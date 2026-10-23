@@ -1,0 +1,260 @@
+openapi: 3.1.0
+info:
+  title: Navidex retrieval plugin contract
+  version: "1.0"
+  description: |
+    The HTTP API every Navidex retrieval plugin implements. The Navidex core is the only client.
+    Plugins are stateless apart from in-flight fetch jobs: settings are sent with every call, and
+    candidate IDs carry everything needed to fetch. See retrieval-plugins.md.
+  license:
+    name: MIT
+servers:
+  - url: http://retriever:8080
+paths:
+  /v1/manifest:
+    get:
+      operationId: getManifest
+      summary: The plugin's manifest.
+      responses:
+        "200":
+          description: The manifest.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PluginManifest" }
+  /v1/health:
+    post:
+      operationId: checkHealth
+      summary: Checks the plugin works with the given settings.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HealthRequest" }
+      responses:
+        "200":
+          description: Health report. Unhealthy plugins still answer 200 with status unhealthy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthReport" }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/search:
+    post:
+      operationId: search
+      summary: Finds candidates for a target, best first.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SearchRequest" }
+      responses:
+        "200":
+          description: Candidates, possibly none.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SearchResponse" }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/fetch:
+    post:
+      operationId: startFetch
+      summary: Starts fetching a candidate into the staging directory.
+      description: Returns as soon as the job is accepted. Starting a job ID that already exists returns its current status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FetchRequest" }
+      responses:
+        "202":
+          description: Accepted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FetchStatus" }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/fetch/{jobId}:
+    parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getFetchStatus
+      summary: Status of a fetch.
+      responses:
+        "200":
+          description: Current status.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FetchStatus" }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      operationId: cancelFetch
+      summary: Cancels a fetch and removes partial files. Only with the cancel capability.
+      responses:
+        "204":
+          description: Cancelled, or already finished.
+        "404": { $ref: "#/components/responses/Error" }
+components:
+  responses:
+    Error:
+      description: Something went wrong.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/RetrievalError" }
+  schemas:
+    Settings:
+      description: The plugin instance's settings, valid against the manifest's settingsSchema.
+      type: object
+      additionalProperties: true
+    ProviderId:
+      type: object
+      required: [provider, value]
+      properties:
+        provider:
+          type: string
+          description: Scheme name, for example musicbrainz, isrc, upc or deezer.
+        value: { type: string }
+    PluginManifest:
+      type: object
+      required: [id, name, version, type, contractVersion]
+      properties:
+        id: { type: string, examples: [navidex.retrieval.ytdlp] }
+        name: { type: string }
+        version: { type: string }
+        type: { type: string, const: retrieval }
+        contractVersion: { type: string, pattern: '^\d+\.\d+$', examples: ["1.0"] }
+        description: { type: string }
+        homepage: { type: string, format: uri }
+        capabilities:
+          type: array
+          items: { type: string, enum: [fetch-track, fetch-album, cancel] }
+        settingsSchema:
+          description: JSON Schema (draft 2020-12) for the settings form.
+          type: object
+        access:
+          type: object
+          properties:
+            network: { type: array, items: { type: string } }
+            files: { type: array, items: { type: string } }
+        maxRequestsPerSecond: { type: number }
+        retrieval:
+          type: object
+          properties:
+            formats: { type: array, items: { type: string } }
+            minBitrateKbps: { type: integer }
+            maxBitrateKbps: { type: integer }
+            lossless: { type: boolean }
+    HealthRequest:
+      type: object
+      required: [settings]
+      properties:
+        settings: { $ref: "#/components/schemas/Settings" }
+    HealthReport:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [healthy, degraded, unhealthy] }
+        message: { type: string }
+    RetrievalKind:
+      type: string
+      enum: [track, album]
+    RetrievalTarget:
+      type: object
+      required: [kind, title, artist]
+      properties:
+        kind: { $ref: "#/components/schemas/RetrievalKind" }
+        title: { type: string }
+        artist: { type: string }
+        album: { type: string, description: Album title, for a track target. }
+        durationSeconds: { type: number, description: Expected length of the track, or of the whole album. }
+        tracks:
+          type: array
+          description: For an album target, the expected track listing.
+          items: { $ref: "#/components/schemas/RetrievalTargetTrack" }
+        ids:
+          type: array
+          items: { $ref: "#/components/schemas/ProviderId" }
+    RetrievalTargetTrack:
+      type: object
+      required: [disc, position, title]
+      properties:
+        disc: { type: integer, minimum: 1 }
+        position: { type: integer, minimum: 1 }
+        title: { type: string }
+        durationSeconds: { type: number }
+        ids:
+          type: array
+          items: { $ref: "#/components/schemas/ProviderId" }
+    SearchRequest:
+      type: object
+      required: [settings, target]
+      properties:
+        settings: { $ref: "#/components/schemas/Settings" }
+        target: { $ref: "#/components/schemas/RetrievalTarget" }
+        limit: { type: integer, minimum: 1, default: 10 }
+    SearchResponse:
+      type: object
+      required: [candidates]
+      properties:
+        candidates:
+          type: array
+          items: { $ref: "#/components/schemas/Candidate" }
+    Candidate:
+      type: object
+      required: [candidateId, kind, title, source]
+      properties:
+        candidateId:
+          type: string
+          description: Opaque to the core; passed back unchanged to /v1/fetch. Must carry everything needed to fetch.
+        kind: { $ref: "#/components/schemas/RetrievalKind" }
+        title: { type: string }
+        artist: { type: string }
+        album: { type: string }
+        durationSeconds: { type: number }
+        source: { type: string, description: Human-readable origin, shown on the Activity page. }
+        url: { type: string, format: uri }
+        format: { type: string, description: Output format the fetched file will have. }
+        bitrateKbps: { type: integer }
+        score: { type: number, minimum: 0, maximum: 1 }
+    FetchRequest:
+      type: object
+      required: [settings, jobId, target, candidate, stagingDirectory]
+      properties:
+        settings: { $ref: "#/components/schemas/Settings" }
+        jobId: { type: string, description: Core-assigned and unique. }
+        target: { $ref: "#/components/schemas/RetrievalTarget" }
+        candidate: { $ref: "#/components/schemas/Candidate" }
+        stagingDirectory:
+          type: string
+          description: Relative to the staging volume root (/staging). Created by the core; write only inside it.
+    FetchState:
+      type: string
+      enum: [queued, running, completed, failed, cancelled]
+    FetchStatus:
+      type: object
+      required: [jobId, state]
+      properties:
+        jobId: { type: string }
+        state: { $ref: "#/components/schemas/FetchState" }
+        progress: { type: number, minimum: 0, maximum: 1 }
+        files:
+          type: array
+          description: Filled once completed.
+          items: { $ref: "#/components/schemas/FetchedFile" }
+        error: { type: string }
+    FetchedFile:
+      type: object
+      required: [path]
+      properties:
+        path: { type: string, description: Relative to the request's staging directory. }
+        codec: { type: string }
+        container: { type: string }
+        bitrateKbps: { type: integer }
+        durationSeconds: { type: number }
+        disc: { type: integer }
+        position: { type: integer }
+    RetrievalError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        code: { type: string, examples: [invalid-settings, unknown-job] }

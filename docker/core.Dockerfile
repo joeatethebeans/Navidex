@@ -1,0 +1,24 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY Directory.Build.props Navidex.sln ./
+COPY src/Navidex.Contracts/Navidex.Contracts.csproj src/Navidex.Contracts/
+COPY src/Navidex.Core/Navidex.Core.csproj src/Navidex.Core/
+RUN dotnet restore src/Navidex.Core/Navidex.Core.csproj
+COPY src/ src/
+RUN dotnet publish src/Navidex.Core/Navidex.Core.csproj -c Release -o /app --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+RUN mkdir -p /config /music /staging /listen-now /plugins \
+    && chown -R $APP_UID /config /staging /listen-now /plugins
+COPY --from=build /app .
+ENV ASPNETCORE_HTTP_PORTS=8080 \
+    Navidex__DataPath=/config \
+    Navidex__LibraryPath=/music \
+    Navidex__StagingPath=/staging \
+    Navidex__ListenNowPath=/listen-now \
+    Navidex__PluginsPath=/plugins
+EXPOSE 8080
+VOLUME ["/config", "/staging", "/listen-now"]
+USER $APP_UID
+ENTRYPOINT ["dotnet", "Navidex.Core.dll"]

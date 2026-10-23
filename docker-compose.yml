@@ -1,0 +1,37 @@
+# Navidex joins an existing Navidrome setup; Navidrome itself isn't part of this stack.
+# Point MUSIC_PATH at the same folder Navidrome reads.
+
+services:
+  core:
+    build:
+      context: .
+      dockerfile: docker/core.Dockerfile
+    image: navidex/core:dev
+    container_name: navidex-core
+    ports:
+      - "${NAVIDEX_PORT:-8787}:8080"
+    volumes:
+      - config:/config
+      - ${MUSIC_PATH:-./music}:/music:ro
+      - staging:/staging
+      - listen-now:/listen-now
+      - ./plugins:/plugins:ro
+    restart: unless-stopped
+
+  # Phase 2: the import engine. Writes the library; the core and Navidrome only read it.
+  # beets-worker:
+  #   image: navidex/beets-worker:dev
+  #   volumes:
+  #     - ${MUSIC_PATH:-./music}:/music
+  #     - staging:/staging
+
+  # Phase 2: one container per retrieval plugin, each from its own repository.
+  # retriever-ytdlp:
+  #   image: navidex/retriever-ytdlp:dev
+  #   volumes:
+  #     - staging:/staging
+
+volumes:
+  config:
+  staging:
+  listen-now:
