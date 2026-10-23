@@ -34,6 +34,12 @@ to a playlist until it's in the library and has a server track ID, whatever the 
 Through the Subsonic API: `startScan` and `getScanStatus` for scanning, `search3` to resolve tracks, plus
 playlists and stars. Navidrome scans the whole library folder, so it doesn't declare `selective-scan`.
 
+Navidrome's Subsonic responses don't report the real file path by default. `path` is synthesised from the tags,
+for example `Portishead/Dummy/01-01 - Mysterons.flac` for a file at `Portishead/Dummy (1994)/01 Mysterons.flac`.
+So the connector resolves tracks by MusicBrainz recording ID first (`musicBrainzId` on songs), then ISRC (`isrc`),
+then title, artist, album and duration. It falls back to the path only when Navidrome is set to report real paths.
+Seen on Navidrome 0.64.2 in the sandbox; see [docs/testing.md](../testing.md).
+
 Navidrome can't match files that are retagged and moved in the same scan, so the adopt step for existing libraries
 retags in place first, scans, then moves and scans again. The connector is what makes that two-pass flow possible.
 

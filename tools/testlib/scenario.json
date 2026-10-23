@@ -1,0 +1,83 @@
+{
+  "description": "A small library built from real MusicBrainz data, with a known answer for what's owned and missing. Each album exercises one matching path or edge case.",
+  "artists": [
+    { "mbid": "8f6bd1e4-fbe1-4f50-aa9b-94c450ec0f11", "name": "Portishead" },
+    { "mbid": "056e4f3e-d505-4dad-8ec1-d04f521cbb56", "name": "Daft Punk" }
+  ],
+  "albums": [
+    {
+      "why": "Complete album with full MusicBrainz tags: the easy path.",
+      "release": "76df3287-6cda-33eb-8e9a-044b5e15ffdd",
+      "tags": "musicbrainz",
+      "format": "flac"
+    },
+    {
+      "why": "Owned album with two tracks missing: shows as owned, with the missing tracks listed separately.",
+      "release": "23d752fa-d27c-33bf-ab33-aff5fb47d507",
+      "tags": "musicbrainz",
+      "format": "mp3",
+      "omit": [[1, 4], [1, 9]]
+    },
+    {
+      "why": "Live album with basic tags only: matched fuzzily, and owned even though live albums are hidden from the missing view.",
+      "release": "213910e7-279a-3186-81ae-cf330ded96fb",
+      "tags": "basic",
+      "format": "m4a"
+    },
+    {
+      "why": "No MusicBrainz IDs, but every track carries its ISRC: matched by ISRC.",
+      "release": "6cd30d99-4923-4d5e-8e51-9d87506976f1",
+      "tags": "isrc",
+      "format": "mp3"
+    },
+    {
+      "why": "Basic tags with messy folder names and title variations: matched fuzzily after normalisation.",
+      "release": "2fdcc2d7-50b9-4b27-8262-8cf9e31aaa4d",
+      "tags": "basic",
+      "format": "flac",
+      "folder": "daft punk - homework [FLAC]",
+      "overrides": [
+        { "disc": 1, "position": 3, "was": "Revolution 909", "title": "REVOLUTION 909" },
+        { "disc": 1, "position": 7, "was": "Around the World", "title": "Around The World (Album Version)" },
+        { "disc": 1, "position": 12, "was": "Oh Yeah", "artist": "Daft Punk feat. nobody" }
+      ]
+    },
+    {
+      "why": "Two-disc deluxe edition (10th anniversary) with one bonus track missing: owning a deluxe edition owns the album, and missing tracks are per disc.",
+      "release": "6940fcdf-6e70-4764-8782-18e2c1e600de",
+      "tags": "musicbrainz",
+      "format": "m4a",
+      "omit": [[2, 3]]
+    }
+  ],
+  "strays": [
+    {
+      "why": "Right name, wrong length (75 seconds too long): fuzzy confidence falls under the threshold, so it goes to review.",
+      "path": "Portishead/Singles/Glory Box.mp3",
+      "tags": { "artist": "Portishead", "title": "Glory Box" },
+      "like": { "release": "76df3287-6cda-33eb-8e9a-044b5e15ffdd", "disc": 1, "position": 11 },
+      "durationOffset": 75,
+      "expect": "review"
+    },
+    {
+      "why": "A track that isn't in the catalogue at all.",
+      "path": "Daft Punk/Bootlegs/One More Time (Live at Wembley).mp3",
+      "tags": { "artist": "Daft Punk", "title": "One More Time (Live at Wembley)", "album": "Wembley 2007" },
+      "durationSeconds": 412,
+      "expect": "review"
+    },
+    {
+      "why": "No tags at all.",
+      "path": "Unknown/Track 01.mp3",
+      "tags": {},
+      "durationSeconds": 187,
+      "expect": "review"
+    }
+  ],
+  "policy": {
+    "why": "The missing view's default filters. The plan shows albums, EPs and singles and hides live albums, compilations, remixes, demos and soundtracks; real data also has interviews, mixtapes and DJ mixes, so any secondary type hides a group. Groups with no official release (bootlegs only) are hidden too.",
+    "shownPrimaryTypes": ["Album", "EP", "Single"],
+    "hideAnySecondaryType": true,
+    "requireOfficialRelease": true
+  }
+}

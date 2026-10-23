@@ -1,0 +1,5177 @@
+{
+ "source": "musicbrainz.org",
+ "fetchedAt": "2026-10-23",
+ "artists": [
+  {
+   "mbid": "8f6bd1e4-fbe1-4f50-aa9b-94c450ec0f11",
+   "name": "Portishead",
+   "sortName": "Portishead",
+   "releaseGroups": [
+    {
+     "mbid": "553b284c-ece2-4206-bfde-a8b7fbafbe45",
+     "title": "Wildwood",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1994",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "8a399961-ca70-3c62-b000-3684fb0fd73b",
+     "title": "Numb",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1994-06-06",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "f9ea98b9-9941-35c4-9441-00158db3d469",
+     "title": "Sour Times",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1994-06-25",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "48140466-cff6-3222-bd55-63c27e43190d",
+     "title": "Dummy",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1994-08-22",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "19d8fec6-6761-407d-b335-2b610e6063c4",
+     "title": "Glory Box",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1994-12-20",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "be8b93e3-874a-4a2f-b63f-e0568cc476ef",
+     "title": "In Concert 652",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1995",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "dfa33d05-2dd4-4622-8d42-199bb199a5a6",
+     "title": "Live at the Empress Ballroom",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1995",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "196a7a58-ea83-38ee-b6b2-8db5f97c3ac6",
+     "title": "Trip-Hop Reconstruction",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "1995",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "c6f69669-0e8f-4dce-89a4-df3a3cf40dec",
+     "title": "Wandering Star",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1995",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "becff7a3-76c3-4003-b17f-9b35acf16000",
+     "title": "Nobody Loves Me!",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1995-04",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "f15babbe-563e-3bbd-b9e6-eb4f36467141",
+     "title": "1995‐04‐11: Élysée Montmartre, Paris, France",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1995-04-11",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "9436ffe3-597c-3b8b-976f-8fa35388aeb4",
+     "title": "1995‐04‐17: Mysterious Heads: Rock’n’Cafe, Seattle, WA, USA",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1995-04-17",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "d37d94c5-67c2-436e-8073-f60685731dcb",
+     "title": "1995-04-23: BBC Radio 1 Essential Mix",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "1995-04-23",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "cf0054cf-1273-38bf-be77-7569ad078b1d",
+     "title": "L : Live",
+     "primaryType": "EP",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1995-05-03",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "606d12e0-5afe-47fe-9c9c-0c4b0a29b57a",
+     "title": "1995‐05‐25: Tower Ballroom, Blackpool, England, UK",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1995-05-25",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "91167070-c8a7-3b59-9caa-58c8acf7dec4",
+     "title": "Glory Times",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "1995-06-07",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "fea6c4b4-3bb9-37da-b043-f091a03de52c",
+     "title": "An Evening With",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b19144ff-fd99-36e7-954d-4959aba1bae7",
+     "title": "B-Sides",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "952da497-62da-4409-ae43-9f822e200927",
+     "title": "Cowboys",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "4bb9ae7f-64fe-3024-847a-4a998c81b4d4",
+     "title": "Interview & Mix",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "2865b8b3-8b48-474a-a8b2-b941609c272f",
+     "title": "Interview & Mix CD",
+     "primaryType": "Other",
+     "secondaryTypes": [
+      "Interview"
+     ],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "5c6c3376-856f-4cc7-8c9f-87613eb07d41",
+     "title": "Only We",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "a0441860-63d1-3414-847f-fe58bb90ea9f",
+     "title": "Only You",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "dbba4d4c-14df-31b2-b5fc-b9ee3399ae66",
+     "title": "Only the Lonely",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "45e76c63-becc-4c34-9261-7bf434807f28",
+     "title": "Portishead",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "193a4b3e-1dd0-31e0-9323-e3fc5b1b448b",
+     "title": "All Mine",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997-09-08",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "5b4a33d5-7381-4b83-8ca9-b5bb0cff564a",
+     "title": "All Mine",
+     "primaryType": "EP",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997-09-08",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "46b38f09-e90b-39eb-b04f-002da20f7f96",
+     "title": "Portishead",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997-09-29",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "3ac98669-3237-312d-b044-8e211abf3501",
+     "title": "Over",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997-11-10",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "d3e07d7a-852e-42af-b3b0-65e85adc323d",
+     "title": "The Roxy",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1997-12-03",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "bf4b6ed7-0e89-4d9e-800c-983d4acc39f2",
+     "title": "Elysium",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "77896a65-8331-49c6-8a23-16146da4d89c",
+     "title": "PNYC",
+     "primaryType": "EP",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998",
+     "releaseStatuses": [
+      "Bootleg",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "57a20ee2-8f3d-4a47-bdf9-09a83526a8a7",
+     "title": "1998‐04‐01: The Warfield, San Francisco, CA, USA",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998-04-01",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "f52fc694-27f5-4521-9def-a1b5c31cad18",
+     "title": "Reliving Past Times: The Interviews",
+     "primaryType": "Other",
+     "secondaryTypes": [
+      "Interview"
+     ],
+     "firstReleaseDate": "1998-06-15",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "605569e2-bb08-3076-a205-a8c4c1f4b939",
+     "title": "1998‐06‐26: Glastonbury, Somerset, England, UK",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998-06-26",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "67afdaae-a9eb-3e68-b5ec-9e56d1bc5a6b",
+     "title": "1998‐08‐09: Sudoeste Festival 1998: Zambujeira Do Mar, Portugal",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998-08-09",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b6a5da8b-2575-389c-9c14-091ce138072d",
+     "title": "1998‐08‐15: La Route du Rock Festival, Saint‐Malo, France",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998-08-15",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "fa9f44b9-2fc6-3dd6-84a6-c34041af3808",
+     "title": "1998-08-21: Symphony: Bizarre Festival, Cologne, Germany",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998-08-21",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ce61f4a8-db95-3608-93de-53f9ecb1b8d2",
+     "title": "Roseland NYC Live",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998-11-02",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "ca86b455-3056-46a5-8d19-f96c16b9f03d",
+     "title": "Undercover Themes",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2000",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "df88839e-6275-4f48-85e6-38a812ef69ba",
+     "title": "Electronic Collection: Best Trips",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "e1ed0899-0755-4d19-bdab-b03c103a8c3b",
+     "title": "MTV History Hits 2002",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2002",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2bb1004d-e1e2-3ab3-bea4-c68ad8efbafa",
+     "title": "Melody Nelson: B-Sides, Rarities & Unreleased Tracks",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2002",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "14c123e7-33bc-313d-8f5f-c36d57d83c00",
+     "title": "Mysteries",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2002",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "23684b6a-8231-4936-96de-de975b445445",
+     "title": "Portishead Remix Collection",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2002",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "347f8b14-ca20-3809-b39b-4036ff555d18",
+     "title": "Toy Box",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2002",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "c64f4e97-544e-48da-bb4f-06f23f4cf109",
+     "title": "Roads (Sultan & Tone Depth Remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2003",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "e13b26a2-7f59-3ac6-a8b9-fd9bcafc2461",
+     "title": "Portishead + Epigones",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2004",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "437d5120-f249-3a4e-bbc6-c782132191b1",
+     "title": "Portishead: The Remixes, Volume 1",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2005",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "661d591d-d053-3fd8-8f45-70b3d2fbb1fe",
+     "title": "Portishead: The Remixes, Volume 2",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2005",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "3e499c4b-3a48-36e6-b41e-2d88bd844465",
+     "title": "2005-02-19: Tsunami - Crisis in Asia: Bristol, UK",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2005-02-19",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "c06414bc-1d6d-32ca-9647-751289e91640",
+     "title": "Manu Chao / Portishead",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2005-05-30",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "a65cf519-1c22-39b3-8024-706656a640f9",
+     "title": "Portishead Remixed: Dumb",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2006-02-10",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ff572227-cab8-33fd-b289-b6956a02cff0",
+     "title": "2007‐12‐08: ATP Festival, Minehead, England, UK",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2007-12-08",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "e3342ab7-cd75-4d58-b176-86579fe0e090",
+     "title": "Magic Doors",
+     "primaryType": "EP",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "b57455bf-784f-45c6-ad97-99d05d27c43f",
+     "title": "Saturnine",
+     "primaryType": "EP",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2008",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "1d1e0002-95ed-3c2c-b206-7bea41ef557d",
+     "title": "Machine Gun",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008-03-18",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "5318dd34-98a1-46f0-b80d-4435586688da",
+     "title": "2008-03-26: Coliseu do Porto, Oporto, Portugal",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-03-26",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "c58c7ad0-200d-4931-920d-4a5e56e704c9",
+     "title": "2008-04-02: Tonhalle, München, Germany (CMC8 source)",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-04-02",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "7e08a8aa-42ec-42f4-bb78-b1025225880f",
+     "title": "2008-04-02: Tonhalle, München, Germany (MBHO source)",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-04-02",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "0e829ccd-1436-4900-a409-d99dbd278ce7",
+     "title": "2008-04-03: Columbiahalle, Berlin, Germany",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-04-03",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "774b7ff5-67e6-43e7-bb29-29420d92aee3",
+     "title": "2008-04-06: Palladium, Köln, Germany (matrix source)",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-04-06",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "47b9a834-a90e-3574-94f8-d11568fa2468",
+     "title": "2008-04-07: Heineken Music Hall, Amsterdam, The Netherlands",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-04-07",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "163339ab-813b-3d29-bba8-e1d5acf63cab",
+     "title": "Third",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008-04-08",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "7685a5d0-3dac-40c7-b26d-544636129979",
+     "title": "Portishead in Portishead",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-04-11",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "45e3ec08-43bd-4a21-be7a-325ae8458180",
+     "title": "2008-04-26: Main Stage, Coachella Music and Arts Festival, Empire Polo Field, Indio, CA, USA",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-04-26",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "bf9cdd05-527c-4c9e-b892-46c12cd109d3",
+     "title": "Concert Privé, Canal+, May 3, 2008",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2008-05-03",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "6ed02415-4b0a-4d97-9101-274e42f74651",
+     "title": "2008-05-20: Mark Radcliffe and Stuart Maconie Show, BBC Radio 2, BBC Studios, London, UK",
+     "primaryType": "Other",
+     "secondaryTypes": [
+      "Interview",
+      "Live"
+     ],
+     "firstReleaseDate": "2008-05-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "82fc8d35-3146-4d5e-bd8b-d97f1ae7693c",
+     "title": "The Rip",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008-06-09",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "4e8bb524-4d69-4bf2-bc79-55adf914b922",
+     "title": "Strangers / Mr Me Too (Remixes)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2008-10",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "d84632c7-1cd0-4cc5-ab7e-a7f77128306f",
+     "title": "Dummy / Portishead",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2009",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "9bf6cf4a-3302-4cd2-86eb-37010722ce4c",
+     "title": "R.A.R.E (Reliving a Real Experience)",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Mixtape/Street"
+     ],
+     "firstReleaseDate": "2009-06-19",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "a87ef716-4659-4ecb-8941-16fb73c1f21f",
+     "title": "Chase the Tear",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2009-12-09",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "3921b63e-090e-4975-b88f-da8b5b0ce524",
+     "title": "Remixes",
+     "primaryType": "EP",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "137fd79f-cfc8-422e-87cd-89d147277d5d",
+     "title": "2011‐07‐19: Festival de Nîmes, Nîmes, France",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2011-07-19",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "7bb67a35-c618-4408-892d-bfc877a9392a",
+     "title": "2011-07-23: All Tomorrows Parties: Alexandra Palace, London, England, UK",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2011-07-23",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "8029f958-4fa7-4bf5-841c-9fe06c07cf82",
+     "title": "SOS",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2016-06-22",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "4f3c05cf-1a8b-483e-b1ab-9642b9cee99c",
+     "title": "SOS (Diamond Setter Edit)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2021-05-07",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "68807aee-2631-480e-a55e-7a53eb94f3f3",
+     "title": "Live in Paris 1997",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2025-07-04",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "b178b939-7e65-40b8-b759-c50270cad75a",
+     "title": "1998-06-28: Roskilde Festival, Roskilde, Denmark",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "145bf2f3-90e9-33dc-ba03-b6a32debf14d",
+     "title": "Desolation Row",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "dc3c8cb2-b60c-3ad3-b131-7029eac87822",
+     "title": "Greatest Hits '99",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "254e9d58-8b7a-3d4f-ab3e-2e0c9a04c38e",
+     "title": "Live Chicago",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "09f0d0fa-8d8d-3cb9-8422-1d7a6508423e",
+     "title": "Live Weisen 1998",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2b632efe-e6cf-3a6c-bc0b-05383b513557",
+     "title": "Live at New York (1997)",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "3a58a638-718b-3a3a-99bf-219071f73da9",
+     "title": "Live in Paris",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "188a1c4a-20b8-3f40-aa64-09695d318e43",
+     "title": "Lowland Beats",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "cf93aff9-d668-3ee5-84d4-4a1303d3b899",
+     "title": "Millennium Hits",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "48db8dfc-21c4-3a2d-b62d-dd1874cfc28a",
+     "title": "Sweet Times: Non-Album Tracks",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "8960c356-1e40-36af-9a2d-f09edd04a17a",
+     "title": "Welcome to Portishead",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+   "name": "Daft Punk",
+   "sortName": "Daft Punk",
+   "releaseGroups": [
+    {
+     "mbid": "35a4f900-60c1-3f79-8cdb-193941b78768",
+     "title": "The New Wave",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1994-04-11",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "5dd37d7e-a5da-412e-8e69-169fd0389ff0",
+     "title": "Musique / L'ombelico del mondo / Make It Funky",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1995",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "770b66b9-1ecb-4c0d-b6f4-cf4c50c6e156",
+     "title": "1995-08-05: Soirée Prophecy, Le Cannet, France",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live",
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "1995-08-05",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "d86198a6-29e6-3748-93a8-1a4a0fadef57",
+     "title": "Da Funk",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1995-12-07",
+     "releaseStatuses": [
+      "None",
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "5b1c02ac-8608-3857-a9b6-62e056177d96",
+     "title": "Around the World",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1996",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "4a25766d-f1ab-30de-9599-e0e0920df0a4",
+     "title": "Revolution 909",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1996",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "af768bc7-cd05-342a-8e9f-c53b3881278f",
+     "title": "Indo Silver Club",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1996-02-26",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "73569814-a0a7-3969-be46-b88de57297b9",
+     "title": "Assault",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "00054665-89fa-33d5-a8f0-1728ea8c32c3",
+     "title": "Homework",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997-01-20",
+     "releaseStatuses": [
+      "None",
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "55beed1f-8ebd-4240-bddd-8674c28e11cd",
+     "title": "1997-03-02: BBC Radio 1 Essential Mix",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "1997-03-02",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "c1839360-3cab-4176-a0cd-ce831459b6a4",
+     "title": "Live @ We Are Family",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "1997-04-11",
+     "releaseStatuses": [
+      "None",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "0c9fd16a-4a8c-4094-b123-8a32eb274962",
+     "title": "Live @ Tribal Party, NRJ, Paris, France",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "1997-06-01",
+     "releaseStatuses": [
+      "None"
+     ]
+    },
+    {
+     "mbid": "8dfbd2f1-be5d-3b42-9d7a-8ab3a6d66cb6",
+     "title": "Burnin’",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "1997-09-01",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "2c9bcca3-7234-491c-9bf3-8cd349095961",
+     "title": "Alive 1997 (Mayan Theater)",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1997-12-17",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "8093fc8c-942c-30f3-a224-49dbc718f8e4",
+     "title": "Alive 1997",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "1998",
+     "releaseStatuses": [
+      "Bootleg",
+      "Official",
+      "Withdrawn"
+     ]
+    },
+    {
+     "mbid": "fb5c8c26-a13e-4e24-abd2-0cc3adc480a5",
+     "title": "Around the World (Masters at Work Remixes)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "1998",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "165cdc07-e4b9-48d5-bfb2-a63e479c41a3",
+     "title": "1998-12-31: Daft Punk, BBC Radio One Essential Selection",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "Live",
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "1998-12-31",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b791a9cc-dc92-45ee-b5b9-be5617823411",
+     "title": "D.A.F.T. : A Story About Dogs, Androids, Firemen and Tomatoes",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "1999",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "9fb1c546-e3bb-4024-94a9-7fe2bd00ca46",
+     "title": "Untitled",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "1999",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "297c4c53-8eeb-4837-97e9-bdc77c4a8ee4",
+     "title": "One More Virgin: Tracks for Celebration of New Century",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2000",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "e50a2822-49b6-4ec1-b883-cf671aa7fdcb",
+     "title": "Stronger",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2000",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "1f63ade9-c584-37c3-84b2-930a7d5c353b",
+     "title": "One More Time",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2000-09-28",
+     "releaseStatuses": [
+      "Bootleg",
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "73942bd4-1706-4b4b-96cd-8861a524b49b",
+     "title": "Aerodynamic (special edition from Daft Club)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "6350b399-fa05-4361-b01e-4851f3cb0c96",
+     "title": "Aerodynamite",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "84216190-e46f-4cf1-8a28-76910183be38",
+     "title": "Discovery (Beta Version)",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2a7840ab-9567-37f4-85b8-3208db09434b",
+     "title": "Discovery: Bonus Tracks From daftclub.com",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "2462008f-216b-4c2d-bb9d-642eb02492d3",
+     "title": "Generic Radio Interview w/ Thomas Bangalter",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Interview"
+     ],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "fac1af8d-0676-3884-9d70-2c314c158d5d",
+     "title": "Live @ Rex Club, Paris",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "f6c36277-4b45-4af8-a610-18d1bb68268f",
+     "title": "Radioactivo 98.5",
+     "primaryType": "Other",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "5e98d0fa-b14b-425b-966f-739fe0cf6212",
+     "title": "Ultimate Collection",
+     "primaryType": "Other",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2001",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "48117b90-a16e-34ca-a514-19c702df1158",
+     "title": "Discovery",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2001-02-26",
+     "releaseStatuses": [
+      "None",
+      "Official"
+     ]
+    },
+    {
+     "mbid": "c265ac4b-aa80-3f8b-83f7-47b81d8175c0",
+     "title": "Aerodynamic",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2001-03-23",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "3888f64b-f8ce-3e3d-a2f7-23d83697f43d",
+     "title": "Digital Love",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2001-04-25",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "4b2647ff-d3ae-4ffa-93cd-36bdb20813f1",
+     "title": "Da Funk vs. Music / Rock With You (remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2001-07-11",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "705354d1-3fa7-4af4-b982-18243c6c20be",
+     "title": "Aerodynamic (Slum Village remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2001-08-14",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "c2a09e19-6a4e-4ee9-a53b-50ec0143a284",
+     "title": "Harder, Better, Faster, Stronger (The Neptunes remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2001-10-13",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "1ed45c8c-9abd-4ec3-9ff6-43d264f0e6b7",
+     "title": "Homework / Discovery",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2001-10-15",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "aa5b9bea-dcdf-4911-838f-8f90b0fc1171",
+     "title": "Harder, Better, Faster, Stronger",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2001-10-22",
+     "releaseStatuses": [
+      "Bootleg",
+      "None",
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "94c9ccc0-0c9b-306b-8d91-3a45bbdf30bc",
+     "title": "DJ Mix",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation",
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2001-12-17",
+     "releaseStatuses": [
+      "Bootleg",
+      "Promotion",
+      "Pseudo-Release"
+     ]
+    },
+    {
+     "mbid": "c5afe0db-56f0-3af8-bc00-bf8b2aeaa40e",
+     "title": "Face to Face",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2002",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "869203a4-f7ea-4eab-9f78-bf8603f4d854",
+     "title": "Voodoo People / Da Funk Music",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2002",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "a2388a7f-a913-42f4-bbe9-fcbe77edf625",
+     "title": "Breathe / One More Time (Remixes)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2003",
+     "releaseStatuses": [
+      "None"
+     ]
+    },
+    {
+     "mbid": "93341465-cd7e-4558-aeeb-05676210acb8",
+     "title": "Daft Club Net Songs",
+     "primaryType": "Other",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2003",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "921aeaf5-bcc9-449f-bcb9-fc88a77b9b85",
+     "title": "Daft Horse",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2003",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "6e0abf7a-839f-4cc4-a005-b1e558421a3e",
+     "title": "Underground 2003 (Da Automatic Funk)",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2003",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "7ae00e0b-59bf-47d6-bec7-5ca90aaa4280",
+     "title": "Phoenix (Basement Jaxx remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2003-01-01",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "20309718-0e63-47ef-b81a-669d9eeac632",
+     "title": "Daft Michael",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2003-03-23",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "adc644a3-30e2-4ccf-85a5-302858b8a533",
+     "title": "Interstella 5555",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Soundtrack"
+     ],
+     "firstReleaseDate": "2003-05-18",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "13ba6204-83e8-3bf2-aeb4-05b14acc9167",
+     "title": "Something About Us: Love Theme From Interstella 5555",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2003-11-17",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "1fd2e0fe-90f6-35ca-92c0-d816ab3bb79c",
+     "title": "Daft Club",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2003-11-27",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "adddef22-87cf-41e4-8563-5a2fc376ccd3",
+     "title": "Interstella 5555: The 5tory of the 5ecret 5tar 5ystem",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2003-12-01",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "5df97278-a814-4f76-8213-c358579570c5",
+     "title": "Darker Skies",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2004",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "46109483-9c24-4d52-b698-9b89dcdc2dcb",
+     "title": "Darker Skies",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2004",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "5f58454c-1d12-4140-934a-2a2508cfb2e0",
+     "title": "The Age of Punk [Daft Love]",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2004",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2548c1e0-7fc2-4f6a-896c-52367c68e010",
+     "title": "The Remixes, Volume 3",
+     "primaryType": "EP",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2004",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "63c8cb6e-91bb-4fb9-a5bc-f97a6980957b",
+     "title": "Daft Punk Live in NYC",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2005",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "f3d5e1e8-c7e4-473c-bdee-eaba708bbd30",
+     "title": "Kiss / Around Da World / El Segundo / 1nce Again",
+     "primaryType": "EP",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2005",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "67f5c12b-1f6d-4755-9ccc-49a456d24792",
+     "title": "Put Your Hands Up For Technologic",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2005",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "c80aa5ed-1a43-4d28-adbd-d7e782097b4f",
+     "title": "Technologic (Exclusive Mixes)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2005",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "da00fcb0-4c72-3612-8a14-4ba083505fe2",
+     "title": "Robot Rock",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2005-01-25",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "f9e8042a-674e-3f01-80ec-7f0ab1c537df",
+     "title": "Human After All",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2005-03-01",
+     "releaseStatuses": [
+      "Bootleg",
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "8a8ca5fc-4eff-3aa8-939b-9c064ba73d7f",
+     "title": "Technologic",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2005-06-06",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "14d335b6-71e9-43a3-9ad8-cf8367990c23",
+     "title": "Human After All",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2005-10-21",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "62e79939-b2b1-426e-8a5e-1212fdac7b96",
+     "title": "Technologic / Indo Silver Club / Burnin’ Remixes",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2005-12-15",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ae3d1ac6-aa03-4b1a-af97-93095a0235c9",
+     "title": "Alive 2006",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2006",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ba991e16-9f65-43ac-931b-3a4cbc903cab",
+     "title": "Alive Summer 2006",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2006",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "819c087a-8966-40d9-8c77-957287f534bd",
+     "title": "Bitch Technologic",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2006",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "3ab059bc-281d-4719-90c6-ed130fa2bd20",
+     "title": "Greatest Hits",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2006",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "eeaaf34f-ffa2-47ce-bfdb-4721d2e19002",
+     "title": "Musique Mix",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2006",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "63a703ec-7725-4b70-893e-10a8cd4c1492",
+     "title": "Human After All (Unreleased Remixes)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2006-01",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "92a695fb-3604-4a9e-97b5-b431f89f1245",
+     "title": "Robot Rock (Adjuster remake)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2006-01-01",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "e04f5290-3257-461a-b98f-4b4578052f87",
+     "title": "Robot Rock (Shiloh Remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2006-03",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "66ecf2c3-441f-3981-b85f-a005d9cc582d",
+     "title": "Musique, Volume 1: 1993–2005",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2006-03-06",
+     "releaseStatuses": [
+      "Bootleg",
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "16ea0f65-3462-3283-a3eb-e81dcc92c1d5",
+     "title": "Human After All: Remixes",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2006-03-29",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "f9b52398-c578-32c4-95a6-b2e4a9bdc472",
+     "title": "Prime Time of Your Life",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2006-05-27",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "ffa5f4e2-205c-4927-bde1-267c7f2d2c06",
+     "title": "1996-06-29: BBC Radio 1, \"Tribal Gathering '96\": Luton Hoo Estate, Bedfordshire, England, UK",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2006-06-16",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "5d68adea-fcf7-4a85-968b-49c3078e1f5c",
+     "title": "2006-11-04: Live @ Bue Festival, Buenos Ares, Argentina",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2006-11-04",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "6f374838-0f94-3066-a8f5-3ec758e4dace",
+     "title": "2006-06-30: Eurockéennes, Belfort, France",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2007",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "7738472e-0737-454f-af7d-542ad28d020f",
+     "title": "Ain't No Television",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2007",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "182d5b24-b70a-4942-b73a-3fa5b3c9aa61",
+     "title": "Louis Vuitton Spring/Summer ’08 – Women’s Wear",
+     "primaryType": "EP",
+     "secondaryTypes": [
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2007",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "79e32b57-9b02-48e9-9719-ae15ea37e13d",
+     "title": "Like Liquor for Punks (Daft Punk VS Lupe/Common)",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Mixtape/Street"
+     ],
+     "firstReleaseDate": "2007-07-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "cb83a67b-428e-379c-bfd0-58031e4ee700",
+     "title": "2007-10-27: Vegoose 2007: Sam Boyd Stadium, Las Vegas, NV, USA",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2007-10-27",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b3a846bc-1b2c-4e2a-b193-e6bf257c0b98",
+     "title": "One More Time (The House Moguls remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2007-11-10",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "4bac3d70-deea-3d80-85c4-8be9f90558e6",
+     "title": "Alive 2007",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2007-11-14",
+     "releaseStatuses": [
+      "Bootleg",
+      "Official"
+     ]
+    },
+    {
+     "mbid": "11bbba73-bb2f-4723-a14b-a706bad16467",
+     "title": "2007-12-13: Sidney Myer Music Bowl, Melbourne, Australia",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2007-12-13",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "96ca5255-b12f-4d92-82fc-01b3980eeed1",
+     "title": "Around the World (Dumb Dan Remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2008",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "705400b0-c66f-42df-80c3-21051a7f17b5",
+     "title": "Complete Reboot",
+     "primaryType": "EP",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "aa1f7530-6bf3-41c8-b885-c7a0c4cb9e13",
+     "title": "Extra Credit",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "40825f0c-d53c-401f-b029-99503c8b4810",
+     "title": "One More Time Alive 2008 / New Da Funk Alive 2008",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "309b123e-2733-4302-8211-59efc48e84ac",
+     "title": "ReDiscovery",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2008",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "a1ce1197-f6ab-4e9a-9f1b-d1e67c1a708d",
+     "title": "Television Rules the Nation (Deadhau5 mix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2008",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "54c822fe-5d16-4930-88a3-8d813103e41f",
+     "title": "Live Mixes 2007",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Live",
+      "Remix"
+     ],
+     "firstReleaseDate": "2008-01",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "5fc50b4a-e46e-38cf-a189-cdde7590dc43",
+     "title": "Harder Better Faster Stronger 2008 (Alive club mix) / Touch It Technologic (Alive club mix)",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008-02",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b2dd2bfc-dc7f-4b2b-9407-182f6fb976a8",
+     "title": "Around the World 2009",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2008-06",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "529a48ba-bcd1-4273-ba52-939f76451440",
+     "title": "Leftovers",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2008-06-12",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ec8e9600-b802-48ff-a387-ace28cb90642",
+     "title": "Alive 2007 / Alive 1997",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation",
+      "Live"
+     ],
+     "firstReleaseDate": "2009",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "f30c676d-82a4-4689-8d40-ec326bd0ce4f",
+     "title": "Around the World 2009",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2009",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "077306e2-a25c-42c5-953d-59a5d0fe7d26",
+     "title": "One More Time / Somebody To Love",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2009-02-18",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "68360aa5-6003-403d-8b4f-d04cbda9516c",
+     "title": "Digital Decks",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2009-03-14",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "43edf8c3-f8dd-4fc6-be99-bfa921b5ba25",
+     "title": "O.M.T. (One More Time 2009)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2009-04",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "15af54b9-b687-4450-bab8-a0cac036ab3b",
+     "title": "Remix After All",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2009-05-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "cb52afdf-738f-4064-86e6-9be058891f56",
+     "title": "End of Line (reworked by Cryda Luv)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2009-07-27",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b974eb3e-5967-4dc5-a60c-33a6854b4ac2",
+     "title": "1995-11-04: Planet Rose, Nijmegen, Netherlands",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live",
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2009-08-15",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "e4d45d1f-55dc-488f-a774-6ee82dbe9c86",
+     "title": "Drive (Unreleased 1994)",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2010",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "3c22791b-bbfe-466f-a818-611767716335",
+     "title": "Human After All / Daft Club",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2010",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "025a0ba5-5271-4927-840f-90e2a6231527",
+     "title": "Louis Vuitton Runway Show Mix (Spring / Summer 2008)",
+     "primaryType": "EP",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2010",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "44fbe109-73c7-43ff-93f7-d6dbb31c420c",
+     "title": "Tron: Legacy Score",
+     "primaryType": "EP",
+     "secondaryTypes": [
+      "Soundtrack"
+     ],
+     "firstReleaseDate": "2010",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "bae0aca5-51c3-4b16-afcf-7b1fc379526b",
+     "title": "Another One Bites the Dust vs. Da Funk",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-03-04",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "477b5d71-0e86-4cdc-b94d-6d78b597cc16",
+     "title": "End of Line (Alexel remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-04-12",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "9f91c213-26c6-4eb2-b095-d64b8fe14aa8",
+     "title": "Da Funk (The Brainwashers remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-06-22",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "4ecae1cf-ceb0-4228-86fd-f791e48d336b",
+     "title": "Harder Better Faster Stronger (OTIK dubstep remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-07-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "a2e3f127-135a-4bb1-a45b-e28165b4e8cb",
+     "title": "Derezzed (NTEIBINT remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-09-30",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "f45b4f26-de5b-47cf-ba9a-a076ae418c3b",
+     "title": "Derezzed (Ryan Riback’s Tron Guy remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-11-21",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "6e7d05be-c3ea-472c-bfa8-0a4817fac2cc",
+     "title": "End of Line (edit)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-11-23",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b585e56e-69cb-4f53-9597-320af5e5f541",
+     "title": "TRON: Legacy",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Soundtrack"
+     ],
+     "firstReleaseDate": "2010-12-03",
+     "releaseStatuses": [
+      "Bootleg",
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "34aace74-9378-48dd-ad9b-93f1336f5861",
+     "title": "Derezzed",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Soundtrack"
+     ],
+     "firstReleaseDate": "2010-12-08",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "b4efce6c-bbe7-4e31-bf19-bbaff1f4d966",
+     "title": "TRON LEGACY - END OF LINE - RMX",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-12-10",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "c2ee80a5-1ede-4284-a8a4-564568868d76",
+     "title": "Adagio for TRON (Venaccio remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-12-27",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "569a7ff6-b852-4be8-9127-cf60f19d5b31",
+     "title": "Son of Flynn (remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2010-12-31",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2dda747c-d6b3-44e6-a1ce-d1dcc15055ff",
+     "title": "Discovery / Human After All",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2011",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "1d0bfca6-4252-4fab-8e9f-3746c93dece4",
+     "title": "One More Time (Daft Punk) / Swoon (Chemical Brothers)",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2011",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "03399070-0651-4ff8-af8e-2fe058f6bf5d",
+     "title": "The Mashup",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "829d4cee-4a58-47b0-99ec-80ae124cc4c1",
+     "title": "Technologic (5pack Remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-01-01",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "fd675440-fcb0-4855-958c-0091208bbcfa",
+     "title": "The Game Has Changed (Mindless Faith mix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-01-10",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "1f1592fd-0816-469e-8e42-050633a743e4",
+     "title": "Castor (remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-01-22",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "bc49de56-46c7-4250-b987-a0cd43e73279",
+     "title": "TRON: Legacy R3C0NF1GUR3D",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Soundtrack",
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-04-04",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "1c90e3ab-e2c3-4fde-b93c-4ff6a0c69b06",
+     "title": "Translucence",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Soundtrack"
+     ],
+     "firstReleaseDate": "2011-04-16",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "b3916e07-4d0f-4ff0-bfd6-0f94060d401e",
+     "title": "TRON: Legacy Collector’s Digital EP",
+     "primaryType": "EP",
+     "secondaryTypes": [
+      "Soundtrack"
+     ],
+     "firstReleaseDate": "2011-04-19",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "8d71521e-c2c5-48c5-b842-a2818933b936",
+     "title": "The Grid (Sounda remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-04-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "de059cce-903f-4695-b30e-1bc279ad926c",
+     "title": "End of Line (Neelixxx remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-04-24",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "72cd510a-c220-4a17-b409-d6bbbff9e753",
+     "title": "Derezzed (Robotaki remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-04-29",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ae5cfe91-53eb-4b46-b942-6c700227b065",
+     "title": "TRON Legacy (Adam Freeland's 303 Mix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-05-04",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "d9fa3a99-81a3-4bb0-95a3-e5476b485366",
+     "title": "The Grid (Munkeycop's 'La Grille' remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-05-04",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "34aecf5d-b20f-466f-bedf-96cde1332f6d",
+     "title": "The Grid (Alcala remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-05-06",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "10fdb02f-7a90-4825-acff-175120bfb6dc",
+     "title": "The Grid (Josh Evans remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-05-23",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "be3df8a5-39cb-4a8c-bb17-a079b13faf74",
+     "title": "Re-Discovery",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-08-05",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "5df7905d-f61a-404b-a842-78778f0cdf64",
+     "title": "End of Line (Distrix mix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-09-21",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "14e14346-ed56-48f9-9875-92173cdead74",
+     "title": "Da Funk (Schoolboy remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-10-07",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2cf7bc34-c0ce-4936-bc6c-a62bb315c5ce",
+     "title": "Da Funk (Schoolboy remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-10-07",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "f7d93712-3459-4730-907b-27f710ac7831",
+     "title": "Veridis Quo (Cyberdesign remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-10-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "3d71dd0b-e579-4904-9d6c-f0d6eae39fe0",
+     "title": "Something About Us (Cherokee remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-11-07",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b58ec668-723a-48c6-a8ef-4df5b029e90c",
+     "title": "Da Funk (ZG remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2011-12-24",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "a9e1ea74-252d-4914-b268-d0994f4c436c",
+     "title": "Son of Flynn (remix - extended)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-01-02",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2292c05e-299a-4c03-8688-3bf3d0a01277",
+     "title": "Discovery Remixed",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix",
+      "Mixtape/Street"
+     ],
+     "firstReleaseDate": "2012-03-10",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "c095717a-5770-48e7-9e0f-8b062e188e63",
+     "title": "End of Line (Bratz in the Lava rework)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-03-21",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ae8feacd-dfde-4c55-b89f-49aa5565ec05",
+     "title": "Tron Legacy Reconfigured (Troniuz Derrezed remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-06-17",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "00eb1335-7ff0-4dd6-8cee-51f395b06fd3",
+     "title": "Human After All (Medley)",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2012-06-22",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "811f0a01-4641-471d-99e4-bf359d2eb319",
+     "title": "Technologic (F.O.O.L remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-07-04",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "9c53c837-f9b0-47bd-9b40-e06ac855b502",
+     "title": "Da Funk (Brass Ankle remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-07-30",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ac89992b-95d5-4744-b012-0ec1e64114db",
+     "title": "Harder Better Faster Stronger (HLM remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-08-03",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "ef82917d-ffbd-483d-ac81-d584505fef09",
+     "title": "Superheroes (Solidisco remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-09-28",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "0d400736-25d0-481d-b780-1147e03f7f70",
+     "title": "Rollin' & Scratchin (Karetus Remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-10-29",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "4b3e53ab-f389-451c-854e-4c7bcbb547e0",
+     "title": "Tron: The Grid (Junkie XL Remix 2010)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-11-09",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "9f4e8a2c-6adc-45b8-bf4f-217f83ade2d0",
+     "title": "19-2000 Funk",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2012-12-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b997fa41-4167-47d9-a3ab-92727b842924",
+     "title": "Claw",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "98eb1f5f-a329-4be2-a363-40072bcb07b7",
+     "title": "Get Lucky (Remixes)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "9cd86d09-7a91-45ba-bbe6-5b4e76f4c8f0",
+     "title": "Instant Crush",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2013",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "1964960a-4bf9-4055-89e7-ea34b88a3d07",
+     "title": "rock ´n roll again (Djhekma remix bootleg)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "812a63b9-9da8-4bfe-a11b-a095ec1363d1",
+     "title": "\" The Grid\" Tron Remix",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-02-13",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "4a8ba687-d4b9-4513-8026-fb3aa5c84e27",
+     "title": "End of Line (\"The Game Has Reached Its End\" Emsland remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-03-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "1f333970-c21f-4923-9f20-fb3f6120b507",
+     "title": "Random Access Memories (Vanderway Edit)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-03-31",
+     "releaseStatuses": [
+      "None"
+     ]
+    },
+    {
+     "mbid": "6c6f77d5-b8c6-4737-a420-c27264b472f0",
+     "title": "TRONify (Madcas TRON Legacy, Live Push Performance remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Live",
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-04-07",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "9b7ce16c-8310-4cc5-aad5-09893a5a8297",
+     "title": "Get Lucky",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2013-04-19",
+     "releaseStatuses": [
+      "None",
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "95793d08-41b1-455c-86b5-76893f94dd4b",
+     "title": "Get Lucky (Mr. Moustache remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-05-08",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "6c3e1dce-3234-4eec-a53b-f1f817d9e9c9",
+     "title": "Get Lucky (Razihel remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-05-10",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "984b148e-1208-408f-aa5e-8cb930315be4",
+     "title": "Random Access Memories: The Collaborators",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Interview"
+     ],
+     "firstReleaseDate": "2013-05-14",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "aa997ea0-2936-40bd-884d-3af8a0e064dc",
+     "title": "Random Access Memories",
+     "primaryType": "Album",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2013-05-17",
+     "releaseStatuses": [
+      "Bootleg",
+      "Official",
+      "Pseudo-Release",
+      "Withdrawn"
+     ]
+    },
+    {
+     "mbid": "62ffda47-f2e7-42e1-9272-5040ccbb7471",
+     "title": "Get Lucky (Daft Punk remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-06-26",
+     "releaseStatuses": [
+      "Official",
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "92599cac-734e-49d4-a037-adb886f0a256",
+     "title": "The Grid (Paul Rein remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-06-27",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "815c4877-f0d5-490e-b642-910a47a992c9",
+     "title": "Make Love (Remix of Daft Punk)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2013-07-26",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "44041ba2-b490-47d1-9106-83f6b0e3a205",
+     "title": "Lose Yourself to Dance",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2013-08-13",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "111e4cc8-e7b6-437a-af02-a42c757e4e17",
+     "title": "Give Life Back to Music",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2014",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "b0b90af2-6c55-423c-bdfa-98ca548454c1",
+     "title": "HAA Era Demo Track",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Demo"
+     ],
+     "firstReleaseDate": "2014-02-14",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b42e3163-b4f5-4e6d-acee-363d6a2ad7ad",
+     "title": "Doin’ It Right",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2014-03-17",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "526bd4e1-9be5-4455-8bf2-a91fd69dd263",
+     "title": "Da Funk (Nightcrawler remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2014-03-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "cc76096e-0e0d-46b6-93ec-a6fceb9a705a",
+     "title": "Harder, Better, Faster, Stronger (Dillon Francis remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2014-04-20",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2576d52d-3b10-4d18-96ee-0cf95e3afcc5",
+     "title": "Aerodynamite Forever (Goldmaster edit)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2015",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "2caadc8f-0da4-4dfe-a30b-f255173104eb",
+     "title": "Around the World (Tom & Jame Remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2016",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "469c8958-5f75-4754-9b01-1c2a98324e92",
+     "title": "I Gotta Try You Girl (Daft Punk edit)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2016-04-16",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "985a7746-4207-45ba-9400-49796eaaaf72",
+     "title": "Starboy",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2016-09-21",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "159e9b33-a800-4891-aba0-9e068264d312",
+     "title": "Starboy (Kygo remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2016-11-11",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "0f813c16-1663-49fa-8316-fb32766dd554",
+     "title": "I Feel It Coming",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2016-11-17",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "400dd23e-5550-457a-b6c1-b1e6a23b4445",
+     "title": "Fresh (Agrume Remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2016-12-24",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "3b440a82-e94c-4dc1-99be-c498ff0eba47",
+     "title": "Motherboard / Aerodynamic (Vitalectro remix, FL studio cover) - Alive 2019",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2017-03-21",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "aa3835ef-f9f7-4c6d-8455-169d5a70b95a",
+     "title": "Veridis Quo (Y&V remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2017-05-12",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "8de71193-da6c-4871-9b36-e1c3757b13cd",
+     "title": "Rules Around the World (5ERIOUS 2017 Mashup)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2017-11-07",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "0d072998-0c29-45c6-94a1-dd20bf7123e6",
+     "title": "Phantom Robot (Kiivas’ “Soulwax” Mashup)",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2017-12-17",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "964a87fc-fa76-4928-b2e8-422f341bf536",
+     "title": "Rinzler ( 1 7 8 8 - L / R E M I X )",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2018-03-02",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "6445b676-45d1-42f2-96c3-5bbf2efafa00",
+     "title": "Harder, Better, Faster, Stronger (Far Out remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2018-07-25",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "d4140485-ca99-435a-8d08-ed5396b7d9c5",
+     "title": "Harder Better Faster Stronger (MH YS2019 edit)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2019-06-12",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "e7f82de1-22bd-4ed9-9e87-0dd5d94291db",
+     "title": "Deep Cuts",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2020",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "621b7916-9d29-4709-97f6-0164c4dac55e",
+     "title": "Technologic Time Mashup",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Compilation"
+     ],
+     "firstReleaseDate": "2020-04-05",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "4b3f6bee-a5c2-4506-937d-8900ce22a962",
+     "title": "Get Lucky (Fabian Special Disco Mix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2020-12-21",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "9ca244c0-d434-454e-90ee-ffca54fecebf",
+     "title": "Digital Love (Kevin McKay Re-Edit)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2021",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "6b778838-904b-41f8-8e80-7e82ae632615",
+     "title": "1995-11-18: Le Privé, Avignon, France",
+     "primaryType": null,
+     "secondaryTypes": [
+      "Live",
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2021-01-18",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "5954eb55-20c3-4154-80b9-e333f80b26f3",
+     "title": "2007-07-06: Rockhal, Esch-sur-Alzette, Luxembourg",
+     "primaryType": "Other",
+     "secondaryTypes": [
+      "Live",
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2021-01-31",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "100bd201-e1ab-4925-a01f-e69046888069",
+     "title": "About and Technologic Mashup",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2021-12-27",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "b7a7b524-e29a-4d8e-a7f5-ffbcea5a38e4",
+     "title": "Homework (Remixes)",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2022-02-02",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "60fde6aa-44c9-4c46-825d-a083192773af",
+     "title": "Daft Punk Live @ The Mayan Theatre, Los Angeles",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": "2022-02-22",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "df7d1104-7543-4868-b6c4-92ab83ad27f3",
+     "title": "Discovery (Sample Bandit Bootlegs)",
+     "primaryType": "EP",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2022-06-10",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "d4e48375-99e6-465b-b4e9-019b8ac1526d",
+     "title": "Derezzed (Everen Maxwell remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2023-03-04",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "1f8c7f41-c3f1-4b0c-a151-943a3583f202",
+     "title": "The Writing of Fragments of Time",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2023-03-22",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "a828b9b2-6d96-4ebf-8ec6-5a6e7439dd67",
+     "title": "GLBTM (studio outtakes)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Demo"
+     ],
+     "firstReleaseDate": "2023-04-20",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "51852807-e0dd-46f2-bac8-05ae1644e839",
+     "title": "Infinity Repeating (2013 demo)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Demo"
+     ],
+     "firstReleaseDate": "2023-05-11",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "2ad826e4-529d-4be6-bec7-849b4e4cfee0",
+     "title": "2007-06-16: Hyde Park, Westminster, London, UK",
+     "primaryType": "Other",
+     "secondaryTypes": [
+      "Live",
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2023-06-16",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "138356de-0683-472a-b20a-3a8d7b1b037c",
+     "title": "Within (drumless edition)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2023-09-28",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "393b5314-89df-4ee1-b982-a14656c9573c",
+     "title": "Motherboard (drumless edition)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2023-11-09",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "d34c6b11-6b3b-41ea-9fc6-44db1cc6577a",
+     "title": "Random Access Memories (drumless edition)",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2023-11-17",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "5167e2b8-99f4-4ede-bdb3-171c9a0eeeb5",
+     "title": "Beyond (Mr. Moustache remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2023-12-30",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "70fdfa1b-f1ed-4a6b-b52c-c96020e3bf21",
+     "title": "Veridis Quo",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": "2024-12-13",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "b1b71641-6b63-4ed9-a298-baa53665a66a",
+     "title": "2025-08-30: Les mixes cultes de la French Touch, #9, “1997-2013 : les mixes de Daft Punk sur Radio Nova”",
+     "primaryType": "Broadcast",
+     "secondaryTypes": [
+      "Compilation",
+      "DJ-mix"
+     ],
+     "firstReleaseDate": "2025-08-30",
+     "releaseStatuses": [
+      "Official"
+     ]
+    },
+    {
+     "mbid": "39ccc975-cf9f-4552-b703-0f5ff0233a21",
+     "title": "Around the World (Westend edit)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2025-09-17",
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "23709b74-f095-4036-8808-25c69c8518fb",
+     "title": "Prime Time Of Your Life (Eddie Nitro Remix)",
+     "primaryType": "Single",
+     "secondaryTypes": [
+      "Remix"
+     ],
+     "firstReleaseDate": "2026",
+     "releaseStatuses": [
+      "Promotion"
+     ]
+    },
+    {
+     "mbid": "d395a8cf-71dd-330d-99bd-fca3ec0c59c5",
+     "title": "2006-04-29: Empire Polo Club, Indio, CA, USA",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Live"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "5b7d00d7-dbaf-30ce-ab32-1a2ee383ac00",
+     "title": "Blue Monday Alive",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "fe469af8-a7cf-4d4a-8f4c-a9e83bc50bd9",
+     "title": "TRON: Legacy (Bio-Digital Jazz Edition)",
+     "primaryType": "Album",
+     "secondaryTypes": [
+      "Soundtrack",
+      "Remix"
+     ],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    },
+    {
+     "mbid": "a55ec9fa-61c2-4fb8-bb0b-61eea3657682",
+     "title": "Technologic remix",
+     "primaryType": "Single",
+     "secondaryTypes": [],
+     "firstReleaseDate": null,
+     "releaseStatuses": [
+      "Bootleg"
+     ]
+    }
+   ]
+  }
+ ],
+ "editions": [
+  {
+   "mbid": "213910e7-279a-3186-81ae-cf330ded96fb",
+   "title": "Roseland NYC Live",
+   "date": "1998-11-02",
+   "country": "GB",
+   "status": "Official",
+   "disambiguation": null,
+   "barcode": "731455942422",
+   "artistCredit": "Portishead",
+   "artistMbid": "8f6bd1e4-fbe1-4f50-aa9b-94c450ec0f11",
+   "releaseGroup": {
+    "mbid": "ce61f4a8-db95-3608-93de-53f9ecb1b8d2",
+    "title": "Roseland NYC Live",
+    "primaryType": "Album",
+    "secondaryTypes": [
+     "Live"
+    ],
+    "firstReleaseDate": "1998-11-02"
+   },
+   "media": [
+    {
+     "position": 1,
+     "format": "CD",
+     "tracks": [
+      {
+       "position": 1,
+       "number": "1",
+       "title": "Humming",
+       "lengthMs": 397266,
+       "trackMbid": "4bbf0eac-2fef-3892-9279-0fda44134abb",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "dadee897-854d-4d6e-a375-fcd5586b0c74",
+        "title": "Humming",
+        "lengthMs": 397253,
+        "isrcs": [
+         "GBARA9800068",
+         "GBUM72303924"
+        ]
+       }
+      },
+      {
+       "position": 2,
+       "number": "2",
+       "title": "Cowboys",
+       "lengthMs": 302893,
+       "trackMbid": "3c17ed44-a366-3d92-beb1-511a21e1ff62",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "db45ed76-f5bf-430f-a19f-fbe3cd1c77d3",
+        "title": "Cowboys",
+        "lengthMs": 302880,
+        "isrcs": [
+         "GBARA9800067",
+         "GBUM72303925"
+        ]
+       }
+      },
+      {
+       "position": 3,
+       "number": "3",
+       "title": "All Mine",
+       "lengthMs": 242600,
+       "trackMbid": "1b4b3eaa-a165-38b1-a6ce-a8e30096ed14",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "d5050499-3035-4daf-8493-ba0aafe1836d",
+        "title": "All Mine",
+        "lengthMs": 242600,
+        "isrcs": [
+         "GBARA9800071",
+         "GBUM72303926"
+        ]
+       }
+      },
+      {
+       "position": 4,
+       "number": "4",
+       "title": "Mysterons",
+       "lengthMs": 344066,
+       "trackMbid": "82b6bc85-ce52-31e6-b60b-805520a899cf",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "322a32ae-3487-4a4b-a9d9-f7a6e30c10f3",
+        "title": "Mysterons",
+        "lengthMs": 344066,
+        "isrcs": [
+         "GBARA9800065",
+         "GBUM72303927"
+        ]
+       }
+      },
+      {
+       "position": 5,
+       "number": "5",
+       "title": "Only You",
+       "lengthMs": 320506,
+       "trackMbid": "9c53166c-d344-3d83-8784-b7dc91e07adb",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "4b8928cd-19e3-4b11-bf08-a1b35c0414d6",
+        "title": "Only You",
+        "lengthMs": 321360,
+        "isrcs": [
+         "GBARA9800064",
+         "GBUM72303928"
+        ]
+       }
+      },
+      {
+       "position": 6,
+       "number": "6",
+       "title": "Half Day Closing",
+       "lengthMs": 252400,
+       "trackMbid": "65fd5dec-06b2-3104-8b03-ba24defa92cc",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "fb97d8d6-3952-459b-8b3a-d404dd68af21",
+        "title": "Half Day Closing",
+        "lengthMs": 252400,
+        "isrcs": [
+         "GBARA9800063",
+         "GBUM72303929"
+        ]
+       }
+      },
+      {
+       "position": 7,
+       "number": "7",
+       "title": "Over",
+       "lengthMs": 253533,
+       "trackMbid": "68b81b0d-ffd9-3e95-99de-a23efbbc2699",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "9eb6ea8d-89ce-4566-978f-d0367a20efb0",
+        "title": "Over",
+        "lengthMs": 253533,
+        "isrcs": [
+         "GBARA9800076",
+         "GBUM72303930"
+        ]
+       }
+      },
+      {
+       "position": 8,
+       "number": "8",
+       "title": "Glory Box",
+       "lengthMs": 337200,
+       "trackMbid": "b65dd737-0266-3716-923d-07c64dffb0e4",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "6c7fadb6-2cca-4a20-b8df-9994e7008cb2",
+        "title": "Glory Box",
+        "lengthMs": 337200,
+        "isrcs": [
+         "GBARA9800069",
+         "GBUM72303931"
+        ]
+       }
+      },
+      {
+       "position": 9,
+       "number": "9",
+       "title": "Sour Times",
+       "lengthMs": 321893,
+       "trackMbid": "5daafc41-53f9-3742-b258-aafd7648e649",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "2a37ad88-330c-4e31-abc6-331e20621805",
+        "title": "Sour Times",
+        "lengthMs": 320880,
+        "isrcs": [
+         "GBARA9800072"
+        ]
+       }
+      },
+      {
+       "position": 10,
+       "number": "10",
+       "title": "Roads",
+       "lengthMs": 350306,
+       "trackMbid": "b6f6aa0f-413a-30a2-a0dd-c1775498289a",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "cf8ebc20-e0d4-4881-ab54-804d97e75aa4",
+        "title": "Roads",
+        "lengthMs": 350306,
+        "isrcs": [
+         "GBARA9800070"
+        ]
+       }
+      },
+      {
+       "position": 11,
+       "number": "11",
+       "title": "Strangers",
+       "lengthMs": 320666,
+       "trackMbid": "dbb04b05-938b-3755-bc2c-e0fcb41f076c",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "6b770b21-5c8f-4a93-8f90-11bc6de33ee8",
+        "title": "Strangers",
+        "lengthMs": 320666,
+        "isrcs": [
+         "GBARA9800073",
+         "GBUM72303934"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "23d752fa-d27c-33bf-ab33-aff5fb47d507",
+   "title": "Portishead",
+   "date": "1997-09-29",
+   "country": "GB",
+   "status": "Official",
+   "disambiguation": null,
+   "barcode": "731453918924",
+   "artistCredit": "Portishead",
+   "artistMbid": "8f6bd1e4-fbe1-4f50-aa9b-94c450ec0f11",
+   "releaseGroup": {
+    "mbid": "46b38f09-e90b-39eb-b04f-002da20f7f96",
+    "title": "Portishead",
+    "primaryType": "Album",
+    "secondaryTypes": [],
+    "firstReleaseDate": "1997-09-29"
+   },
+   "media": [
+    {
+     "position": 1,
+     "format": "CD",
+     "tracks": [
+      {
+       "position": 1,
+       "number": "1",
+       "title": "Cowboys",
+       "lengthMs": 282000,
+       "trackMbid": "619e7e37-1fb3-3d66-b930-c29d30e5dd0d",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "d2d7e3b5-c49e-49f3-b442-ccdc1430a262",
+        "title": "Cowboys",
+        "lengthMs": 282000,
+        "isrcs": [
+         "GBARA9700035"
+        ]
+       }
+      },
+      {
+       "position": 2,
+       "number": "2",
+       "title": "All Mine",
+       "lengthMs": 242360,
+       "trackMbid": "c8c0e0f6-d37b-3ff8-9676-5529142c65bb",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "4e22d68a-19a2-4fd4-a29f-36bc05fc81fe",
+        "title": "All Mine",
+        "lengthMs": 242360,
+        "isrcs": [
+         "GBARA9700034"
+        ]
+       }
+      },
+      {
+       "position": 3,
+       "number": "3",
+       "title": "Undenied",
+       "lengthMs": 264666,
+       "trackMbid": "a459dceb-8d96-35c8-9e56-4bd1acbcc4c1",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "54727d71-8789-407c-a622-3e1acf01e178",
+        "title": "Undenied",
+        "lengthMs": 264666,
+        "isrcs": [
+         "GBARA9700059"
+        ]
+       }
+      },
+      {
+       "position": 4,
+       "number": "4",
+       "title": "Half Day Closing",
+       "lengthMs": 227906,
+       "trackMbid": "95e92ee7-f326-3c49-afcb-5bc946fa85fa",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "0082002e-4ac5-4a6a-88c9-a95f480c0f02",
+        "title": "Half Day Closing",
+        "lengthMs": 228306,
+        "isrcs": [
+         "GBARA9700060"
+        ]
+       }
+      },
+      {
+       "position": 5,
+       "number": "5",
+       "title": "Over",
+       "lengthMs": 240760,
+       "trackMbid": "3c21bd90-a78b-3d44-91da-6f2de1c5de44",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "c4310335-9213-46a6-af81-b86fcb1975ed",
+        "title": "Over",
+        "lengthMs": 240760,
+        "isrcs": [
+         "GBARA9700061"
+        ]
+       }
+      },
+      {
+       "position": 6,
+       "number": "6",
+       "title": "Humming",
+       "lengthMs": 364066,
+       "trackMbid": "b4589009-105a-3751-8733-001b4e504007",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "4cc1cd3c-965a-467c-a4c7-1049a0682b3d",
+        "title": "Humming",
+        "lengthMs": 363533,
+        "isrcs": [
+         "GBARA9700062"
+        ]
+       }
+      },
+      {
+       "position": 7,
+       "number": "7",
+       "title": "Mourning Air",
+       "lengthMs": 255506,
+       "trackMbid": "a3a9a493-faff-3b37-a73b-b11c28d89e37",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "f831bf4a-df9e-40c1-9b8c-aa1b40f4b13f",
+        "title": "Mourning Air",
+        "lengthMs": 255506,
+        "isrcs": [
+         "GBARA9700063"
+        ]
+       }
+      },
+      {
+       "position": 8,
+       "number": "8",
+       "title": "Seven Months",
+       "lengthMs": 258760,
+       "trackMbid": "40b4b10d-110d-3acd-b7ee-1fce64d50a30",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "0d61fbd1-2649-4411-a892-b8ed4c388266",
+        "title": "Seven Months",
+        "lengthMs": 258786,
+        "isrcs": [
+         "GBARA9700064"
+        ]
+       }
+      },
+      {
+       "position": 9,
+       "number": "9",
+       "title": "Only You",
+       "lengthMs": 302306,
+       "trackMbid": "1327c2b8-b512-3de8-8a74-927a95fcd30b",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "073e2d76-5c7e-43b2-aef1-2512cda7f8a3",
+        "title": "Only You",
+        "lengthMs": 302293,
+        "isrcs": [
+         "GBARA9700067"
+        ]
+       }
+      },
+      {
+       "position": 10,
+       "number": "10",
+       "title": "Elysium",
+       "lengthMs": 356960,
+       "trackMbid": "eeb4185f-e13f-3c28-bb3c-84c42fac0caf",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "f49db552-8a2e-4a29-9ea2-a0d48a7723ef",
+        "title": "Elysium",
+        "lengthMs": 357240,
+        "isrcs": [
+         "GBARA9700065"
+        ]
+       }
+      },
+      {
+       "position": 11,
+       "number": "11",
+       "title": "Western Eyes",
+       "lengthMs": 239333,
+       "trackMbid": "0607c524-9363-3748-a407-8fdf0ce84ff7",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "34745941-69c5-401a-bdb9-ae761a9b3562",
+        "title": "Western Eyes",
+        "lengthMs": 239360,
+        "isrcs": [
+         "GBARA9700066"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "2fdcc2d7-50b9-4b27-8262-8cf9e31aaa4d",
+   "title": "Homework",
+   "date": null,
+   "country": "XW",
+   "status": "Official",
+   "disambiguation": null,
+   "barcode": "0724384260958",
+   "artistCredit": "Daft Punk",
+   "artistMbid": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+   "releaseGroup": {
+    "mbid": "00054665-89fa-33d5-a8f0-1728ea8c32c3",
+    "title": "Homework",
+    "primaryType": "Album",
+    "secondaryTypes": [],
+    "firstReleaseDate": "1997-01-20"
+   },
+   "media": [
+    {
+     "position": 1,
+     "format": "Digital Media",
+     "tracks": [
+      {
+       "position": 1,
+       "number": "1",
+       "title": "Daftendirekt",
+       "lengthMs": 164000,
+       "trackMbid": "0f67cb05-d831-4832-ac25-3d87fac742fd",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "10cdacde-e54a-412a-863b-81d9ea6b3df2",
+        "title": "Daftendirekt",
+        "lengthMs": 164560,
+        "isrcs": [
+         "FRS949600380",
+         "GBDUW0600003"
+        ]
+       }
+      },
+      {
+       "position": 2,
+       "number": "2",
+       "title": "WDPK 83.7 FM",
+       "lengthMs": 28000,
+       "trackMbid": "f05b0eab-d967-4b45-94b5-fa90c1b5e869",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "9fc87ed0-cf62-4447-b411-d0832eb9daae",
+        "title": "WDPK 83.7 FM",
+        "lengthMs": 28293,
+        "isrcs": [
+         "FRS949600390",
+         "GBDUW0600004"
+        ]
+       }
+      },
+      {
+       "position": 3,
+       "number": "3",
+       "title": "Revolution 909",
+       "lengthMs": 335000,
+       "trackMbid": "7d1fde64-83f1-4ef3-8f59-f7f19022aa1e",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "0a6e234d-0c9d-41e0-bce7-5c0ca09befbd",
+        "title": "Revolution 909",
+        "lengthMs": 326573,
+        "isrcs": [
+         "FRS949600400",
+         "GBDUW0600005",
+         "GBDUW0600046"
+        ]
+       }
+      },
+      {
+       "position": 4,
+       "number": "4",
+       "title": "Da Funk",
+       "lengthMs": 328000,
+       "trackMbid": "5008dbfe-3271-4cfd-b554-5b76ae9efe7a",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+        "title": "Da Funk",
+        "lengthMs": 329000,
+        "isrcs": [
+         "FRS949600410",
+         "FRZ111002044",
+         "GBDUW0600006"
+        ]
+       }
+      },
+      {
+       "position": 5,
+       "number": "5",
+       "title": "Phœnix",
+       "lengthMs": 297000,
+       "trackMbid": "5e8bf302-f71c-42ea-8bdb-189ce970e75f",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "28651acc-1f13-4431-b2de-d93a33a50084",
+        "title": "Phœnix",
+        "lengthMs": 297106,
+        "isrcs": [
+         "FRS949600420",
+         "GBDUW0600007"
+        ]
+       }
+      },
+      {
+       "position": 6,
+       "number": "6",
+       "title": "Fresh",
+       "lengthMs": 244400,
+       "trackMbid": "94f3660d-778c-4b4e-9fbc-827025288c1b",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "9ca385f4-4082-494a-974a-b1a8aa997838",
+        "title": "Fresh",
+        "lengthMs": 244400,
+        "isrcs": [
+         "FRS949600430",
+         "GBDUW0600008"
+        ]
+       }
+      },
+      {
+       "position": 7,
+       "number": "7",
+       "title": "Around the World",
+       "lengthMs": 429000,
+       "trackMbid": "284cc845-aa06-40b1-aedd-2db2cd3adcee",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+        "title": "Around the World",
+        "lengthMs": 429506,
+        "isrcs": [
+         "FRS949600440",
+         "GBDUW0600009"
+        ]
+       }
+      },
+      {
+       "position": 8,
+       "number": "8",
+       "title": "Rollin' & Scratchin'",
+       "lengthMs": 447533,
+       "trackMbid": "9c2d4042-3a13-4bf9-b2d0-d07199627860",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "bfbd9b4b-12c6-405d-9681-45cb71057985",
+        "title": "Rollin’ & Scratchin’",
+        "lengthMs": 447533,
+        "isrcs": [
+         "FRS949600450",
+         "GBDUW0600010"
+        ]
+       }
+      },
+      {
+       "position": 9,
+       "number": "9",
+       "title": "Teachers",
+       "lengthMs": 173493,
+       "trackMbid": "cd23825c-833e-44e2-a58f-f8c88c040efe",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "3707ab0d-ff31-46a2-9056-d094bae44c3e",
+        "title": "Teachers",
+        "lengthMs": 173493,
+        "isrcs": [
+         "FRS949600460",
+         "GBDUW0600037"
+        ]
+       }
+      },
+      {
+       "position": 10,
+       "number": "10",
+       "title": "High Fidelity",
+       "lengthMs": 362000,
+       "trackMbid": "930c90f2-f4e2-4d2d-9386-8595c28c34c9",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "95ab771e-62b4-4324-befd-024356c190c6",
+        "title": "High Fidelity",
+        "lengthMs": 362333,
+        "isrcs": [
+         "FRS949600470",
+         "GBDUW0600012"
+        ]
+       }
+      },
+      {
+       "position": 11,
+       "number": "11",
+       "title": "Rock'n Roll",
+       "lengthMs": 453000,
+       "trackMbid": "40ef1a8f-1061-491a-bcc8-8d88e1166a33",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "a42b76a0-3bd1-4c3a-8e83-751f48d818ec",
+        "title": "Rock’n Roll",
+        "lengthMs": 453826,
+        "isrcs": [
+         "FRS949600480",
+         "GBDUW0600013"
+        ]
+       }
+      },
+      {
+       "position": 12,
+       "number": "12",
+       "title": "Oh Yeah",
+       "lengthMs": 121200,
+       "trackMbid": "6126825d-8275-4c61-a8e6-95c3bffea8ad",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "89ae9c78-7e38-40ec-bf9f-79d1f2678890",
+        "title": "Oh Yeah",
+        "lengthMs": 121200,
+        "isrcs": [
+         "FRS949600490",
+         "GBDUW0600014"
+        ]
+       }
+      },
+      {
+       "position": 13,
+       "number": "13",
+       "title": "Burnin'",
+       "lengthMs": 413666,
+       "trackMbid": "726392ab-52c4-4e2e-96d2-a3256f15415f",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "5fceebe4-d425-4e83-85d0-b4ee61b8d8d6",
+        "title": "Burnin’",
+        "lengthMs": 413666,
+        "isrcs": [
+         "FRS949600500",
+         "GBDUW0600015",
+         "GBDUW0600040"
+        ]
+       }
+      },
+      {
+       "position": 14,
+       "number": "14",
+       "title": "Indo Silver Club",
+       "lengthMs": 274000,
+       "trackMbid": "587b1360-f991-483f-8be2-e66af5ecbf7b",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "1285a717-b387-4353-91d4-3ea357dfc9c5",
+        "title": "Indo Silver Club",
+        "lengthMs": 274733,
+        "isrcs": [
+         "FRS949600510",
+         "GBDUW0600016"
+        ]
+       }
+      },
+      {
+       "position": 15,
+       "number": "15",
+       "title": "Alive",
+       "lengthMs": 316000,
+       "trackMbid": "5a04d6ba-9f74-4395-8f43-18b43066ba63",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "a08473a1-e622-49cc-bb97-65f813429025",
+        "title": "Alive",
+        "lengthMs": 315266,
+        "isrcs": [
+         "FRS949600520",
+         "GBDUW0600017"
+        ]
+       }
+      },
+      {
+       "position": 16,
+       "number": "16",
+       "title": "Funk Ad",
+       "lengthMs": 51240,
+       "trackMbid": "f288bf73-d76c-4644-b756-936eee7765dc",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "eab36835-9fa7-4598-a50a-8bb114c9c5fb",
+        "title": "Funk Ad",
+        "lengthMs": 51240,
+        "isrcs": [
+         "FRS949600530",
+         "GBDUW0600018"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "6940fcdf-6e70-4764-8782-18e2c1e600de",
+   "title": "Random Access Memories",
+   "date": "2023-05-12",
+   "country": "XE",
+   "status": "Official",
+   "disambiguation": "10th anniversary edition",
+   "barcode": "196588010323",
+   "artistCredit": "Daft Punk",
+   "artistMbid": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+   "releaseGroup": {
+    "mbid": "aa997ea0-2936-40bd-884d-3af8a0e064dc",
+    "title": "Random Access Memories",
+    "primaryType": "Album",
+    "secondaryTypes": [],
+    "firstReleaseDate": "2013-05-17"
+   },
+   "media": [
+    {
+     "position": 1,
+     "format": "CD",
+     "tracks": [
+      {
+       "position": 1,
+       "number": "1",
+       "title": "Give Life Back to Music",
+       "lengthMs": 275386,
+       "trackMbid": "04db1c43-d469-472b-b8a0-ff9ad290e975",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "0c871a4a-efdf-47f8-98c2-cc277f806d2f",
+        "title": "Give Life Back to Music",
+        "lengthMs": 274000,
+        "isrcs": [
+         "USQX91300101"
+        ]
+       }
+      },
+      {
+       "position": 2,
+       "number": "2",
+       "title": "The Game of Love",
+       "lengthMs": 322146,
+       "trackMbid": "6cd6602c-d55b-47e0-b265-f3081a0acf10",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "294a1b4d-ebc0-4b03-be25-6171d382cb58",
+        "title": "The Game of Love",
+        "lengthMs": 321000,
+        "isrcs": [
+         "USQX91300102"
+        ]
+       }
+      },
+      {
+       "position": 3,
+       "number": "3",
+       "title": "Giorgio by Moroder",
+       "lengthMs": 544626,
+       "trackMbid": "f934cedc-4353-4cf8-a38e-dbe350f63f78",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "cac27da9-20c5-4722-9a25-f2c26e2c04cf",
+        "title": "Giorgio by Moroder",
+        "lengthMs": 544000,
+        "isrcs": [
+         "USQX91300103"
+        ]
+       }
+      },
+      {
+       "position": 4,
+       "number": "4",
+       "title": "Within",
+       "lengthMs": 228506,
+       "trackMbid": "69ac4037-25aa-46ca-ae8d-6ae5ba12581b",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "20999e3e-b964-4d66-b7c2-660fc45178bb",
+        "title": "Within",
+        "lengthMs": 228000,
+        "isrcs": [
+         "USQX91300104"
+        ]
+       }
+      },
+      {
+       "position": 5,
+       "number": "5",
+       "title": "Instant Crush",
+       "lengthMs": 337560,
+       "trackMbid": "7446e2bf-7814-4192-981b-b70d020f9701",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "dbc0da50-4bc6-4230-9e7b-136b5dc2b31a",
+        "title": "Instant Crush",
+        "lengthMs": 337000,
+        "isrcs": [
+         "USQX91300105"
+        ]
+       }
+      },
+      {
+       "position": 6,
+       "number": "6",
+       "title": "Lose Yourself to Dance",
+       "lengthMs": 353893,
+       "trackMbid": "41495865-85c8-4de8-a269-66748428df01",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "9f381fef-7bbd-4f2a-be8b-2acd072bb7e1",
+        "title": "Lose Yourself to Dance",
+        "lengthMs": 353000,
+        "isrcs": [
+         "USQX91300106"
+        ]
+       }
+      },
+      {
+       "position": 7,
+       "number": "7",
+       "title": "Touch",
+       "lengthMs": 498960,
+       "trackMbid": "e6355caf-81a7-40a7-af1a-21e226626c28",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "2c718ee9-ad54-4016-ae43-e8df5ea1b4e1",
+        "title": "Touch",
+        "lengthMs": 498000,
+        "isrcs": [
+         "USQX91300107"
+        ]
+       }
+      },
+      {
+       "position": 8,
+       "number": "8",
+       "title": "Get Lucky",
+       "lengthMs": 369626,
+       "trackMbid": "89618597-22e7-4efb-90f5-eda2b600234d",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "833f00e1-781f-4edd-90e4-e52712618862",
+        "title": "Get Lucky",
+        "lengthMs": 369000,
+        "isrcs": [
+         "USQX91300108"
+        ]
+       }
+      },
+      {
+       "position": 9,
+       "number": "9",
+       "title": "Beyond",
+       "lengthMs": 290240,
+       "trackMbid": "c360e67e-fd00-46f4-9237-d30eee18cdd0",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "ce495790-b2f7-4ff0-858c-8df38c2025ab",
+        "title": "Beyond",
+        "lengthMs": 290000,
+        "isrcs": [
+         "USQX91300109"
+        ]
+       }
+      },
+      {
+       "position": 10,
+       "number": "10",
+       "title": "Motherboard",
+       "lengthMs": 341653,
+       "trackMbid": "a03a59be-e7bd-4590-b382-eacdcc947012",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "762e120f-6d52-4fae-a796-699ae0a0ea9f",
+        "title": "Motherboard",
+        "lengthMs": 341000,
+        "isrcs": [
+         "USQX91300110"
+        ]
+       }
+      },
+      {
+       "position": 11,
+       "number": "11",
+       "title": "Fragments of Time",
+       "lengthMs": 279773,
+       "trackMbid": "04426fe4-734e-4d93-a62a-7a2ea7829ad6",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "770894b7-030e-404d-a833-4a77d0558cb2",
+        "title": "Fragments of Time",
+        "lengthMs": 279000,
+        "isrcs": [
+         "USQX91300111"
+        ]
+       }
+      },
+      {
+       "position": 12,
+       "number": "12",
+       "title": "Doin’ It Right",
+       "lengthMs": 251293,
+       "trackMbid": "383cedf6-7701-4f60-b9bf-337547a7d1e4",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "4e4a5947-a6e5-4091-9b42-f7e9ba387c1b",
+        "title": "Doin’ It Right",
+        "lengthMs": 251000,
+        "isrcs": [
+         "USQX91300112"
+        ]
+       }
+      },
+      {
+       "position": 13,
+       "number": "13",
+       "title": "Contact",
+       "lengthMs": 383626,
+       "trackMbid": "e1f8f8b2-9f56-4059-be68-820767083e62",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "78194fbe-3bcd-4afe-b4a6-7a97711c325f",
+        "title": "Contact",
+        "lengthMs": 381000,
+        "isrcs": [
+         "USQX91300113"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "position": 2,
+     "format": "CD",
+     "tracks": [
+      {
+       "position": 1,
+       "number": "1",
+       "title": "Horizon Ouverture",
+       "lengthMs": 128693,
+       "trackMbid": "477b9c07-5322-4a01-b45f-3221276c0fac",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "1b156f0e-ae83-4e30-a323-1a7aca77bfd8",
+        "title": "Horizon Ouverture",
+        "lengthMs": 128000,
+        "isrcs": [
+         "GBDUW2300010"
+        ]
+       }
+      },
+      {
+       "position": 2,
+       "number": "2",
+       "title": "Horizon (Japan CD)",
+       "lengthMs": 262560,
+       "trackMbid": "28649a1e-bfaf-4287-ad13-1a05eff1a512",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "befed7fb-a77e-49a9-8005-c7e36d5173cf",
+        "title": "Horizon",
+        "lengthMs": 262560,
+        "isrcs": [
+         "USQX91300808"
+        ]
+       }
+      },
+      {
+       "position": 3,
+       "number": "3",
+       "title": "GLBTM (studio outtakes)",
+       "lengthMs": 381666,
+       "trackMbid": "e8937d0f-40de-4e82-842d-494b981d4973",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "8ed4a1bb-b952-433e-b5d2-05eb320586c9",
+        "title": "GLBTM (studio outtakes)",
+        "lengthMs": 381666,
+        "isrcs": [
+         "GBDUW2300020"
+        ]
+       }
+      },
+      {
+       "position": 4,
+       "number": "4",
+       "title": "Infinity Repeating (2013 demo)",
+       "lengthMs": 239213,
+       "trackMbid": "0b841258-d75a-44fe-bdec-8831089ac435",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "3fa66caf-eecc-44db-ac1a-b8df895a03ec",
+        "title": "Infinity Repeating (2013 demo)",
+        "lengthMs": 239213,
+        "isrcs": [
+         "GBDUW2300030"
+        ]
+       }
+      },
+      {
+       "position": 5,
+       "number": "5",
+       "title": "GL (early take)",
+       "lengthMs": 32893,
+       "trackMbid": "137a5613-24a8-40c6-ace5-85db96bf28f9",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "2aa303ef-a543-412b-a6d1-bb1d4e6795d2",
+        "title": "GL (early take)",
+        "lengthMs": 32893,
+        "isrcs": [
+         "GBDUW2300040"
+        ]
+       }
+      },
+      {
+       "position": 6,
+       "number": "6",
+       "title": "Prime (2012 unfinished)",
+       "lengthMs": 286400,
+       "trackMbid": "735d48dd-fcf7-40fb-b0e6-e54b47d53f60",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "cb2bdf74-3d6c-45b4-a278-080363a782aa",
+        "title": "Prime (2012 unfinished)",
+        "lengthMs": 286400,
+        "isrcs": [
+         "GBDUW2300050"
+        ]
+       }
+      },
+      {
+       "position": 7,
+       "number": "7",
+       "title": "LYTD (vocoder tests)",
+       "lengthMs": 128440,
+       "trackMbid": "4ff28d10-4d34-47ca-a5e9-be5cca9f1d1b",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "89ca0996-0599-4732-8a09-2c1dafb4d8e9",
+        "title": "LYTD (vocoder tests)",
+        "lengthMs": 128440,
+        "isrcs": [
+         "GBDUW2300060"
+        ]
+       }
+      },
+      {
+       "position": 8,
+       "number": "8",
+       "title": "The Writing of Fragments of Time",
+       "lengthMs": 497146,
+       "trackMbid": "72d8e146-ceba-4a1b-9398-6f1508430671",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "eb1a3018-e2ae-4a9f-84d3-1b38c4a35503",
+        "title": "The Writing of Fragments of Time",
+        "lengthMs": 497146,
+        "isrcs": [
+         "GBDUW2300070"
+        ]
+       }
+      },
+      {
+       "position": 9,
+       "number": "9",
+       "title": "Touch (2021 epilogue)",
+       "lengthMs": 181986,
+       "trackMbid": "00e05809-0d80-4a5c-a811-af0f78715e60",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "5729d511-60d2-4d55-85f7-1f555d3a8eda",
+        "title": "Touch (2021 epilogue)",
+        "lengthMs": 180000,
+        "isrcs": [
+         "GBDUW2300080"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "6cd30d99-4923-4d5e-8e51-9d87506976f1",
+   "title": "Discovery",
+   "date": "2005-01-24",
+   "country": "XW",
+   "status": "Official",
+   "disambiguation": null,
+   "barcode": "724384960650",
+   "artistCredit": "Daft Punk",
+   "artistMbid": "056e4f3e-d505-4dad-8ec1-d04f521cbb56",
+   "releaseGroup": {
+    "mbid": "48117b90-a16e-34ca-a514-19c702df1158",
+    "title": "Discovery",
+    "primaryType": "Album",
+    "secondaryTypes": [],
+    "firstReleaseDate": "2001-02-26"
+   },
+   "media": [
+    {
+     "position": 1,
+     "format": "Digital Media",
+     "tracks": [
+      {
+       "position": 1,
+       "number": "1",
+       "title": "One More Time",
+       "lengthMs": 320357,
+       "trackMbid": "4d2f6ed2-371e-4779-a4d5-295cd8e6807a",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "60fa767a-d85d-4991-82bc-4294e0b11ae7",
+        "title": "One More Time",
+        "lengthMs": 320746,
+        "isrcs": [
+         "GBAHT1305744",
+         "GBDUW0000053"
+        ]
+       }
+      },
+      {
+       "position": 2,
+       "number": "2",
+       "title": "Aerodynamic",
+       "lengthMs": 212547,
+       "trackMbid": "f8a391e1-6fb7-4ca4-86de-eba99475992c",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "7c0e11a3-1c7a-4e6d-a14d-6e86d86dbaad",
+        "title": "Aerodynamic",
+        "lengthMs": 207626,
+        "isrcs": [
+         "GATIW0000057",
+         "GBDUW0000057"
+        ]
+       }
+      },
+      {
+       "position": 3,
+       "number": "3",
+       "title": "Digital Love",
+       "lengthMs": 301373,
+       "trackMbid": "102d06d7-e7ef-48b7-9db8-64f3e3ce53c6",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "8c896057-b145-4076-8dea-89684a35ee11",
+        "title": "Digital Love (album version)",
+        "lengthMs": 301360,
+        "isrcs": [
+         "GBDUW0000058"
+        ]
+       }
+      },
+      {
+       "position": 4,
+       "number": "4",
+       "title": "Harder, Better, Faster, Stronger",
+       "lengthMs": 224693,
+       "trackMbid": "583d6c2d-0c0e-4764-a209-87d09c472831",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+        "title": "Harder, Better, Faster, Stronger",
+        "lengthMs": 224293,
+        "isrcs": [
+         "GBDUW0000059",
+         "GBDUW0600059"
+        ]
+       }
+      },
+      {
+       "position": 5,
+       "number": "5",
+       "title": "Crescendolls",
+       "lengthMs": 211640,
+       "trackMbid": "a3b97f6c-739e-48d7-99da-d2a2d1418df7",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "d63ad586-1124-4df1-9a2b-c014d7b7cb02",
+        "title": "Crescendolls",
+        "lengthMs": 211640,
+        "isrcs": [
+         "GBDUW0000060"
+        ]
+       }
+      },
+      {
+       "position": 6,
+       "number": "6",
+       "title": "Nightvision",
+       "lengthMs": 104467,
+       "trackMbid": "15da0dad-5407-4db9-b628-9e2b98f0a4c1",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "712edd8d-b413-4e4e-aca4-9b91fce2e65c",
+        "title": "Nightvision",
+        "lengthMs": 104466,
+        "isrcs": [
+         "GBDUW0000061"
+        ]
+       }
+      },
+      {
+       "position": 7,
+       "number": "7",
+       "title": "Superheroes",
+       "lengthMs": 237800,
+       "trackMbid": "45fbbc75-0d2c-4ce2-bc7f-6014d27c0137",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "8a98614f-0533-44ef-890a-639cab407a2d",
+        "title": "Superheroes",
+        "lengthMs": 237800,
+        "isrcs": [
+         "GBDUW0000062"
+        ]
+       }
+      },
+      {
+       "position": 8,
+       "number": "8",
+       "title": "High Life",
+       "lengthMs": 201800,
+       "trackMbid": "1ee0a9f6-7265-4910-9650-03fcc2d47f26",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "07b720fc-0d6f-4342-a6df-876d1749de0b",
+        "title": "High Life",
+        "lengthMs": 201800,
+        "isrcs": [
+         "GBDUW0000063"
+        ]
+       }
+      },
+      {
+       "position": 9,
+       "number": "9",
+       "title": "Something About Us",
+       "lengthMs": 232667,
+       "trackMbid": "5e718087-39bf-4fa3-a3d3-860bc159dc28",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "defbfcb2-7a5c-4456-be28-b7e5ccf92cc2",
+        "title": "Something About Us",
+        "lengthMs": 231066,
+        "isrcs": [
+         "GBDUW0000064",
+         "GBDUW0600064"
+        ]
+       }
+      },
+      {
+       "position": 10,
+       "number": "10",
+       "title": "Voyager",
+       "lengthMs": 227867,
+       "trackMbid": "dc626016-5f44-4af8-b43c-2e02fa35c406",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "e1fe1d12-dac2-4325-ae1b-25e0ef06b998",
+        "title": "Voyager",
+        "lengthMs": 227866,
+        "isrcs": [
+         "GBDUW0000065"
+        ]
+       }
+      },
+      {
+       "position": 11,
+       "number": "11",
+       "title": "Veridis Quo",
+       "lengthMs": 345187,
+       "trackMbid": "80a9da48-3030-4ef8-9ed2-cfff6b1c3a47",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+        "title": "Veridis Quo",
+        "lengthMs": 344933,
+        "isrcs": [
+         "GBDUW0000066"
+        ]
+       }
+      },
+      {
+       "position": 12,
+       "number": "12",
+       "title": "Short Circuit",
+       "lengthMs": 206867,
+       "trackMbid": "4f9d28a9-0614-4087-b8b7-33189a762714",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "3f60ae01-43cc-4db9-86ec-97b79f83764f",
+        "title": "Short Circuit",
+        "lengthMs": 206866,
+        "isrcs": [
+         "GBDUW0000067"
+        ]
+       }
+      },
+      {
+       "position": 13,
+       "number": "13",
+       "title": "Face to Face",
+       "lengthMs": 240173,
+       "trackMbid": "b8da8c51-0462-433f-a8ef-12d2f6820a66",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "59038571-03ea-4ca4-965c-a57eae2aa138",
+        "title": "Face to Face",
+        "lengthMs": 240173,
+        "isrcs": [
+         "GBDUW0000068"
+        ]
+       }
+      },
+      {
+       "position": 14,
+       "number": "14",
+       "title": "Too Long",
+       "lengthMs": 600293,
+       "trackMbid": "adcde42e-98c4-4931-9223-df3e1becdf57",
+       "artistCredit": "Daft Punk",
+       "recording": {
+        "mbid": "1a915a2d-e2f4-4300-a230-96fc9c8a7b60",
+        "title": "Too Long",
+        "lengthMs": 600293,
+        "isrcs": [
+         "GBDUW0000069"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "76df3287-6cda-33eb-8e9a-044b5e15ffdd",
+   "title": "Dummy",
+   "date": "1994-08-22",
+   "country": "XE",
+   "status": "Official",
+   "disambiguation": null,
+   "barcode": "042282855329",
+   "artistCredit": "Portishead",
+   "artistMbid": "8f6bd1e4-fbe1-4f50-aa9b-94c450ec0f11",
+   "releaseGroup": {
+    "mbid": "48140466-cff6-3222-bd55-63c27e43190d",
+    "title": "Dummy",
+    "primaryType": "Album",
+    "secondaryTypes": [],
+    "firstReleaseDate": "1994-08-22"
+   },
+   "media": [
+    {
+     "position": 1,
+     "format": "CD",
+     "tracks": [
+      {
+       "position": 1,
+       "number": "1",
+       "title": "Mysterons",
+       "lengthMs": 306200,
+       "trackMbid": "17f6c0af-4e48-3810-9d13-17ac5de492df",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "b5d7d380-f43a-4c1f-a5de-694150b093ac",
+        "title": "Mysterons",
+        "lengthMs": 306200,
+        "isrcs": [
+         "GBAQT9400060"
+        ]
+       }
+      },
+      {
+       "position": 2,
+       "number": "2",
+       "title": "Sour Times",
+       "lengthMs": 254000,
+       "trackMbid": "e2f611d3-0cc1-3ac2-ad90-d33a02b49c4c",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "1234a7ae-2af2-4291-aa84-bd0bafe291a1",
+        "title": "Sour Times",
+        "lengthMs": 253760,
+        "isrcs": [
+         "GBAQT9400032"
+        ]
+       }
+      },
+      {
+       "position": 3,
+       "number": "3",
+       "title": "Strangers",
+       "lengthMs": 238000,
+       "trackMbid": "f280d32c-dfed-3be5-9906-91e00e348d1e",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "e97f805a-ab48-4c52-855e-07049142113d",
+        "title": "Strangers",
+        "lengthMs": 238000,
+        "isrcs": [
+         "GBAQT9400061"
+        ]
+       }
+      },
+      {
+       "position": 4,
+       "number": "4",
+       "title": "It Could Be Sweet",
+       "lengthMs": 259973,
+       "trackMbid": "5dff6172-4275-3557-8e10-82d6bb8d4b22",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "c837f888-d471-4b07-bcbc-1b9f7406ec1a",
+        "title": "It Could Be Sweet",
+        "lengthMs": 259959,
+        "isrcs": [
+         "GBAQT9400062"
+        ]
+       }
+      },
+      {
+       "position": 5,
+       "number": "5",
+       "title": "Wandering Star",
+       "lengthMs": 293960,
+       "trackMbid": "ff4f3733-a46f-3aac-8df9-5985f8bf887e",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "9170054a-8a9b-4f33-b31f-4ed58347154a",
+        "title": "Wandering Star",
+        "lengthMs": 293960,
+        "isrcs": [
+         "GBAQT9400063"
+        ]
+       }
+      },
+      {
+       "position": 6,
+       "number": "6",
+       "title": "It’s a Fire",
+       "lengthMs": 229306,
+       "trackMbid": "07eb09c1-8a76-3111-bddb-ed1486195a9e",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "46d6ebba-8d3f-4600-a2a3-9eab4713458d",
+        "title": "It’s a Fire",
+        "lengthMs": 228000,
+        "isrcs": [
+         "GBAQT9400058"
+        ]
+       }
+      },
+      {
+       "position": 7,
+       "number": "7",
+       "title": "Numb",
+       "lengthMs": 237960,
+       "trackMbid": "3875c956-6a5e-3179-a4b7-506eb878105b",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "977c23ba-10e0-4c03-a882-5896e58717ae",
+        "title": "Numb",
+        "lengthMs": 237866,
+        "isrcs": [
+         "GBAQT9400026"
+        ]
+       }
+      },
+      {
+       "position": 8,
+       "number": "8",
+       "title": "Roads",
+       "lengthMs": 305173,
+       "trackMbid": "4fa99ea3-ae31-3a2a-b4e0-ae8a76b911c1",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "8a49dba0-253a-4535-b87f-78bb035336ce",
+        "title": "Roads",
+        "lengthMs": 305173,
+        "isrcs": [
+         "GBAQT9400064",
+         "USEE10100141"
+        ]
+       }
+      },
+      {
+       "position": 9,
+       "number": "9",
+       "title": "Pedestal",
+       "lengthMs": 221000,
+       "trackMbid": "7a67d3db-6c7c-3ba9-85d1-357ddf825a7b",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "c7baf0bc-77ed-454e-92a0-687f6b70d612",
+        "title": "Pedestal",
+        "lengthMs": 221000,
+        "isrcs": [
+         "GBAQT9400057"
+        ]
+       }
+      },
+      {
+       "position": 10,
+       "number": "10",
+       "title": "Biscuit",
+       "lengthMs": 304093,
+       "trackMbid": "2d2c3253-8b61-3c02-b5e1-83be8ade482c",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "5efc1689-a6e8-45d3-a481-774be58e8b59",
+        "title": "Biscuit",
+        "lengthMs": 304026,
+        "isrcs": [
+         "GBAQT9400065"
+        ]
+       }
+      },
+      {
+       "position": 11,
+       "number": "11",
+       "title": "Glory Box",
+       "lengthMs": 305573,
+       "trackMbid": "81489fd3-99de-3c50-b46c-6309fab8cf3f",
+       "artistCredit": "Portishead",
+       "recording": {
+        "mbid": "145f5c43-0ac2-4886-8b09-63d0e92ded5d",
+        "title": "Glory Box",
+        "lengthMs": 305573,
+        "isrcs": [
+         "GBAQT9400066"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

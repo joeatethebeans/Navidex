@@ -1,0 +1,73 @@
+# Testing without a real library
+
+Navidex is developed against a generated test library and a throwaway Navidrome, so nothing touches a real
+music collection until you choose to point it at one.
+
+## The test library
+
+`tools/testlib` builds a small library from real MusicBrainz data, with a known answer for what's owned and what's
+missing.
+
+```bash
+python3 tools/testlib/generate.py
+```
+
+This writes `tools/testlib/out/music/` (85 silent files, about 10 MB) and `tools/testlib/out/expected.json`, the
+answer key. It needs ffmpeg and the Python `mutagen` package, and runs offline in about ten seconds.
+
+| File | What it is |
+| --- | --- |
+| `scenario.json` | What to build: which artists, which editions are owned, how each album is tagged, and the stray files |
+| `catalogue.json` | A committed snapshot of the MusicBrainz data the library is built from |
+| `fetch_catalogue.py` | Refreshes the snapshot (about 30 requests, at MusicBrainz's one request a second) |
+| `generate.py` | Builds the files and the answer key from the two JSON files |
+
+The scenarios, two artists with deep and messy discographies (Portishead: 90 release groups; Daft Punk: 217):
+
+| Album | Format | Tags | Exercises |
+| --- | --- | --- | --- |
+| Dummy | FLAC | Full MusicBrainz | The easy path |
+| Portishead | MP3 | Full MusicBrainz | Owned album with 2 tracks missing |
+| Roseland NYC Live | M4A | Basic only | Fuzzy matching; a live album that's owned although live albums are hidden from the missing view |
+| Discovery | MP3 | Basic + ISRC | ISRC matching without MusicBrainz IDs |
+| Homework | FLAC | Basic only | Fuzzy matching through a messy folder name, shouting, a version suffix and a changed artist credit |
+| Random Access Memories (10th anniversary) | M4A | Full MusicBrainz | Two-disc deluxe edition owning the album, with one disc-2 bonus track missing |
+| Three strays | MP3 | Various | A wrong-length "Glory Box", a track not in the catalogue, and an untagged file: all go to review |
+
+Tags are written the way beets and Picard write them for each format: Vorbis comments, ID3v2.4 with a UFID for the
+recording ID, and MP4 freeform atoms.
+
+### The answer key
+
+`expected.json` says, for each file, the match method Navidex should use (named as in `MatchMethod`) and the
+recording, edition and album it belongs to. Stray files say `"review": true` instead. For each artist, it lists the
+owned albums (complete or with their missing tracks), the missing albums the default filters show, and how many
+missing albums the filters hide. Phase 1 tests can check the library scan and the missing view against it.
+
+The default filters are in `scenario.json` under `policy`. The plan names live albums, compilations, remixes, demos
+and soundtracks as hidden. Real data also has interviews, mixtapes and DJ mixes, so the policy hides any release
+group with a secondary type. It also hides groups with only bootleg releases, such as Daft Punk's *Leftovers*.
+
+## The sandbox
+
+`sandbox/sandbox.sh` runs Navidrome 0.64.2 and Navidex side by side over the test library, with podman or docker:
+
+```bash
+sandbox/sandbox.sh up
+```
+
+This generates the library if it isn't there, builds the Navidex image if needed, starts both containers on a
+private network, creates a Navidrome admin, scans, and reports what Navidrome indexed.
+
+- Navidrome: http://localhost:4533. The user is `admin`; the password is generated into `sandbox/.env` on first run.
+- Navidex: http://localhost:8787/api/v1/health
+- Inside the network, Navidex reaches Navidrome at `http://navidrome:4533`, ready for the Phase 2 connector.
+
+The music folder is mounted read-only in both containers. `sandbox/sandbox.sh scan` rescans after you regenerate,
+`status` reports, and `down` removes the containers and their data.
+
+## Moving on to a real library
+
+Phase 1 only reads the library, so the final check that the missing view is right can run against your real files
+read-only (Compose mounts the music folder `:ro`). Files without MusicBrainz IDs will match less reliably until
+they're adopted with beets. To try the adopt step without risk, run it on a copy.

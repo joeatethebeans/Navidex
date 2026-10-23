@@ -15,6 +15,8 @@ beside Navidrome rather than replacing it: Navidex finds, fetches and imports; N
 | `src/Navidex.Core` | The core service: public API at `/api/v1`, data model, and later the job queue and workers |
 | `tests/Navidex.Core.Tests` | Tests for the contracts, data model and API |
 | `docs/contracts` | The three plugin contracts, written down, including the retrieval OpenAPI spec |
+| `tools/testlib` | Generates a test music library from real MusicBrainz data, with an answer key |
+| `sandbox` | A throwaway Navidrome + Navidex stack over the test library |
 | `docker-compose.yml` | The stack. It joins an existing Navidrome setup. |
 
 ## Running
@@ -40,6 +42,12 @@ environment variables such as `Navidex__LibraryPath=/music`.
 
 ```bash
 dotnet test
+```
+
+To try things out without a real library, see [docs/testing.md](docs/testing.md):
+
+```bash
+sandbox/sandbox.sh up
 ```
 
 Schema changes need a migration:
