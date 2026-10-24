@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <RootNamespace>Navidex.Web</RootNamespace>
-    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
   </PropertyGroup>
 
   <ItemGroup>

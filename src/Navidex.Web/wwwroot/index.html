@@ -7,10 +7,8 @@
     <meta name="theme-color" content="#1f6f5c" />
     <title>Navidex</title>
     <base href="/" />
-    <link rel="preload" id="webassembly" />
     <link rel="icon" type="image/png" href="icon-192.png" />
     <link rel="stylesheet" href="css/app.css" />
-    <script type="importmap"></script>
 </head>
 
 <body>
@@ -23,7 +21,8 @@
         <a href="." class="reload">Reload</a>
         <span class="dismiss">✕</span>
     </div>
-    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <!-- Plain names: the core publishes this page as is, without filling in fingerprint placeholders. -->
+    <script src="_framework/blazor.webassembly.js"></script>
 </body>
 
 </html>
