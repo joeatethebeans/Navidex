@@ -1,0 +1,55 @@
+@page "/review"
+@inject NavidexClient Api
+
+<PageTitle>Review · Navidex</PageTitle>
+
+<h1>Review</h1>
+<p class="muted">Files Navidex couldn't match confidently. They don't count as owned until they're matched. Accepting and rematching come with the Review page in Phase 2; for now, fixing a file's tags and scanning again works.</p>
+
+@if (_items is null)
+{
+    <p class="muted">Loading…</p>
+}
+else if (_items.Count == 0)
+{
+    <div class="empty card">Nothing to review.</div>
+}
+else
+{
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Why</th>
+                    <th class="hide-narrow">Best guess</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _items)
+                {
+                    <tr>
+                        <td>
+                            <div>@(item.Title ?? "(no title)") <span class="muted">· @(item.Artist ?? "unknown artist")</span></div>
+                            <div class="muted small">@item.Path · @Format.Duration(item.DurationSeconds)</div>
+                        </td>
+                        <td class="small">@item.Reason</td>
+                        <td class="small hide-narrow">
+                            @if (item.Suggestion is { } s)
+                            {
+                                <div>@s.Title <span class="muted">· @s.ArtistCredit · @Format.Duration(s.DurationSeconds)</span></div>
+                                @if (s.AlbumId is { } albumId) { <a href="albums/@albumId">@s.AlbumTitle</a> }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<ReviewItem>? _items;
+
+    protected override async Task OnInitializedAsync() => _items = await Api.GetReviewAsync();
+}

@@ -1,0 +1,103 @@
+@page "/search"
+@inject NavidexClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Search · Navidex</PageTitle>
+
+<h1>Search</h1>
+
+<form class="toolbar" @onsubmit="SubmitAsync">
+    <input type="search" placeholder="Artist, album or track" @bind="_query" />
+    <button class="primary" type="submit" disabled="@_busy">Search</button>
+</form>
+
+@if (_busy)
+{
+    <p class="muted">Searching…</p>
+}
+else if (_results is not null)
+{
+    @if (_results.Artists.Count + _results.Albums.Count + _results.Tracks.Count == 0)
+    {
+        <div class="empty card">No results.</div>
+    }
+    @if (_results.Artists.Count > 0)
+    {
+        <h2>Artists</h2>
+        <div class="card">
+            <table class="table">
+                <tbody>
+                    @foreach (var artist in _results.Artists)
+                    {
+                        <tr>
+                            <td><a href="artists/@artist.Id">@artist.Name</a> @if (artist.Disambiguation is not null) { <span class="muted small">(@artist.Disambiguation)</span> }</td>
+                            <td class="num">@if (artist.InLibrary) { <span class="badge owned">In library</span> }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    @if (_results.Albums.Count > 0)
+    {
+        <h2>Albums</h2>
+        <div class="card">
+            <table class="table">
+                <tbody>
+                    @foreach (var album in _results.Albums)
+                    {
+                        <tr>
+                            <td><a href="albums/@album.Id">@album.Title</a> <span class="muted small">· @album.ArtistCredit · @Format.Year(album.FirstReleaseDate)</span></td>
+                            <td class="muted hide-narrow">@Format.TypeLabel(album.Type)</td>
+                            <td class="num"><StatusBadge Album="album.Status" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    @if (_results.Tracks.Count > 0)
+    {
+        <h2>Tracks</h2>
+        <div class="card">
+            <table class="table">
+                <tbody>
+                    @foreach (var track in _results.Tracks)
+                    {
+                        <tr>
+                            <td>@track.Title <span class="muted small">· @track.ArtistCredit</span></td>
+                            <td class="num muted hide-narrow">@Format.Duration(track.DurationSeconds)</td>
+                            <td class="num"><StatusBadge Track="track.Owned ? TrackStatus.Owned : TrackStatus.Missing" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "q")] public string? Query { get; set; }
+
+    private string _query = "";
+    private SearchResults? _results;
+    private bool _busy;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _query = Query ?? "";
+        _results = null;
+        if (_query.Length > 0)
+        {
+            _busy = true;
+            _results = await Api.SearchAsync(_query);
+            _busy = false;
+        }
+    }
+
+    private Task SubmitAsync()
+    {
+        Navigation.NavigateTo($"search?q={Uri.EscapeDataString(_query)}");
+        return Task.CompletedTask;
+    }
+}

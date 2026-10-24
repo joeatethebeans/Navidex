@@ -1,0 +1,145 @@
+:root {
+    --bg: #f6f7f5;
+    --surface: #ffffff;
+    --text: #1b1f1d;
+    --muted: #5f6763;
+    --border: #dde1de;
+    --accent: #1f6f5c;
+    --accent-text: #ffffff;
+    --owned: #1f7a4d;
+    --owned-bg: #e3f3ea;
+    --partial: #8a5a00;
+    --partial-bg: #fbf0d9;
+    --covered: #2f5f8a;
+    --covered-bg: #e2edf7;
+    --missing: #a23b2d;
+    --missing-bg: #f8e4e1;
+    --radius: 8px;
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #121513;
+        --surface: #1b1f1d;
+        --text: #e6e9e7;
+        --muted: #9aa39e;
+        --border: #2d3330;
+        --accent: #4fb89a;
+        --accent-text: #0d1311;
+        --owned: #6fd19f;
+        --owned-bg: #193325;
+        --partial: #f0c062;
+        --partial-bg: #3a2e14;
+        --covered: #8cbbe6;
+        --covered-bg: #18293a;
+        --missing: #f08a7c;
+        --missing-bg: #3a1d19;
+        color-scheme: dark;
+    }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.15rem; margin: 1.75rem 0 .5rem; }
+
+.boot { padding: 3rem; text-align: center; color: var(--muted); }
+
+/* Layout */
+.topbar {
+    display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+    padding: .6rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+}
+.brand { font-weight: 700; font-size: 1.1rem; color: var(--text); }
+.nav { display: flex; gap: .25rem; flex-wrap: wrap; }
+.nav a { padding: .3rem .6rem; border-radius: 6px; color: var(--muted); }
+.nav a.active { background: var(--bg); color: var(--text); font-weight: 600; }
+.nav a:hover { text-decoration: none; color: var(--text); }
+.spacer { flex: 1; }
+main { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+/* Controls */
+button, .button {
+    font: inherit; padding: .4rem .8rem; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button:disabled { opacity: .55; cursor: default; }
+button.link { border: none; background: none; color: var(--accent); padding: 0; }
+input[type=search], input[type=text], input[type=number], select {
+    font: inherit; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--text);
+}
+input[type=search] { width: 100%; max-width: 420px; }
+label { display: inline-flex; align-items: center; gap: .4rem; }
+
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
+
+/* Cards and tables */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { text-align: left; padding: .5rem .75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.table th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+.table tr:last-child td { border-bottom: none; }
+.table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table tr.dim td { opacity: .6; }
+
+/* Status badges */
+.badge {
+    display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .78rem; font-weight: 600; white-space: nowrap;
+}
+.badge.complete, .badge.owned { color: var(--owned); background: var(--owned-bg); }
+.badge.partial { color: var(--partial); background: var(--partial-bg); }
+.badge.covered, .badge.ownedElsewhere { color: var(--covered); background: var(--covered-bg); }
+.badge.missing { color: var(--missing); background: var(--missing-bg); }
+.badge.neutral { color: var(--muted); background: var(--bg); border: 1px solid var(--border); }
+
+.meter { height: 6px; background: var(--missing-bg); border-radius: 999px; overflow: hidden; min-width: 80px; }
+.meter > span { display: block; height: 100%; background: var(--owned); }
+
+.ids { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .8rem; }
+.ids code { background: var(--bg); padding: .05rem .35rem; border-radius: 4px; border: 1px solid var(--border); }
+
+.notice { padding: .75rem 1rem; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); margin: 1rem 0; }
+.empty { padding: 2rem; text-align: center; color: var(--muted); }
+
+details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem; }
+
+#blazor-error-ui {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; padding: .75rem 1rem;
+    background: var(--missing-bg); color: var(--missing); z-index: 100;
+}
+#blazor-error-ui .dismiss { cursor: pointer; float: right; }
+
+@media (max-width: 640px) {
+    .hide-narrow { display: none; }
+    .table th, .table td { padding: .45rem .5rem; }
+}
+
+/* Album lists stack per type on the artist page; fixed columns keep them aligned. */
+.table.albums { table-layout: fixed; }
+.table.albums th:nth-child(2) { width: 4.5rem; }
+.table.albums th:nth-child(3) { width: 8rem; }
+.table.albums th:nth-child(4) { width: 6.5rem; }
+.table.albums td:nth-child(4) { white-space: nowrap; }
+.table.albums th:nth-child(5) { width: 5.5rem; }
+.table.albums td:first-child { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+    .table.albums th:nth-child(3) { width: 6.5rem; }
+}
+.nowrap { white-space: nowrap; }

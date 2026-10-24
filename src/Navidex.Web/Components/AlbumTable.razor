@@ -1,0 +1,43 @@
+@* A list of albums with their status. *@
+<div class="card">
+    <table class="table albums">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th class="hide-narrow">Year</th>
+                <th>Status</th>
+                <th class="num hide-narrow">Tracks</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var album in Albums)
+            {
+                <tr class="@(album.Ignored ? "dim" : "")">
+                    <td>
+                        <a href="albums/@album.Id">@album.Title</a>
+                        @if (ShowSecondary && album.SecondaryTypes.Count > 0)
+                        {
+                            <span class="muted small"> · @Format.Secondary(album.SecondaryTypes)</span>
+                        }
+                    </td>
+                    <td class="hide-narrow muted">@Format.Year(album.FirstReleaseDate)</td>
+                    <td><StatusBadge Album="album.Status" /></td>
+                    <td class="num hide-narrow muted">@Format.Tracks(album)</td>
+                    <td class="num">
+                        @if (album.Status == AlbumStatus.Missing)
+                        {
+                            <button class="link small" @onclick="() => OnIgnore.InvokeAsync(album)">@(album.Ignored ? "Unignore" : "Ignore")</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<AlbumSummary> Albums { get; set; } = [];
+    [Parameter] public EventCallback<AlbumSummary> OnIgnore { get; set; }
+    [Parameter] public bool ShowSecondary { get; set; }
+}

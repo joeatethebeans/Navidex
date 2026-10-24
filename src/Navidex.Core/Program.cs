@@ -1,17 +1,45 @@
 using Microsoft.EntityFrameworkCore;
+using Navidex.Client;
 using Navidex.Core;
 using Navidex.Core.Api;
+using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
+using Navidex.Core.Library;
+using Navidex.Core.Plugins;
+using Navidex.Core.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var options = builder.Configuration.GetSection(NavidexOptions.Section).Get<NavidexOptions>() ?? new NavidexOptions();
 builder.Services.Configure<NavidexOptions>(builder.Configuration.GetSection(NavidexOptions.Section));
+builder.Services.AddOptions<PluginHttpOptions>();
 
 Directory.CreateDirectory(options.DataPath);
 builder.Services.AddDbContext<NavidexDbContext>(db =>
     db.UseSqlite(builder.Configuration.GetConnectionString("Navidex")
                  ?? $"Data Source={Path.Combine(options.DataPath, "navidex.db")}"));
+
+builder.Services.ConfigureHttpJsonOptions(json => NavidexJson.Configure(json.SerializerOptions));
+
+// Plugins
+builder.Services.AddSingleton<PluginCatalog>();
+builder.Services.AddSingleton<PluginHost>();
+builder.Services.AddScoped<IndexPlugins>();
+
+// Catalogue and library
+builder.Services.AddScoped<CatalogueService>();
+builder.Services.AddScoped<CatalogueRefresher>();
+builder.Services.AddScoped<SettingsService>();
+builder.Services.AddScoped<LibraryScanner>();
+builder.Services.AddScoped<LibraryMatcher>();
+builder.Services.AddScoped<LibraryView>();
+
+// Background work
+builder.Services.AddSingleton<TaskSignal>();
+builder.Services.AddScoped<TaskQueue>();
+builder.Services.AddScoped<ITaskHandler, LibraryScanTask>();
+builder.Services.AddScoped<ITaskHandler, ArtistRefreshTask>();
+builder.Services.AddHostedService<TaskWorker>();
 
 builder.Services.AddOpenApi("v1", openApi => openApi.AddDocumentTransformer((document, _, _) =>
 {
@@ -23,12 +51,23 @@ builder.Services.AddOpenApi("v1", openApi => openApi.AddDocumentTransformer((doc
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
-    await scope.ServiceProvider.GetRequiredService<NavidexDbContext>().Database.MigrateAsync();
+{
+    var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
+    await db.Database.MigrateAsync();
+    await IndexPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
+}
 
 // The spec is part of the public contract, so it's served in every environment.
 app.MapOpenApi();
 
-app.MapGroup("/api/v1").MapSystemEndpoints();
+var api = app.MapGroup("/api/v1");
+api.MapSystemEndpoints();
+api.MapLibraryEndpoints();
+api.MapCatalogueEndpoints();
+
+// The web app: Blazor WebAssembly, served from the same origin and talking only to the public API.
+app.MapStaticAssets();
+app.MapFallbackToFile("index.html");
 
 app.Run();
 

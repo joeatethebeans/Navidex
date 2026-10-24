@@ -50,15 +50,26 @@ public sealed class DataModelTests : IDisposable
     [Fact]
     public async Task A_provider_id_maps_to_one_entity_per_kind()
     {
-        var first = Guid.CreateVersion7();
-        _db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Track, EntityId = first, Provider = Providers.Isrc, Value = "GBAYE0601498" });
+        const string mbid = "b5d7d380-f43a-4c1f-a5de-694150b093ac";
+        _db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Track, EntityId = Guid.CreateVersion7(), Provider = Providers.MusicBrainz, Value = mbid });
         // The same value may identify an entity of another kind...
-        _db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Edition, EntityId = Guid.CreateVersion7(), Provider = Providers.Isrc, Value = "GBAYE0601498" });
+        _db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Edition, EntityId = Guid.CreateVersion7(), Provider = Providers.MusicBrainz, Value = mbid });
         await _db.SaveChangesAsync();
 
         // ...but not a second entity of the same kind.
-        _db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Track, EntityId = Guid.CreateVersion7(), Provider = Providers.Isrc, Value = "GBAYE0601498" });
+        _db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Track, EntityId = Guid.CreateVersion7(), Provider = Providers.MusicBrainz, Value = mbid });
         await Assert.ThrowsAsync<DbUpdateException>(() => _db.SaveChangesAsync());
+    }
+
+    [Fact]
+    public async Task An_isrc_can_identify_several_tracks()
+    {
+        // One ISRC is often shared by distinct MusicBrainz recordings of the same master, such as a single and album version.
+        _db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Track, EntityId = Guid.CreateVersion7(), Provider = Providers.Isrc, Value = "GBAYE0601498" });
+        _db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Track, EntityId = Guid.CreateVersion7(), Provider = Providers.Isrc, Value = "GBAYE0601498" });
+        await _db.SaveChangesAsync();
+
+        Assert.Equal(2, await _db.Crosswalk.CountAsync(c => c.Provider == Providers.Isrc));
     }
 
     [Fact]

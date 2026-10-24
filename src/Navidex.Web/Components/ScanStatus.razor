@@ -1,0 +1,55 @@
+@implements IDisposable
+@inject NavidexClient Api
+
+@* Shows the scan button, or what the running task is doing. Polls while a task runs. *@
+<div class="row small">
+    @if (_status?.CurrentTask is { } task)
+    {
+        <span class="muted" title="@task.Kind">@(task.Progress ?? "Starting…")</span>
+    }
+    else if (_status is not null)
+    {
+        <span class="muted hide-narrow">@_status.Files files@(_status.Review > 0 ? $", {_status.Review} to review" : "")</span>
+    }
+    <button class="primary" disabled="@(_status?.CurrentTask is not null)" @onclick="ScanAsync">Scan library</button>
+</div>
+
+@code {
+    private LibraryStatus? _status;
+    private Timer? _timer;
+    private bool _wasRunning;
+
+    /// <summary>Raised when a task finishes, so pages can reload.</summary>
+    public static event Action? TaskFinished;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+        _timer = new Timer(_ => InvokeAsync(RefreshAsync), null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+    }
+
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            _status = await Api.GetLibraryStatusAsync();
+        }
+        catch (HttpRequestException)
+        {
+            return;
+        }
+        var running = _status?.CurrentTask is not null;
+        if (_wasRunning && !running)
+            TaskFinished?.Invoke();
+        _wasRunning = running;
+        StateHasChanged();
+    }
+
+    private async Task ScanAsync()
+    {
+        await Api.ScanLibraryAsync();
+        await RefreshAsync();
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

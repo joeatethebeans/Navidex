@@ -5173,5 +5173,7551 @@
     }
    ]
   }
+ ],
+ "coverage": [
+  {
+   "mbid": "8a399961-ca70-3c62-b000-3684fb0fd73b",
+   "title": "Numb",
+   "editions": [
+    {
+     "mbid": "172ddda3-1837-4fd2-8d12-ddd1e70b4c57",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "977c23ba-10e0-4c03-a882-5896e58717ae",
+       "isrcs": [
+        "GBAQT9400026"
+       ]
+      },
+      {
+       "mbid": "d45e3f81-5f21-4eaf-bd07-283ce4b26b02",
+       "isrcs": [
+        "GBAQT9400027"
+       ]
+      },
+      {
+       "mbid": "1ca5869a-88d7-4429-a03b-d28c8f5f2075",
+       "isrcs": [
+        "GBAQT9400028"
+       ]
+      },
+      {
+       "mbid": "40341a21-8185-4283-92e5-9eae694d8752",
+       "isrcs": [
+        "GBAQT9400029"
+       ]
+      },
+      {
+       "mbid": "5eb94502-c632-4751-ab50-67747171c6a7",
+       "isrcs": [
+        "GBAQT9400030"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "32a43767-2384-4246-9a15-de0f83acc70e",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "06062f31-6ed0-4096-b5ce-1a610e762ad0",
+       "isrcs": []
+      },
+      {
+       "mbid": "ce77339f-e37f-4e40-b8f4-eab4865b443f",
+       "isrcs": []
+      },
+      {
+       "mbid": "545a3bdd-3e7e-44a7-bc2c-0a874bacb13b",
+       "isrcs": []
+      },
+      {
+       "mbid": "f4aa0d80-19bc-4c4b-9136-75341f8232fa",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "70f6eb67-34d4-4775-ae39-2fa85373e1b5",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "977c23ba-10e0-4c03-a882-5896e58717ae",
+       "isrcs": [
+        "GBAQT9400026"
+       ]
+      },
+      {
+       "mbid": "d45e3f81-5f21-4eaf-bd07-283ce4b26b02",
+       "isrcs": [
+        "GBAQT9400027"
+       ]
+      },
+      {
+       "mbid": "1ca5869a-88d7-4429-a03b-d28c8f5f2075",
+       "isrcs": [
+        "GBAQT9400028"
+       ]
+      },
+      {
+       "mbid": "40341a21-8185-4283-92e5-9eae694d8752",
+       "isrcs": [
+        "GBAQT9400029"
+       ]
+      },
+      {
+       "mbid": "5eb94502-c632-4751-ab50-67747171c6a7",
+       "isrcs": [
+        "GBAQT9400030"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "80febf74-39f8-4ceb-84d7-5e681772f7e3",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "977c23ba-10e0-4c03-a882-5896e58717ae",
+       "isrcs": [
+        "GBAQT9400026"
+       ]
+      },
+      {
+       "mbid": "d45e3f81-5f21-4eaf-bd07-283ce4b26b02",
+       "isrcs": [
+        "GBAQT9400027"
+       ]
+      },
+      {
+       "mbid": "1ca5869a-88d7-4429-a03b-d28c8f5f2075",
+       "isrcs": [
+        "GBAQT9400028"
+       ]
+      },
+      {
+       "mbid": "40341a21-8185-4283-92e5-9eae694d8752",
+       "isrcs": [
+        "GBAQT9400029"
+       ]
+      },
+      {
+       "mbid": "5eb94502-c632-4751-ab50-67747171c6a7",
+       "isrcs": [
+        "GBAQT9400030"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "b5490803-d892-4a8f-9a5a-c2465a28afef",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "977c23ba-10e0-4c03-a882-5896e58717ae",
+       "isrcs": [
+        "GBAQT9400026"
+       ]
+      },
+      {
+       "mbid": "d45e3f81-5f21-4eaf-bd07-283ce4b26b02",
+       "isrcs": [
+        "GBAQT9400027"
+       ]
+      },
+      {
+       "mbid": "1ca5869a-88d7-4429-a03b-d28c8f5f2075",
+       "isrcs": [
+        "GBAQT9400028"
+       ]
+      },
+      {
+       "mbid": "40341a21-8185-4283-92e5-9eae694d8752",
+       "isrcs": [
+        "GBAQT9400029"
+       ]
+      },
+      {
+       "mbid": "5eb94502-c632-4751-ab50-67747171c6a7",
+       "isrcs": [
+        "GBAQT9400030"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "ec82a4ff-cf2a-48f0-a435-769c84b4a348",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "977c23ba-10e0-4c03-a882-5896e58717ae",
+       "isrcs": [
+        "GBAQT9400026"
+       ]
+      },
+      {
+       "mbid": "d45e3f81-5f21-4eaf-bd07-283ce4b26b02",
+       "isrcs": [
+        "GBAQT9400027"
+       ]
+      },
+      {
+       "mbid": "1ca5869a-88d7-4429-a03b-d28c8f5f2075",
+       "isrcs": [
+        "GBAQT9400028"
+       ]
+      },
+      {
+       "mbid": "5eb94502-c632-4751-ab50-67747171c6a7",
+       "isrcs": [
+        "GBAQT9400030"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "f9ea98b9-9941-35c4-9441-00158db3d469",
+   "title": "Sour Times",
+   "editions": [
+    {
+     "mbid": "05159c59-8489-48f8-99c5-73dec763bbbb",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fc81f1ca-174c-4921-8360-eba7ce3dd458",
+       "isrcs": [
+        "GBAQT9400037"
+       ]
+      },
+      {
+       "mbid": "46d6ebba-8d3f-4600-a2a3-9eab4713458d",
+       "isrcs": [
+        "GBAQT9400058"
+       ]
+      },
+      {
+       "mbid": "c7baf0bc-77ed-454e-92a0-687f6b70d612",
+       "isrcs": [
+        "GBAQT9400057"
+       ]
+      },
+      {
+       "mbid": "ace721ca-8650-4b6a-bb8c-e5bf63844caf",
+       "isrcs": [
+        "GBAQT9400059"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "148a32f7-fded-4632-a5a7-f597d67d0d96",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fc81f1ca-174c-4921-8360-eba7ce3dd458",
+       "isrcs": [
+        "GBAQT9400037"
+       ]
+      },
+      {
+       "mbid": "10e1d2d4-bd50-497d-8e52-4ec89746493f",
+       "isrcs": [
+        "GBAQT9400033"
+       ]
+      },
+      {
+       "mbid": "c22502a8-babf-4a96-bd40-f7e879cfa865",
+       "isrcs": [
+        "GBAQT9400034"
+       ]
+      },
+      {
+       "mbid": "c916efe9-b540-4073-a0da-b64385fc4078",
+       "isrcs": [
+        "GBAQT9400035"
+       ]
+      },
+      {
+       "mbid": "c233597a-1004-40dd-985d-2a5eb1b8da48",
+       "isrcs": [
+        "GBAQT9400036"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "501b4c95-67d4-38df-9577-2e867c912358",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fc81f1ca-174c-4921-8360-eba7ce3dd458",
+       "isrcs": [
+        "GBAQT9400037"
+       ]
+      },
+      {
+       "mbid": "10e1d2d4-bd50-497d-8e52-4ec89746493f",
+       "isrcs": [
+        "GBAQT9400033"
+       ]
+      },
+      {
+       "mbid": "c22502a8-babf-4a96-bd40-f7e879cfa865",
+       "isrcs": [
+        "GBAQT9400034"
+       ]
+      },
+      {
+       "mbid": "c916efe9-b540-4073-a0da-b64385fc4078",
+       "isrcs": [
+        "GBAQT9400035"
+       ]
+      },
+      {
+       "mbid": "c233597a-1004-40dd-985d-2a5eb1b8da48",
+       "isrcs": [
+        "GBAQT9400036"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "6e421c5a-8784-40d4-8e5f-0ccb6bce3108",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fc81f1ca-174c-4921-8360-eba7ce3dd458",
+       "isrcs": [
+        "GBAQT9400037"
+       ]
+      },
+      {
+       "mbid": "10e1d2d4-bd50-497d-8e52-4ec89746493f",
+       "isrcs": [
+        "GBAQT9400033"
+       ]
+      },
+      {
+       "mbid": "c22502a8-babf-4a96-bd40-f7e879cfa865",
+       "isrcs": [
+        "GBAQT9400034"
+       ]
+      },
+      {
+       "mbid": "c916efe9-b540-4073-a0da-b64385fc4078",
+       "isrcs": [
+        "GBAQT9400035"
+       ]
+      },
+      {
+       "mbid": "c233597a-1004-40dd-985d-2a5eb1b8da48",
+       "isrcs": [
+        "GBAQT9400036"
+       ]
+      },
+      {
+       "mbid": "ace721ca-8650-4b6a-bb8c-e5bf63844caf",
+       "isrcs": [
+        "GBAQT9400059"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "89b72a2b-619a-4c12-9761-82261a1ad6e0",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fece53cc-a0ad-4a5d-a390-efe02f4fc4e8",
+       "isrcs": [
+        "GBAQT9400037"
+       ]
+      },
+      {
+       "mbid": "10e1d2d4-bd50-497d-8e52-4ec89746493f",
+       "isrcs": [
+        "GBAQT9400033"
+       ]
+      },
+      {
+       "mbid": "19c5d38c-ddc6-4705-806b-cd9c8e9c42bd",
+       "isrcs": [
+        "GBAQT9400034"
+       ]
+      },
+      {
+       "mbid": "c916efe9-b540-4073-a0da-b64385fc4078",
+       "isrcs": [
+        "GBAQT9400035"
+       ]
+      },
+      {
+       "mbid": "3782415e-2e3f-40f2-a17d-9fbe97333dd4",
+       "isrcs": [
+        "GBAQT9400036"
+       ]
+      },
+      {
+       "mbid": "ace721ca-8650-4b6a-bb8c-e5bf63844caf",
+       "isrcs": [
+        "GBAQT9400059"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "baf49562-8165-4b6c-af4a-cc6c84aceb5e",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fc81f1ca-174c-4921-8360-eba7ce3dd458",
+       "isrcs": [
+        "GBAQT9400037"
+       ]
+      },
+      {
+       "mbid": "19c5d38c-ddc6-4705-806b-cd9c8e9c42bd",
+       "isrcs": [
+        "GBAQT9400034"
+       ]
+      },
+      {
+       "mbid": "e2144a51-4e4b-4982-9a82-e81ea77ab219",
+       "isrcs": []
+      },
+      {
+       "mbid": "3782415e-2e3f-40f2-a17d-9fbe97333dd4",
+       "isrcs": [
+        "GBAQT9400036"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e3a1b9aa-2081-43e4-b5f0-d422340b8f87",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fc81f1ca-174c-4921-8360-eba7ce3dd458",
+       "isrcs": [
+        "GBAQT9400037"
+       ]
+      },
+      {
+       "mbid": "10e1d2d4-bd50-497d-8e52-4ec89746493f",
+       "isrcs": [
+        "GBAQT9400033"
+       ]
+      },
+      {
+       "mbid": "c7baf0bc-77ed-454e-92a0-687f6b70d612",
+       "isrcs": [
+        "GBAQT9400057"
+       ]
+      },
+      {
+       "mbid": "ace721ca-8650-4b6a-bb8c-e5bf63844caf",
+       "isrcs": [
+        "GBAQT9400059"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e962354a-28f2-44b1-9a26-c8092de4d4f3",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fc81f1ca-174c-4921-8360-eba7ce3dd458",
+       "isrcs": [
+        "GBAQT9400037"
+       ]
+      },
+      {
+       "mbid": "d45e3f81-5f21-4eaf-bd07-283ce4b26b02",
+       "isrcs": [
+        "GBAQT9400027"
+       ]
+      },
+      {
+       "mbid": "5eb94502-c632-4751-ab50-67747171c6a7",
+       "isrcs": [
+        "GBAQT9400030"
+       ]
+      },
+      {
+       "mbid": "c22502a8-babf-4a96-bd40-f7e879cfa865",
+       "isrcs": [
+        "GBAQT9400034"
+       ]
+      },
+      {
+       "mbid": "ace721ca-8650-4b6a-bb8c-e5bf63844caf",
+       "isrcs": [
+        "GBAQT9400059"
+       ]
+      },
+      {
+       "mbid": "c233597a-1004-40dd-985d-2a5eb1b8da48",
+       "isrcs": [
+        "GBAQT9400036"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "19d8fec6-6761-407d-b335-2b610e6063c4",
+   "title": "Glory Box",
+   "editions": [
+    {
+     "mbid": "079dac62-ae9a-410a-b8f9-fc76c14ae0b2",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "80434f5d-f467-4c6b-8dec-fd17db3f85df",
+       "isrcs": [
+        "GBAQT9400107"
+       ]
+      },
+      {
+       "mbid": "13c3265d-df1f-4265-9272-c4eb1bc884ee",
+       "isrcs": [
+        "GBAQT9400108"
+       ]
+      },
+      {
+       "mbid": "51a0eb87-b3f0-4fd3-89da-72222e27068f",
+       "isrcs": [
+        "GBAQT9400109"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "0a63ab44-f33c-4377-ac94-fcb6d8f2463c",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "80434f5d-f467-4c6b-8dec-fd17db3f85df",
+       "isrcs": [
+        "GBAQT9400107"
+       ]
+      },
+      {
+       "mbid": "13c3265d-df1f-4265-9272-c4eb1bc884ee",
+       "isrcs": [
+        "GBAQT9400108"
+       ]
+      },
+      {
+       "mbid": "51a0eb87-b3f0-4fd3-89da-72222e27068f",
+       "isrcs": [
+        "GBAQT9400109"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "1b43ed26-93b5-4a40-a6f9-b222476e358e",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "9e0e873e-ec08-4c89-963f-59672e36bc71",
+       "isrcs": []
+      },
+      {
+       "mbid": "9cc428e0-7d08-4b75-b66d-9efe5bbed4b8",
+       "isrcs": []
+      },
+      {
+       "mbid": "65613578-5f12-487b-a82b-5e410b5e33b4",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "3ec06f05-c74b-41cb-8c42-30f0747874cf",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "80434f5d-f467-4c6b-8dec-fd17db3f85df",
+       "isrcs": [
+        "GBAQT9400107"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "459ed88d-cb8a-4a34-885c-aa2c725646c4",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "80434f5d-f467-4c6b-8dec-fd17db3f85df",
+       "isrcs": [
+        "GBAQT9400107"
+       ]
+      },
+      {
+       "mbid": "13c3265d-df1f-4265-9272-c4eb1bc884ee",
+       "isrcs": [
+        "GBAQT9400108"
+       ]
+      },
+      {
+       "mbid": "51a0eb87-b3f0-4fd3-89da-72222e27068f",
+       "isrcs": [
+        "GBAQT9400109"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "5173e685-ae4a-4e05-a062-3594f64cf20b",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "80434f5d-f467-4c6b-8dec-fd17db3f85df",
+       "isrcs": [
+        "GBAQT9400107"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "74b5ac04-7afe-49e8-ae66-a207713890bd",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "80434f5d-f467-4c6b-8dec-fd17db3f85df",
+       "isrcs": [
+        "GBAQT9400107"
+       ]
+      },
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "80434f5d-f467-4c6b-8dec-fd17db3f85df",
+       "isrcs": [
+        "GBAQT9400107"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "7a49ead4-059e-4260-a20c-50d95ea43dbc",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "145f5c43-0ac2-4886-8b09-63d0e92ded5d",
+       "isrcs": [
+        "GBAQT9400066"
+       ]
+      },
+      {
+       "mbid": "13c3265d-df1f-4265-9272-c4eb1bc884ee",
+       "isrcs": [
+        "GBAQT9400108"
+       ]
+      },
+      {
+       "mbid": "51a0eb87-b3f0-4fd3-89da-72222e27068f",
+       "isrcs": [
+        "GBAQT9400109"
+       ]
+      },
+      {
+       "mbid": "e97f805a-ab48-4c52-855e-07049142113d",
+       "isrcs": [
+        "GBAQT9400061"
+       ]
+      },
+      {
+       "mbid": "9170054a-8a9b-4f33-b31f-4ed58347154a",
+       "isrcs": [
+        "GBAQT9400063"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "bd7d2d2b-f653-4833-afc5-27ff28dac9c1",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "1c303ad7-a2be-4afe-b6c8-d03872499be6",
+       "isrcs": [
+        "GBAMY9600109",
+        "GBAQT9400104"
+       ]
+      },
+      {
+       "mbid": "13c3265d-df1f-4265-9272-c4eb1bc884ee",
+       "isrcs": [
+        "GBAQT9400108"
+       ]
+      },
+      {
+       "mbid": "51a0eb87-b3f0-4fd3-89da-72222e27068f",
+       "isrcs": [
+        "GBAQT9400109"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "dde44338-01d2-47d9-b6ad-b3178cdeb1ff",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "11784391-d0bf-458d-b0e9-ccfe9ebf1bd4",
+       "isrcs": []
+      },
+      {
+       "mbid": "4582f3b6-0047-493f-b901-c07fa95d1778",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "efa76db9-e7d2-4ea7-932f-2816d8ca7f28",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "362bff15-29d6-4cd9-8431-d8d08343dff1",
+       "isrcs": [
+        "GBAQT9400106"
+       ]
+      },
+      {
+       "mbid": "80434f5d-f467-4c6b-8dec-fd17db3f85df",
+       "isrcs": [
+        "GBAQT9400107"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "952da497-62da-4409-ae43-9f822e200927",
+   "title": "Cowboys",
+   "editions": [
+    {
+     "mbid": "0f710c8f-5ea6-4424-9add-584d3f527675",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "d2d7e3b5-c49e-49f3-b442-ccdc1430a262",
+       "isrcs": [
+        "GBARA9700035"
+       ]
+      },
+      {
+       "mbid": "6233bc5f-9528-44b5-a20a-f198b257c7dd",
+       "isrcs": [
+        "GBARA9700036"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "a0441860-63d1-3414-847f-fe58bb90ea9f",
+   "title": "Only You",
+   "editions": [
+    {
+     "mbid": "7fefe5cc-0be8-459b-a3b7-22d7ed10467e",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "13907357-a605-449a-9726-2fe11cf5a83e",
+       "isrcs": []
+      },
+      {
+       "mbid": "bd8b34c2-af67-4e5b-b4b8-424f9447cd9d",
+       "isrcs": []
+      },
+      {
+       "mbid": "54c05e18-dc9c-488a-ab78-0cda84bb9ca7",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "93437d42-18a3-458c-972a-c7bc871cf1dc",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e2cfa01b-74bb-445d-a1a2-01a42ed39f6b",
+       "isrcs": []
+      },
+      {
+       "mbid": "e02dbdeb-7077-425a-8c71-2fdeed3575b7",
+       "isrcs": []
+      },
+      {
+       "mbid": "f462b2fd-6eb9-46ca-a0d6-7c53a2f53a64",
+       "isrcs": []
+      },
+      {
+       "mbid": "073e2d76-5c7e-43b2-aef1-2512cda7f8a3",
+       "isrcs": [
+        "GBARA9700067"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "d27ab811-468f-4dff-9132-f28f7eaf49d4",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "e2cfa01b-74bb-445d-a1a2-01a42ed39f6b",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "193a4b3e-1dd0-31e0-9323-e3fc5b1b448b",
+   "title": "All Mine",
+   "editions": [
+    {
+     "mbid": "50f46351-2efa-4633-8fda-af8440f12b9b",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4e22d68a-19a2-4fd4-a29f-36bc05fc81fe",
+       "isrcs": [
+        "GBARA9700034"
+       ]
+      },
+      {
+       "mbid": "d2d7e3b5-c49e-49f3-b442-ccdc1430a262",
+       "isrcs": [
+        "GBARA9700035"
+       ]
+      },
+      {
+       "mbid": "6233bc5f-9528-44b5-a20a-f198b257c7dd",
+       "isrcs": [
+        "GBARA9700036"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "8b7e07f8-b2d9-4428-b592-9d9fe41969c6",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4e22d68a-19a2-4fd4-a29f-36bc05fc81fe",
+       "isrcs": [
+        "GBARA9700034"
+       ]
+      },
+      {
+       "mbid": "d2d7e3b5-c49e-49f3-b442-ccdc1430a262",
+       "isrcs": [
+        "GBARA9700035"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "5b4a33d5-7381-4b83-8ca9-b5bb0cff564a",
+   "title": "All Mine",
+   "editions": [
+    {
+     "mbid": "2bb30bdc-8558-47e3-8a33-502aca35a2b7",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4e22d68a-19a2-4fd4-a29f-36bc05fc81fe",
+       "isrcs": [
+        "GBARA9700034"
+       ]
+      },
+      {
+       "mbid": "2686c8e1-4bd0-4bae-8563-0ff435783215",
+       "isrcs": [
+        "GBUM72200761"
+       ]
+      },
+      {
+       "mbid": "d2d7e3b5-c49e-49f3-b442-ccdc1430a262",
+       "isrcs": [
+        "GBARA9700035"
+       ]
+      },
+      {
+       "mbid": "6233bc5f-9528-44b5-a20a-f198b257c7dd",
+       "isrcs": [
+        "GBARA9700036"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "3ac98669-3237-312d-b044-8e211abf3501",
+   "title": "Over",
+   "editions": [
+    {
+     "mbid": "5c8c8b39-09bd-413c-b41a-980f112122a0",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c4310335-9213-46a6-af81-b86fcb1975ed",
+       "isrcs": [
+        "GBARA9700061"
+       ]
+      },
+      {
+       "mbid": "8d634edd-bc84-46a2-94ec-aa503498718a",
+       "isrcs": []
+      },
+      {
+       "mbid": "f408fb85-dde5-452d-a034-be0e65989366",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "8fb65ed7-728a-4c78-bc03-c24f44905877",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c4310335-9213-46a6-af81-b86fcb1975ed",
+       "isrcs": [
+        "GBARA9700061"
+       ]
+      },
+      {
+       "mbid": "20dfcfd5-32c8-4c53-95c5-5d50105afe17",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "9661a795-531c-474f-b987-7cf1dd19da00",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c4310335-9213-46a6-af81-b86fcb1975ed",
+       "isrcs": [
+        "GBARA9700061"
+       ]
+      },
+      {
+       "mbid": "20dfcfd5-32c8-4c53-95c5-5d50105afe17",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "fc4a931d-f2ee-4c4f-9e49-c56a675986d5",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c4310335-9213-46a6-af81-b86fcb1975ed",
+       "isrcs": [
+        "GBARA9700061"
+       ]
+      },
+      {
+       "mbid": "20dfcfd5-32c8-4c53-95c5-5d50105afe17",
+       "isrcs": []
+      },
+      {
+       "mbid": "0b218788-121c-47b5-8a07-b4a9a8141947",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "e3342ab7-cd75-4d58-b176-86579fe0e090",
+   "title": "Magic Doors",
+   "editions": [
+    {
+     "mbid": "e1c03e66-9671-436c-bbc3-4c814138d786",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "f85051e0-4620-4124-94c3-aae49b1ebc48",
+       "isrcs": []
+      },
+      {
+       "mbid": "9b9665a7-e39e-4894-a3ef-f14684787506",
+       "isrcs": []
+      },
+      {
+       "mbid": "d3ccbdcd-e400-4bf3-bf2d-24235d5f23ac",
+       "isrcs": []
+      },
+      {
+       "mbid": "2f636e2f-6233-4f30-a86d-271bf7aae658",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "1d1e0002-95ed-3c2c-b206-7bea41ef557d",
+   "title": "Machine Gun",
+   "editions": [
+    {
+     "mbid": "b71926ec-5813-4fa4-9372-0c07154a07af",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "097340ae-3190-4c13-bd06-5d6b58196bd5",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "eec7bf82-d75e-35eb-8e87-0bc3a1840a82",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "097340ae-3190-4c13-bd06-5d6b58196bd5",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "163339ab-813b-3d29-bba8-e1d5acf63cab",
+   "title": "Third",
+   "editions": [
+    {
+     "mbid": "064fa38d-810d-4a8a-a6a4-55d6fd1da34b",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "0c12545e-5040-3f2e-b4c9-80f982b14254",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "18256dad-c3fe-4d39-beb7-ec33421c250b",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      },
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      },
+      {
+       "mbid": "097340ae-3190-4c13-bd06-5d6b58196bd5",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "5a085d49-e955-3e7f-888a-955cce6b7890",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "5add188d-8cf4-4864-ae76-629f618eae16",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      },
+      {
+       "mbid": "871865ed-9a60-4b32-9f93-a1801b76b522",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "78f3870c-dee3-4566-8bd9-ac4fe32fc393",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "7da10d5d-4021-4bc5-bd30-0436b0307aa8",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      },
+      {
+       "mbid": "567e6193-339c-41a5-ac32-55c174e157cd",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "7da5c6a7-bd8b-3f85-89a7-577283388083",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "930345b1-a970-3495-a1dd-55147bea7741",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9f05d3c7-d1b1-4e2e-9130-f66a9df43997",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      },
+      {
+       "mbid": "657ca490-251d-4e25-a74f-7dc2a21c5ce1",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "bc18c59d-6131-4e18-aff5-4600ea7f3d7d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "cae2ac10-057f-3d29-9e9d-1ba58e67ab9f",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "d68e178c-4c97-4a03-98df-d9faf26e2236",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "daa9710c-2e71-497f-8a02-10d9b611c370",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "097340ae-3190-4c13-bd06-5d6b58196bd5",
+       "isrcs": []
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e1e5386a-5616-460b-bb79-0d366537b7fb",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e4f5a41f-b8b6-4d30-8baf-0db1478dc487",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "f5bfccaf-1816-427a-b03d-b41c8ac155c5",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "83b416db-4ee1-4560-a3b3-52fd453eb285",
+       "isrcs": [
+        "GBUM70801427"
+       ]
+      },
+      {
+       "mbid": "82f19edd-6d1c-415e-9fe2-876435663cef",
+       "isrcs": [
+        "GBUM70801428"
+       ]
+      },
+      {
+       "mbid": "9258baf5-052d-4a22-a68a-2311008b6f91",
+       "isrcs": [
+        "GBUM70801436"
+       ]
+      },
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "8855e971-0570-4d20-9258-4b7ed7441f10",
+       "isrcs": [
+        "GBUM70801438"
+       ]
+      },
+      {
+       "mbid": "b00efba7-0d88-478c-97ad-257aef64cc27",
+       "isrcs": [
+        "GBUM70801440"
+       ]
+      },
+      {
+       "mbid": "59e5540f-1c4b-4df2-ae16-c32982853895",
+       "isrcs": [
+        "GBUM70801441"
+       ]
+      },
+      {
+       "mbid": "a4eaf9db-a183-4b55-8ea0-05a18f18368f",
+       "isrcs": [
+        "GBUM70801442"
+       ]
+      },
+      {
+       "mbid": "5bd5990e-2f7e-44d8-8e36-4c5a346f197e",
+       "isrcs": [
+        "GBUM70801445"
+       ]
+      },
+      {
+       "mbid": "92748d27-3f5a-4991-8693-fabf9c84edf3",
+       "isrcs": [
+        "GBUM70801443"
+       ]
+      },
+      {
+       "mbid": "2eaca226-0ee9-4312-a7e2-29eb2652cc6c",
+       "isrcs": [
+        "GBUM70801444"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "82fc8d35-3146-4d5e-bd8b-d97f1ae7693c",
+   "title": "The Rip",
+   "editions": [
+    {
+     "mbid": "0c572f13-75c9-4a33-b52e-e5180e0de157",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "9ed2d445-7f57-4ab8-a970-5c87ffaa33b7",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "2b44b4ad-5d95-46a6-b3f5-da72c2dd10e8",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "a7ed3365-affa-4331-8bd9-1ececaf9ae77",
+       "isrcs": [
+        "GBUM70801437"
+       ]
+      },
+      {
+       "mbid": "777bf67e-ff24-4972-ae8c-3224eefdbba7",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "a87ef716-4659-4ecb-8941-16fb73c1f21f",
+   "title": "Chase the Tear",
+   "editions": [
+    {
+     "mbid": "2fa59afe-b6a4-4f60-a311-4cf11b393e25",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "0b0c8490-d215-46dd-a5f0-a30cdefb2eac",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "2fd31328-5600-4fdf-8c73-236ad3499631",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "0b0c8490-d215-46dd-a5f0-a30cdefb2eac",
+       "isrcs": []
+      },
+      {
+       "mbid": "da19d2d9-9198-434a-b544-b22a8a060f65",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "d45da67a-e3c5-3c6d-985e-03d421cfd624",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "0b0c8490-d215-46dd-a5f0-a30cdefb2eac",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "8029f958-4fa7-4bf5-841c-9fe06c07cf82",
+   "title": "SOS",
+   "editions": [
+    {
+     "mbid": "81177df2-e055-422b-b9ab-1dc70c48c3fb",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "ea36caf6-c851-4448-b48f-37d7a4836f98",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "ba4ac457-356c-4da9-b12d-874f5e719244",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "ea36caf6-c851-4448-b48f-37d7a4836f98",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "ea24ae27-3cb0-4a46-a085-5e3b94c966b0",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "ea36caf6-c851-4448-b48f-37d7a4836f98",
+       "isrcs": []
+      },
+      {
+       "mbid": "02999e5c-075f-47c4-a24f-f26fbfc447c5",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "35a4f900-60c1-3f79-8cdb-193941b78768",
+   "title": "The New Wave",
+   "editions": [
+    {
+     "mbid": "36ce0141-1427-4410-a518-2f14fc151130",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "d06eb3be-44fa-4703-b12f-10903246479b",
+       "isrcs": []
+      },
+      {
+       "mbid": "d54a68ab-929a-461b-98bc-40168bfc1d73",
+       "isrcs": []
+      },
+      {
+       "mbid": "d3cf1fff-e63c-4b5d-af26-8b9f177ca7a1",
+       "isrcs": []
+      },
+      {
+       "mbid": "a08473a1-e622-49cc-bb97-65f813429025",
+       "isrcs": [
+        "FRS949600520",
+        "GBDUW0600017"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "95d9f3ef-c935-4a7b-b9cb-36aea57b6bae",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "d06eb3be-44fa-4703-b12f-10903246479b",
+       "isrcs": []
+      },
+      {
+       "mbid": "d54a68ab-929a-461b-98bc-40168bfc1d73",
+       "isrcs": []
+      },
+      {
+       "mbid": "d3cf1fff-e63c-4b5d-af26-8b9f177ca7a1",
+       "isrcs": []
+      },
+      {
+       "mbid": "a08473a1-e622-49cc-bb97-65f813429025",
+       "isrcs": [
+        "FRS949600520",
+        "GBDUW0600017"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "da158a6b-abfe-4206-8dc3-9f1bcf3bc3f8",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "d54a68ab-929a-461b-98bc-40168bfc1d73",
+       "isrcs": []
+      },
+      {
+       "mbid": "d06eb3be-44fa-4703-b12f-10903246479b",
+       "isrcs": []
+      },
+      {
+       "mbid": "d3cf1fff-e63c-4b5d-af26-8b9f177ca7a1",
+       "isrcs": []
+      },
+      {
+       "mbid": "a08473a1-e622-49cc-bb97-65f813429025",
+       "isrcs": [
+        "FRS949600520",
+        "GBDUW0600017"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "d86198a6-29e6-3748-93a8-1a4a0fadef57",
+   "title": "Da Funk",
+   "editions": [
+    {
+     "mbid": "19ead05f-a1e0-4c39-a34c-3ca162ff46d5",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "3707ab0d-ff31-46a2-9056-d094bae44c3e",
+       "isrcs": [
+        "FRS949600460",
+        "GBDUW0600037"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "29437381-b2f4-4d1f-9cc7-e64d186abb99",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1315c3ca-b107-42cc-a03e-62781d51fdc6",
+       "isrcs": [
+        "FRS949600412"
+       ]
+      },
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "650cac61-2536-4626-bc93-543d6856e1b9",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      },
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "7492612f-50b4-4a8c-bbd0-295e4561c4bf",
+     "status": null,
+     "recordings": [
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "834f8c7d-1397-4706-8b46-19c9ac1142b9",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1315c3ca-b107-42cc-a03e-62781d51fdc6",
+       "isrcs": [
+        "FRS949600412"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      },
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "a25ea368-63ba-458b-a5c7-ccf1b37d45c8",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      },
+      {
+       "mbid": "9f88f1c3-6451-4d73-b0d6-e8546e9c7005",
+       "isrcs": [
+        "GBDUW0600048"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "b1f35e3e-0d4f-451f-93c7-1eb8809b9aa5",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "bfbd9b4b-12c6-405d-9681-45cb71057985",
+       "isrcs": [
+        "FRS949600450",
+        "GBDUW0600010"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "bff2b84a-9b27-4793-914f-82c863608644",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      },
+      {
+       "mbid": "9f88f1c3-6451-4d73-b0d6-e8546e9c7005",
+       "isrcs": [
+        "GBDUW0600048"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "c0024286-559c-473f-8afa-5fab4027b0ca",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "1d08676f-36d4-4569-8913-4d58d8eba32c",
+       "isrcs": []
+      },
+      {
+       "mbid": "9bbda409-4c5c-465c-a125-7cf898d0244c",
+       "isrcs": []
+      },
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "9f88f1c3-6451-4d73-b0d6-e8546e9c7005",
+       "isrcs": [
+        "GBDUW0600048"
+       ]
+      },
+      {
+       "mbid": "16838145-3033-49d4-a207-d7d7d6cd46e1",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "c5922184-c4e7-35df-bd1d-b198da677993",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1315c3ca-b107-42cc-a03e-62781d51fdc6",
+       "isrcs": [
+        "FRS949600412"
+       ]
+      },
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "ef991163-dcd3-4156-8051-a66c73bf3320",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "4cde50af-2c78-4202-b8d0-30c1d916db97",
+       "isrcs": [
+        "FRS949600410",
+        "FRZ111002044",
+        "GBDUW0600006"
+       ]
+      },
+      {
+       "mbid": "45f4b98b-7f34-45aa-b0fc-3824f6fda7ce",
+       "isrcs": [
+        "FRS949600540",
+        "GBDUW0600056"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "5b1c02ac-8608-3857-a9b6-62e056177d96",
+   "title": "Around the World",
+   "editions": [
+    {
+     "mbid": "0db87549-5001-4c22-b74b-ccc013af66e9",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "de114899-3074-4b2a-873a-98f0aea9f710",
+       "isrcs": [
+        "FRS949600443"
+       ]
+      },
+      {
+       "mbid": "844ea2fd-c12a-47cd-9dcc-873b9fe7a5c6",
+       "isrcs": [
+        "FRS949600444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "13289b10-653a-4ea3-b415-617e530c302c",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "734bc44e-53f5-4fe2-a32e-4c5bbe05605c",
+       "isrcs": [
+        "GBDUW0600057"
+       ]
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "1c0eaaf9-0852-4232-8dc1-e53597a9b441",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "51173793-df67-4171-947f-8379c556514a",
+       "isrcs": []
+      },
+      {
+       "mbid": "6659bfd7-d0b3-4585-98ff-a9aa0299e17a",
+       "isrcs": [
+        "GBDUW0600036"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      },
+      {
+       "mbid": "734bc44e-53f5-4fe2-a32e-4c5bbe05605c",
+       "isrcs": [
+        "GBDUW0600057"
+       ]
+      },
+      {
+       "mbid": "54f6a421-470e-4b22-b2d6-9b688eac8313",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "3d51ceaa-0504-40da-a0d8-4f3de1825874",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "6659bfd7-d0b3-4585-98ff-a9aa0299e17a",
+       "isrcs": [
+        "GBDUW0600036"
+       ]
+      },
+      {
+       "mbid": "95e7c4df-35c0-4008-9615-be41e2e3440f",
+       "isrcs": []
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "45289d18-8c96-4d59-9568-841ddc0641a1",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "6659bfd7-d0b3-4585-98ff-a9aa0299e17a",
+       "isrcs": [
+        "GBDUW0600036"
+       ]
+      },
+      {
+       "mbid": "844ea2fd-c12a-47cd-9dcc-873b9fe7a5c6",
+       "isrcs": [
+        "FRS949600444"
+       ]
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "4831c85e-dd92-445b-a19b-5e65e7d1ce16",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "51173793-df67-4171-947f-8379c556514a",
+       "isrcs": []
+      },
+      {
+       "mbid": "6659bfd7-d0b3-4585-98ff-a9aa0299e17a",
+       "isrcs": [
+        "GBDUW0600036"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "4b2bd4de-88ae-38d0-aee4-510870e8104b",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "734bc44e-53f5-4fe2-a32e-4c5bbe05605c",
+       "isrcs": [
+        "GBDUW0600057"
+       ]
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "525209da-17da-43dd-a66c-1f1934341ab5",
+       "isrcs": [
+        "GBDUW0600011"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "573cb521-d603-4b0e-85f9-c09e5491cf2f",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "734bc44e-53f5-4fe2-a32e-4c5bbe05605c",
+       "isrcs": [
+        "GBDUW0600057"
+       ]
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "525209da-17da-43dd-a66c-1f1934341ab5",
+       "isrcs": [
+        "GBDUW0600011"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "5ddf2fc2-7179-446b-8602-c9fdb226d1ca",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "734bc44e-53f5-4fe2-a32e-4c5bbe05605c",
+       "isrcs": [
+        "GBDUW0600057"
+       ]
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "525209da-17da-43dd-a66c-1f1934341ab5",
+       "isrcs": [
+        "GBDUW0600011"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "70f7b556-4caf-4b63-9be5-d8c3a8df43a7",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "7f8e0f94-8a2b-439b-b4fd-8805959392ed",
+       "isrcs": []
+      },
+      {
+       "mbid": "e74563a0-9dd0-4dee-acfc-9c1963de7cf5",
+       "isrcs": [
+        "FRS949600446"
+       ]
+      },
+      {
+       "mbid": "1db6972f-b1fb-40ce-ad8f-89c5a369a231",
+       "isrcs": [
+        "FRS949600447"
+       ]
+      },
+      {
+       "mbid": "b5e7719d-3985-4b9a-aadc-448178913749",
+       "isrcs": [
+        "FRS949600448"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "70fadbe0-b319-48f4-82ff-07b75409b71c",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "f89cf426-e728-4c4a-81ef-622409b3fd78",
+       "isrcs": [
+        "FRS949600445"
+       ]
+      },
+      {
+       "mbid": "e74563a0-9dd0-4dee-acfc-9c1963de7cf5",
+       "isrcs": [
+        "FRS949600446"
+       ]
+      },
+      {
+       "mbid": "1db6972f-b1fb-40ce-ad8f-89c5a369a231",
+       "isrcs": [
+        "FRS949600447"
+       ]
+      },
+      {
+       "mbid": "b5e7719d-3985-4b9a-aadc-448178913749",
+       "isrcs": [
+        "FRS949600448"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "794f26d0-e1e0-45f9-bb20-2acf6fe8eede",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "6659bfd7-d0b3-4585-98ff-a9aa0299e17a",
+       "isrcs": [
+        "GBDUW0600036"
+       ]
+      },
+      {
+       "mbid": "844ea2fd-c12a-47cd-9dcc-873b9fe7a5c6",
+       "isrcs": [
+        "FRS949600444"
+       ]
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "b8243e29-2672-4b60-8ae0-7f3e793a8a41",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "734bc44e-53f5-4fe2-a32e-4c5bbe05605c",
+       "isrcs": [
+        "GBDUW0600057"
+       ]
+      },
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "525209da-17da-43dd-a66c-1f1934341ab5",
+       "isrcs": [
+        "GBDUW0600011"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "b9b01380-b335-4b51-94f9-aea1762d4e78",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      },
+      {
+       "mbid": "525209da-17da-43dd-a66c-1f1934341ab5",
+       "isrcs": [
+        "GBDUW0600011"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "fbce1257-1bc3-4e67-ab48-51a7fbc4b427",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "7813d6e5-fe21-4cd0-8f8b-82b7c15662ae",
+       "isrcs": [
+        "FRS949600440",
+        "GBDUW0600009"
+       ]
+      },
+      {
+       "mbid": "7cf0d68e-d240-44d9-b377-ef5dfa340cfa",
+       "isrcs": [
+        "GBDUW0600035"
+       ]
+      },
+      {
+       "mbid": "525209da-17da-43dd-a66c-1f1934341ab5",
+       "isrcs": [
+        "GBDUW0600011"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "4a25766d-f1ab-30de-9599-e0e0920df0a4",
+   "title": "Revolution 909",
+   "editions": [
+    {
+     "mbid": "0149d352-f1f9-43aa-96e0-7d33bf27a711",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "0a6e234d-0c9d-41e0-bce7-5c0ca09befbd",
+       "isrcs": [
+        "FRS949600400",
+        "GBDUW0600005",
+        "GBDUW0600046"
+       ]
+      },
+      {
+       "mbid": "bdfc87af-aa1a-4f03-9e7a-1b388148a9bb",
+       "isrcs": [
+        "GBDUW0600044"
+       ]
+      },
+      {
+       "mbid": "c4d0a019-b324-4f95-8b3a-1041c849e604",
+       "isrcs": [
+        "FRS949600403",
+        "GBDUW0600047"
+       ]
+      },
+      {
+       "mbid": "8df063aa-5f25-4aa0-9a89-ba0b7d07a911",
+       "isrcs": [
+        "FRS949600404",
+        "GBDUW0600045"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "0ca00790-a695-4c71-93d9-79b60bd7fc26",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "bdfc87af-aa1a-4f03-9e7a-1b388148a9bb",
+       "isrcs": [
+        "GBDUW0600044"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "0f420105-6a3c-481a-a6ef-152834c5dcc1",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "bdfc87af-aa1a-4f03-9e7a-1b388148a9bb",
+       "isrcs": [
+        "GBDUW0600044"
+       ]
+      },
+      {
+       "mbid": "c4d0a019-b324-4f95-8b3a-1041c849e604",
+       "isrcs": [
+        "FRS949600403",
+        "GBDUW0600047"
+       ]
+      },
+      {
+       "mbid": "8df063aa-5f25-4aa0-9a89-ba0b7d07a911",
+       "isrcs": [
+        "FRS949600404",
+        "GBDUW0600045"
+       ]
+      },
+      {
+       "mbid": "0a6e234d-0c9d-41e0-bce7-5c0ca09befbd",
+       "isrcs": [
+        "FRS949600400",
+        "GBDUW0600005",
+        "GBDUW0600046"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "2de0f135-4ddb-4844-9314-905198c0cea4",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "0a6e234d-0c9d-41e0-bce7-5c0ca09befbd",
+       "isrcs": [
+        "FRS949600400",
+        "GBDUW0600005",
+        "GBDUW0600046"
+       ]
+      },
+      {
+       "mbid": "c4d0a019-b324-4f95-8b3a-1041c849e604",
+       "isrcs": [
+        "FRS949600403",
+        "GBDUW0600047"
+       ]
+      },
+      {
+       "mbid": "8df063aa-5f25-4aa0-9a89-ba0b7d07a911",
+       "isrcs": [
+        "FRS949600404",
+        "GBDUW0600045"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "bd8e712f-57c1-4590-a71b-792d84fb0a47",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "bdfc87af-aa1a-4f03-9e7a-1b388148a9bb",
+       "isrcs": [
+        "GBDUW0600044"
+       ]
+      },
+      {
+       "mbid": "c4d0a019-b324-4f95-8b3a-1041c849e604",
+       "isrcs": [
+        "FRS949600403",
+        "GBDUW0600047"
+       ]
+      },
+      {
+       "mbid": "8df063aa-5f25-4aa0-9a89-ba0b7d07a911",
+       "isrcs": [
+        "FRS949600404",
+        "GBDUW0600045"
+       ]
+      },
+      {
+       "mbid": "0a6e234d-0c9d-41e0-bce7-5c0ca09befbd",
+       "isrcs": [
+        "FRS949600400",
+        "GBDUW0600005",
+        "GBDUW0600046"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "f311fef2-3c11-44cc-b2dc-c4cc7860a640",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "bdfc87af-aa1a-4f03-9e7a-1b388148a9bb",
+       "isrcs": [
+        "GBDUW0600044"
+       ]
+      },
+      {
+       "mbid": "c4d0a019-b324-4f95-8b3a-1041c849e604",
+       "isrcs": [
+        "FRS949600403",
+        "GBDUW0600047"
+       ]
+      },
+      {
+       "mbid": "8df063aa-5f25-4aa0-9a89-ba0b7d07a911",
+       "isrcs": [
+        "FRS949600404",
+        "GBDUW0600045"
+       ]
+      },
+      {
+       "mbid": "0a6e234d-0c9d-41e0-bce7-5c0ca09befbd",
+       "isrcs": [
+        "FRS949600400",
+        "GBDUW0600005",
+        "GBDUW0600046"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "af768bc7-cd05-342a-8e9f-c53b3881278f",
+   "title": "Indo Silver Club",
+   "editions": [
+    {
+     "mbid": "8a59a411-86a4-45cc-8f29-77f83e1d66ae",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "8a6501a2-10e2-4d30-8625-08d3260ba421",
+       "isrcs": []
+      },
+      {
+       "mbid": "4b760480-5dff-4992-b77c-4a881cf72ecd",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "73569814-a0a7-3969-be46-b88de57297b9",
+   "title": "Assault",
+   "editions": [
+    {
+     "mbid": "a634c24c-811b-4048-a0b3-fc833121bbb8",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "684837fb-bcc6-4711-80bc-d8d41845f4e5",
+       "isrcs": []
+      },
+      {
+       "mbid": "a08473a1-e622-49cc-bb97-65f813429025",
+       "isrcs": [
+        "FRS949600520",
+        "GBDUW0600017"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "8dfbd2f1-be5d-3b42-9d7a-8ab3a6d66cb6",
+   "title": "Burnin’",
+   "editions": [
+    {
+     "mbid": "18c076aa-e1be-4634-84d3-01f0c0bb9c1d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "6373694b-2bae-4bc1-89a3-8545441304c9",
+       "isrcs": [
+        "GBDUW0600041"
+       ]
+      },
+      {
+       "mbid": "d94be8de-7431-4a9b-9d13-d238c55a9f01",
+       "isrcs": [
+        "GBDUW0600038"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "35596697-ef1e-4792-9e21-8aa36ecbed26",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "6373694b-2bae-4bc1-89a3-8545441304c9",
+       "isrcs": [
+        "GBDUW0600041"
+       ]
+      },
+      {
+       "mbid": "d94be8de-7431-4a9b-9d13-d238c55a9f01",
+       "isrcs": [
+        "GBDUW0600038"
+       ]
+      },
+      {
+       "mbid": "b858796c-2032-433f-9e25-8e50fc51fdd3",
+       "isrcs": [
+        "GBDUW0600039"
+       ]
+      },
+      {
+       "mbid": "5fceebe4-d425-4e83-85d0-b4ee61b8d8d6",
+       "isrcs": [
+        "FRS949600500",
+        "GBDUW0600015",
+        "GBDUW0600040"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "488c4b44-4738-4a9d-b19c-259b8aa47e17",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "6373694b-2bae-4bc1-89a3-8545441304c9",
+       "isrcs": [
+        "GBDUW0600041"
+       ]
+      },
+      {
+       "mbid": "d94be8de-7431-4a9b-9d13-d238c55a9f01",
+       "isrcs": [
+        "GBDUW0600038"
+       ]
+      },
+      {
+       "mbid": "b858796c-2032-433f-9e25-8e50fc51fdd3",
+       "isrcs": [
+        "GBDUW0600039"
+       ]
+      },
+      {
+       "mbid": "5fceebe4-d425-4e83-85d0-b4ee61b8d8d6",
+       "isrcs": [
+        "FRS949600500",
+        "GBDUW0600015",
+        "GBDUW0600040"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "618cdbab-0357-4514-8eab-a92f751302e2",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "d94be8de-7431-4a9b-9d13-d238c55a9f01",
+       "isrcs": [
+        "GBDUW0600038"
+       ]
+      },
+      {
+       "mbid": "22fe0d74-f560-4a35-9540-f138eefd6c4c",
+       "isrcs": []
+      },
+      {
+       "mbid": "5fceebe4-d425-4e83-85d0-b4ee61b8d8d6",
+       "isrcs": [
+        "FRS949600500",
+        "GBDUW0600015",
+        "GBDUW0600040"
+       ]
+      },
+      {
+       "mbid": "f052ac7b-1270-4119-9a06-b9060141d858",
+       "isrcs": [
+        "GBAYE1310761"
+       ]
+      },
+      {
+       "mbid": "15ee3838-811a-4529-a8a5-bf3085174454",
+       "isrcs": [
+        "GBAYE1335017"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "fc312bd8-511a-4b49-9250-f60ad2fe0bcf",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "1c74188a-f7ad-4a61-83a7-2af4e6724136",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "1f63ade9-c584-37c3-84b2-930a7d5c353b",
+   "title": "One More Time",
+   "editions": [
+    {
+     "mbid": "12d715cf-d1e0-44f3-85f6-051596600580",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "245618b6-5dd6-479e-8f1d-e584106fd7d5",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      },
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "25a46488-9d7f-4b36-95fe-814e0def0516",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "1611a62a-bc3b-491f-bc56-75565ca42c38",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "46bd2d1f-f522-4e00-bf56-46700094db8c",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "4a9e65ec-c732-40a2-b824-4ccb49751717",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "60fa767a-d85d-4991-82bc-4294e0b11ae7",
+       "isrcs": [
+        "GBAHT1305744",
+        "GBDUW0000053"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "5c64e515-570b-4f02-9225-9f7c0a136b74",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "611f526a-5800-44f1-9be5-153de0014802",
+     "status": "Bootleg",
+     "recordings": [
+      {
+       "mbid": "12794ad0-e986-49a8-81e5-fcf2f2042e36",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "7a404e0f-d315-4811-9538-797031e9d068",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      },
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "8ae7c475-9a73-4993-bf14-997dab05d6b7",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      },
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "8fe56f1f-dc12-4b13-963a-671ae3491d28",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      },
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "922d6902-9e4c-42e0-9f86-6b15228ef354",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9870d9d3-1fd9-4c2b-af74-3db96de0c6fe",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "1611a62a-bc3b-491f-bc56-75565ca42c38",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "a7dc5abd-3347-4d06-b158-9114d50e1f6f",
+     "status": "Bootleg",
+     "recordings": [
+      {
+       "mbid": "c08d73f4-298b-4d63-825c-13c332683ac2",
+       "isrcs": []
+      },
+      {
+       "mbid": "7215a360-a4bd-4f24-b5e9-04753178003d",
+       "isrcs": []
+      },
+      {
+       "mbid": "60fa767a-d85d-4991-82bc-4294e0b11ae7",
+       "isrcs": [
+        "GBAHT1305744",
+        "GBDUW0000053"
+       ]
+      },
+      {
+       "mbid": "95c84ddd-d6ed-46b8-aaef-2d36df2033e2",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "b538bccd-7a4f-442a-bcbc-b5d971f2bfec",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "870d75e9-75bb-4343-9767-76b1a0b43d93",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "b5450c6f-c1bb-4b7c-a78e-9d961e456764",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "870d75e9-75bb-4343-9767-76b1a0b43d93",
+       "isrcs": []
+      },
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "7ce4a656-b6b3-4b51-9b8e-497a48007850",
+       "isrcs": []
+      },
+      {
+       "mbid": "977f337a-b60b-4f07-9e28-bc87d0fa4234",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "bd324e9a-85d4-4dea-b401-209b80405b47",
+     "status": "Bootleg",
+     "recordings": [
+      {
+       "mbid": "c08d73f4-298b-4d63-825c-13c332683ac2",
+       "isrcs": []
+      },
+      {
+       "mbid": "7215a360-a4bd-4f24-b5e9-04753178003d",
+       "isrcs": []
+      },
+      {
+       "mbid": "60fa767a-d85d-4991-82bc-4294e0b11ae7",
+       "isrcs": [
+        "GBAHT1305744",
+        "GBDUW0000053"
+       ]
+      },
+      {
+       "mbid": "95c84ddd-d6ed-46b8-aaef-2d36df2033e2",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "c6b3977c-b218-4395-933d-f79e175309d7",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "ced02ebb-fb41-4f60-90ed-65808fc1f0ac",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "1611a62a-bc3b-491f-bc56-75565ca42c38",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "d76a6de0-edb7-420d-8966-3964908b7826",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e482bad7-cf58-41ac-9a4d-7fa67ff9c61d",
+     "status": "Bootleg",
+     "recordings": [
+      {
+       "mbid": "c08d73f4-298b-4d63-825c-13c332683ac2",
+       "isrcs": []
+      },
+      {
+       "mbid": "7215a360-a4bd-4f24-b5e9-04753178003d",
+       "isrcs": []
+      },
+      {
+       "mbid": "60fa767a-d85d-4991-82bc-4294e0b11ae7",
+       "isrcs": [
+        "GBAHT1305744",
+        "GBDUW0000053"
+       ]
+      },
+      {
+       "mbid": "95c84ddd-d6ed-46b8-aaef-2d36df2033e2",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "e5bee24a-5ca8-4e96-94b4-509cc15fc73e",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      },
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      },
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      },
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e72307a5-b55f-4293-a792-7ce4a6f35e4e",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "c3c3b281-5943-4c7d-bd1c-69d877277714",
+       "isrcs": [
+        "GBDUW0000054"
+       ]
+      },
+      {
+       "mbid": "9dbdc948-790e-4b96-b5f0-7067ee724ae7",
+       "isrcs": [
+        "GBDUW0000050"
+       ]
+      },
+      {
+       "mbid": "38523c69-718a-40ef-872c-422c86fc74ac",
+       "isrcs": [
+        "GBDUW0000051"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "edafa5b4-90d5-4e9a-a13c-2d90af069ffc",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "dd4c53e0-90a4-4b47-a1d4-ef1506cf7cae",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "c265ac4b-aa80-3f8b-83f7-47b81d8175c0",
+   "title": "Aerodynamic",
+   "editions": [
+    {
+     "mbid": "072e7c80-cf82-3f36-821d-ea41d6dd8742",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "29b45fae-fc32-43c0-ab74-052842458315",
+       "isrcs": [
+        "GBDUW0000057"
+       ]
+      },
+      {
+       "mbid": "e36a5702-459a-49e7-8a5b-4822f49f7923",
+       "isrcs": [
+        "GBDUW0100002"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "45c54505-919c-4473-a149-ed7ab1b7701d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "29b45fae-fc32-43c0-ab74-052842458315",
+       "isrcs": [
+        "GBDUW0000057"
+       ]
+      },
+      {
+       "mbid": "e36a5702-459a-49e7-8a5b-4822f49f7923",
+       "isrcs": [
+        "GBDUW0100002"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9746583c-df49-48d7-9142-3d48ed4a6d31",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "29b45fae-fc32-43c0-ab74-052842458315",
+       "isrcs": [
+        "GBDUW0000057"
+       ]
+      },
+      {
+       "mbid": "e36a5702-459a-49e7-8a5b-4822f49f7923",
+       "isrcs": [
+        "GBDUW0100002"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "f95709b8-0023-4d67-a000-941fef0a78fd",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "29b45fae-fc32-43c0-ab74-052842458315",
+       "isrcs": [
+        "GBDUW0000057"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "f9a01839-8bb2-42f5-8cff-3eca10b4e227",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "97414e77-d4ae-4c25-a7d9-efee274aef43",
+       "isrcs": []
+      },
+      {
+       "mbid": "e36a5702-459a-49e7-8a5b-4822f49f7923",
+       "isrcs": [
+        "GBDUW0100002"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "fa4fdcb2-ce5a-4ab3-a215-d20ea19640a5",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "a907cace-47d9-4e5c-81b2-a8bc5ed04a2c",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "3888f64b-f8ce-3e3d-a2f7-23d83697f43d",
+   "title": "Digital Love",
+   "editions": [
+    {
+     "mbid": "27de075e-87df-4b93-baf8-7620863c4016",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "e76a9d91-498f-4c3d-ab5e-ff9c62f22ab8",
+       "isrcs": [
+        "GBDUW0100003"
+       ]
+      },
+      {
+       "mbid": "15f16efc-8762-4151-95ab-c12d06268640",
+       "isrcs": [
+        "GBDUW0000058"
+       ]
+      },
+      {
+       "mbid": "397d41cc-d0f0-47e6-8154-6f2ed4dccf80",
+       "isrcs": [
+        "GBDUW0100004"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "46937ece-a947-40eb-8c83-c8cd5d375bdd",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e76a9d91-498f-4c3d-ab5e-ff9c62f22ab8",
+       "isrcs": [
+        "GBDUW0100003"
+       ]
+      },
+      {
+       "mbid": "8c896057-b145-4076-8dea-89684a35ee11",
+       "isrcs": [
+        "GBDUW0000058"
+       ]
+      },
+      {
+       "mbid": "397d41cc-d0f0-47e6-8154-6f2ed4dccf80",
+       "isrcs": [
+        "GBDUW0100004"
+       ]
+      },
+      {
+       "mbid": "29b45fae-fc32-43c0-ab74-052842458315",
+       "isrcs": [
+        "GBDUW0000057"
+       ]
+      },
+      {
+       "mbid": "e36a5702-459a-49e7-8a5b-4822f49f7923",
+       "isrcs": [
+        "GBDUW0100002"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "59a4dec5-b7c8-4f14-b2ef-a06ea86bf413",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e76a9d91-498f-4c3d-ab5e-ff9c62f22ab8",
+       "isrcs": [
+        "GBDUW0100003"
+       ]
+      },
+      {
+       "mbid": "a9cf616a-de6d-4a6f-a3ba-67a582637cb6",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "5f2eb3e5-f703-4fe6-b8b1-802b42ceedc3",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "55676fbe-d22a-4112-8ed9-01a2055bc99c",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "610299a4-f9e4-3d54-8cf3-43e08f8467cb",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e76a9d91-498f-4c3d-ab5e-ff9c62f22ab8",
+       "isrcs": [
+        "GBDUW0100003"
+       ]
+      },
+      {
+       "mbid": "8c896057-b145-4076-8dea-89684a35ee11",
+       "isrcs": [
+        "GBDUW0000058"
+       ]
+      },
+      {
+       "mbid": "397d41cc-d0f0-47e6-8154-6f2ed4dccf80",
+       "isrcs": [
+        "GBDUW0100004"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "61fbc6c9-42cd-445f-affa-790c9887ab45",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e76a9d91-498f-4c3d-ab5e-ff9c62f22ab8",
+       "isrcs": [
+        "GBDUW0100003"
+       ]
+      },
+      {
+       "mbid": "8c896057-b145-4076-8dea-89684a35ee11",
+       "isrcs": [
+        "GBDUW0000058"
+       ]
+      },
+      {
+       "mbid": "397d41cc-d0f0-47e6-8154-6f2ed4dccf80",
+       "isrcs": [
+        "GBDUW0100004"
+       ]
+      },
+      {
+       "mbid": "e36a5702-459a-49e7-8a5b-4822f49f7923",
+       "isrcs": [
+        "GBDUW0100002"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "70b08b7b-9d5e-4e35-813a-7d3549b28e5f",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "2a35b2ee-8de2-4cc7-a584-3476a93ba7fd",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "770dfe00-fcb7-45d2-b93a-fbe1a0d392aa",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e76a9d91-498f-4c3d-ab5e-ff9c62f22ab8",
+       "isrcs": [
+        "GBDUW0100003"
+       ]
+      },
+      {
+       "mbid": "8c896057-b145-4076-8dea-89684a35ee11",
+       "isrcs": [
+        "GBDUW0000058"
+       ]
+      },
+      {
+       "mbid": "397d41cc-d0f0-47e6-8154-6f2ed4dccf80",
+       "isrcs": [
+        "GBDUW0100004"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9432447c-e311-442e-a4f9-1fd3b3d2c48a",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "15f16efc-8762-4151-95ab-c12d06268640",
+       "isrcs": [
+        "GBDUW0000058"
+       ]
+      },
+      {
+       "mbid": "397d41cc-d0f0-47e6-8154-6f2ed4dccf80",
+       "isrcs": [
+        "GBDUW0100004"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9b7ea30b-cfc1-44f0-9c69-44ab73dac719",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "eafe4cd0-a526-4ce1-9af4-936c5f0f3759",
+       "isrcs": []
+      },
+      {
+       "mbid": "8bca2404-e209-4915-baf8-b4d2633eafb8",
+       "isrcs": [
+        "GBDUW0100008"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "b2c8af77-231a-46c3-b781-5bbd0b1ac7e9",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "397d41cc-d0f0-47e6-8154-6f2ed4dccf80",
+       "isrcs": [
+        "GBDUW0100004"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "c96f34e5-d440-451d-aa2c-c8825989f046",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e76a9d91-498f-4c3d-ab5e-ff9c62f22ab8",
+       "isrcs": [
+        "GBDUW0100003"
+       ]
+      },
+      {
+       "mbid": "8c896057-b145-4076-8dea-89684a35ee11",
+       "isrcs": [
+        "GBDUW0000058"
+       ]
+      },
+      {
+       "mbid": "397d41cc-d0f0-47e6-8154-6f2ed4dccf80",
+       "isrcs": [
+        "GBDUW0100004"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "aa5b9bea-dcdf-4911-838f-8f90b0fc1171",
+   "title": "Harder, Better, Faster, Stronger",
+   "editions": [
+    {
+     "mbid": "10bdc60f-aeb7-492b-94f7-dc9089669a6c",
+     "status": null,
+     "recordings": [
+      {
+       "mbid": "14be95c7-3d51-436f-a514-0411105c5e8f",
+       "isrcs": []
+      },
+      {
+       "mbid": "23121840-b6fa-4954-8beb-38ca41e31aab",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "1be9930d-d6eb-4c87-ba90-7fd8f23687b4",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "7fd00707-bc25-45ba-964d-50e273c886d1",
+       "isrcs": [
+        "GBDUW0100021"
+       ]
+      },
+      {
+       "mbid": "07056aa8-f138-412a-9407-163becdd1538",
+       "isrcs": []
+      },
+      {
+       "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+       "isrcs": [
+        "GBDUW0000059",
+        "GBDUW0600059"
+       ]
+      },
+      {
+       "mbid": "b1a88e4a-5526-47e1-88f0-96eaf547c848",
+       "isrcs": [
+        "GBDUW0100016"
+       ]
+      },
+      {
+       "mbid": "31f379c1-7e89-4df2-8f4f-d0b434ada4b0",
+       "isrcs": [
+        "GBDUW0100022"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "1e57f96a-4f50-42de-a4db-d2e77541f523",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "de7a70b2-f7da-4057-91b2-5c28e1420e63",
+       "isrcs": [
+        "GBDUW0100023"
+       ]
+      },
+      {
+       "mbid": "9b9546fc-2617-4e05-a2ef-1975261a1536",
+       "isrcs": [
+        "GBDUW0100027"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "1f4357aa-c5d7-4a52-9515-be5e90b21841",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+       "isrcs": [
+        "GBDUW0000059",
+        "GBDUW0600059"
+       ]
+      },
+      {
+       "mbid": "b1a88e4a-5526-47e1-88f0-96eaf547c848",
+       "isrcs": [
+        "GBDUW0100016"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "30456764-a9fb-4c0c-b262-c382ea60eff9",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+       "isrcs": [
+        "GBDUW0000059",
+        "GBDUW0600059"
+       ]
+      },
+      {
+       "mbid": "b1a88e4a-5526-47e1-88f0-96eaf547c848",
+       "isrcs": [
+        "GBDUW0100016"
+       ]
+      },
+      {
+       "mbid": "5a9cea41-904d-4388-8e34-043eaec454eb",
+       "isrcs": [
+        "GBDUW0100015"
+       ]
+      },
+      {
+       "mbid": "7fd00707-bc25-45ba-964d-50e273c886d1",
+       "isrcs": [
+        "GBDUW0100021"
+       ]
+      },
+      {
+       "mbid": "31f379c1-7e89-4df2-8f4f-d0b434ada4b0",
+       "isrcs": [
+        "GBDUW0100022"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "4159ff17-4b7d-4135-aa2c-58af28c08c8b",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e3d5a93f-c409-4889-9389-c4e543a7f10b",
+       "isrcs": [
+        "GBDUW0700015"
+       ]
+      },
+      {
+       "mbid": "471667fb-17d8-4714-8c52-193897964c45",
+       "isrcs": [
+        "GBDUW0700028"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "44ed0ddb-937d-464e-bc04-43ce1cbd18ee",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "7fd00707-bc25-45ba-964d-50e273c886d1",
+       "isrcs": [
+        "GBDUW0100021"
+       ]
+      },
+      {
+       "mbid": "b1a88e4a-5526-47e1-88f0-96eaf547c848",
+       "isrcs": [
+        "GBDUW0100016"
+       ]
+      },
+      {
+       "mbid": "5a9cea41-904d-4388-8e34-043eaec454eb",
+       "isrcs": [
+        "GBDUW0100015"
+       ]
+      },
+      {
+       "mbid": "0b064e82-a1cf-4821-b7d9-7313ae89d63c",
+       "isrcs": []
+      },
+      {
+       "mbid": "31f379c1-7e89-4df2-8f4f-d0b434ada4b0",
+       "isrcs": [
+        "GBDUW0100022"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "4cc688c7-4080-4924-b138-45bd9cf223ac",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "0b064e82-a1cf-4821-b7d9-7313ae89d63c",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "6613f412-cae3-440b-9f5a-79d31ce901ea",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "e3d5a93f-c409-4889-9389-c4e543a7f10b",
+       "isrcs": [
+        "GBDUW0700015"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "661a095f-3640-4bc9-9a2a-f4df1bfcf4ad",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e3d5a93f-c409-4889-9389-c4e543a7f10b",
+       "isrcs": [
+        "GBDUW0700015"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "78969e45-d7c0-4bc4-b36d-6b6b902a55fe",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+       "isrcs": [
+        "GBDUW0000059",
+        "GBDUW0600059"
+       ]
+      },
+      {
+       "mbid": "b1a88e4a-5526-47e1-88f0-96eaf547c848",
+       "isrcs": [
+        "GBDUW0100016"
+       ]
+      },
+      {
+       "mbid": "7fd00707-bc25-45ba-964d-50e273c886d1",
+       "isrcs": [
+        "GBDUW0100021"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "799429f7-ee45-4b5a-8cfa-ceb0880ba33c",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "e98b55ce-6b1b-4b2f-8f4d-e56c3c770bde",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "7afef236-aea1-4c2e-957c-186dbb64fb10",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+       "isrcs": [
+        "GBDUW0000059",
+        "GBDUW0600059"
+       ]
+      },
+      {
+       "mbid": "b1a88e4a-5526-47e1-88f0-96eaf547c848",
+       "isrcs": [
+        "GBDUW0100016"
+       ]
+      },
+      {
+       "mbid": "7fd00707-bc25-45ba-964d-50e273c886d1",
+       "isrcs": [
+        "GBDUW0100021"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "92102aaf-ed3b-49eb-bf3a-af0563a72933",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+       "isrcs": [
+        "GBDUW0000059",
+        "GBDUW0600059"
+       ]
+      },
+      {
+       "mbid": "b1a88e4a-5526-47e1-88f0-96eaf547c848",
+       "isrcs": [
+        "GBDUW0100016"
+       ]
+      },
+      {
+       "mbid": "5a9cea41-904d-4388-8e34-043eaec454eb",
+       "isrcs": [
+        "GBDUW0100015"
+       ]
+      },
+      {
+       "mbid": "7fd00707-bc25-45ba-964d-50e273c886d1",
+       "isrcs": [
+        "GBDUW0100021"
+       ]
+      },
+      {
+       "mbid": "77eb9a09-f507-4455-b40b-589386cae338",
+       "isrcs": [
+        "GBDUW0100006"
+       ]
+      },
+      {
+       "mbid": "ab44415f-6930-48bf-bc68-824aba82e63c",
+       "isrcs": [
+        "GBDUW0100018"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "baa5b38f-3c24-441c-befa-65f944e52a36",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e3d5a93f-c409-4889-9389-c4e543a7f10b",
+       "isrcs": [
+        "GBDUW0700015"
+       ]
+      },
+      {
+       "mbid": "471667fb-17d8-4714-8c52-193897964c45",
+       "isrcs": [
+        "GBDUW0700028"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "bed7fb93-9c39-4ead-885f-19ba0ee1d718",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "7fd00707-bc25-45ba-964d-50e273c886d1",
+       "isrcs": [
+        "GBDUW0100021"
+       ]
+      },
+      {
+       "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+       "isrcs": [
+        "GBDUW0000059",
+        "GBDUW0600059"
+       ]
+      },
+      {
+       "mbid": "31f379c1-7e89-4df2-8f4f-d0b434ada4b0",
+       "isrcs": [
+        "GBDUW0100022"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "ce72046e-870e-495e-aa69-a03a9ee58fed",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "f9bd9f86-71b5-43de-9284-d5851a9ec344",
+       "isrcs": []
+      },
+      {
+       "mbid": "1eb440e1-fd82-4576-b3ce-7547c5faf3ac",
+       "isrcs": []
+      },
+      {
+       "mbid": "757269f5-d7d0-42dc-97c9-50ae351a6ba4",
+       "isrcs": []
+      },
+      {
+       "mbid": "3d83fdb6-94c3-4a55-97b0-b11e886f2f56",
+       "isrcs": []
+      },
+      {
+       "mbid": "2be5672c-846c-4d3a-bf2f-dbedd23385fe",
+       "isrcs": []
+      },
+      {
+       "mbid": "c62cb97a-8359-483c-95c7-5009e9d7a9e2",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "d04fa769-fa49-496b-90de-ea689047186a",
+     "status": "Bootleg",
+     "recordings": [
+      {
+       "mbid": "2f5a989b-87cb-4207-8258-40c88e2c0eaa",
+       "isrcs": []
+      },
+      {
+       "mbid": "73f1feed-0e9b-4a4d-8266-256f40f9032d",
+       "isrcs": []
+      },
+      {
+       "mbid": "b12c0a2c-a593-49db-b4df-57cef11db80d",
+       "isrcs": []
+      },
+      {
+       "mbid": "891458d0-00e8-4d10-b87b-f1c9acb52f10",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "e1ed2270-c44f-4c72-8836-140579b211fa",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "f1a6a40f-78f5-4918-968d-f64363bae94c",
+       "isrcs": [
+        "GBDUW0000059",
+        "GBDUW0600059"
+       ]
+      },
+      {
+       "mbid": "b1a88e4a-5526-47e1-88f0-96eaf547c848",
+       "isrcs": [
+        "GBDUW0100016"
+       ]
+      },
+      {
+       "mbid": "5a9cea41-904d-4388-8e34-043eaec454eb",
+       "isrcs": [
+        "GBDUW0100015"
+       ]
+      },
+      {
+       "mbid": "7fd00707-bc25-45ba-964d-50e273c886d1",
+       "isrcs": [
+        "GBDUW0100021"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e5556a81-d32c-4edd-b58d-603d8131a29d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "e3d5a93f-c409-4889-9389-c4e543a7f10b",
+       "isrcs": [
+        "GBDUW0700015"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "13ba6204-83e8-3bf2-aeb4-05b14acc9167",
+   "title": "Something About Us: Love Theme From Interstella 5555",
+   "editions": [
+    {
+     "mbid": "06cdfeac-a0f5-4258-9346-fcad6787fb20",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "43c55fb8-d18f-4ff3-a0d8-c6b54da43e5b",
+       "isrcs": [
+        "GBDUW0300007"
+       ]
+      },
+      {
+       "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+       "isrcs": [
+        "GBDUW0000066"
+       ]
+      },
+      {
+       "mbid": "15dae73a-e743-49dd-b2a5-77ed31c8b551",
+       "isrcs": [
+        "GBDUW0300008"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "134bf37f-0f8e-4b9d-bf0c-6bfcceb27200",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "43c55fb8-d18f-4ff3-a0d8-c6b54da43e5b",
+       "isrcs": [
+        "GBDUW0300007"
+       ]
+      },
+      {
+       "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+       "isrcs": [
+        "GBDUW0000066"
+       ]
+      },
+      {
+       "mbid": "15dae73a-e743-49dd-b2a5-77ed31c8b551",
+       "isrcs": [
+        "GBDUW0300008"
+       ]
+      },
+      {
+       "mbid": "defbfcb2-7a5c-4456-be28-b7e5ccf92cc2",
+       "isrcs": [
+        "GBDUW0000064",
+        "GBDUW0600064"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "18cd81e0-e1a5-4eb5-8a4e-02b178004699",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "43c55fb8-d18f-4ff3-a0d8-c6b54da43e5b",
+       "isrcs": [
+        "GBDUW0300007"
+       ]
+      },
+      {
+       "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+       "isrcs": [
+        "GBDUW0000066"
+       ]
+      },
+      {
+       "mbid": "15dae73a-e743-49dd-b2a5-77ed31c8b551",
+       "isrcs": [
+        "GBDUW0300008"
+       ]
+      },
+      {
+       "mbid": "defbfcb2-7a5c-4456-be28-b7e5ccf92cc2",
+       "isrcs": [
+        "GBDUW0000064",
+        "GBDUW0600064"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "4029e22a-4e84-3231-983d-b6c446804ea8",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "defbfcb2-7a5c-4456-be28-b7e5ccf92cc2",
+       "isrcs": [
+        "GBDUW0000064",
+        "GBDUW0600064"
+       ]
+      },
+      {
+       "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+       "isrcs": [
+        "GBDUW0000066"
+       ]
+      },
+      {
+       "mbid": "15dae73a-e743-49dd-b2a5-77ed31c8b551",
+       "isrcs": [
+        "GBDUW0300008"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "57356933-4eec-4f0c-81d5-44e5f34f1a22",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "43c55fb8-d18f-4ff3-a0d8-c6b54da43e5b",
+       "isrcs": [
+        "GBDUW0300007"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "76b44de6-dbef-4cdf-b0b7-aca8ea054f7d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "43c55fb8-d18f-4ff3-a0d8-c6b54da43e5b",
+       "isrcs": [
+        "GBDUW0300007"
+       ]
+      },
+      {
+       "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+       "isrcs": [
+        "GBDUW0000066"
+       ]
+      },
+      {
+       "mbid": "15dae73a-e743-49dd-b2a5-77ed31c8b551",
+       "isrcs": [
+        "GBDUW0300008"
+       ]
+      },
+      {
+       "mbid": "defbfcb2-7a5c-4456-be28-b7e5ccf92cc2",
+       "isrcs": [
+        "GBDUW0000064",
+        "GBDUW0600064"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "987df340-f794-4b82-a55e-69ef4f8b50e6",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "defbfcb2-7a5c-4456-be28-b7e5ccf92cc2",
+       "isrcs": [
+        "GBDUW0000064",
+        "GBDUW0600064"
+       ]
+      },
+      {
+       "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+       "isrcs": [
+        "GBDUW0000066"
+       ]
+      },
+      {
+       "mbid": "15dae73a-e743-49dd-b2a5-77ed31c8b551",
+       "isrcs": [
+        "GBDUW0300008"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "fa53d063-6b40-46da-8dc7-54264de3854c",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "defbfcb2-7a5c-4456-be28-b7e5ccf92cc2",
+       "isrcs": [
+        "GBDUW0000064",
+        "GBDUW0600064"
+       ]
+      },
+      {
+       "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+       "isrcs": [
+        "GBDUW0000066"
+       ]
+      },
+      {
+       "mbid": "15dae73a-e743-49dd-b2a5-77ed31c8b551",
+       "isrcs": [
+        "GBDUW0300008"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "da00fcb0-4c72-3612-8a14-4ba083505fe2",
+   "title": "Robot Rock",
+   "editions": [
+    {
+     "mbid": "0e41cd6c-c558-492b-af35-7778fcc4d95e",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "112ad4bc-5e14-4cbc-9536-c4de5d4397f6",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "a40ded37-1af6-4465-8751-0be9bcd9eee0",
+       "isrcs": [
+        "GBDUW0400111"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "667a61a0-8608-4dc5-8698-2af6299a66dc",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "a40ded37-1af6-4465-8751-0be9bcd9eee0",
+       "isrcs": [
+        "GBDUW0400111"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "7003002d-0edc-4194-8a41-e6576251a232",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "6327b2a0-f1cc-4289-9ca7-ef52b979ca6b",
+       "isrcs": []
+      },
+      {
+       "mbid": "b1c25e8c-bd49-439a-91b0-e9d77b2718f9",
+       "isrcs": [
+        "GBDUW0500002"
+       ]
+      },
+      {
+       "mbid": "629cdfb3-6122-4bba-bead-4c09f888efca",
+       "isrcs": [
+        "GBDUW0500001"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "8bde5105-d38c-451f-9d5b-269e0759dbb0",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "08ec8d1f-d222-4bf3-9143-a3a614add7c4",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "99355351-bf2f-4c23-9606-0c577745b2dd",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "629cdfb3-6122-4bba-bead-4c09f888efca",
+       "isrcs": [
+        "GBDUW0500001"
+       ]
+      },
+      {
+       "mbid": "b1c25e8c-bd49-439a-91b0-e9d77b2718f9",
+       "isrcs": [
+        "GBDUW0500002"
+       ]
+      },
+      {
+       "mbid": "a89935cf-33bb-4681-9be2-30c21fa6d21c",
+       "isrcs": [
+        "GBDUW0500003"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e067d191-1836-4d34-9a92-6ae4523642ec",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "629cdfb3-6122-4bba-bead-4c09f888efca",
+       "isrcs": [
+        "GBDUW0500001"
+       ]
+      },
+      {
+       "mbid": "b1c25e8c-bd49-439a-91b0-e9d77b2718f9",
+       "isrcs": [
+        "GBDUW0500002"
+       ]
+      },
+      {
+       "mbid": "a89935cf-33bb-4681-9be2-30c21fa6d21c",
+       "isrcs": [
+        "GBDUW0500003"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "ede5e69c-1a51-48fd-aa65-70e4b0dc29ed",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "a40ded37-1af6-4465-8751-0be9bcd9eee0",
+       "isrcs": [
+        "GBDUW0400111"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "f9e8042a-674e-3f01-80ec-7f0ab1c537df",
+   "title": "Human After All",
+   "editions": [
+    {
+     "mbid": "0443ddba-cc5d-347c-9859-d72a70eab674",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "2b2d70aa-8327-43d0-9683-a1216c295611",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "382e22d2-27ad-49c6-ab3b-aaa6e860447d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "3c89972c-81bc-4dbb-917c-09451198df67",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "5005475a-cbd4-4e07-8d62-45bac1285673",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "742047dc-e0ae-43c2-b77e-e6e1d0bec237",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "77a2f001-ae10-45fe-8d56-6069edfe20fe",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "7f293aa6-8c19-4695-80bb-63ac40a0f2b5",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "86d4299f-810e-3c4c-a324-2cc03672ed00",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "877970e7-3bae-37ef-bd9f-b28c2c948dbb",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "8f4d3899-be98-4352-a9f0-8853cd6fb21e",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9a4cf1a0-da00-44bb-9fe4-b714394889c2",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9c02dc5c-6725-314b-a5d1-b6097ff0c6ce",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9e3978e5-221d-4c9f-ba12-c1d05da1e64d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "abbc40a0-2bcc-449e-bdd0-2dbae3213517",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "b3923734-6636-4e81-8330-0990a318e10e",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "f78b23ae-4f27-4274-a499-bd2b48cc9817",
+       "isrcs": []
+      },
+      {
+       "mbid": "3f92e890-abfe-4da9-aa27-6e76603c38ad",
+       "isrcs": []
+      },
+      {
+       "mbid": "e9d33889-ee08-45af-8376-262a10766627",
+       "isrcs": []
+      },
+      {
+       "mbid": "4eda9362-4803-40c0-9025-5640e9193fa1",
+       "isrcs": []
+      },
+      {
+       "mbid": "7df0252c-2fe8-4175-9d41-0e261420581b",
+       "isrcs": []
+      },
+      {
+       "mbid": "19a9ef58-45a4-4f6c-90e7-54aec40e732c",
+       "isrcs": []
+      },
+      {
+       "mbid": "81ba648c-4572-4246-b187-0caab9586c2d",
+       "isrcs": []
+      },
+      {
+       "mbid": "09a83c53-1148-41a5-b559-141bb650d74d",
+       "isrcs": []
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "efee830c-9e1c-47d7-adb6-9bc7bbe98955",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "bda44260-ef94-4abf-a787-02a2f6ef22e1",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e2b832c5-65cb-496d-801b-9d24c9b85a90",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e367f332-fe1a-4e28-9754-9eda252b5b50",
+     "status": "Bootleg",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      },
+      {
+       "mbid": "a100b174-4422-498f-98e3-2e17977751fa",
+       "isrcs": []
+      },
+      {
+       "mbid": "aa2cf13f-0b0a-40d6-9d0f-7dca8910d022",
+       "isrcs": []
+      },
+      {
+       "mbid": "2e52ca0b-f443-4565-8d97-1d37049030b1",
+       "isrcs": [
+        "GBDUW0300002"
+       ]
+      },
+      {
+       "mbid": "844ea2fd-c12a-47cd-9dcc-873b9fe7a5c6",
+       "isrcs": [
+        "FRS949600444"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e4aad7bc-f587-4a64-94b3-d16979007313",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e7b4cfcd-6ad2-4426-a8be-103f24cd62c6",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e890f782-bc39-43dd-890d-0c906c2641b2",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "ecf98192-83c3-4176-afec-8a069eb4de8f",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "57a7135d-6f9f-416d-9d35-ead26d43f5e9",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "fd07d0fc-a68a-3b77-95c9-fd7ec7fea013",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "f92e924f-e795-433b-95ce-b256098abfd6",
+       "isrcs": [
+        "GBDUW0400103"
+       ]
+      },
+      {
+       "mbid": "0ca77e5a-1c86-440b-a8e4-fa8c4b296c9c",
+       "isrcs": [
+        "GBDUW0400104"
+       ]
+      },
+      {
+       "mbid": "82f8a6c1-21b1-4aec-96ed-d76a473b38c6",
+       "isrcs": [
+        "GBDUW0400105"
+       ]
+      },
+      {
+       "mbid": "a6a58800-dd8f-4649-a61a-369a82d9ef38",
+       "isrcs": [
+        "GBDUW0400106"
+       ]
+      },
+      {
+       "mbid": "21a0211f-b7e5-4800-aa89-461591ac2a01",
+       "isrcs": [
+        "GBDUW0400107"
+       ]
+      },
+      {
+       "mbid": "76fa60bf-10c5-46d1-a47a-bf156dec2035",
+       "isrcs": [
+        "GBDUW0400108"
+       ]
+      },
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fd0da185-a03d-405f-b7f2-8a271c6f632b",
+       "isrcs": [
+        "GBDUW0400110"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "8a8ca5fc-4eff-3aa8-939b-9c064ba73d7f",
+   "title": "Technologic",
+   "editions": [
+    {
+     "mbid": "0c976bd1-88db-48f9-ac71-e5309e0e54d5",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "71a8e994-5042-4dc6-8ea0-3ae7349da46d",
+       "isrcs": [
+        "GBDUW0500010"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "33100f7b-b16b-4a81-b541-0a43915aa3f7",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "c37077ed-e12d-4615-a58d-4ec2bbe2c594",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "59b7e763-67e6-4e1e-9bb3-1369fcd35915",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "71a8e994-5042-4dc6-8ea0-3ae7349da46d",
+       "isrcs": [
+        "GBDUW0500010"
+       ]
+      },
+      {
+       "mbid": "fb751a1b-4fde-4cf3-bf4c-6cf7f8bcd599",
+       "isrcs": [
+        "GBDUW0500009"
+       ]
+      },
+      {
+       "mbid": "7f569533-08d3-42fd-acce-4c5d23ac8e92",
+       "isrcs": [
+        "GBDUW0500007"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "6580309d-d61b-4479-be35-ae57b215754d",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "fbb595a4-23f8-48c0-9c0d-43e54ea71045",
+       "isrcs": [
+        "GBDUW0500005"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "6cdb6634-256d-4f2b-bfbd-3a97bef561cf",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "7f569533-08d3-42fd-acce-4c5d23ac8e92",
+       "isrcs": [
+        "GBDUW0500007"
+       ]
+      },
+      {
+       "mbid": "fb751a1b-4fde-4cf3-bf4c-6cf7f8bcd599",
+       "isrcs": [
+        "GBDUW0500009"
+       ]
+      },
+      {
+       "mbid": "1bb95b8f-31da-4028-876b-c07496903916",
+       "isrcs": []
+      },
+      {
+       "mbid": "71a8e994-5042-4dc6-8ea0-3ae7349da46d",
+       "isrcs": [
+        "GBDUW0500010"
+       ]
+      },
+      {
+       "mbid": "fbb595a4-23f8-48c0-9c0d-43e54ea71045",
+       "isrcs": [
+        "GBDUW0500005"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "7a6d5e5a-6c50-4dc5-8709-c3daeca2d6b6",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "71a8e994-5042-4dc6-8ea0-3ae7349da46d",
+       "isrcs": [
+        "GBDUW0500010"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "8ce9ac78-48b7-44c3-b788-6cb8b7c61c33",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fb751a1b-4fde-4cf3-bf4c-6cf7f8bcd599",
+       "isrcs": [
+        "GBDUW0500009"
+       ]
+      },
+      {
+       "mbid": "71a8e994-5042-4dc6-8ea0-3ae7349da46d",
+       "isrcs": [
+        "GBDUW0500010"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "9e4cb666-a8c6-4606-bdfc-b9e176137900",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fb751a1b-4fde-4cf3-bf4c-6cf7f8bcd599",
+       "isrcs": [
+        "GBDUW0500009"
+       ]
+      },
+      {
+       "mbid": "71a8e994-5042-4dc6-8ea0-3ae7349da46d",
+       "isrcs": [
+        "GBDUW0500010"
+       ]
+      },
+      {
+       "mbid": "7f569533-08d3-42fd-acce-4c5d23ac8e92",
+       "isrcs": [
+        "GBDUW0500007"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "c159c60b-b9fd-46d6-8569-eaa0a04e9bed",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "71a8e994-5042-4dc6-8ea0-3ae7349da46d",
+       "isrcs": [
+        "GBDUW0500010"
+       ]
+      },
+      {
+       "mbid": "fb751a1b-4fde-4cf3-bf4c-6cf7f8bcd599",
+       "isrcs": [
+        "GBDUW0500009"
+       ]
+      },
+      {
+       "mbid": "7f569533-08d3-42fd-acce-4c5d23ac8e92",
+       "isrcs": [
+        "GBDUW0500007"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "c7b1e7dc-ffc9-4d62-9925-d50337d7b894",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "83c80477-4f60-4504-aee0-1934d1ab56e4",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "d44718b1-11e3-4659-9855-7f08657fab96",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "48d9340a-0c6a-469a-b043-eeaec9f577c6",
+       "isrcs": [
+        "GBDUW0400109",
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "fb751a1b-4fde-4cf3-bf4c-6cf7f8bcd599",
+       "isrcs": [
+        "GBDUW0500009"
+       ]
+      },
+      {
+       "mbid": "71a8e994-5042-4dc6-8ea0-3ae7349da46d",
+       "isrcs": [
+        "GBDUW0500010"
+       ]
+      },
+      {
+       "mbid": "7f569533-08d3-42fd-acce-4c5d23ac8e92",
+       "isrcs": [
+        "GBDUW0500007"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "ed8d8cb6-410b-4c26-b79c-2185f3b723fb",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fbb595a4-23f8-48c0-9c0d-43e54ea71045",
+       "isrcs": [
+        "GBDUW0500005"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "f98cbef7-5d64-41e4-a21c-ddf78cad115d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "fbb595a4-23f8-48c0-9c0d-43e54ea71045",
+       "isrcs": [
+        "GBDUW0500005"
+       ]
+      },
+      {
+       "mbid": "7f569533-08d3-42fd-acce-4c5d23ac8e92",
+       "isrcs": [
+        "GBDUW0500007"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "14d335b6-71e9-43a3-9ad8-cf8367990c23",
+   "title": "Human After All",
+   "editions": [
+    {
+     "mbid": "134d357c-9cd9-4b30-90c9-900744a24e4a",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "10f05631-cb9b-467c-8349-eea641022b97",
+       "isrcs": [
+        "GBDUW0500015"
+       ]
+      },
+      {
+       "mbid": "fae2db2d-90d4-40b6-8ff4-aeef78624b31",
+       "isrcs": [
+        "GBDUW0500016"
+       ]
+      },
+      {
+       "mbid": "9f5df0bb-1244-4627-87fb-aeb79869f1ea",
+       "isrcs": [
+        "GBDUW0500017"
+       ]
+      },
+      {
+       "mbid": "12f055b1-1654-48a5-ae42-765dbba00255",
+       "isrcs": [
+        "GBDUW0500018"
+       ]
+      },
+      {
+       "mbid": "d6d4bf70-561e-44a2-8989-084fd8903452",
+       "isrcs": [
+        "GBDUW0500019"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "56736173-8988-3b4f-b56a-1b36acec0e24",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "1f7b6b76-ea87-428b-b731-52ea62a708d2",
+       "isrcs": [
+        "GBDUW0400101"
+       ]
+      },
+      {
+       "mbid": "10f05631-cb9b-467c-8349-eea641022b97",
+       "isrcs": [
+        "GBDUW0500015"
+       ]
+      },
+      {
+       "mbid": "fae2db2d-90d4-40b6-8ff4-aeef78624b31",
+       "isrcs": [
+        "GBDUW0500016"
+       ]
+      },
+      {
+       "mbid": "9f5df0bb-1244-4627-87fb-aeb79869f1ea",
+       "isrcs": [
+        "GBDUW0500017"
+       ]
+      },
+      {
+       "mbid": "12f055b1-1654-48a5-ae42-765dbba00255",
+       "isrcs": [
+        "GBDUW0500018"
+       ]
+      },
+      {
+       "mbid": "d6d4bf70-561e-44a2-8989-084fd8903452",
+       "isrcs": [
+        "GBDUW0500019"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "f9b52398-c578-32c4-95a6-b2e4a9bdc472",
+   "title": "Prime Time of Your Life",
+   "editions": [
+    {
+     "mbid": "1ac0121b-df73-4620-bc3b-5db47529fc34",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "955a556d-7cda-4060-b402-bbfaf9d96c44",
+       "isrcs": [
+        "GBDUW0400102"
+       ]
+      },
+      {
+       "mbid": "6943fab7-444f-47a0-ae18-099125cfea02",
+       "isrcs": [
+        "GBDUW0600002"
+       ]
+      },
+      {
+       "mbid": "1b0f9355-7a45-4ecc-bfe8-187573450cd0",
+       "isrcs": [
+        "GBDUW0600001"
+       ]
+      },
+      {
+       "mbid": "5dcdf041-b98f-4fcc-803f-e4b09374ba1b",
+       "isrcs": [
+        "GBDUW0500020"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "f3110ef7-313b-44a8-a334-2d2d2427c68f",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "6943fab7-444f-47a0-ae18-099125cfea02",
+       "isrcs": [
+        "GBDUW0600002"
+       ]
+      },
+      {
+       "mbid": "1b0f9355-7a45-4ecc-bfe8-187573450cd0",
+       "isrcs": [
+        "GBDUW0600001"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "e4d45d1f-55dc-488f-a774-6ee82dbe9c86",
+   "title": "Drive (Unreleased 1994)",
+   "editions": [
+    {
+     "mbid": "43842d96-94a8-4adb-96ea-846956877da2",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "34a51b84-d1ac-427d-b277-034caebe541d",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "00eb1335-7ff0-4dd6-8cee-51f395b06fd3",
+   "title": "Human After All (Medley)",
+   "editions": [
+    {
+     "mbid": "305cb2f7-48fb-4e76-a7ea-197814a13bcd",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "dc08b223-4607-405e-b8d5-b6611252255a",
+       "isrcs": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "9b7ce16c-8310-4cc5-aad5-09893a5a8297",
+   "title": "Get Lucky",
+   "editions": [
+    {
+     "mbid": "12b86859-ac48-4b8a-850b-0755adc88d8a",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "833f00e1-781f-4edd-90e4-e52712618862",
+       "isrcs": [
+        "USQX91300108"
+       ]
+      },
+      {
+       "mbid": "744787e9-444c-4494-a544-7640dafc0e9d",
+       "isrcs": [
+        "USQX91300809"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "1ddb40a4-d7d7-44f3-8f12-7617484e7983",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "744787e9-444c-4494-a544-7640dafc0e9d",
+       "isrcs": [
+        "USQX91300809"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "5e1c929e-f68c-4b0d-9094-0c11620b3bec",
+     "status": "Promotion",
+     "recordings": [
+      {
+       "mbid": "744787e9-444c-4494-a544-7640dafc0e9d",
+       "isrcs": [
+        "USQX91300809"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "98473e2e-6521-4ce9-932c-f1be22ce844d",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "aea7d8d7-91db-4de7-91ac-63545e29530b",
+       "isrcs": [
+        "USQX91301322"
+       ]
+      },
+      {
+       "mbid": "833f00e1-781f-4edd-90e4-e52712618862",
+       "isrcs": [
+        "USQX91300108"
+       ]
+      },
+      {
+       "mbid": "744787e9-444c-4494-a544-7640dafc0e9d",
+       "isrcs": [
+        "USQX91300809"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "e967be84-9831-4578-a535-c4eb12ec8f8b",
+     "status": null,
+     "recordings": [
+      {
+       "mbid": "833f00e1-781f-4edd-90e4-e52712618862",
+       "isrcs": [
+        "USQX91300108"
+       ]
+      },
+      {
+       "mbid": "744787e9-444c-4494-a544-7640dafc0e9d",
+       "isrcs": [
+        "USQX91300809"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "985a7746-4207-45ba-9400-49796eaaaf72",
+   "title": "Starboy",
+   "editions": [
+    {
+     "mbid": "0f4ca137-1d77-4255-855f-c86cc188230a",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "32d23acd-98d0-400c-ace7-98b17a6e58ef",
+       "isrcs": []
+      }
+     ]
+    },
+    {
+     "mbid": "3c1354c0-fd32-4fbe-9ba9-44771073ced4",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "89f98350-c4b1-4c3b-8856-3304090d3c1b",
+       "isrcs": [
+        "USUG11903398"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "88c42ca4-b964-44cf-b24d-d6dadd213ed8",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "ebd8f597-6191-44c1-a40f-c511e31d7842",
+       "isrcs": [
+        "USUG11600977"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "a3f3b080-3a9b-454c-bff1-97929459f4c9",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "3da01a8e-3c71-408f-a9c7-0c4d10ad4e7d",
+       "isrcs": [
+        "USUG11600976"
+       ]
+      },
+      {
+       "mbid": "ebd8f597-6191-44c1-a40f-c511e31d7842",
+       "isrcs": [
+        "USUG11600977"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "0f813c16-1663-49fa-8316-fb32766dd554",
+   "title": "I Feel It Coming",
+   "editions": [
+    {
+     "mbid": "3908b2ef-64bd-43f3-9067-dc10a766c79c",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "911e4813-56ea-4490-8fcd-cc3dcd0ae7ca",
+       "isrcs": [
+        "QM7281773122",
+        "USUG11600996",
+        "USUG11601012"
+       ]
+      }
+     ]
+    },
+    {
+     "mbid": "be8ff5fb-f730-4807-b6fb-5faa433f0fba",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "bbca38a2-e633-4090-ba2b-3d346b85b061",
+       "isrcs": [
+        "USUM71919073"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "1f8c7f41-c3f1-4b0c-a151-943a3583f202",
+   "title": "The Writing of Fragments of Time",
+   "editions": [
+    {
+     "mbid": "a64f566e-4732-4cb0-b8ff-054e26290fc7",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "eb1a3018-e2ae-4a9f-84d3-1b38c4a35503",
+       "isrcs": [
+        "GBDUW2300070"
+       ]
+      },
+      {
+       "mbid": "770894b7-030e-404d-a833-4a77d0558cb2",
+       "isrcs": [
+        "USQX91300111"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "mbid": "70fdfa1b-f1ed-4a6b-b52c-c96020e3bf21",
+   "title": "Veridis Quo",
+   "editions": [
+    {
+     "mbid": "90ddfa72-e8c5-4f13-b021-5bd022fdab61",
+     "status": "Official",
+     "recordings": [
+      {
+       "mbid": "47bdb22a-d0d3-4ff7-af84-325992e13e3b",
+       "isrcs": [
+        "GBDUW2400010"
+       ]
+      },
+      {
+       "mbid": "2a220770-1150-4190-b0e0-57d89a0a7469",
+       "isrcs": [
+        "GBDUW0000066"
+       ]
+      }
+     ]
+    }
+   ]
+  }
  ]
 }

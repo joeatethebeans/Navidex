@@ -19,7 +19,7 @@ answer key. It needs ffmpeg and the Python `mutagen` package, and runs offline i
 | --- | --- |
 | `scenario.json` | What to build: which artists, which editions are owned, how each album is tagged, and the stray files |
 | `catalogue.json` | A committed snapshot of the MusicBrainz data the library is built from |
-| `fetch_catalogue.py` | Refreshes the snapshot (about 30 requests, at MusicBrainz's one request a second) |
+| `fetch_catalogue.py` | Refreshes the snapshot (about 70 requests, at MusicBrainz's one request a second) |
 | `generate.py` | Builds the files and the answer key from the two JSON files |
 
 The scenarios, two artists with deep and messy discographies (Portishead: 90 release groups; Daft Punk: 217):
@@ -40,13 +40,30 @@ recording ID, and MP4 freeform atoms.
 ### The answer key
 
 `expected.json` says, for each file, the match method Navidex should use (named as in `MatchMethod`) and the
-recording, edition and album it belongs to. Stray files say `"review": true` instead. For each artist, it lists the
-owned albums (complete or with their missing tracks), the missing albums the default filters show, and how many
-missing albums the filters hide. Phase 1 tests can check the library scan and the missing view against it.
+recording, edition and album it belongs to; stray files say `Unmatched`. For each artist, it lists the owned albums
+(complete or with their missing tracks), the missing albums the default filters show, and how many missing albums
+the filters hide.
+
+Each missing album also says whether it's `coveredWhenFetchedOnce`: every track of one of its official editions is
+owned on other albums. With the default `duplicateTracks` setting (fetch a song once, keep it in the album) those
+albums are covered, not missing; with `keepBoth` they're missing.
 
 The default filters are in `scenario.json` under `policy`. The plan names live albums, compilations, remixes, demos
 and soundtracks as hidden. Real data also has interviews, mixtapes and DJ mixes, so the policy hides any release
 group with a secondary type. It also hides groups with only bootleg releases, such as Daft Punk's *Leftovers*.
+
+### The gate test
+
+`LibraryGateTests` scans the test library through the real core and checks every file's match and every album's
+status against the answer key, in both duplicate modes. It replays recorded MusicBrainz responses from
+`tests/fixtures/musicbrainz`, so it runs offline in seconds. After changing what the MusicBrainz plugin or the matcher
+asks for, record them again (about ten minutes, at one request a second) and commit the fixtures:
+
+```bash
+NAVIDEX_RECORD=1 dotnet test --filter LibraryGateTests
+```
+
+It's skipped if the library hasn't been generated. CI generates it first.
 
 ## The sandbox
 
@@ -60,7 +77,7 @@ This generates the library if it isn't there, builds the Navidex image if needed
 private network, creates a Navidrome admin, scans, and reports what Navidrome indexed.
 
 - Navidrome: http://localhost:4533. The user is `admin`; the password is generated into `sandbox/.env` on first run.
-- Navidex: http://localhost:8787/api/v1/health
+- Navidex: http://localhost:8787
 - Inside the network, Navidex reaches Navidrome at `http://navidrome:4533`, ready for the Phase 2 connector.
 
 The music folder is mounted read-only in both containers. `sandbox/sandbox.sh scan` rescans after you regenerate,

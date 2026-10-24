@@ -231,9 +231,35 @@ def shown_by_default(group: dict, policy: dict) -> bool:
     return not policy["requireOfficialRelease"] or "Official" in group["releaseStatuses"]
 
 
+def covered_groups(catalogue: dict, editions: dict[str, dict], files: list[File]) -> set[str]:
+    """
+    Release groups that every track of some edition is owned for, on other albums: what Navidex calls covered when a
+    song on several albums is fetched once. Only official editions count when the group has any, so a one-track promo
+    doesn't hide a B-side. A track counts as owned if a matched file has its recording, or a recording sharing one of
+    its ISRCs.
+    """
+    owned_recordings = {f.expect["recordingMbid"] for f in files if "recordingMbid" in f.expect}
+    isrcs_of = {t["recording"]["mbid"]: t["recording"]["isrcs"] for e in editions.values() for m in e["media"] for t in m["tracks"]}
+    owned_isrcs = {isrc for r in owned_recordings for isrc in isrcs_of.get(r, [])}
+
+    def owned(recording: dict) -> bool:
+        return recording["mbid"] in owned_recordings or any(i in owned_isrcs for i in recording["isrcs"])
+
+    def judged(group: dict) -> list[dict]:
+        official = [e for e in group["editions"] if e["status"] == "Official"]
+        return official or group["editions"]
+
+    return {
+        group["mbid"]
+        for group in catalogue["coverage"]
+        if any(e["recordings"] and all(owned(r) for r in e["recordings"]) for e in judged(group))
+    }
+
+
 def answer_key(scenario: dict, catalogue: dict, editions: dict[str, dict], files: list[File]) -> dict:
     policy = scenario["policy"]
     owned_tracks = {(f.expect["releaseMbid"], f.expect["disc"], f.expect["position"]) for f in files if "releaseMbid" in f.expect}
+    covered = covered_groups(catalogue, editions, files)
     artists = []
     for artist in catalogue["artists"]:
         owned = []
@@ -262,8 +288,16 @@ def answer_key(scenario: dict, catalogue: dict, editions: dict[str, dict], files
             "mbid": artist["mbid"],
             "name": artist["name"],
             "owned": owned,
+            # With duplicateTracks keepBoth every album shown and not owned is missing; with keepInAlbum (the default) or
+            # keepInSingle, the ones marked coveredWhenFetchedOnce are covered instead.
             "missing": [
-                {"releaseGroupMbid": g["mbid"], "title": g["title"], "primaryType": g["primaryType"], "firstReleaseDate": g["firstReleaseDate"]}
+                {
+                    "releaseGroupMbid": g["mbid"],
+                    "title": g["title"],
+                    "primaryType": g["primaryType"],
+                    "firstReleaseDate": g["firstReleaseDate"],
+                    "coveredWhenFetchedOnce": g["mbid"] in covered,
+                }
                 for g in not_owned if shown_by_default(g, policy)
             ],
             "missingHiddenByDefault": sum(1 for g in not_owned if not shown_by_default(g, policy)),
@@ -305,8 +339,10 @@ def main() -> None:
     print(f"{len(files)} files in {music}")
     for artist in key["artists"]:
         partial = sum(1 for o in artist["owned"] if not o["complete"])
+        covered = sum(1 for m in artist["missing"] if m["coveredWhenFetchedOnce"])
         print(f"  {artist['name']}: {len(artist['owned'])} albums owned ({partial} partial), "
-              f"{len(artist['missing'])} missing shown, {artist['missingHiddenByDefault']} hidden")
+              f"{len(artist['missing'])} missing shown ({covered} covered when fetched once), "
+              f"{artist['missingHiddenByDefault']} hidden")
     print(f"answer key: {args.out / 'expected.json'}")
 
 

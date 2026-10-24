@@ -12,8 +12,14 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+      - name: Generate the test library
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+          pip install mutagen
+          python3 tools/testlib/generate.py
       - run: dotnet restore
       - run: dotnet build --no-restore -c Release
+      # The gate test replays recorded MusicBrainz responses from tests/fixtures, so CI never calls MusicBrainz.
       - run: dotnet test --no-build --configuration Release
       - name: Check the model matches the migrations
         run: |

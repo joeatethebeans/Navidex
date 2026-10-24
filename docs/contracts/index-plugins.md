@@ -28,7 +28,7 @@ hide live albums, compilations, remixes, demos and soundtracks from the missing 
 | `SearchAsync(query)` | Artists, albums and tracks, each ordered by relevance | `query.Kinds` narrows the kinds; empty means all. Respect `query.Limit` per kind. |
 | `GetArtistAsync(artistId)` | One artist, or `null` | |
 | `GetArtistAlbumsAsync(artistId)` | Every album of the artist, of every type | Don't filter; the core applies the user's filters. |
-| `GetAlbumAsync(albumId)` | The album with all editions, media and track listings, or `null` | This is what ownership is computed against. |
+| `GetAlbumAsync(albumId)` | The album with all editions, media and track listings, or `null` | This is what ownership is computed against. Set `HasOfficialRelease` on the album if the source knows release statuses, so bootleg-only albums can be hidden. Keep it to as few upstream requests as the source allows: the core calls it for every album the missing view shows. |
 | `CheckHealthAsync()` | A `HealthReport` | Backs the Test button. Make one cheap upstream call. |
 
 Error handling: return `null` (or an empty list) when the entity doesn't exist; throw for anything else (network

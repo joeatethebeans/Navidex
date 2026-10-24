@@ -1,0 +1,109 @@
+@page "/albums/{Id:guid}"
+@inject NavidexClient Api
+
+<PageTitle>@(_album?.Album.Title ?? "Album") · Navidex</PageTitle>
+
+@if (_notFound)
+{
+    <div class="empty card">That album isn't in the catalogue.</div>
+}
+else if (_album is null)
+{
+    <p class="muted">Loading…</p>
+}
+else
+{
+    var album = _album.Album;
+    <h1>@album.Title</h1>
+    <div class="row muted small">
+        <a href="artists/@album.ArtistId">@album.ArtistCredit</a>
+        <span>@Format.Year(album.FirstReleaseDate)</span>
+        <span>@Format.TypeLabel(album.Type)@(album.SecondaryTypes.Count > 0 ? $" · {Format.Secondary(album.SecondaryTypes)}" : "")</span>
+        <StatusBadge Album="album.Status" />
+        @if (album.HiddenByDefault) { <span class="badge neutral">Hidden by default</span> }
+        @if (album.Ignored) { <span class="badge neutral">Ignored</span> }
+        <ProviderIds Ids="album.Ids" Entity="release-group" />
+    </div>
+
+    @if (_album.Editions.Count == 0)
+    {
+        <div class="empty card">No editions in the catalogue yet.</div>
+    }
+    else
+    {
+        <div class="toolbar">
+            <label class="small">
+                Edition
+                <select value="@_album.ShownEditionId" @onchange="ChangeEditionAsync">
+                    @foreach (var edition in _album.Editions)
+                    {
+                        <option value="@edition.Id">@EditionLabel(edition)</option>
+                    }
+                </select>
+            </label>
+            @if (_album.OwnedEditionId is { } owned && owned != _album.ShownEditionId)
+            {
+                <button class="link small" @onclick="() => LoadAsync(owned)">Show the edition you have</button>
+            }
+        </div>
+
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="num">#</th>
+                        <th>Title</th>
+                        <th class="num hide-narrow">Length</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var track in _album.Tracks)
+                    {
+                        <tr>
+                            <td class="num muted nowrap">@(MultiDisc ? $"{track.Disc}-" : "")@track.Number</td>
+                            <td>
+                                @track.Title
+                                @if (track.ArtistCredit != album.ArtistCredit) { <span class="muted small"> · @track.ArtistCredit</span> }
+                                @if (track.FilePath is not null) { <div class="muted small">@track.FilePath</div> }
+                            </td>
+                            <td class="num hide-narrow muted">@Format.Duration(track.DurationSeconds)</td>
+                            <td><StatusBadge Track="track.Status" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private AlbumDetail? _album;
+    private bool _notFound;
+
+    private bool MultiDisc => _album!.Tracks.Select(t => t.Disc).Distinct().Count() > 1;
+
+    protected override Task OnParametersSetAsync() => LoadAsync(null);
+
+    private async Task LoadAsync(Guid? editionId)
+    {
+        _album = await Api.GetAlbumAsync(Id, editionId);
+        _notFound = _album is null;
+    }
+
+    private Task ChangeEditionAsync(ChangeEventArgs e) => LoadAsync(Guid.TryParse(e.Value?.ToString(), out var id) ? id : null);
+
+    private string EditionLabel(EditionSummary e)
+    {
+        var parts = new[] { e.ReleaseDate, e.Country, Formats(e.Formats), e.Disambiguation, e.Status is "Official" ? null : e.Status }
+            .Where(p => !string.IsNullOrEmpty(p));
+        var owned = e.FilesInLibrary > 0 ? $" · {e.FilesInLibrary} files in library" : "";
+        return $"{e.Title} ({string.Join(", ", parts)}) · {e.TrackCount} tracks{owned}";
+    }
+
+    // "CD, CD" reads better as "2×CD".
+    private static string? Formats(string? formats) => formats is null ? null : string.Join(", ",
+        formats.Split(", ").GroupBy(f => f).Select(g => g.Count() > 1 ? $"{g.Count()}×{g.Key}" : g.Key));
+}

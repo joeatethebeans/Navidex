@@ -30,8 +30,17 @@ namespace Navidex.Core.Data.Migrations
                     b.Property<Guid>("ArtistId")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("EditionsRefreshedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FirstReleaseDate")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool?>("HasOfficialRelease")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Ignored")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("RefreshedAt")
                         .HasColumnType("TEXT");
@@ -63,11 +72,17 @@ namespace Navidex.Core.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("AlbumsRefreshedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Country")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Disambiguation")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("InLibrary")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -86,6 +101,45 @@ namespace Navidex.Core.Data.Migrations
                     b.ToTable("Artists");
                 });
 
+            modelBuilder.Entity("Navidex.Core.Data.BackgroundTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PayloadJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Progress")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("BackgroundTasks");
+                });
+
             modelBuilder.Entity("Navidex.Core.Data.Edition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -101,6 +155,9 @@ namespace Navidex.Core.Data.Migrations
                     b.Property<string>("Disambiguation")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Formats")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ReleaseDate")
                         .HasColumnType("TEXT");
 
@@ -110,6 +167,9 @@ namespace Navidex.Core.Data.Migrations
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("TrackCount")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -209,6 +269,9 @@ namespace Navidex.Core.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("ArtistId")
+                        .HasColumnType("TEXT");
+
                     b.Property<TimeSpan?>("Duration")
                         .HasColumnType("TEXT");
 
@@ -225,6 +288,9 @@ namespace Navidex.Core.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("MatchedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("MediaServerTrackId")
                         .HasColumnType("TEXT");
 
@@ -235,11 +301,20 @@ namespace Navidex.Core.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ReviewReason")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("ScannedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<long>("Size")
                         .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("SuggestedEditionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("SuggestedTrackId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("TagsJson")
                         .IsRequired()
@@ -250,7 +325,11 @@ namespace Navidex.Core.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ArtistId");
+
                     b.HasIndex("EditionId");
+
+                    b.HasIndex("MatchedAt");
 
                     b.HasIndex("Path")
                         .IsUnique();
@@ -393,8 +472,12 @@ namespace Navidex.Core.Data.Migrations
 
                     b.HasIndex("EntityKind", "EntityId");
 
+                    b.HasIndex("Provider", "Value");
+
                     b.HasIndex("EntityKind", "Provider", "Value")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_Crosswalk_ProviderId")
+                        .HasFilter("\"Provider\" NOT IN ('isrc', 'upc')");
 
                     b.ToTable("Crosswalk", (string)null);
                 });
@@ -442,6 +525,20 @@ namespace Navidex.Core.Data.Migrations
                     b.HasIndex("TargetKind", "TargetId", "Mode");
 
                     b.ToTable("Requests");
+                });
+
+            modelBuilder.Entity("Navidex.Core.Data.Setting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ValueJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("Settings");
                 });
 
             modelBuilder.Entity("Navidex.Core.Data.Track", b =>

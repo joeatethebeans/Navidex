@@ -2,6 +2,9 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY Directory.Build.props Navidex.sln ./
 COPY src/Navidex.Contracts/Navidex.Contracts.csproj src/Navidex.Contracts/
+COPY src/Navidex.Client/Navidex.Client.csproj src/Navidex.Client/
+COPY src/Navidex.Web/Navidex.Web.csproj src/Navidex.Web/
+COPY src/Navidex.Plugins.MusicBrainz/Navidex.Plugins.MusicBrainz.csproj src/Navidex.Plugins.MusicBrainz/
 COPY src/Navidex.Core/Navidex.Core.csproj src/Navidex.Core/
 RUN dotnet restore src/Navidex.Core/Navidex.Core.csproj
 COPY src/ src/

@@ -15,6 +15,8 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
     public DbSet<Job> Jobs => Set<Job>();
     public DbSet<ListenNowItem> ListenNowItems => Set<ListenNowItem>();
     public DbSet<PluginInstance> PluginInstances => Set<PluginInstance>();
+    public DbSet<Setting> Settings => Set<Setting>();
+    public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,7 +54,12 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
         {
             e.ToTable("Crosswalk");
             // A provider ID identifies exactly one entity of a kind; an entity can have many provider IDs.
-            e.HasIndex(m => new { m.EntityKind, m.Provider, m.Value }).IsUnique();
+            // ISRCs and UPCs are the exception, as catalogues sometimes share them between entities.
+            e.HasIndex(m => new { m.EntityKind, m.Provider, m.Value })
+                .IsUnique()
+                .HasFilter("\"Provider\" NOT IN ('isrc', 'upc')")
+                .HasDatabaseName("IX_Crosswalk_ProviderId");
+            e.HasIndex(m => new { m.Provider, m.Value });
             e.HasIndex(m => new { m.EntityKind, m.EntityId });
         });
 
@@ -61,6 +68,8 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
             e.HasIndex(f => f.Path).IsUnique();
             e.HasIndex(f => f.TrackId);
             e.HasIndex(f => f.EditionId);
+            e.HasIndex(f => f.ArtistId);
+            e.HasIndex(f => f.MatchedAt);
             e.HasOne(f => f.Track).WithMany().OnDelete(DeleteBehavior.SetNull);
             e.HasOne(f => f.Edition).WithMany().OnDelete(DeleteBehavior.SetNull);
         });
@@ -89,6 +98,16 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
         modelBuilder.Entity<PluginInstance>(e =>
         {
             e.HasIndex(p => new { p.Type, p.Priority });
+        });
+
+        modelBuilder.Entity<Setting>(e =>
+        {
+            e.HasKey(s => s.Key);
+        });
+
+        modelBuilder.Entity<BackgroundTask>(e =>
+        {
+            e.HasIndex(t => new { t.Status, t.CreatedAt });
         });
 
         // Store enums as their names so the database stays readable and reordering members is safe.

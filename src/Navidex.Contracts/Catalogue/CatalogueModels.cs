@@ -95,6 +95,10 @@ public sealed record ArtistRef(ProviderId Id, string Name);
 /// <param name="SecondaryTypes">Secondary types.</param>
 /// <param name="FirstReleaseDate">Earliest release date, as precise as known: <c>yyyy</c>, <c>yyyy-MM</c> or <c>yyyy-MM-dd</c>.</param>
 /// <param name="ExternalIds">This album's IDs in other providers' schemes.</param>
+/// <param name="HasOfficialRelease">
+/// Whether at least one edition is an official release, as opposed to only bootlegs, promos or pseudo-releases.
+/// The missing view hides albums without one by default. <c>null</c> when the plugin doesn't know.
+/// </param>
 public sealed record IndexAlbum(
     ProviderId Id,
     string Title,
@@ -103,7 +107,8 @@ public sealed record IndexAlbum(
     AlbumType Type,
     IReadOnlyList<AlbumSecondaryType> SecondaryTypes,
     string? FirstReleaseDate = null,
-    IReadOnlyList<ProviderId>? ExternalIds = null);
+    IReadOnlyList<ProviderId>? ExternalIds = null,
+    bool? HasOfficialRelease = null);
 
 /// <summary>An album with all of its editions and their track listings.</summary>
 /// <param name="Album">The album.</param>

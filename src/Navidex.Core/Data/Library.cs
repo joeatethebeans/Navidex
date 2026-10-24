@@ -31,14 +31,31 @@ public class LibraryFile
     /// <summary>Tags as read from the file, as a JSON object of tag name to value.</summary>
     public string TagsJson { get; set; } = "{}";
 
+    /// <summary>The artist the file is credited to, once resolved.</summary>
+    public Guid? ArtistId { get; set; }
+
     public Guid? TrackId { get; set; }
     public Track? Track { get; set; }
+
+    /// <summary>The edition the file belongs to; null for a track matched on its own, without an album.</summary>
     public Guid? EditionId { get; set; }
+
     public Edition? Edition { get; set; }
     public MatchMethod MatchMethod { get; set; }
 
     /// <summary>From 0 to 1; anything under the threshold goes to the review list.</summary>
     public double? MatchConfidence { get; set; }
+
+    /// <summary>For files on the review list: the best candidate found, which the user can accept.</summary>
+    public Guid? SuggestedTrackId { get; set; }
+
+    public Guid? SuggestedEditionId { get; set; }
+
+    /// <summary>Why the file is on the review list; null when it's matched.</summary>
+    public string? ReviewReason { get; set; }
+
+    /// <summary>When matching last ran for this file; null means it's waiting to be matched.</summary>
+    public DateTime? MatchedAt { get; set; }
 
     public string? MediaServerTrackId { get; set; }
     public DateTime ScannedAt { get; set; } = DateTime.UtcNow;
@@ -197,4 +214,39 @@ public class PluginInstance
     public string? HealthMessage { get; set; }
     public DateTime? HealthCheckedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>A user setting, stored as JSON under a key.</summary>
+public class Setting
+{
+    public required string Key { get; set; }
+    public required string ValueJson { get; set; }
+}
+
+public enum BackgroundTaskStatus
+{
+    Queued,
+    Running,
+    Succeeded,
+    Failed,
+}
+
+/// <summary>Database-backed queue of internal work, such as library scans, so it survives restarts.</summary>
+public class BackgroundTask
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    /// <summary>What to do, for example <c>library-scan</c>.</summary>
+    public required string Kind { get; set; }
+
+    public string? PayloadJson { get; set; }
+    public BackgroundTaskStatus Status { get; set; }
+
+    /// <summary>Human-readable progress, for example <c>Matching 40 of 85 files</c>.</summary>
+    public string? Progress { get; set; }
+
+    public string? Error { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? StartedAt { get; set; }
+    public DateTime? FinishedAt { get; set; }
 }

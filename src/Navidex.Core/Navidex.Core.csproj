@@ -5,16 +5,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Navidex.Contracts\Navidex.Contracts.csproj" />
+    <ProjectReference Include="..\Navidex.Plugins.MusicBrainz\Navidex.Plugins.MusicBrainz.csproj" />
+    <ProjectReference Include="..\Navidex.Client\Navidex.Client.csproj" />
+    <ProjectReference Include="..\Navidex.Web\Navidex.Web.csproj" />
   </ItemGroup>
 
 </Project>

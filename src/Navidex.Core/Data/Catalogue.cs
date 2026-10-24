@@ -23,6 +23,12 @@ public class Artist
     public string? Country { get; set; }
     public DateTime RefreshedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>When the discography was last fetched from the index plugin; null if never.</summary>
+    public DateTime? AlbumsRefreshedAt { get; set; }
+
+    /// <summary>Whether any library file is credited to this artist, so it appears on the Library page.</summary>
+    public bool InLibrary { get; set; }
+
     public List<Album> Albums { get; set; } = [];
 }
 
@@ -40,7 +46,16 @@ public class Album
     /// <summary><c>yyyy</c>, <c>yyyy-MM</c> or <c>yyyy-MM-dd</c>.</summary>
     public string? FirstReleaseDate { get; set; }
 
+    /// <summary>Whether any edition is an official release; null when unknown. Bootleg-only albums are hidden by default.</summary>
+    public bool? HasOfficialRelease { get; set; }
+
+    /// <summary>The user never wants this album listed as missing.</summary>
+    public bool Ignored { get; set; }
+
     public DateTime RefreshedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>When the editions and track listings were last fetched; null if never.</summary>
+    public DateTime? EditionsRefreshedAt { get; set; }
 
     public List<Edition> Editions { get; set; } = [];
 }
@@ -56,6 +71,11 @@ public class Edition
     public string? Country { get; set; }
     public string? Status { get; set; }
     public string? Disambiguation { get; set; }
+
+    /// <summary>Media formats, for example <c>CD, CD</c> or <c>Digital Media</c>.</summary>
+    public string? Formats { get; set; }
+
+    public int TrackCount { get; set; }
 
     public List<EditionTrack> Tracks { get; set; } = [];
 }
@@ -94,7 +114,8 @@ public class EditionTrack
 
 /// <summary>
 /// The crosswalk: one row per provider ID an internal entity is known by. ISRCs and UPCs are stored here too,
-/// under the <c>isrc</c> and <c>upc</c> providers, as the provider-neutral glue between catalogues.
+/// under the <c>isrc</c> and <c>upc</c> providers, as the provider-neutral glue between catalogues. Unlike provider
+/// IDs, they aren't unique: real catalogues sometimes give two recordings the same ISRC.
 /// </summary>
 public class ProviderIdMapping
 {

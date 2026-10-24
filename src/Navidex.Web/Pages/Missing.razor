@@ -1,0 +1,57 @@
+@page "/missing"
+@implements IDisposable
+@inject NavidexClient Api
+
+<PageTitle>Missing · Navidex</PageTitle>
+
+<h1>Missing</h1>
+<p class="muted">Albums, EPs and singles you don't have, across every artist in the library. Live albums, compilations and the like are left out; change that in Settings.</p>
+
+@if (_missing is null)
+{
+    <p class="muted">Loading…</p>
+}
+else if (_missing.Count == 0)
+{
+    <div class="empty card">Nothing missing.</div>
+}
+else
+{
+    @foreach (var artist in _missing.GroupBy(m => (m.Album.ArtistId, m.ArtistName)))
+    {
+        <h2><a href="artists/@artist.Key.ArtistId">@artist.Key.ArtistName</a> <span class="muted small">@artist.Count()</span></h2>
+        <div class="card">
+            <table class="table">
+                <tbody>
+                    @foreach (var item in artist)
+                    {
+                        <tr>
+                            <td><a href="albums/@item.Album.Id">@item.Album.Title</a></td>
+                            <td class="muted">@Format.TypeLabel(item.Album.Type)</td>
+                            <td class="muted hide-narrow">@Format.Year(item.Album.FirstReleaseDate)</td>
+                            <td class="num muted hide-narrow">@(item.Album.OwnedTracks > 0 ? $"{item.Album.OwnedTracks} of {item.Album.TotalTracks} tracks on other albums" : "")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    private IReadOnlyList<MissingAlbum>? _missing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ScanStatus.TaskFinished += Reload;
+        _missing = await Api.GetMissingAsync();
+    }
+
+    private void Reload() => InvokeAsync(async () =>
+    {
+        _missing = await Api.GetMissingAsync();
+        StateHasChanged();
+    });
+
+    public void Dispose() => ScanStatus.TaskFinished -= Reload;
+}

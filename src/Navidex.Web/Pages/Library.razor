@@ -1,0 +1,79 @@
+@page "/"
+@implements IDisposable
+@inject NavidexClient Api
+
+<PageTitle>Library · Navidex</PageTitle>
+
+<h1>Library</h1>
+<p class="muted">Every artist in your music folder, and how much of their catalogue you have.</p>
+
+@if (_artists is null)
+{
+    <p class="muted">Loading…</p>
+}
+else if (_artists.Count == 0)
+{
+    <div class="empty card">No artists yet. Scan the library to read your music folder.</div>
+}
+else
+{
+    <div class="toolbar">
+        <input type="search" placeholder="Filter artists" @bind="_filter" @bind:event="oninput" />
+        <label class="small"><input type="checkbox" @bind="_onlyIncomplete" /> Only artists with missing albums</label>
+    </div>
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Artist</th>
+                    <th class="num">Owned</th>
+                    <th class="num">Missing</th>
+                    <th class="num hide-narrow">Covered</th>
+                    <th class="hide-narrow">Complete</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var artist in Visible)
+                {
+                    var total = artist.OwnedAlbums + artist.MissingAlbums;
+                    <tr>
+                        <td>
+                            <a href="artists/@artist.Id">@artist.Name</a>
+                            @if (artist.Disambiguation is not null) { <span class="muted small"> (@artist.Disambiguation)</span> }
+                        </td>
+                        <td class="num">@artist.OwnedAlbums</td>
+                        <td class="num">@artist.MissingAlbums</td>
+                        <td class="num hide-narrow">@artist.CoveredAlbums</td>
+                        <td class="hide-narrow">
+                            <div class="meter" title="@artist.OwnedAlbums of @total"><span style="width:@(total == 0 ? 100 : 100 * artist.OwnedAlbums / total)%"></span></div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<LibraryArtist>? _artists;
+    private string _filter = "";
+    private bool _onlyIncomplete;
+
+    private IEnumerable<LibraryArtist> Visible => _artists!
+        .Where(a => _filter.Length == 0 || a.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase))
+        .Where(a => !_onlyIncomplete || a.MissingAlbums > 0);
+
+    protected override async Task OnInitializedAsync()
+    {
+        ScanStatus.TaskFinished += Reload;
+        _artists = await Api.GetLibraryArtistsAsync();
+    }
+
+    private void Reload() => InvokeAsync(async () =>
+    {
+        _artists = await Api.GetLibraryArtistsAsync();
+        StateHasChanged();
+    });
+
+    public void Dispose() => ScanStatus.TaskFinished -= Reload;
+}

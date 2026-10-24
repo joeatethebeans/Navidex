@@ -1,0 +1,24 @@
+@* Lists provider IDs, linking MusicBrainz ones. *@
+@if (Ids.Count > 0)
+{
+    <div class="ids">
+        @foreach (var id in Ids)
+        {
+            @if (id.Provider == Providers.MusicBrainz && Entity is not null)
+            {
+                <a href="https://musicbrainz.org/@Entity/@id.Value" target="_blank" rel="noopener"><code>musicbrainz</code></a>
+            }
+            else
+            {
+                <span><code>@id.Provider</code> @id.Value</span>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<ProviderId> Ids { get; set; } = [];
+
+    /// <summary>MusicBrainz entity path: artist, release-group, release or recording.</summary>
+    [Parameter] public string? Entity { get; set; }
+}

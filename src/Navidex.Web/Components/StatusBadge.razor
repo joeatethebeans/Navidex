@@ -1,0 +1,29 @@
+@* Shows an album or track status as a coloured label. *@
+<span class="badge @CssClass">@Label</span>
+
+@code {
+    [Parameter] public AlbumStatus? Album { get; set; }
+    [Parameter] public TrackStatus? Track { get; set; }
+
+    private string CssClass => Album?.ToString().ToLowerInvariant() ?? Track switch
+    {
+        TrackStatus.OwnedElsewhere => "ownedElsewhere",
+        { } t => t.ToString().ToLowerInvariant(),
+        null => "neutral",
+    };
+
+    private string Label => Album switch
+    {
+        AlbumStatus.Complete => "Owned",
+        AlbumStatus.Partial => "Partly owned",
+        AlbumStatus.Covered => "Covered",
+        AlbumStatus.Missing => "Missing",
+        _ => Track switch
+        {
+            TrackStatus.Owned => "Owned",
+            TrackStatus.OwnedElsewhere => "On another album",
+            TrackStatus.Missing => "Missing",
+            _ => "",
+        },
+    };
+}

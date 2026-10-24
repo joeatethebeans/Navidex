@@ -2,12 +2,19 @@
 """Snapshot the MusicBrainz data the test library is built from.
 
 Reads scenario.json and writes catalogue.json: every release group of each artist (with the statuses of
-its releases, so bootleg-only groups can be told apart), plus full track listings for the editions the
-scenario owns. The snapshot is committed, so generating the library needs no network and is repeatable.
+its releases, so bootleg-only groups can be told apart), full track listings for the editions the scenario
+owns, and the recordings on every edition of each group the missing view shows, so the answer key can say
+which of those are covered by tracks owned on other albums. The snapshot is committed, so generating the
+library needs no network and is repeatable.
 
 Run it again only to refresh the data; it keeps to MusicBrainz's one request a second.
+
+    python3 tools/testlib/fetch_catalogue.py [--only-coverage]
+
+--only-coverage keeps the rest of catalogue.json and refetches only the coverage listings.
 """
 
+import argparse
 import json
 import sys
 import time
@@ -134,15 +141,59 @@ def snapshot_edition(mbid: str) -> dict:
     }
 
 
-def main() -> None:
-    scenario = json.loads((HERE / "scenario.json").read_text())
-    editions = {a["release"] for a in scenario["albums"]} | {s["like"]["release"] for s in scenario["strays"] if "like" in s}
-    catalogue = {
-        "source": "musicbrainz.org",
-        "fetchedAt": time.strftime("%Y-%m-%d"),
-        "artists": [snapshot_artist(a["mbid"]) for a in scenario["artists"]],
-        "editions": [snapshot_edition(mbid) for mbid in sorted(editions)],
+def shown_by_default(group: dict, policy: dict) -> bool:
+    # Kept in step with generate.py.
+    if group["primaryType"] not in policy["shownPrimaryTypes"]:
+        return False
+    if policy["hideAnySecondaryType"] and group["secondaryTypes"]:
+        return False
+    return not policy["requireOfficialRelease"] or "Official" in group["releaseStatuses"]
+
+
+def snapshot_coverage(group: dict) -> dict:
+    """The recordings on each edition of a release group, with their ISRCs."""
+    print(f"  coverage: {group['title']}", file=sys.stderr)
+    releases = browse("release", "releases", **{"release-group": group["mbid"], "inc": "recordings isrcs"})
+    return {
+        "mbid": group["mbid"],
+        "title": group["title"],
+        "editions": [
+            {
+                "mbid": release["id"],
+                "status": release.get("status"),
+                "recordings": [
+                    {"mbid": t["recording"]["id"], "isrcs": t["recording"].get("isrcs", [])}
+                    for medium in release.get("media", []) for t in medium.get("tracks", [])
+                ],
+            }
+            for release in releases
+        ],
     }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--only-coverage", action="store_true", help="refetch only the coverage listings")
+    args = parser.parse_args()
+
+    scenario = json.loads((HERE / "scenario.json").read_text())
+    if args.only_coverage:
+        catalogue = json.loads((HERE / "catalogue.json").read_text())
+    else:
+        editions = {a["release"] for a in scenario["albums"]} | {s["like"]["release"] for s in scenario["strays"] if "like" in s}
+        catalogue = {
+            "source": "musicbrainz.org",
+            "fetchedAt": time.strftime("%Y-%m-%d"),
+            "artists": [snapshot_artist(a["mbid"]) for a in scenario["artists"]],
+            "editions": [snapshot_edition(mbid) for mbid in sorted(editions)],
+        }
+
+    owned = {e["releaseGroup"]["mbid"] for e in catalogue["editions"]}
+    catalogue["coverage"] = [
+        snapshot_coverage(g)
+        for artist in catalogue["artists"] for g in artist["releaseGroups"]
+        if g["mbid"] not in owned and shown_by_default(g, scenario["policy"])
+    ]
     (HERE / "catalogue.json").write_text(json.dumps(catalogue, indent=1, ensure_ascii=False) + "\n")
     print("wrote catalogue.json", file=sys.stderr)
 

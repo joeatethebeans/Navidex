@@ -1,0 +1,89 @@
+@page "/settings"
+@inject NavidexClient Api
+
+<PageTitle>Settings · Navidex</PageTitle>
+
+<h1>Settings</h1>
+
+@if (_settings is null)
+{
+    <p class="muted">Loading…</p>
+}
+else
+{
+    <h2>Songs on more than one album</h2>
+    <p class="muted small">A song can be on an album and on a single, or on a deluxe edition and a compilation. This decides whether it's fetched once or for each, and so whether owning it on one album counts for the others.</p>
+    <div class="card" style="padding: .75rem 1rem;">
+        @foreach (var (value, label, help) in DuplicateOptions)
+        {
+            <div style="margin: .35rem 0;">
+                <label>
+                    <input type="radio" name="duplicates" checked="@(_settings.DuplicateTracks == value)" @onchange="() => _settings = _settings with { DuplicateTracks = value }" />
+                    <strong>@label</strong>
+                </label>
+                <div class="muted small" style="margin-left: 1.6rem;">@help</div>
+            </div>
+        }
+    </div>
+
+    <h2>Missing view</h2>
+    <div class="card" style="padding: .75rem 1rem;">
+        <div class="row" style="margin: .35rem 0;">
+            <span>Show</span>
+            @foreach (var type in new[] { AlbumType.Album, AlbumType.Ep, AlbumType.Single, AlbumType.Broadcast, AlbumType.Other })
+            {
+                <label><input type="checkbox" checked="@_settings.ShownTypes.Contains(type)" @onchange="e => ToggleType(type, (bool)e.Value!)" /> @Format.TypeName(type)</label>
+            }
+        </div>
+        <div style="margin: .35rem 0;">
+            <label><input type="checkbox" checked="@_settings.HideSecondaryTypes" @onchange="e => _settings = _settings with { HideSecondaryTypes = (bool)e.Value! }" /> Hide live albums, compilations, remixes, demos, soundtracks and other secondary types</label>
+        </div>
+        <div style="margin: .35rem 0;">
+            <label><input type="checkbox" checked="@_settings.HideUnofficial" @onchange="e => _settings = _settings with { HideUnofficial = (bool)e.Value! }" /> Hide albums that only exist as bootlegs</label>
+        </div>
+    </div>
+
+    <h2>Matching</h2>
+    <div class="card" style="padding: .75rem 1rem;">
+        <label>
+            Send fuzzy matches under
+            <input type="number" min="50" max="100" step="1" style="width: 5rem;" value="@((int)Math.Round(_settings.MatchThreshold * 100))"
+                   @onchange="e => _settings = _settings with { MatchThreshold = int.Parse(e.Value!.ToString()!) / 100.0 }" />
+            % confidence to review
+        </label>
+        <div class="muted small">Applies from the next scan.</div>
+    </div>
+
+    <div class="toolbar">
+        <button class="primary" @onclick="SaveAsync">Save</button>
+        @if (_saved) { <span class="muted small">Saved.</span> }
+    </div>
+}
+
+@code {
+    private LibrarySettings? _settings;
+    private bool _saved;
+
+    private static readonly (DuplicateTracks, string, string)[] DuplicateOptions =
+    [
+        (DuplicateTracks.KeepInAlbum, "Fetch once, keep in the album", "Owning a song anywhere counts for every album it's on. A single whose songs you have on an album shows as covered, not missing."),
+        (DuplicateTracks.KeepInSingle, "Fetch once, keep in the single", "As above, but the file lives in the single's folder."),
+        (DuplicateTracks.KeepBoth, "Fetch for each, keep both", "Every album is judged on its own files, so singles show as missing until you have them as singles."),
+    ];
+
+    protected override async Task OnInitializedAsync() => _settings = await Api.GetLibrarySettingsAsync();
+
+    private void ToggleType(AlbumType type, bool on)
+    {
+        var types = _settings!.ShownTypes.Where(t => t != type).ToList();
+        if (on)
+            types.Add(type);
+        _settings = _settings with { ShownTypes = types };
+    }
+
+    private async Task SaveAsync()
+    {
+        await Api.SaveLibrarySettingsAsync(_settings!);
+        _saved = true;
+    }
+}
