@@ -34,6 +34,10 @@ public sealed class LibraryMatcher(
             .GroupBy(x => x.Tags.Album is null
                 ? $"loose|{x.Path}"
                 : $"{x.Tags.AlbumArtist ?? x.Tags.Artist}|{x.Tags.Album}|{Path.GetDirectoryName(x.Path)}")
+            // Groups with MusicBrainz IDs first: they pin their artists by ID, so later groups by the same artist don't
+            // need a name search. Then by key, so the order (and the requests made) never depends on the filesystem.
+            .OrderBy(g => g.Any(x => x.Tags.MusicBrainzReleaseGroupId is not null || x.Tags.MusicBrainzReleaseId is not null) ? 0 : 1)
+            .ThenBy(g => g.Key, StringComparer.Ordinal)
             .ToList();
 
         int done = 0, matched = 0, review = 0;

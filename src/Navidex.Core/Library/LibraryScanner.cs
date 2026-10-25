@@ -40,7 +40,8 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
         ".mp3", ".flac", ".m4a", ".mp4", ".aac", ".ogg", ".oga", ".opus", ".wma", ".wav", ".aif", ".aiff", ".ape", ".wv", ".mpc", ".dsf",
     };
 
-    public sealed record Result(int Files, int Added, int Changed, int Removed, int Unreadable);
+    /// <param name="SkippedFolders">Folders that couldn't be read; their files are kept as they were.</param>
+    public sealed record Result(int Files, int Added, int Changed, int Removed, int Unreadable, int SkippedFolders);
 
     public async Task<Result> ScanAsync(IProgress<string>? progress, CancellationToken ct)
     {
@@ -52,8 +53,11 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
         var seen = new HashSet<string>();
         int added = 0, changed = 0, unreadable = 0;
 
-        var files = Directory.EnumerateFiles(root, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true })
-            .Where(f => AudioExtensions.Contains(Path.GetExtension(f)));
+        var walk = Walk(root);
+        var files = walk.Files.Where(f => AudioExtensions.Contains(Path.GetExtension(f))).ToList();
+        if (files.Count == 0)
+            // Never treat an empty or unreadable folder as "everything was deleted".
+            throw new InvalidOperationException(NothingFound(root, walk));
         foreach (var fullPath in files)
         {
             ct.ThrowIfCancellationRequested();
@@ -100,13 +104,60 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
             }
         }
 
-        var removed = known.Values.Where(f => !seen.Contains(f.Path)).ToList();
+        var skipped = walk.Skipped.Select(d => Path.GetRelativePath(root, d).Replace('\\', '/') + "/").ToList();
+        var removed = known.Values.Where(f => !seen.Contains(f.Path) && !skipped.Any(f.Path.StartsWith)).ToList();
         db.LibraryFiles.RemoveRange(removed);
         await db.SaveChangesAsync(ct);
 
-        var result = new Result(seen.Count, added, changed, removed.Count, unreadable);
+        if (walk.Skipped.Count > 0)
+            logger.LogWarning("Couldn't read {Count} folders in {Root}, for example {Folder}. The container's user needs read access.",
+                walk.Skipped.Count, root, walk.Skipped[0]);
+        var result = new Result(seen.Count, added, changed, removed.Count, unreadable, walk.Skipped.Count);
         logger.LogInformation("Scanned {Root}: {Result}", root, result);
         return result;
+    }
+
+    private sealed record Walked(List<string> Files, List<string> Skipped, int Entries);
+
+    /// <summary>Every file under the root, noting the folders that couldn't be read rather than silently skipping them.</summary>
+    private static Walked Walk(string root)
+    {
+        var files = new List<string>();
+        var skipped = new List<string>();
+        var entries = 0;
+        var pending = new Stack<string>([root]);
+        while (pending.TryPop(out var dir))
+        {
+            try
+            {
+                foreach (var entry in new DirectoryInfo(dir).EnumerateFileSystemInfos())
+                {
+                    entries++;
+                    if (entry is DirectoryInfo sub)
+                        pending.Push(sub.FullName);
+                    else
+                        files.Add(entry.FullName);
+                }
+            }
+            catch (Exception e) when (e is UnauthorizedAccessException or IOException)
+            {
+                skipped.Add(dir);
+            }
+        }
+        // A fixed order, whatever the filesystem returns, so scans are repeatable.
+        files.Sort(StringComparer.Ordinal);
+        return new Walked(files, skipped, entries);
+    }
+
+    private static string NothingFound(string root, Walked walk)
+    {
+        if (walk.Skipped.Contains(root))
+            return $"Navidex can't read the music folder {root}. Give the container's user read access to it (for example chmod -R o+rX on the host), or on SELinux hosts mount it with :z.";
+        if (walk.Entries == 0)
+            return $"The music folder {root} is empty. Check that MUSIC_PATH points at your music library.";
+        if (walk.Skipped.Count > 0)
+            return $"Found no audio files in {root}, and couldn't read {walk.Skipped.Count} folders in it, for example {walk.Skipped[0]}. Give the container's user read access (for example chmod -R o+rX on the host).";
+        return $"Found no audio files in {root} ({walk.Files.Count} other files). Check that MUSIC_PATH points at your music library.";
     }
 
     private (FileTags Tags, TimeSpan? Duration)? Read(string path)

@@ -7,9 +7,13 @@
     {
         <span class="muted" title="@task.Kind">@(task.Progress ?? "Starting…")</span>
     }
+    else if (_status?.LastScan is { State: TaskState.Failed } failed)
+    {
+        <span class="error" title="@failed.Error">Scan failed: @failed.Error</span>
+    }
     else if (_status is not null)
     {
-        <span class="muted hide-narrow">@_status.Files files@(_status.Review > 0 ? $", {_status.Review} to review" : "")</span>
+        <span class="muted hide-narrow" title="@_status.LastScan?.Progress">@_status.Files files@(_status.Review > 0 ? $", {_status.Review} to review" : "")</span>
     }
     <button class="primary" disabled="@(_status?.CurrentTask is not null)" @onclick="ScanAsync">Scan library</button>
 </div>

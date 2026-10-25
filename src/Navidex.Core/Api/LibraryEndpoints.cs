@@ -24,7 +24,10 @@ public static class LibraryEndpoints
                     .MaxAsync(t => (DateTime?)t.FinishedAt, ct);
                 var current = await db.BackgroundTasks.Where(t => t.Status == BackgroundTaskStatus.Running || t.Status == BackgroundTaskStatus.Queued)
                     .OrderBy(t => t.CreatedAt).FirstOrDefaultAsync(ct);
-                return new LibraryStatus(files, matched, files - matched - pending, pending, lastScan, current is null ? null : TaskQueue.ToInfo(current));
+                var lastFinished = await db.BackgroundTasks.Where(t => t.Kind == LibraryScanTask.TaskKind && t.FinishedAt != null)
+                    .OrderByDescending(t => t.FinishedAt).FirstOrDefaultAsync(ct);
+                return new LibraryStatus(files, matched, files - matched - pending, pending, lastScan, current is null ? null : TaskQueue.ToInfo(current),
+                    lastFinished is null ? null : TaskQueue.ToInfo(lastFinished));
             })
             .WithName("GetLibraryStatus").WithSummary("File counts, the last scan, and any task in progress.");
 

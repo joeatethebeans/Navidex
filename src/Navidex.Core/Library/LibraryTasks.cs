@@ -30,8 +30,14 @@ public sealed class LibraryScanTask(
 
         var artists = await db.Artists.Where(a => a.InLibrary).Select(a => a.Id).ToListAsync(ct);
         var failures = await refresher.RefreshArtistsAsync(artists, progress, ct);
-        var skipped = failures > 0 ? $"; {failures} catalogue updates failed and will be retried next scan" : "";
-        progress.Report($"{scan.Files} files: {match.Matched} newly matched, {match.Review} to review{skipped}");
+        var notes = new List<string>();
+        if (scan.SkippedFolders > 0)
+            notes.Add($"{scan.SkippedFolders} folders couldn't be read");
+        if (scan.Unreadable > 0)
+            notes.Add($"{scan.Unreadable} files couldn't be read");
+        if (failures > 0)
+            notes.Add($"{failures} catalogue updates failed and will be retried next scan");
+        progress.Report($"{scan.Files} files: {match.Matched} newly matched, {match.Review} to review" + string.Concat(notes.Select(n => "; " + n)));
     }
 }
 
