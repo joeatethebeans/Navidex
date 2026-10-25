@@ -2,6 +2,7 @@ using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using Navidex.Client;
 using Navidex.Core.Data;
+using Navidex.Core.Diagnostics;
 
 namespace Navidex.Core.Tasks;
 
@@ -97,7 +98,7 @@ public sealed class TaskWorker(IServiceScopeFactory scopes, TaskSignal signal, I
             await handler.RunAsync(task, progress, ct);
             await progress.FlushAsync();
             await FinishAsync(task.Id, BackgroundTaskStatus.Succeeded, null);
-            logger.LogInformation("Finished {Kind}: {Summary}", task.Kind, progress.Latest ?? "done");
+            logger.LogInformation(LogEvents.Success, "Finished {Kind}: {Summary}", task.Kind, progress.Latest ?? "done");
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {

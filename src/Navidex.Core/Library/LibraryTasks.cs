@@ -44,7 +44,7 @@ public sealed class LibraryScanTask(
         progress.Report($"{scan.Files} files: {match.Matched} newly matched, {match.Review} to review" + string.Concat(notes.Select(n => "; " + n)));
     }
 
-    private static string Count(int n, string one, string many) => $"{n} {(n == 1 ? one : many)}";
+    private static string Count(int n, string one, string many) => LibraryMatcher.Plural(n, one, many);
 }
 
 /// <summary>Fills in one artist's catalogue after their page is opened, so non-library artists get full statuses.</summary>
@@ -62,8 +62,8 @@ public sealed class ArtistRefreshTask(CatalogueRefresher refresher) : ITaskHandl
 
 /// <summary>
 /// Fills in the catalogue for library artists: discographies, then editions of the albums the missing view shows (editions
-/// say whether an album has an official release). A provider failure skips that artist or album and leaves it stale, so the
-/// next scan tries it again; it doesn't fail the scan.
+/// say whether an album has an official release). An artist or album the source is too busy for goes to the back of its
+/// queue, up to the attempts the settings allow; after that it stays stale for the next scan. Nothing fails the scan.
 /// </summary>
 public sealed class CatalogueRefresher(
     NavidexDbContext db,
@@ -72,88 +72,100 @@ public sealed class CatalogueRefresher(
     IOptions<PluginHttpOptions> httpOptions,
     ILogger<CatalogueRefresher> logger)
 {
-    private int _unavailableInARow;
+    private enum Outcome { Done, Busy, Failed }
 
     public async Task<int> RefreshArtistsAsync(IReadOnlyList<Guid> artistIds, IProgress<string> progress, CancellationToken ct)
     {
         var library = await settings.GetLibraryAsync(ct);
-        var failures = 0;
-        _unavailableInARow = 0;
-        for (var i = 0; i < artistIds.Count; i++)
+        var backoff = new SourceBackoff(httpOptions.Value, logger);
+        var artists = new Queue<(Guid Id, int Attempt)>(artistIds.Select(id => (id, 1)));
+        int done = 0, failures = 0;
+        while (artists.TryDequeue(out var next))
         {
-            if (GivingUp())
-                return failures;
-            var artist = await db.Artists.FindAsync([artistIds[i]], ct);
+            if (backoff.GaveUp)
+                return failures + artists.Count + 1;
+            db.ChangeTracker.Clear();
+            var artist = await db.Artists.FindAsync([next.Id], ct);
             if (artist is null)
                 continue;
-            progress.Report($"Updating catalogue: {artist.Name} ({i + 1} of {artistIds.Count})");
-            if (!await TryAsync(() => catalogue.RefreshDiscographyAsync(artist, false, ct), $"the discography of {artist.Name}", ct))
+            var status = $"Updating catalogue: {artist.Name} ({done + 1} of {artistIds.Count})";
+            progress.Report(status);
+            var name = artist.Name;
+            switch (await TryAsync(() => catalogue.RefreshDiscographyAsync(artist, false, ct), $"the discography of {name}", next.Attempt, library.AttemptsWhenBusy, backoff, progress, status, ct))
             {
-                failures++;
-                continue;
+                case Outcome.Busy when next.Attempt < library.AttemptsWhenBusy:
+                    artists.Enqueue((next.Id, next.Attempt + 1));
+                    continue;
+                case Outcome.Busy or Outcome.Failed:
+                    done++;
+                    failures++;
+                    continue;
             }
 
             var stale = DateTime.UtcNow - CatalogueService.EditionsTtl;
-            var albums = await db.Albums.Where(a => a.ArtistId == artist.Id && (a.EditionsRefreshedAt == null || a.EditionsRefreshedAt < stale)).ToListAsync(ct);
-            var wanted = albums.Where(library.Shows).Select(a => a.Id).ToList();
-            var failedBefore = failures;
-            for (var j = 0; j < wanted.Count; j++)
+            var albums = await db.Albums.Where(a => a.ArtistId == next.Id && (a.EditionsRefreshedAt == null || a.EditionsRefreshedAt < stale)).ToListAsync(ct);
+            var wanted = new Queue<(Guid Id, int Attempt)>(albums.Where(library.Shows).Select(a => (a.Id, 1)));
+            int checkedAlbums = 0, albumFailures = 0, total = wanted.Count;
+            while (wanted.TryDequeue(out var albumItem))
             {
-                if (GivingUp())
-                    return failures;
-                progress.Report($"Updating catalogue: {artist.Name}, album {j + 1} of {wanted.Count} ({i + 1} of {artistIds.Count} artists)");
+                if (backoff.GaveUp)
+                    return failures + albumFailures + wanted.Count + 1 + artists.Count;
+                var albumStatus = $"Updating catalogue: {name}, album {checkedAlbums + 1} of {total} ({done + 1} of {artistIds.Count} artists)";
+                progress.Report(albumStatus);
                 // Loaded one at a time with a clear tracker: a big discography tracks thousands of entities otherwise,
                 // and every query and save would scan them all.
                 db.ChangeTracker.Clear();
-                if (await db.Albums.FindAsync([wanted[j]], ct) is not { } album)
+                if (await db.Albums.FindAsync([albumItem.Id], ct) is not { } album)
                     continue;
-                if (!await TryAsync(() => catalogue.RefreshEditionsAsync(album, false, ct), $"the editions of {album.Title}", ct))
-                    failures++;
+                switch (await TryAsync(() => catalogue.RefreshEditionsAsync(album, false, ct), $"the editions of {album.Title}", albumItem.Attempt, library.AttemptsWhenBusy, backoff, progress, albumStatus, ct))
+                {
+                    case Outcome.Busy when albumItem.Attempt < library.AttemptsWhenBusy:
+                        wanted.Enqueue((albumItem.Id, albumItem.Attempt + 1));
+                        continue;
+                    case Outcome.Busy or Outcome.Failed:
+                        albumFailures++;
+                        break;
+                }
+                checkedAlbums++;
             }
             db.ChangeTracker.Clear();
-            if (wanted.Count == 0)
-                logger.LogInformation("The catalogue for {Artist} is up to date", artist.Name);
+            done++;
+            failures += albumFailures;
+            if (total == 0)
+                logger.LogInformation("[{Done}/{Total} artists] The catalogue for {Artist} is up to date", done, artistIds.Count, name);
             else
                 logger.LogInformation("[{Done}/{Total} artists] Updated the catalogue for {Artist}: {Count} albums checked{Failed}",
-                    i + 1, artistIds.Count, artist.Name, wanted.Count,
-                    failures > failedBefore ? $", {failures - failedBefore} couldn't be updated" : "");
+                    done, artistIds.Count, name, total, albumFailures > 0 ? $", {albumFailures} couldn't be updated" : "");
         }
         return failures;
     }
 
-    // As in matching: after a run of "unavailable" answers, stop for this scan rather than wait out an outage.
-    private bool GivingUp()
-    {
-        if (_unavailableInARow < LibraryMatcher.UnavailableLimit)
-            return false;
-        logger.LogWarning("The catalogue source has been unavailable {Count} times in a row, so updating stops here. The next scan picks up where this one left off.",
-            _unavailableInARow);
-        return true;
-    }
-
-    private async Task<bool> TryAsync(Func<Task> refresh, string what, CancellationToken ct)
+    private async Task<Outcome> TryAsync(Func<Task> refresh, string what, int attempt, int attempts, SourceBackoff backoff,
+        IProgress<string> progress, string status, CancellationToken ct)
     {
         try
         {
             await refresh();
-            _unavailableInARow = 0;
-            return true;
+            backoff.Answered();
+            return Outcome.Done;
         }
         catch (Exception e) when (!ct.IsCancellationRequested)
         {
             // Drop whatever the failed refresh left half-done, so the next save doesn't write it.
             db.ChangeTracker.Clear();
-            if (LibraryMatcher.IsUnavailable(e, ct))
-            {
-                _unavailableInARow++;
-                logger.LogWarning("Couldn't update {What}, it'll be tried again on the next scan: {Reason}", what, e.Message);
-                await Task.Delay(httpOptions.Value.UnavailablePause, ct);
-            }
-            else
+            if (!LibraryMatcher.IsUnavailable(e, ct))
             {
                 logger.LogWarning(e, "Couldn't update {What}; it will be tried again on the next scan", what);
+                return Outcome.Failed;
             }
-            return false;
+            if (attempt < attempts)
+                logger.LogWarning("The catalogue source is busy; {What} goes to the back of the queue (attempt {Attempt} of {Attempts}): {Reason}",
+                    what, attempt, attempts, e.Message);
+            else
+                logger.LogWarning("Gave up on {What} for this scan after {Attempts}; the next scan tries again: {Reason}",
+                    what, LibraryMatcher.Plural(attempts, "attempt", "attempts"), e.Message);
+            await backoff.UnavailableAsync(progress, status, ct);
+            return Outcome.Busy;
         }
     }
 }

@@ -9,8 +9,16 @@
 
 <div class="toolbar">
     <input type="search" placeholder="Filter, for example a folder or artist" @bind="_filter" @bind:event="oninput" />
-    <label class="small"><input type="checkbox" @bind="_problemsOnly" /> Only warnings and errors</label>
-    <span class="muted small">@Problems @(Problems == 1 ? "problem" : "problems")</span>
+    <select @bind="_source" aria-label="Source">
+        <option value="">All sources</option>
+        @foreach (var source in _entries.Select(e => e.Source).Distinct().Order())
+        {
+            <option value="@source">@source</option>
+        }
+    </select>
+    <label class="small"><input type="checkbox" @bind="_information" /> Information</label>
+    <label class="small"><input type="checkbox" @bind="_warnings" /> Warnings <span class="muted">(@Count(LogEntryLevel.Warning))</span></label>
+    <label class="small"><input type="checkbox" @bind="_errors" /> Errors <span class="muted">(@Count(LogEntryLevel.Error))</span></label>
 </div>
 
 @if (_entries.Count == 0)
@@ -45,14 +53,23 @@ else
     private readonly List<LogEntry> _entries = [];
     private long _latest;
     private string _filter = "";
-    private bool _problemsOnly;
+    private string _source = "";
+    private bool _information = true;
+    private bool _warnings = true;
+    private bool _errors = true;
     private Timer? _timer;
 
     private IEnumerable<LogEntry> Visible => Enumerable.Reverse(_entries)
-        .Where(e => !_problemsOnly || e.Level != LogEntryLevel.Information)
+        .Where(e => e.Level switch
+        {
+            LogEntryLevel.Warning => _warnings,
+            LogEntryLevel.Error => _errors,
+            _ => _information,
+        })
+        .Where(e => _source.Length == 0 || e.Source == _source)
         .Where(e => _filter.Length == 0 || e.Message.Contains(_filter, StringComparison.OrdinalIgnoreCase) || e.Source.Contains(_filter, StringComparison.OrdinalIgnoreCase));
 
-    private int Problems => _entries.Count(e => e.Level != LogEntryLevel.Information);
+    private int Count(LogEntryLevel level) => _entries.Count(e => e.Level == level);
 
     protected override async Task OnInitializedAsync()
     {

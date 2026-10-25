@@ -43,7 +43,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        ScanStatus.TaskFinished += Reload;
+        ScanStatus.LibraryChanged += Reload;
         _missing = await Api.GetMissingAsync();
     }
 
@@ -53,5 +53,5 @@ else
         StateHasChanged();
     });
 
-    public void Dispose() => ScanStatus.TaskFinished -= Reload;
+    public void Dispose() => ScanStatus.LibraryChanged -= Reload;
 }

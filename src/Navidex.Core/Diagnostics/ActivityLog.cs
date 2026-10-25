@@ -43,6 +43,13 @@ public sealed class ActivityLog
     }
 }
 
+/// <summary>Event IDs the activity log shows differently.</summary>
+public static class LogEvents
+{
+    /// <summary>Logged at Information, shown as a success: a scan or other task that finished well.</summary>
+    public static readonly EventId Success = new(1, nameof(Success));
+}
+
 /// <summary>Feeds <see cref="ActivityLog"/> from the app's logging.</summary>
 public sealed class ActivityLogProvider(ActivityLog log) : ILoggerProvider
 {
@@ -71,6 +78,7 @@ public sealed class ActivityLogProvider(ActivityLog log) : ILoggerProvider
             {
                 >= LogLevel.Error => LogEntryLevel.Error,
                 LogLevel.Warning => LogEntryLevel.Warning,
+                _ when eventId.Name == LogEvents.Success.Name => LogEntryLevel.Success,
                 _ => LogEntryLevel.Information,
             };
             log.Add(level, _source, formatter(state, exception), exception?.GetBaseException().Message);

@@ -49,9 +49,11 @@ Each is an extra interface on the same class, declared in the manifest by name.
 ## Errors
 
 Return `null` or an empty list for things that don't exist. When the source can't answer right now (overloaded,
-rate-limiting, down), throw `IndexUnavailableException`. The core leaves that work pending for the next scan, rests
-the plugin for a while, and stops asking for the rest of the scan after five such answers in a row. A plain
-`HttpRequestException` or timeout is treated the same way. Anything else is logged as a failure.
+rate-limiting, down), throw `IndexUnavailableException`. The core rests the plugin for a while and moves that work to
+the back of the queue. It tries the work again up to the number of times set under "When MusicBrainz is busy" in
+Settings (default 3), and then leaves it pending for the next scan. After every five such answers in a row it waits
+five minutes. After fifteen in a row it stops asking for the rest of the scan. A plain `HttpRequestException` or a
+timeout counts the same way. Anything else is logged as a failure.
 
 ## What the core does for you
 

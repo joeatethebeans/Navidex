@@ -18,6 +18,9 @@ public class PluginHttpOptions
 
     /// <summary>How long the core leaves a plugin alone after it reports its source unavailable, before asking again.</summary>
     public TimeSpan UnavailablePause { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>The longer wait after <see cref="Library.SourceBackoff.InARowBeforeLongWait"/> unavailable answers in a row.</summary>
+    public TimeSpan LongUnavailablePause { get; set; } = TimeSpan.FromMinutes(5);
 }
 
 public static class PluginHttp

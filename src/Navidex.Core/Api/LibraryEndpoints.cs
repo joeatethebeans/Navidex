@@ -57,6 +57,8 @@ public static class LibraryEndpoints
             {
                 if (value.MatchThreshold is <= 0 or > 1)
                     return Results.ValidationProblem(new Dictionary<string, string[]> { ["matchThreshold"] = ["Must be between 0 and 1."] });
+                if (value.AttemptsWhenBusy is < 1 or > 10)
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["attemptsWhenBusy"] = ["Must be between 1 and 10."] });
                 await s.SaveLibraryAsync(value, ct);
                 return Results.NoContent();
             })

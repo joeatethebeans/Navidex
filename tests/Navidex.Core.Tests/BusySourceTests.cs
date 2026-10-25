@@ -11,7 +11,10 @@ using Navidex.Core.Tests.Support;
 
 namespace Navidex.Core.Tests;
 
-/// <summary>When MusicBrainz is overloaded, a scan finishes anyway and leaves what it couldn't match for the next one.</summary>
+/// <summary>
+/// When MusicBrainz is overloaded, busy work goes to the back of the queue; a scan finishes anyway and leaves what it
+/// couldn't match for the next one.
+/// </summary>
 public sealed class BusySourceTests : IDisposable
 {
     private readonly string _dataPath = Path.Combine(Path.GetTempPath(), "navidex-tests", Guid.NewGuid().ToString("N"));
@@ -20,6 +23,9 @@ public sealed class BusySourceTests : IDisposable
     private readonly NavidexClient _api;
     private int _requests;
 
+    // How many requests MusicBrainz is busy for before it answers from the recorded fixtures.
+    private int _busyFor = int.MaxValue;
+
     public BusySourceTests()
     {
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder => builder
@@ -27,10 +33,14 @@ public sealed class BusySourceTests : IDisposable
             .UseSetting("Navidex:LibraryPath", TestLibrary.Music)
             .ConfigureServices(services => services.Configure<PluginHttpOptions>(http =>
             {
-                http.PrimaryHandler = () => new BusyHandler(() => Interlocked.Increment(ref _requests));
+                http.PrimaryHandler = () => new BusyHandler(() => Interlocked.Increment(ref _requests) <= _busyFor)
+                {
+                    InnerHandler = new ReplayHandler(TestLibrary.MusicBrainzFixtures),
+                };
                 http.RateLimit = false;
                 http.RetryDelay = TimeSpan.FromMilliseconds(1);
                 http.UnavailablePause = TimeSpan.FromMilliseconds(1);
+                http.LongUnavailablePause = TimeSpan.FromMilliseconds(1);
             })));
         _http = _factory.CreateClient();
         _api = new NavidexClient(_http);
@@ -47,26 +57,41 @@ public sealed class BusySourceTests : IDisposable
     [TestLibraryFact]
     public async Task A_scan_while_musicbrainz_is_busy_finishes_and_leaves_files_for_the_next_scan()
     {
-        var task = await _api.ScanLibraryAsync();
-        var deadline = DateTime.UtcNow + TimeSpan.FromMinutes(1);
-        while (task.State is TaskState.Queued or TaskState.Running && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(100);
-            task = (await _api.GetTaskAsync(task.Id))!;
-        }
+        var task = await ScanAsync();
 
         Assert.True(task.State == TaskState.Succeeded, task.Error);
         Assert.Contains("left to match next scan", task.Progress);
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
-        Assert.Equal(await db.LibraryFiles.CountAsync(), await db.LibraryFiles.CountAsync(f => f.MatchedAt == null));
+        // Only files that need no lookup, like one with no title tag, got anywhere.
+        Assert.Equal(await db.LibraryFiles.CountAsync(), await db.LibraryFiles.CountAsync(f => f.MatchedAt == null || f.ReviewReason == "The file has no title tag."));
 
-        // It stopped asking after a few folders rather than retrying every one of them.
+        // Busy groups went to the back of the queue, and after three long waits with nothing getting through it
+        // stopped asking rather than trying every folder.
         var log = (await _api.GetLogAsync()).Entries;
-        Assert.Contains(log, e => e.Message.Contains("matching stops here"));
-        Assert.Equal(LibraryMatcher.UnavailableLimit, log.Count(e => e.Message.Contains("for the next scan:")));
-        Assert.True(_requests < 100, $"{_requests} requests");
+        Assert.Contains(log, e => e.Message.Contains("goes to the back of the queue (attempt 1 of 3)"));
+        Assert.Contains(log, e => e.Message.Contains("stops asking"));
+        Assert.Equal(SourceBackoff.InARowBeforeLongWait * SourceBackoff.LongWaitsBeforeStopping,
+            log.Count(e => e.Message.Contains("goes to the back of the queue") || e.Message.Contains("Gave up on")));
+        Assert.True(_requests < 150, $"{_requests} requests");
+    }
+
+    [TestLibraryFact]
+    public async Task A_folder_musicbrainz_was_busy_for_is_matched_later_in_the_same_scan()
+    {
+        // Busy through every retry of the first request, then fine.
+        _busyFor = 6;
+
+        var task = await ScanAsync();
+
+        Assert.True(task.State == TaskState.Succeeded, task.Error);
+        var log = (await _api.GetLogAsync()).Entries;
+        Assert.Contains(log, e => e.Message.Contains("goes to the back of the queue (attempt 1 of 3)"));
+        Assert.DoesNotContain(log, e => e.Message.Contains("Gave up on"));
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
+        Assert.Equal(0, await db.LibraryFiles.CountAsync(f => f.MatchedAt == null));
     }
 
     [Fact]
@@ -78,11 +103,24 @@ public sealed class BusySourceTests : IDisposable
         Assert.NotNull(response.Headers.RetryAfter);
     }
 
-    private sealed class BusyHandler(Action onRequest) : HttpMessageHandler
+    private async Task<TaskInfo> ScanAsync()
+    {
+        var task = await _api.ScanLibraryAsync();
+        var deadline = DateTime.UtcNow + TimeSpan.FromMinutes(3);
+        while (task.State is TaskState.Queued or TaskState.Running && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(100);
+            task = (await _api.GetTaskAsync(task.Id))!;
+        }
+        return task;
+    }
+
+    private sealed class BusyHandler(Func<bool> busy) : DelegatingHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            onRequest();
+            if (!busy())
+                return base.SendAsync(request, cancellationToken);
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
             {
                 RequestMessage = request,

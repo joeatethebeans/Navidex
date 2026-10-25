@@ -29,12 +29,10 @@ public sealed class LibraryMatcher(
     /// <param name="Deferred">Files left pending because the index was unavailable; the next scan matches them.</param>
     public sealed record Result(int Matched, int Review, int Deferred);
 
-    /// <summary>Folders in a row the index can't answer for before matching stops until the next scan.</summary>
-    public const int UnavailableLimit = 5;
-
     public async Task<Result> MatchPendingAsync(IProgress<string>? progress, CancellationToken ct)
     {
-        _threshold = (await settings.GetLibraryAsync(ct)).MatchThreshold;
+        var library = await settings.GetLibraryAsync(ct);
+        _threshold = library.MatchThreshold;
         var pending = await db.LibraryFiles.AsNoTracking().Where(f => f.MatchedAt == null).Select(f => new { f.Id, f.Path, f.TagsJson }).ToListAsync(ct);
         var groups = pending
             .Select(f => (f.Id, Tags: FileTags.Parse(f.TagsJson), f.Path))
@@ -47,18 +45,18 @@ public sealed class LibraryMatcher(
             .ThenBy(g => g.Key, StringComparer.Ordinal)
             .ToList();
 
-        int done = 0, matched = 0, review = 0, deferred = 0, unavailableInARow = 0;
-        foreach (var group in groups)
+        // A group the source was too busy for goes to the back, so it gets time to recover before the next attempt.
+        var queue = new Queue<(IGrouping<string, (Guid Id, FileTags Tags, string Path)> Group, int Attempt)>(groups.Select(g => (g, 1)));
+        var backoff = new SourceBackoff(httpOptions.Value, logger);
+        int done = 0, matched = 0, review = 0, deferred = 0;
+        while (queue.TryDequeue(out var item))
         {
             ct.ThrowIfCancellationRequested();
-            if (unavailableInARow >= UnavailableLimit)
+            var (group, attempt) = item;
+            if (backoff.GaveUp)
             {
-                // The index is down or overloaded: stop asking, and leave the rest for the next scan.
-                var left = pending.Count - done;
-                deferred += left;
-                logger.LogWarning("The catalogue source has been unavailable {Count} times in a row, so matching stops here. {Left} files are left for the next scan.",
-                    unavailableInARow, left);
-                break;
+                deferred += group.Count();
+                continue;
             }
             // Each group starts with a clear tracker, so catalogue imports don't pile up and slow every later query.
             db.ChangeTracker.Clear();
@@ -68,19 +66,28 @@ public sealed class LibraryMatcher(
             try
             {
                 await MatchGroupAsync(files, ct);
-                unavailableInARow = 0;
+                // Only a group the source was asked about says it's answering again; one with no title tags never asks.
+                if (files.Any(f => f.Tags.Title is not null || f.Tags.Isrc is not null))
+                    backoff.Answered();
             }
             catch (Exception e) when (IsUnavailable(e, ct))
             {
-                // Upstream trouble: leave the files pending so the next scan tries again, and give the source a rest.
-                done += files.Count;
-                deferred += files.Count;
-                unavailableInARow++;
-                logger.LogWarning("[{Done}/{Total}] Left {Count} files in {Where} for the next scan: {Reason}",
-                    done, pending.Count, files.Count, Where(files), e.Message);
                 db.ChangeTracker.Clear();
-                progress?.Report($"Matched {done} of {pending.Count} files (the catalogue source is busy; waiting)");
-                await Task.Delay(httpOptions.Value.UnavailablePause, ct);
+                if (attempt < library.AttemptsWhenBusy)
+                {
+                    queue.Enqueue((group, attempt + 1));
+                    logger.LogWarning("[{Done}/{Total}] The catalogue source is busy; {Where} goes to the back of the queue (attempt {Attempt} of {Attempts}): {Reason}",
+                        done, pending.Count, Where(files), attempt, library.AttemptsWhenBusy, e.Message);
+                }
+                else
+                {
+                    // Out of attempts: leave the files pending so the next scan tries again.
+                    done += files.Count;
+                    deferred += files.Count;
+                    logger.LogWarning("[{Done}/{Total}] Gave up on {Where} for this scan after {Attempts}; the next scan tries again: {Reason}",
+                        done, pending.Count, Where(files), Plural(library.AttemptsWhenBusy, "attempt", "attempts"), e.Message);
+                }
+                await backoff.UnavailableAsync(progress, $"Matched {done} of {pending.Count} files", ct);
                 continue;
             }
 
@@ -90,10 +97,17 @@ public sealed class LibraryMatcher(
                 if (file.TrackId is null) review++; else matched++;
             }
             await db.SaveChangesAsync(ct);
+            // Artists join the library as their files match, so the library and missing pages fill in during a long
+            // scan. Artists who lost their last file leave at the end.
+            var credited = files.Select(c => c.File.ArtistId).OfType<Guid>().Distinct().ToList();
+            if (credited.Count > 0)
+                await db.Artists.Where(a => !a.InLibrary && credited.Contains(a.Id)).ExecuteUpdateAsync(s => s.SetProperty(a => a.InLibrary, true), ct);
             done += files.Count;
             LogGroup(files, done, pending.Count);
             progress?.Report($"Matched {done} of {pending.Count} files");
         }
+        if (backoff.GaveUp && deferred > 0)
+            logger.LogWarning("{Files} left to match on the next scan", Plural(deferred, "file", "files"));
         db.ChangeTracker.Clear();
 
         await UpdateLibraryArtistsAsync(ct);
@@ -105,6 +119,8 @@ public sealed class LibraryMatcher(
     /// <summary>A provider failure worth retrying later, as opposed to a bug.</summary>
     public static bool IsUnavailable(Exception e, CancellationToken ct) =>
         e is IndexUnavailableException or HttpRequestException || e is TaskCanceledException && !ct.IsCancellationRequested;
+
+    internal static string Plural(int n, string one, string many) => $"{n} {(n == 1 ? one : many)}";
 
     private static string Where(List<Candidate> files) =>
         files.Count == 1 ? files[0].File.Path : Path.GetDirectoryName(files[0].File.Path)?.Replace('\\', '/') + "/";

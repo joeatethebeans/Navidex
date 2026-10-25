@@ -22,9 +22,13 @@
     private LibraryStatus? _status;
     private Timer? _timer;
     private bool _wasRunning;
+    private int _polls;
 
-    /// <summary>Raised when a task finishes, so pages can reload.</summary>
-    public static event Action? TaskFinished;
+    /// <summary>
+    /// Raised every 15 seconds while a task runs and once when it finishes, so pages can reload: artists show up as
+    /// their files are matched, not only at the end of a long scan.
+    /// </summary>
+    public static event Action? LibraryChanged;
 
     protected override async Task OnInitializedAsync()
     {
@@ -43,8 +47,8 @@
             return;
         }
         var running = _status?.CurrentTask is not null;
-        if (_wasRunning && !running)
-            TaskFinished?.Invoke();
+        if (_wasRunning && !running || running && ++_polls % 5 == 0)
+            LibraryChanged?.Invoke();
         _wasRunning = running;
         StateHasChanged();
     }

@@ -74,6 +74,12 @@ public sealed record LibrarySettings
     /// <summary>Fuzzy matches under this confidence, from 0 to 1, go to the review list.</summary>
     public double MatchThreshold { get; init; } = 0.85;
 
+    /// <summary>
+    /// How many times a scan tries an album while the catalogue source (MusicBrainz) says it's busy. Each busy album
+    /// goes to the back of the queue; after the last attempt it waits for the next scan. From 1 to 10.
+    /// </summary>
+    public int AttemptsWhenBusy { get; init; } = 3;
+
     /// <summary>Album types the missing view shows by default.</summary>
     public IReadOnlyList<AlbumType> ShownTypes { get; init; } = [AlbumType.Album, AlbumType.Ep, AlbumType.Single];
 
@@ -210,6 +216,8 @@ public enum LogEntryLevel
     Information,
     Warning,
     Error,
+    /// <summary>Information about something that finished well, such as a scan.</summary>
+    Success,
 }
 
 /// <summary>One event in the activity log.</summary>

@@ -152,10 +152,12 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 .log { padding: .25rem 0; font-size: .875rem; }
 .log-entry { display: grid; grid-template-columns: 4.5rem 8.5rem 1fr; gap: .75rem; padding: .3rem 1rem; border-left: 3px solid transparent; }
 .log-entry + .log-entry { border-top: 1px solid var(--border); }
-.log-entry.warning { border-left-color: var(--partial); }
+.log-entry.warning { border-left-color: var(--partial); background: var(--partial-bg); }
 .log-entry.warning .log-message { color: var(--partial); }
 .log-entry.error { border-left-color: var(--missing); background: var(--missing-bg); }
 .log-entry.error .log-message { color: var(--missing); }
+.log-entry.success { border-left-color: var(--owned); background: var(--owned-bg); }
+.log-entry.success .log-message { color: var(--owned); }
 .log-time { font-variant-numeric: tabular-nums; }
 .log-source { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .log-message { overflow-wrap: anywhere; }

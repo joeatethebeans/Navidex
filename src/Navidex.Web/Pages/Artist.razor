@@ -57,8 +57,8 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        ScanStatus.TaskFinished -= Reload;
-        ScanStatus.TaskFinished += Reload;
+        ScanStatus.LibraryChanged -= Reload;
+        ScanStatus.LibraryChanged += Reload;
         _artist = await Api.GetArtistAsync(Id);
         _notFound = _artist is null;
     }
@@ -75,5 +75,5 @@ else
         _artist = await Api.GetArtistAsync(Id);
     }
 
-    public void Dispose() => ScanStatus.TaskFinished -= Reload;
+    public void Dispose() => ScanStatus.LibraryChanged -= Reload;
 }

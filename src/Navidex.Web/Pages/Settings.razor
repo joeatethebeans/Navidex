@@ -52,6 +52,13 @@ else
             % confidence to review
         </label>
         <div class="muted small">Applies from the next scan.</div>
+        <label style="display: block; margin-top: .75rem;">
+            When MusicBrainz is busy, try each album
+            <input type="number" min="1" max="10" step="1" style="width: 4rem;" value="@_settings.AttemptsWhenBusy"
+                   @onchange="e => _settings = _settings with { AttemptsWhenBusy = int.TryParse(e.Value?.ToString(), out var n) ? Math.Clamp(n, 1, 10) : _settings.AttemptsWhenBusy }" />
+            @(_settings.AttemptsWhenBusy == 1 ? "time" : "times") before leaving it for the next scan
+        </label>
+        <div class="muted small">A busy album goes to the back of the queue, so MusicBrainz gets time to recover before it's tried again.</div>
     </div>
 
     <div class="toolbar">

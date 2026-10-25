@@ -65,7 +65,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        ScanStatus.TaskFinished += Reload;
+        ScanStatus.LibraryChanged += Reload;
         _artists = await Api.GetLibraryArtistsAsync();
     }
 
@@ -75,5 +75,5 @@ else
         StateHasChanged();
     });
 
-    public void Dispose() => ScanStatus.TaskFinished -= Reload;
+    public void Dispose() => ScanStatus.LibraryChanged -= Reload;
 }
