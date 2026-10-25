@@ -136,12 +136,21 @@ public static class LibraryEndpoints
             .WithName("IgnoreAlbum").WithSummary("Never list this album as missing.");
         catalogue.MapDelete("/albums/{id:guid}/ignore", (Guid id, NavidexDbContext db, CancellationToken ct) => SetIgnored(db, id, false, ct))
             .WithName("UnignoreAlbum");
+        catalogue.MapPut("/tracks/{id:guid}/ignore", (Guid id, NavidexDbContext db, CancellationToken ct) => SetTrackIgnored(db, id, true, ct))
+            .WithName("IgnoreTrack").WithSummary("Stop counting this song, on every album it's on, as missing.");
+        catalogue.MapDelete("/tracks/{id:guid}/ignore", (Guid id, NavidexDbContext db, CancellationToken ct) => SetTrackIgnored(db, id, false, ct))
+            .WithName("UnignoreTrack");
 
         return api;
     }
 
     private static async Task<IResult> SetIgnored(NavidexDbContext db, Guid id, bool ignored, CancellationToken ct) =>
         await db.Albums.Where(a => a.Id == id).ExecuteUpdateAsync(s => s.SetProperty(a => a.Ignored, ignored), ct) == 0
+            ? Results.NotFound()
+            : Results.NoContent();
+
+    private static async Task<IResult> SetTrackIgnored(NavidexDbContext db, Guid id, bool ignored, CancellationToken ct) =>
+        await db.Tracks.Where(t => t.Id == id).ExecuteUpdateAsync(s => s.SetProperty(t => t.Ignored, ignored), ct) == 0
             ? Results.NotFound()
             : Results.NoContent();
 }

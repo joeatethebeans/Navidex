@@ -51,6 +51,9 @@ public enum TrackStatus
 
     /// <summary>Not in the library.</summary>
     Missing,
+
+    /// <summary>Not in the library, and ignored: it doesn't count against the album.</summary>
+    Ignored,
 }
 
 /// <summary>How to treat a song that appears on more than one album, for example on an album and on a single.</summary>
@@ -98,6 +101,7 @@ public sealed record LibrarySettings
 /// <param name="OwnedAlbums">Albums with an edition in the library.</param>
 /// <param name="MissingAlbums">Albums the missing view lists, after filters and ignores.</param>
 /// <param name="CoveredAlbums">Albums whose tracks are all in the library on other albums.</param>
+/// <param name="ImageUrl">A picture of the artist; null until Navidex fetches artwork.</param>
 public sealed record LibraryArtist(
     Guid Id,
     string Name,
@@ -107,7 +111,8 @@ public sealed record LibraryArtist(
     int OwnedAlbums,
     int MissingAlbums,
     int CoveredAlbums,
-    int Files);
+    int Files,
+    string? ImageUrl = null);
 
 public sealed record ArtistDetail(
     Guid Id,
@@ -118,11 +123,14 @@ public sealed record ArtistDetail(
     IReadOnlyList<ProviderId> Ids,
     bool InLibrary,
     DateTime? DiscographyRefreshedAt,
-    IReadOnlyList<AlbumSummary> Albums);
+    IReadOnlyList<AlbumSummary> Albums,
+    string? ImageUrl = null);
 
 /// <param name="HiddenByDefault">The missing view's filters hide it when it isn't owned.</param>
 /// <param name="OwnedTracks">Tracks owned (here or elsewhere) on the owned edition, or the best-covered edition.</param>
-/// <param name="TotalTracks">Tracks on that edition; null until the album's editions have been fetched.</param>
+/// <param name="TotalTracks">Tracks on that edition, less ignored ones you don't have; null until the album's editions have been fetched.</param>
+/// <param name="Ignored">The album is ignored, or every track you don't have on it is.</param>
+/// <param name="CoverUrl">The album's cover art; null until Navidex fetches artwork.</param>
 public sealed record AlbumSummary(
     Guid Id,
     Guid ArtistId,
@@ -136,7 +144,8 @@ public sealed record AlbumSummary(
     bool Ignored,
     int? OwnedTracks,
     int? TotalTracks,
-    IReadOnlyList<ProviderId> Ids);
+    IReadOnlyList<ProviderId> Ids,
+    string? CoverUrl = null);
 
 /// <param name="OwnedEditionId">The edition the library has, if any.</param>
 /// <param name="ShownEditionId">The edition whose tracks are listed: the owned one, the requested one, or the best fit.</param>
@@ -161,6 +170,7 @@ public sealed record EditionSummary(
     IReadOnlyList<ProviderId> Ids);
 
 /// <param name="FilePath">The library file, path relative to the music folder, when owned on this album.</param>
+/// <param name="Ignored">The song is ignored. A track you have still shows as owned.</param>
 public sealed record TrackRow(
     Guid TrackId,
     int Disc,
@@ -171,7 +181,8 @@ public sealed record TrackRow(
     double? DurationSeconds,
     TrackStatus Status,
     string? FilePath,
-    IReadOnlyList<ProviderId> Ids);
+    IReadOnlyList<ProviderId> Ids,
+    bool Ignored = false);
 
 public sealed record MissingAlbum(string ArtistName, AlbumSummary Album);
 

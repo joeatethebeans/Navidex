@@ -16,6 +16,13 @@ else if (_items.Count == 0)
 }
 else
 {
+    <div class="toolbar">
+        <input type="search" placeholder="Filter, for example a title, artist or folder" @bind="_filter" @bind:event="oninput" />
+    </div>
+    @if (!Visible.Any())
+    {
+        <div class="empty card">Nothing to review matches that filter.</div>
+    }
     <div class="card">
         <table class="table">
             <thead>
@@ -26,7 +33,7 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in _items)
+                @foreach (var item in Visible)
                 {
                     <tr>
                         <td>
@@ -50,6 +57,11 @@ else
 
 @code {
     private IReadOnlyList<ReviewItem>? _items;
+    private string _filter = "";
+
+    private IEnumerable<ReviewItem> Visible => _items!.Where(i => _filter.Length == 0
+        || new[] { i.Path, i.Title, i.Artist, i.Album, i.Suggestion?.Title, i.Suggestion?.AlbumTitle }
+            .Any(text => text?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true));
 
     protected override async Task OnInitializedAsync() => _items = await Api.GetReviewAsync();
 }

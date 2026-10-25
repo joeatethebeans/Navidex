@@ -28,6 +28,9 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
         /// <summary>Tracks owned anywhere in the library, including recordings that share an ISRC with an owned one.</summary>
         public required HashSet<Guid> OwnedAnywhere { get; init; }
 
+        /// <summary>Ignored tracks, including recordings that share an ISRC with an ignored one.</summary>
+        public required HashSet<Guid> Ignored { get; init; }
+
         public required ILookup<Guid, ProviderId> AlbumIds { get; init; }
     }
 
@@ -55,6 +58,16 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
             .Select(m => m.EntityId).ToListAsync(ct);
         owned.UnionWith(sharingIsrc);
 
+        var ignored = await db.Tracks.Where(t => t.Ignored).Select(t => t.Id).ToHashSetAsync(ct);
+        if (ignored.Count > 0)
+        {
+            var ignoredIsrcs = await db.Crosswalk.Where(m => m.EntityKind == EntityKind.Track && m.Provider == Providers.Isrc && ignored.Contains(m.EntityId))
+                .Select(m => m.Value).Distinct().ToListAsync(ct);
+            ignored.UnionWith(await db.Crosswalk.Where(m => m.EntityKind == EntityKind.Track && m.Provider == Providers.Isrc
+                                                          && ignoredIsrcs.Contains(m.Value) && listingTracks.Contains(m.EntityId))
+                .Select(m => m.EntityId).ToListAsync(ct));
+        }
+
         var providerIds = await db.Crosswalk.Where(m => m.EntityKind == EntityKind.Album && albumIds.Contains(m.EntityId))
             .Select(m => new { m.EntityId, m.Provider, m.Value }).ToListAsync(ct);
 
@@ -67,11 +80,14 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
             FilesByEdition = files.Where(f => f.EditionId != null).ToLookup(f => f.EditionId!.Value),
             FilesByTrack = files.ToLookup(f => f.TrackId),
             OwnedAnywhere = owned,
+            Ignored = ignored,
             AlbumIds = providerIds.ToLookup(p => p.EntityId, p => new ProviderId(p.Provider, p.Value)),
         };
     }
 
-    private sealed record Evaluation(Album Album, AlbumStatus Status, Edition? OwnedEdition, Edition? ShownEdition, int? OwnedTracks, int? TotalTracks);
+    /// <param name="AllIgnored">Every track not owned on the shown edition is ignored, so there's nothing to fetch.</param>
+    private sealed record Evaluation(Album Album, AlbumStatus Status, Edition? OwnedEdition, Edition? ShownEdition, int? OwnedTracks, int? TotalTracks,
+        bool AllIgnored = false);
 
     private static Evaluation Evaluate(Snapshot s, Album album)
     {
@@ -88,30 +104,35 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
             var listings = s.ListingsByEdition[ownedEdition.Id].ToList();
             var statuses = listings.Select(l => TrackStatusOf(s, l, editionIds)).ToList();
             var missing = statuses.Count(t => t == TrackStatus.Missing);
+            var counted = statuses.Count(t => t != TrackStatus.Ignored);
             return new Evaluation(album, missing == 0 ? AlbumStatus.Complete : AlbumStatus.Partial, ownedEdition, ownedEdition,
-                listings.Count - missing, listings.Count);
+                counted - missing, counted);
         }
 
         if (album.EditionsRefreshedAt is null || editions.Count == 0)
             return new Evaluation(album, AlbumStatus.Missing, null, null, null, null);
 
         // Not owned: find the edition most covered by recordings owned elsewhere, preferring official editions.
+        // Ignored tracks don't count, owned or not.
+        var counts = s.Settings.CountsOwnedAnywhere;
         var official = editions.Where(e => string.Equals(e.Status, "Official", StringComparison.OrdinalIgnoreCase)).ToList();
         var best = (official.Count > 0 ? official : editions)
             .Select(e =>
             {
                 var tracks = s.ListingsByEdition[e.Id].ToList();
-                return (Edition: e, Total: tracks.Count, Owned: tracks.Count(t => s.OwnedAnywhere.Contains(t.TrackId)));
+                var owned = counts ? tracks.Count(t => s.OwnedAnywhere.Contains(t.TrackId)) : 0;
+                var ignored = tracks.Count(t => s.Ignored.Contains(t.TrackId) && !(counts && s.OwnedAnywhere.Contains(t.TrackId)));
+                return (Edition: e, Listed: tracks.Count, Total: tracks.Count - ignored, Owned: owned);
             })
-            .Where(x => x.Total > 0)
+            .Where(x => x.Listed > 0)
             .OrderByDescending(x => x.Owned == x.Total).ThenByDescending(x => x.Owned).ThenByDescending(x => x.Total)
             .FirstOrDefault();
         if (best.Edition is null)
             return new Evaluation(album, AlbumStatus.Missing, null, null, null, null);
 
-        var covered = s.Settings.CountsOwnedAnywhere && best.Owned == best.Total;
+        var covered = counts && best.Owned > 0 && best.Owned == best.Total;
         return new Evaluation(album, covered ? AlbumStatus.Covered : AlbumStatus.Missing, null, best.Edition,
-            s.Settings.CountsOwnedAnywhere ? best.Owned : 0, best.Total);
+            best.Owned, best.Total, AllIgnored: best.Owned == best.Total && !covered);
     }
 
     private static TrackStatus TrackStatusOf(Snapshot s, Listing listing, HashSet<Guid> albumEditions)
@@ -119,15 +140,17 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
         // Owned here if a file for this recording sits on any edition of this album.
         if (s.FilesByTrack[listing.TrackId].Any(f => f.EditionId is { } e && albumEditions.Contains(e)))
             return TrackStatus.Owned;
-        return s.Settings.CountsOwnedAnywhere && s.OwnedAnywhere.Contains(listing.TrackId) ? TrackStatus.OwnedElsewhere : TrackStatus.Missing;
+        if (s.Settings.CountsOwnedAnywhere && s.OwnedAnywhere.Contains(listing.TrackId))
+            return TrackStatus.OwnedElsewhere;
+        return s.Ignored.Contains(listing.TrackId) ? TrackStatus.Ignored : TrackStatus.Missing;
     }
 
     private static AlbumSummary Summarise(Snapshot s, Evaluation e) => new(
         e.Album.Id, e.Album.ArtistId, e.Album.Title, e.Album.ArtistCredit, e.Album.Type, e.Album.SecondaryTypes, e.Album.FirstReleaseDate,
-        e.Status, !s.Settings.Shows(e.Album), e.Album.Ignored, e.OwnedTracks, e.TotalTracks, s.AlbumIds[e.Album.Id].ToList());
+        e.Status, !s.Settings.Shows(e.Album), e.Album.Ignored || e.AllIgnored, e.OwnedTracks, e.TotalTracks, s.AlbumIds[e.Album.Id].ToList());
 
     private static bool IsListedMissing(Snapshot s, Evaluation e) =>
-        e.Status == AlbumStatus.Missing && s.Settings.Shows(e.Album) && !e.Album.Ignored;
+        e.Status == AlbumStatus.Missing && s.Settings.Shows(e.Album) && !e.Album.Ignored && !e.AllIgnored;
 
     private static IEnumerable<Evaluation> Ordered(IEnumerable<Evaluation> evaluations) =>
         evaluations.OrderBy(e => e.Album.FirstReleaseDate ?? "9999").ThenBy(e => e.Album.Title);
@@ -201,7 +224,7 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
                 var status = TrackStatusOf(s, listing, editionIds);
                 var file = s.FilesByTrack[listing.TrackId].FirstOrDefault(f => f.EditionId is { } e && editionIds.Contains(e));
                 tracks.Add(new TrackRow(listing.TrackId, listing.Disc, listing.Position, listing.Number, listing.Title, listing.ArtistCredit,
-                    listing.Duration?.TotalSeconds, status, file?.Path, trackProviderIds[listing.TrackId].ToList()));
+                    listing.Duration?.TotalSeconds, status, file?.Path, trackProviderIds[listing.TrackId].ToList(), s.Ignored.Contains(listing.TrackId)));
             }
         }
 

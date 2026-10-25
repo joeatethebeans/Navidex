@@ -1,6 +1,7 @@
 @page "/artists/{Id:guid}"
 @implements IDisposable
 @inject NavidexClient Api
+@inject Preferences Prefs
 
 <PageTitle>@(_artist?.Name ?? "Artist") · Navidex</PageTitle>
 
@@ -14,26 +15,48 @@ else if (_artist is null)
 }
 else
 {
-    <h1>@_artist.Name</h1>
-    <div class="row muted small">
-        @if (_artist.Disambiguation is not null) { <span>@_artist.Disambiguation</span> }
-        @if (_artist.Country is not null) { <span>@_artist.Country</span> }
-        <span>@Owned owned · @Missing missing@(Covered > 0 ? $" · {Covered} covered" : "")</span>
-        <ProviderIds Ids="_artist.Ids" Entity="artist" />
+    <div class="page-head">
+        <Cover Url="@_artist.ImageUrl" Artist="true" />
+        <div>
+            <h1>@_artist.Name</h1>
+            <div class="row muted small">
+                @if (_artist.Disambiguation is not null) { <span>@_artist.Disambiguation</span> }
+                @if (_artist.Country is not null) { <span>@_artist.Country</span> }
+                <span>@Owned owned · @Missing missing@(Covered > 0 ? $" · {Covered} covered" : "")</span>
+                <ProviderIds Ids="_artist.Ids" Entity="artist" />
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <label class="toggle"><input type="checkbox" checked="@Prefs.OnlyMissing" @onchange="e => Prefs.SetOnlyMissingAsync((bool)e.Value!)" /> Only missing</label>
     </div>
 
     @if (_artist.Albums.Count == 0)
     {
         <div class="empty card">No albums in the catalogue for this artist.</div>
     }
+    else if (Prefs.OnlyMissing && !Shown.Any())
+    {
+        <div class="empty card">Nothing missing for @_artist.Name.</div>
+    }
 
     @foreach (var group in Shown.GroupBy(a => a.Type).OrderBy(g => g.Key))
     {
-        <h2>@Format.TypeName(group.Key)</h2>
-        <AlbumTable Albums="group.ToList()" OnIgnore="ToggleIgnoreAsync" />
+        var open = IsOpen(group.Key);
+        <h2 class="section">
+            <button class="section-toggle" aria-expanded="@(open ? "true" : "false")" @onclick="() => ToggleAsync(group.Key)">
+                <span class="chevron @(open ? "open" : "")" aria-hidden="true"></span>
+                @Format.TypeName(group.Key) <span class="muted small">@group.Count()</span>
+            </button>
+        </h2>
+        @if (open)
+        {
+            <AlbumTable Albums="group.ToList()" OnIgnore="ToggleIgnoreAsync" />
+        }
     }
 
-    @if (Hidden.Any())
+    @if (!Prefs.OnlyMissing && Hidden.Any())
     {
         <details>
             <summary>@Hidden.Count() more hidden by the default filters (live, compilations, remixes, bootlegs…)</summary>
@@ -45,20 +68,31 @@ else
 @code {
     [Parameter] public Guid Id { get; set; }
 
+    private const string SectionsKey = "artistSections";
+
     private ArtistDetail? _artist;
     private bool _notFound;
 
-    // Owned albums always show; the default filters only hide albums you don't have.
-    private IEnumerable<AlbumSummary> Shown => _artist!.Albums.Where(a => !a.HiddenByDefault || a.Status is AlbumStatus.Complete or AlbumStatus.Partial);
+    // Which sections are open, by type; remembered for every artist. Albums start open, the rest closed.
+    private Dictionary<AlbumType, bool> _sections = [];
+
+    // Owned albums always show; the default filters only hide albums you don't have. With only missing on, just the
+    // albums the library counts as missing.
+    private IEnumerable<AlbumSummary> Shown => Prefs.OnlyMissing
+        ? _artist!.Albums.Where(IsMissing)
+        : _artist!.Albums.Where(a => !a.HiddenByDefault || a.Status is AlbumStatus.Complete or AlbumStatus.Partial);
     private IEnumerable<AlbumSummary> Hidden => _artist!.Albums.Except(Shown);
+    private static bool IsMissing(AlbumSummary a) => a.Status == AlbumStatus.Missing && !a.HiddenByDefault && !a.Ignored;
     private int Owned => _artist!.Albums.Count(a => a.Status is AlbumStatus.Complete or AlbumStatus.Partial);
-    private int Missing => _artist!.Albums.Count(a => a.Status == AlbumStatus.Missing && !a.HiddenByDefault && !a.Ignored);
+    private int Missing => _artist!.Albums.Count(IsMissing);
     private int Covered => _artist!.Albums.Count(a => a.Status == AlbumStatus.Covered && !a.HiddenByDefault);
 
     protected override async Task OnParametersSetAsync()
     {
         ScanStatus.LibraryChanged -= Reload;
         ScanStatus.LibraryChanged += Reload;
+        await Prefs.LoadAsync();
+        _sections = await Prefs.GetAsync<Dictionary<AlbumType, bool>>(SectionsKey, []);
         _artist = await Api.GetArtistAsync(Id);
         _notFound = _artist is null;
     }
@@ -68,6 +102,14 @@ else
         _artist = await Api.GetArtistAsync(Id);
         StateHasChanged();
     });
+
+    private bool IsOpen(AlbumType type) => _sections.TryGetValue(type, out var open) ? open : type == AlbumType.Album;
+
+    private Task ToggleAsync(AlbumType type)
+    {
+        _sections[type] = !IsOpen(type);
+        return Prefs.SetAsync(SectionsKey, _sections);
+    }
 
     private async Task ToggleIgnoreAsync(AlbumSummary album)
     {

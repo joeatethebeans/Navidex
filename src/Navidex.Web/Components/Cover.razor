@@ -1,0 +1,21 @@
+@* Artwork for an artist or album, or a placeholder until Navidex fetches artwork. Fills its container's width. *@
+<div class="cover @(Artist ? "artist" : "album") @Class" aria-hidden="true">
+    @if (Url is not null)
+    {
+        <img src="@Url" alt="" loading="lazy" />
+    }
+    else if (Artist)
+    {
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg>
+    }
+    else
+    {
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Url { get; set; }
+    [Parameter] public bool Artist { get; set; }
+    [Parameter] public string? Class { get; set; }
+}

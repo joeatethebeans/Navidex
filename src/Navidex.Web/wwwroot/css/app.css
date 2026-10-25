@@ -107,7 +107,7 @@ label { display: inline-flex; align-items: center; gap: .4rem; }
 .badge.partial { color: var(--partial); background: var(--partial-bg); }
 .badge.covered, .badge.ownedElsewhere { color: var(--covered); background: var(--covered-bg); }
 .badge.missing { color: var(--missing); background: var(--missing-bg); }
-.badge.neutral { color: var(--muted); background: var(--bg); border: 1px solid var(--border); }
+.badge.neutral, .badge.ignored { color: var(--muted); background: var(--bg); border: 1px solid var(--border); }
 
 .meter { height: 6px; background: var(--missing-bg); border-radius: 999px; overflow: hidden; min-width: 80px; }
 .meter > span { display: block; height: 100%; background: var(--owned); }
@@ -133,14 +133,14 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 
 /* Album lists stack per type on the artist page; fixed columns keep them aligned. */
 .table.albums { table-layout: fixed; }
-.table.albums th:nth-child(2) { width: 4.5rem; }
-.table.albums th:nth-child(3) { width: 8rem; }
-.table.albums th:nth-child(4) { width: 6.5rem; }
-.table.albums td:nth-child(4) { white-space: nowrap; }
-.table.albums th:nth-child(5) { width: 5.5rem; }
-.table.albums td:first-child { overflow-wrap: anywhere; }
+.table.albums th:nth-child(3) { width: 4.5rem; }
+.table.albums th:nth-child(4) { width: 8rem; }
+.table.albums th:nth-child(5) { width: 6.5rem; }
+.table.albums td:nth-child(5) { white-space: nowrap; }
+.table.albums th:nth-child(6) { width: 5.5rem; }
+.table.albums td:nth-child(2) { overflow-wrap: anywhere; }
 @media (max-width: 640px) {
-    .table.albums th:nth-child(3) { width: 6.5rem; }
+    .table.albums th:nth-child(4) { width: 6.5rem; }
 }
 .nowrap { white-space: nowrap; }
 
@@ -164,3 +164,50 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 @media (max-width: 640px) {
     .log-entry { grid-template-columns: 4rem 1fr; gap: .5rem; padding: .3rem .75rem; }
 }
+
+/* Artwork, or a placeholder icon until artwork is fetched. Square, and as wide as its container. */
+.cover {
+    aspect-ratio: 1; width: 100%; border-radius: 6px; overflow: hidden;
+    display: grid; place-items: center; background: var(--bg); border: 1px solid var(--border);
+}
+.cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover svg { width: 45%; height: 45%; fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .7; }
+
+/* The library: one square per artist. */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+.tile {
+    display: flex; flex-direction: column; gap: .4rem; padding: .75rem; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-width: 0;
+}
+.tile:hover { text-decoration: none; border-color: var(--accent); }
+.tile .tile-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile .meter { min-width: 0; }
+@media (max-width: 640px) { .tiles { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .75rem; } }
+
+/* "Only missing" stands out from the other filters: it changes what the library and artist pages are for. */
+.toggle {
+    padding: .35rem .7rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); cursor: pointer;
+}
+.toggle:has(input:checked) { border-color: var(--missing); color: var(--missing); background: var(--missing-bg); }
+
+/* Artist and album pages: artwork beside the title. */
+.page-head { display: flex; gap: 1rem; align-items: center; }
+.page-head > .cover { width: 96px; flex: none; }
+@media (max-width: 640px) { .page-head > .cover { width: 64px; } }
+
+/* Collapsible sections on the artist page. */
+h2.section { margin: 1.5rem 0 .5rem; }
+.section-toggle {
+    font: inherit; font-weight: 700; border: none; background: none; padding: 0; color: var(--text);
+    display: inline-flex; align-items: center; gap: .5rem;
+}
+.chevron { width: .5rem; height: .5rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; }
+.chevron.open { transform: rotate(45deg); }
+
+/* Album lists start with a small cover. */
+.table .cover-col { width: 3.5rem; padding-right: 0; }
+.table td.cover-col .cover { width: 2.5rem; }
+
+/* A long option, such as an edition's full description, mustn't push the page wider than the screen. */
+.toolbar label { max-width: 100%; min-width: 0; }
+.toolbar select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }

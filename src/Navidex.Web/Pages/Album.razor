@@ -14,15 +14,20 @@ else if (_album is null)
 else
 {
     var album = _album.Album;
-    <h1>@album.Title</h1>
-    <div class="row muted small">
-        <a href="artists/@album.ArtistId">@album.ArtistCredit</a>
-        <span>@Format.Year(album.FirstReleaseDate)</span>
-        <span>@Format.TypeLabel(album.Type)@(album.SecondaryTypes.Count > 0 ? $" · {Format.Secondary(album.SecondaryTypes)}" : "")</span>
-        <StatusBadge Album="album.Status" />
-        @if (album.HiddenByDefault) { <span class="badge neutral">Hidden by default</span> }
-        @if (album.Ignored) { <span class="badge neutral">Ignored</span> }
-        <ProviderIds Ids="album.Ids" Entity="release-group" />
+    <div class="page-head">
+        <Cover Url="@album.CoverUrl" />
+        <div>
+            <h1>@album.Title</h1>
+            <div class="row muted small">
+                <a href="artists/@album.ArtistId">@album.ArtistCredit</a>
+                <span>@Format.Year(album.FirstReleaseDate)</span>
+                <span>@Format.TypeLabel(album.Type)@(album.SecondaryTypes.Count > 0 ? $" · {Format.Secondary(album.SecondaryTypes)}" : "")</span>
+                <StatusBadge Album="album.Status" />
+                @if (album.HiddenByDefault) { <span class="badge neutral">Hidden by default</span> }
+                @if (album.Ignored) { <span class="badge neutral">Ignored</span> }
+                <ProviderIds Ids="album.Ids" Entity="release-group" />
+            </div>
+        </div>
     </div>
 
     @if (_album.Editions.Count == 0)
@@ -55,12 +60,13 @@ else
                         <th>Title</th>
                         <th class="num hide-narrow">Length</th>
                         <th>Status</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var track in _album.Tracks)
                     {
-                        <tr>
+                        <tr class="@(track.Status == TrackStatus.Ignored ? "dim" : "")">
                             <td class="num muted nowrap">@(MultiDisc ? $"{track.Disc}-" : "")@track.Number</td>
                             <td>
                                 @track.Title
@@ -69,6 +75,13 @@ else
                             </td>
                             <td class="num hide-narrow muted">@Format.Duration(track.DurationSeconds)</td>
                             <td><StatusBadge Track="track.Status" /></td>
+                            <td class="num">
+                                @if (track.Status is TrackStatus.Missing or TrackStatus.Ignored || track.Ignored)
+                                {
+                                    <button class="link small" title="@(track.Ignored ? "Count this song again" : "Stop counting this song as missing, on every album it's on")"
+                                            @onclick="() => ToggleTrackIgnoredAsync(track)">@(track.Ignored ? "Unignore" : "Ignore")</button>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -91,6 +104,12 @@ else
     {
         _album = await Api.GetAlbumAsync(Id, editionId);
         _notFound = _album is null;
+    }
+
+    private async Task ToggleTrackIgnoredAsync(TrackRow track)
+    {
+        await Api.SetTrackIgnoredAsync(track.TrackId, !track.Ignored);
+        await LoadAsync(_album!.ShownEditionId);
     }
 
     private Task ChangeEditionAsync(ChangeEventArgs e) => LoadAsync(Guid.TryParse(e.Value?.ToString(), out var id) ? id : null);

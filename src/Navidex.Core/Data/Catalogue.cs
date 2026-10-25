@@ -90,6 +90,11 @@ public class Track
     public required string ArtistCredit { get; set; }
     public TimeSpan? Duration { get; set; }
 
+    /// <summary>
+    /// The user doesn't want this song: it stops counting towards every album it's on, as do recordings sharing its ISRC.
+    /// </summary>
+    public bool Ignored { get; set; }
+
     public List<EditionTrack> Appearances { get; set; } = [];
 }
 

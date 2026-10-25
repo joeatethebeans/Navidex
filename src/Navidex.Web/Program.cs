@@ -10,5 +10,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // The web app is just another client of the public API, served from the same origin.
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<NavidexClient>();
+builder.Services.AddScoped<Preferences>();
 
 await builder.Build().RunAsync();

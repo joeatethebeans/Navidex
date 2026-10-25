@@ -3,6 +3,7 @@
     <table class="table albums">
         <thead>
             <tr>
+                <th class="cover-col"></th>
                 <th>Title</th>
                 <th class="hide-narrow">Year</th>
                 <th>Status</th>
@@ -14,6 +15,7 @@
             @foreach (var album in Albums)
             {
                 <tr class="@(album.Ignored ? "dim" : "")">
+                    <td class="cover-col"><a href="albums/@album.Id" tabindex="-1"><Cover Url="@album.CoverUrl" /></a></td>
                     <td>
                         <a href="albums/@album.Id">@album.Title</a>
                         @if (ShowSecondary && album.SecondaryTypes.Count > 0)

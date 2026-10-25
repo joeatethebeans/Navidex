@@ -47,6 +47,14 @@ public sealed class NavidexClient(HttpClient http)
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task SetTrackIgnoredAsync(Guid id, bool ignored, CancellationToken ct = default)
+    {
+        using var response = ignored
+            ? await http.PutAsync($"{Api}/tracks/{id}/ignore", null, ct)
+            : await http.DeleteAsync($"{Api}/tracks/{id}/ignore", ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<SearchResults> SearchAsync(string query, CancellationToken ct = default) =>
         await http.GetFromJsonAsync<SearchResults>($"{Api}/catalogue/search?q={Uri.EscapeDataString(query)}", NavidexJson.Options, ct)
         ?? new SearchResults([], [], []);
