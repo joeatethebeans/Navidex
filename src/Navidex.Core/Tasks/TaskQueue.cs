@@ -93,9 +93,11 @@ public sealed class TaskWorker(IServiceScopeFactory scopes, TaskSignal signal, I
         {
             if (handler is null)
                 throw new InvalidOperationException($"No handler for task kind {task.Kind}.");
+            logger.LogInformation("Started {Kind}", task.Kind);
             await handler.RunAsync(task, progress, ct);
             await progress.FlushAsync();
             await FinishAsync(task.Id, BackgroundTaskStatus.Succeeded, null);
+            logger.LogInformation("Finished {Kind}: {Summary}", task.Kind, progress.Latest ?? "done");
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -103,7 +105,7 @@ public sealed class TaskWorker(IServiceScopeFactory scopes, TaskSignal signal, I
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Task {Kind} {Id} failed", task.Kind, task.Id);
+            logger.LogError(e, "{Kind} failed: {Reason}", task.Kind, e.Message);
             await FinishAsync(task.Id, BackgroundTaskStatus.Failed, e.Message);
         }
         return true;
@@ -124,6 +126,8 @@ public sealed class TaskWorker(IServiceScopeFactory scopes, TaskSignal signal, I
     {
         private string? _latest;
         private DateTime _lastWrite = DateTime.MinValue;
+
+        public string? Latest => _latest;
 
         public void Report(string value)
         {

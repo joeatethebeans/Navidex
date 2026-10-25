@@ -66,6 +66,7 @@ public sealed class LibraryMatcher(
                 file.MatchedAt = DateTime.UtcNow;
                 if (file.TrackId is null) review++; else matched++;
             }
+            LogGroup(files);
             await db.SaveChangesAsync(ct);
             done += files.Count;
             progress?.Report($"Matched {done} of {pending.Count} files");
@@ -77,6 +78,28 @@ public sealed class LibraryMatcher(
     }
 
     private sealed record Candidate(LibraryFile File, FileTags Tags);
+
+    private void LogGroup(List<Candidate> files)
+    {
+        var placed = files.Where(f => f.File.TrackId is not null).ToList();
+        var where = files.Count == 1 ? files[0].File.Path : Path.GetDirectoryName(files[0].File.Path)?.Replace('\\', '/') + "/";
+        if (placed.Count > 0)
+        {
+            var how = string.Join(", ", placed.GroupBy(f => f.File.MatchMethod).Select(g => $"{g.Count()} by {Describe(g.Key)}"));
+            logger.LogInformation("Matched {Matched} of {Total} files in {Where} ({How})", placed.Count, files.Count, where, how);
+        }
+        foreach (var file in files.Where(f => f.File.TrackId is null))
+            logger.LogWarning("To review: {Path}: {Reason}", file.File.Path, file.File.ReviewReason ?? "no confident match");
+    }
+
+    private static string Describe(MatchMethod method) => method switch
+    {
+        MatchMethod.MusicBrainzTags => "MusicBrainz tags",
+        MatchMethod.IsrcOrUpc => "ISRC",
+        MatchMethod.Fuzzy => "title, artist and length",
+        MatchMethod.Crosswalk => "a known ID",
+        _ => method.ToString(),
+    };
 
     private async Task MatchGroupAsync(List<Candidate> files, CancellationToken ct)
     {

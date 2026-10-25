@@ -204,3 +204,19 @@ public sealed record TaskInfo(Guid Id, string Kind, TaskState State, string? Pro
 
 /// <param name="LastScan">The most recent finished scan, successful or not: its progress says what it found, its error why it failed.</param>
 public sealed record LibraryStatus(int Files, int Matched, int Review, int Pending, DateTime? LastScanAt, TaskInfo? CurrentTask, TaskInfo? LastScan = null);
+
+public enum LogEntryLevel
+{
+    Information,
+    Warning,
+    Error,
+}
+
+/// <summary>One event in the activity log.</summary>
+/// <param name="Seq">Increases by one per entry; pass the latest you have as <c>after</c> to get only newer ones.</param>
+/// <param name="Source">The part of Navidex it came from, such as LibraryScanner or LibraryMatcher.</param>
+/// <param name="Error">The underlying error's message, if there was one.</param>
+public sealed record LogEntry(long Seq, DateTime Time, LogEntryLevel Level, string Source, string Message, string? Error);
+
+/// <param name="Latest">The newest entry's sequence number, even when no entries are returned.</param>
+public sealed record LogPage(IReadOnlyList<LogEntry> Entries, long Latest);

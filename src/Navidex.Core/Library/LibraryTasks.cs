@@ -32,13 +32,15 @@ public sealed class LibraryScanTask(
         var failures = await refresher.RefreshArtistsAsync(artists, progress, ct);
         var notes = new List<string>();
         if (scan.SkippedFolders > 0)
-            notes.Add($"{scan.SkippedFolders} folders couldn't be read");
+            notes.Add(Count(scan.SkippedFolders, "folder", "folders") + " couldn't be read");
         if (scan.Unreadable > 0)
-            notes.Add($"{scan.Unreadable} files couldn't be read");
+            notes.Add(Count(scan.Unreadable, "file", "files") + " couldn't be read");
         if (failures > 0)
-            notes.Add($"{failures} catalogue updates failed and will be retried next scan");
+            notes.Add(Count(failures, "catalogue update", "catalogue updates") + " failed and will be retried next scan");
         progress.Report($"{scan.Files} files: {match.Matched} newly matched, {match.Review} to review" + string.Concat(notes.Select(n => "; " + n)));
     }
+
+    private static string Count(int n, string one, string many) => $"{n} {(n == 1 ? one : many)}";
 }
 
 /// <summary>Fills in one artist's catalogue after their page is opened, so non-library artists get full statuses.</summary>
@@ -80,6 +82,7 @@ public sealed class CatalogueRefresher(NavidexDbContext db, CatalogueService cat
             var stale = DateTime.UtcNow - CatalogueService.EditionsTtl;
             var albums = await db.Albums.Where(a => a.ArtistId == artist.Id && (a.EditionsRefreshedAt == null || a.EditionsRefreshedAt < stale)).ToListAsync(ct);
             var wanted = albums.Where(library.Shows).Select(a => a.Id).ToList();
+            var failedBefore = failures;
             for (var j = 0; j < wanted.Count; j++)
             {
                 progress.Report($"Updating catalogue: {artist.Name}, album {j + 1} of {wanted.Count} ({i + 1} of {artistIds.Count} artists)");
@@ -92,6 +95,11 @@ public sealed class CatalogueRefresher(NavidexDbContext db, CatalogueService cat
                     failures++;
             }
             db.ChangeTracker.Clear();
+            if (wanted.Count == 0)
+                logger.LogInformation("The catalogue for {Artist} is up to date", artist.Name);
+            else
+                logger.LogInformation("Updated the catalogue for {Artist}: {Count} albums checked{Failed}", artist.Name, wanted.Count,
+                    failures > failedBefore ? $", {failures - failedBefore} couldn't be updated" : "");
         }
         return failures;
     }

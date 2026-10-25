@@ -5,11 +5,11 @@
 <div class="row small">
     @if (_status?.CurrentTask is { } task)
     {
-        <span class="muted" title="@task.Kind">@(task.Progress ?? "Starting…")</span>
+        <a class="muted" href="log" title="See the log">@(task.Progress ?? "Starting…")</a>
     }
     else if (_status?.LastScan is { State: TaskState.Failed } failed)
     {
-        <span class="error" title="@failed.Error">Scan failed: @failed.Error</span>
+        <a class="error" href="log" title="@failed.Error">Scan failed: @failed.Error</a>
     }
     else if (_status is not null)
     {

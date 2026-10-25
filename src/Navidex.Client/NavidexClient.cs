@@ -60,6 +60,10 @@ public sealed class NavidexClient(HttpClient http)
         response.EnsureSuccessStatusCode();
     }
 
+    /// <summary>Activity log entries newer than <paramref name="after"/>, oldest first.</summary>
+    public async Task<LogPage> GetLogAsync(long after = 0, int limit = 1000, CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<LogPage>($"{Api}/log?after={after}&limit={limit}", NavidexJson.Options, ct) ?? new LogPage([], after);
+
     private async Task<T?> GetOrNullAsync<T>(string url, CancellationToken ct)
     {
         using var response = await http.GetAsync(url, ct);

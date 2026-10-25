@@ -4,6 +4,7 @@ using Navidex.Core;
 using Navidex.Core.Api;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
+using Navidex.Core.Diagnostics;
 using Navidex.Core.Library;
 using Navidex.Core.Plugins;
 using Navidex.Core.Tasks;
@@ -18,6 +19,11 @@ Directory.CreateDirectory(options.DataPath);
 builder.Services.AddDbContext<NavidexDbContext>(db =>
     db.UseSqlite(builder.Configuration.GetConnectionString("Navidex")
                  ?? $"Data Source={Path.Combine(options.DataPath, "navidex.db")}"));
+
+// The activity log the web app shows. Registered as a provider so everything logged reaches it.
+var activity = new ActivityLog();
+builder.Services.AddSingleton(activity);
+builder.Logging.AddProvider(new ActivityLogProvider(activity));
 
 builder.Services.ConfigureHttpJsonOptions(json => NavidexJson.Configure(json.SerializerOptions));
 

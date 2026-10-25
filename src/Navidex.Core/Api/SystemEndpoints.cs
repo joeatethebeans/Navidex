@@ -1,6 +1,8 @@
 using System.Reflection;
 using Navidex.Contracts.Plugins;
+using Navidex.Client;
 using Navidex.Core.Data;
+using Navidex.Core.Diagnostics;
 
 namespace Navidex.Core.Api;
 
@@ -35,6 +37,11 @@ public static class SystemEndpoints
                 }))
             .WithName("GetVersion")
             .WithSummary("Service version and the plugin contract versions it supports.");
+
+        group.MapGet("/log", (ActivityLog log, long after = 0, int limit = 1000) =>
+                new LogPage(log.After(after, Math.Clamp(limit, 1, ActivityLog.Capacity)), log.Latest))
+            .WithName("GetLog")
+            .WithSummary("Recent activity since the server started: scans, matches, catalogue updates, warnings and errors.");
 
         return api;
     }

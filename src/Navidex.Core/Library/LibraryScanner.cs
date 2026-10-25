@@ -58,9 +58,18 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
         if (files.Count == 0)
             // Never treat an empty or unreadable folder as "everything was deleted".
             throw new InvalidOperationException(NothingFound(root, walk));
+        logger.LogInformation("Found {Count} audio files in {Root}", files.Count, root);
+        foreach (var folder in walk.Skipped.Take(50))
+            logger.LogWarning("Couldn't open folder {Folder}: permission denied (the container's user needs read access)", RelativePath(folder));
+        if (walk.Skipped.Count > 50)
+            logger.LogWarning("...and {Count} more folders that couldn't be opened", walk.Skipped.Count - 50);
+
+        var index = 0;
         foreach (var fullPath in files)
         {
             ct.ThrowIfCancellationRequested();
+            if (++index % 50 == 0)
+                progress?.Report($"Reading files: {index} of {files.Count}");
             var path = Path.GetRelativePath(root, fullPath).Replace('\\', '/');
             seen.Add(path);
             var info = new FileInfo(fullPath);
@@ -98,10 +107,7 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
             existing.MatchMethod = MatchMethod.Unmatched;
 
             if ((added + changed) % 200 == 0)
-            {
-                progress?.Report($"Read {added + changed} new or changed files");
                 await db.SaveChangesAsync(ct);
-            }
         }
 
         var skipped = walk.Skipped.Select(d => Path.GetRelativePath(root, d).Replace('\\', '/') + "/").ToList();
@@ -109,11 +115,9 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
         db.LibraryFiles.RemoveRange(removed);
         await db.SaveChangesAsync(ct);
 
-        if (walk.Skipped.Count > 0)
-            logger.LogWarning("Couldn't read {Count} folders in {Root}, for example {Folder}. The container's user needs read access.",
-                walk.Skipped.Count, root, walk.Skipped[0]);
-        var result = new Result(seen.Count, added, changed, removed.Count, unreadable, walk.Skipped.Count);
-        logger.LogInformation("Scanned {Root}: {Result}", root, result);
+        var result = new Result(seen.Count - unreadable, added, changed, removed.Count, unreadable, walk.Skipped.Count);
+        logger.LogInformation("Read the library: {Files} files, {Added} new, {Changed} changed, {Removed} removed, {Unreadable} unreadable, {Skipped} folders not opened",
+            result.Files, added, changed, removed.Count, unreadable, walk.Skipped.Count);
         return result;
     }
 
@@ -183,12 +187,19 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
                 MusicBrainzAlbumArtistId = Blank(tag.MusicBrainzReleaseArtistId?.Split('/', ';')[0]),
             }, file.Properties?.Duration is { Ticks: > 0 } d ? d : null);
         }
-        catch (Exception e) when (e is TagLib.CorruptFileException or TagLib.UnsupportedFormatException or IOException)
+        catch (Exception e) when (e is not OperationCanceledException)
         {
-            logger.LogWarning("Can't read {Path}: {Message}", path, e.Message);
+            // One bad or locked file never stops a scan; it's listed in the log and skipped.
+            var reason = e is UnauthorizedAccessException
+                ? "permission denied (the container's user needs read access)"
+                : e.Message;
+            logger.LogWarning("Couldn't read {Path}: {Reason}", RelativePath(path), reason);
             return null;
         }
     }
+
+    private string RelativePath(string path) =>
+        Path.GetRelativePath(Path.GetFullPath(options.Value.LibraryPath), path).Replace('\\', '/');
 
     private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

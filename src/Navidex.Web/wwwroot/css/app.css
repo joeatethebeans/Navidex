@@ -147,3 +147,18 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 /* A failed scan's reason in the top bar; the full text is in the tooltip. */
 .error { color: var(--missing); max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 640px) { .error { max-width: 18ch; } }
+
+/* The activity log: one line per event, warnings and errors marked by colour and a left rule. */
+.log { padding: .25rem 0; font-size: .875rem; }
+.log-entry { display: grid; grid-template-columns: 4.5rem 8.5rem 1fr; gap: .75rem; padding: .3rem 1rem; border-left: 3px solid transparent; }
+.log-entry + .log-entry { border-top: 1px solid var(--border); }
+.log-entry.warning { border-left-color: var(--partial); }
+.log-entry.warning .log-message { color: var(--partial); }
+.log-entry.error { border-left-color: var(--missing); background: var(--missing-bg); }
+.log-entry.error .log-message { color: var(--missing); }
+.log-time { font-variant-numeric: tabular-nums; }
+.log-source { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-message { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+    .log-entry { grid-template-columns: 4rem 1fr; gap: .5rem; padding: .3rem .75rem; }
+}

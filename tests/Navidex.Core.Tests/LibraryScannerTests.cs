@@ -63,6 +63,19 @@ public sealed class LibraryScannerTests : IDisposable
         Assert.Contains("can't read", error.Message);
     }
 
+    [NotRootFact]
+    public async Task An_unreadable_file_is_skipped_and_counted_rather_than_failing_the_scan()
+    {
+        var locked = Path.Combine(_music, "Locked Song.flac");
+        File.WriteAllText(locked, "");
+        File.SetUnixFileMode(locked, UnixFileMode.None);
+
+        var result = await _scanner.ScanAsync(null, default);
+
+        Assert.Equal(1, result.Unreadable);
+        Assert.Equal(0, await _db.LibraryFiles.CountAsync());
+    }
+
     [Fact]
     public async Task An_empty_scan_never_removes_known_files()
     {
