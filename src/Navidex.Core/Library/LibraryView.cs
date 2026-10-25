@@ -177,7 +177,8 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
                     albums.Count(e => e.Status is AlbumStatus.Complete or AlbumStatus.Partial),
                     albums.Count(e => IsListedMissing(s, e)),
                     albums.Count(e => e.Status == AlbumStatus.Covered && s.Settings.Shows(e.Album)),
-                    files.GetValueOrDefault(a.Id));
+                    files.GetValueOrDefault(a.Id),
+                    PartialAlbums: albums.Count(e => e.Status == AlbumStatus.Partial && !e.Album.Ignored));
             })
             .OrderBy(a => a.SortName ?? a.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();

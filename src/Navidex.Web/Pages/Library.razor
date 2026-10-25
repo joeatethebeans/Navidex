@@ -35,7 +35,7 @@ else
                 <div class="tile-name">@artist.Name</div>
                 <div class="meter" title="@artist.OwnedAlbums of @total"><span style="width:@(total == 0 ? 100 : 100 * artist.OwnedAlbums / total)%"></span></div>
                 <div class="muted small">
-                    @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")
+                    @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")
                 </div>
             </a>
         }
@@ -48,7 +48,7 @@ else
 
     private IEnumerable<LibraryArtist> Visible => _artists!
         .Where(a => _filter.Length == 0 || a.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase))
-        .Where(a => !Prefs.OnlyMissing || a.MissingAlbums > 0);
+        .Where(a => !Prefs.OnlyMissing || a.MissingAlbums > 0 || a.PartialAlbums > 0);
 
     private static string Title(LibraryArtist a) => a.Disambiguation is null ? a.Name : $"{a.Name} ({a.Disambiguation})";
 

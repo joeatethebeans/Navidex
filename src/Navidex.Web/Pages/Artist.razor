@@ -76,10 +76,10 @@ else
     // Which sections are open, by type; remembered for every artist. Albums start open, the rest closed.
     private Dictionary<AlbumType, bool> _sections = [];
 
-    // Owned albums always show; the default filters only hide albums you don't have. With only missing on, just the
-    // albums the library counts as missing.
+    // Owned albums always show; the default filters only hide albums you don't have. With only missing on, the albums
+    // the library counts as missing, and owned ones with tracks still missing.
     private IEnumerable<AlbumSummary> Shown => Prefs.OnlyMissing
-        ? _artist!.Albums.Where(IsMissing)
+        ? _artist!.Albums.Where(a => IsMissing(a) || a.Status == AlbumStatus.Partial && !a.Ignored)
         : _artist!.Albums.Where(a => !a.HiddenByDefault || a.Status is AlbumStatus.Complete or AlbumStatus.Partial);
     private IEnumerable<AlbumSummary> Hidden => _artist!.Albums.Except(Shown);
     private static bool IsMissing(AlbumSummary a) => a.Status == AlbumStatus.Missing && !a.HiddenByDefault && !a.Ignored;

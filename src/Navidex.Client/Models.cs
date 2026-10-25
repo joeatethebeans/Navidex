@@ -102,6 +102,7 @@ public sealed record LibrarySettings
 /// <param name="MissingAlbums">Albums the missing view lists, after filters and ignores.</param>
 /// <param name="CoveredAlbums">Albums whose tracks are all in the library on other albums.</param>
 /// <param name="ImageUrl">A picture of the artist; null until Navidex fetches artwork.</param>
+/// <param name="PartialAlbums">Owned albums with tracks missing; included in <paramref name="OwnedAlbums"/>.</param>
 public sealed record LibraryArtist(
     Guid Id,
     string Name,
@@ -112,7 +113,8 @@ public sealed record LibraryArtist(
     int MissingAlbums,
     int CoveredAlbums,
     int Files,
-    string? ImageUrl = null);
+    string? ImageUrl = null,
+    int PartialAlbums = 0);
 
 public sealed record ArtistDetail(
     Guid Id,
