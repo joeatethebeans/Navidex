@@ -12,6 +12,12 @@ public class PluginHttpOptions
 
     /// <summary>Creates the innermost handler. Tests swap in a handler that replays recorded responses.</summary>
     public Func<HttpMessageHandler> PrimaryHandler { get; set; } = () => new SocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(5) };
+
+    /// <summary>The first retry's wait after a 503, 429 or dropped connection; each later one doubles it, up to 30 seconds.</summary>
+    public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>How long the core leaves a plugin alone after it reports its source unavailable, before asking again.</summary>
+    public TimeSpan UnavailablePause { get; set; } = TimeSpan.FromSeconds(30);
 }
 
 public static class PluginHttp
@@ -25,7 +31,7 @@ public static class PluginHttp
     /// <summary>A client with the core's user agent, retries on 503 and 429, and the plugin's rate limit.</summary>
     public static HttpClient CreateClient(PluginHttpOptions options, double? maxRequestsPerSecond)
     {
-        HttpMessageHandler handler = new RetryHandler { InnerHandler = options.PrimaryHandler() };
+        HttpMessageHandler handler = new RetryHandler(options.RetryDelay) { InnerHandler = options.PrimaryHandler() };
         if (options.RateLimit && maxRequestsPerSecond is > 0)
             handler = new RateLimitHandler(TimeSpan.FromSeconds(1 / maxRequestsPerSecond.Value)) { InnerHandler = handler };
 
@@ -63,7 +69,7 @@ public static class PluginHttp
     /// Retries when the upstream says it's overloaded or rate-limiting, honouring Retry-After, and retries GETs whose
     /// connection failed.
     /// </summary>
-    private sealed class RetryHandler : DelegatingHandler
+    private sealed class RetryHandler(TimeSpan firstDelay) : DelegatingHandler
     {
         private const int Attempts = 6;
         private static readonly TimeSpan MaxDelay = TimeSpan.FromSeconds(30);
@@ -90,6 +96,7 @@ public static class PluginHttp
             }
         }
 
-        private static TimeSpan Backoff(int attempt) => TimeSpan.FromSeconds(Math.Min(Math.Pow(2, attempt), MaxDelay.TotalSeconds));
+        private TimeSpan Backoff(int attempt) =>
+            TimeSpan.FromTicks(Math.Min(firstDelay.Ticks * (1L << (attempt - 1)), MaxDelay.Ticks));
     }
 }

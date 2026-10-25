@@ -46,9 +46,18 @@ Each is an extra interface on the same class, declared in the manifest by name.
 | `artwork` | `IArtworkProvider` | Image URLs for artists, albums and editions |
 | `popularity` | `IPopularityProvider` | Track popularity from 0 to 1, for ordering |
 
+## Errors
+
+Return `null` or an empty list for things that don't exist. When the source can't answer right now (overloaded,
+rate-limiting, down), throw `IndexUnavailableException`. The core leaves that work pending for the next scan, rests
+the plugin for a while, and stops asking for the rest of the scan after five such answers in a row. A plain
+`HttpRequestException` or timeout is treated the same way. Anything else is logged as a failure.
+
 ## What the core does for you
 
 - **Caching.** Every response is cached in the catalogue tables and the crosswalk. Plugins must not cache.
+- **Retries.** The plugin's `HttpClient` retries 503 and 429 responses (honouring `Retry-After`) and dropped GET
+  connections, waiting up to 30 seconds between attempts, before the plugin sees the response.
 - **Rate limiting.** The core never exceeds `maxRequestsPerSecond` from the manifest. MusicBrainz asks for about
   one request per second, so the MusicBrainz plugin declares `1` and accepts a custom server URL in its settings
   for users running a mirror.

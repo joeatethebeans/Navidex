@@ -42,7 +42,10 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
         }
     }
 
-    public async Task<IndexSearchResults> SearchAsync(IndexSearchQuery query, CancellationToken cancellationToken)
+    public Task<IndexSearchResults> SearchAsync(IndexSearchQuery query, CancellationToken cancellationToken) =>
+        Guarded(() => SearchAsyncCore(query, cancellationToken));
+
+    private async Task<IndexSearchResults> SearchAsyncCore(IndexSearchQuery query, CancellationToken cancellationToken)
     {
         bool Wants(SearchKind kind) => query.Kinds is null || query.Kinds.Count == 0 || query.Kinds.Contains(kind);
         var text = EscapeLucene(query.Text);
@@ -59,7 +62,10 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
         return new IndexSearchResults(artists, albums, tracks);
     }
 
-    public async Task<IndexArtist?> GetArtistAsync(string artistId, CancellationToken cancellationToken)
+    public Task<IndexArtist?> GetArtistAsync(string artistId, CancellationToken cancellationToken) =>
+        Guarded(() => GetArtistAsyncCore(artistId, cancellationToken));
+
+    private async Task<IndexArtist?> GetArtistAsyncCore(string artistId, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(artistId, out var id))
             return null;
@@ -73,7 +79,10 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
         }
     }
 
-    public async Task<IReadOnlyList<IndexAlbum>> GetArtistAlbumsAsync(string artistId, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<IndexAlbum>> GetArtistAlbumsAsync(string artistId, CancellationToken cancellationToken) =>
+        Guarded(() => GetArtistAlbumsAsyncCore(artistId, cancellationToken));
+
+    private async Task<IReadOnlyList<IndexAlbum>> GetArtistAlbumsAsyncCore(string artistId, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(artistId, out var id))
             return [];
@@ -85,7 +94,10 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
         return albums;
     }
 
-    public async Task<IndexAlbumDetail?> GetAlbumAsync(string albumId, CancellationToken cancellationToken)
+    public Task<IndexAlbumDetail?> GetAlbumAsync(string albumId, CancellationToken cancellationToken) =>
+        Guarded(() => GetAlbumAsyncCore(albumId, cancellationToken));
+
+    private async Task<IndexAlbumDetail?> GetAlbumAsyncCore(string albumId, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(albumId, out var id))
             return null;
@@ -118,7 +130,10 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
         return new IndexAlbumDetail(MapAlbum(group, hasOfficial), editions);
     }
 
-    public async Task<IReadOnlyList<IndexTrack>> LookupIsrcAsync(string isrc, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<IndexTrack>> LookupIsrcAsync(string isrc, CancellationToken cancellationToken) =>
+        Guarded(() => LookupIsrcAsyncCore(isrc, cancellationToken));
+
+    private async Task<IReadOnlyList<IndexTrack>> LookupIsrcAsyncCore(string isrc, CancellationToken cancellationToken)
     {
         try
         {
@@ -128,6 +143,20 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
         catch (HttpError e) when (e.Status is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
         {
             return [];
+        }
+    }
+
+    // MusicBrainz answers 503 when it's overloaded or rate-limiting. The core's HTTP client has already retried by the
+    // time it gets here, so this tells the core to come back later rather than fail.
+    private static async Task<T> Guarded<T>(Func<Task<T>> call)
+    {
+        try
+        {
+            return await call();
+        }
+        catch (HttpError e) when ((int)e.Status >= 500 || e.Status == HttpStatusCode.TooManyRequests)
+        {
+            throw new IndexUnavailableException($"MusicBrainz is busy or unavailable ({(int)e.Status}): {e.Message.Trim()}", e);
         }
     }
 

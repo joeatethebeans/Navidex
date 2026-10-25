@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Navidex.Client;
+using Navidex.Contracts.Plugins.Index;
 using Navidex.Core;
 using Navidex.Core.Api;
 using Navidex.Core.Catalogue;
@@ -62,6 +63,22 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
     await IndexPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
 }
+
+// A catalogue source that's busy or down is the client's cue to try again later, not a server error.
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (IndexUnavailableException e) when (!context.Response.HasStarted)
+    {
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+        context.Response.Headers.RetryAfter = "30";
+        await context.Response.WriteAsJsonAsync(new { title = "The catalogue source is busy", detail = e.Message, status = 503 });
+    }
+});
 
 // The spec is part of the public contract, so it's served in every environment.
 app.MapOpenApi();

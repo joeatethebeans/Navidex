@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
+using Navidex.Core.Plugins;
 using Navidex.Core.Tasks;
 
 namespace Navidex.Core.Library;
@@ -35,6 +37,8 @@ public sealed class LibraryScanTask(
             notes.Add(Count(scan.SkippedFolders, "folder", "folders") + " couldn't be read");
         if (scan.Unreadable > 0)
             notes.Add(Count(scan.Unreadable, "file", "files") + " couldn't be read");
+        if (match.Deferred > 0)
+            notes.Add(Count(match.Deferred, "file", "files") + " left to match next scan (the catalogue source was busy)");
         if (failures > 0)
             notes.Add(Count(failures, "catalogue update", "catalogue updates") + " failed and will be retried next scan");
         progress.Report($"{scan.Files} files: {match.Matched} newly matched, {match.Review} to review" + string.Concat(notes.Select(n => "; " + n)));
@@ -61,14 +65,24 @@ public sealed class ArtistRefreshTask(CatalogueRefresher refresher) : ITaskHandl
 /// say whether an album has an official release). A provider failure skips that artist or album and leaves it stale, so the
 /// next scan tries it again; it doesn't fail the scan.
 /// </summary>
-public sealed class CatalogueRefresher(NavidexDbContext db, CatalogueService catalogue, SettingsService settings, ILogger<CatalogueRefresher> logger)
+public sealed class CatalogueRefresher(
+    NavidexDbContext db,
+    CatalogueService catalogue,
+    SettingsService settings,
+    IOptions<PluginHttpOptions> httpOptions,
+    ILogger<CatalogueRefresher> logger)
 {
+    private int _unavailableInARow;
+
     public async Task<int> RefreshArtistsAsync(IReadOnlyList<Guid> artistIds, IProgress<string> progress, CancellationToken ct)
     {
         var library = await settings.GetLibraryAsync(ct);
         var failures = 0;
+        _unavailableInARow = 0;
         for (var i = 0; i < artistIds.Count; i++)
         {
+            if (GivingUp())
+                return failures;
             var artist = await db.Artists.FindAsync([artistIds[i]], ct);
             if (artist is null)
                 continue;
@@ -85,6 +99,8 @@ public sealed class CatalogueRefresher(NavidexDbContext db, CatalogueService cat
             var failedBefore = failures;
             for (var j = 0; j < wanted.Count; j++)
             {
+                if (GivingUp())
+                    return failures;
                 progress.Report($"Updating catalogue: {artist.Name}, album {j + 1} of {wanted.Count} ({i + 1} of {artistIds.Count} artists)");
                 // Loaded one at a time with a clear tracker: a big discography tracks thousands of entities otherwise,
                 // and every query and save would scan them all.
@@ -98,10 +114,21 @@ public sealed class CatalogueRefresher(NavidexDbContext db, CatalogueService cat
             if (wanted.Count == 0)
                 logger.LogInformation("The catalogue for {Artist} is up to date", artist.Name);
             else
-                logger.LogInformation("Updated the catalogue for {Artist}: {Count} albums checked{Failed}", artist.Name, wanted.Count,
+                logger.LogInformation("[{Done}/{Total} artists] Updated the catalogue for {Artist}: {Count} albums checked{Failed}",
+                    i + 1, artistIds.Count, artist.Name, wanted.Count,
                     failures > failedBefore ? $", {failures - failedBefore} couldn't be updated" : "");
         }
         return failures;
+    }
+
+    // As in matching: after a run of "unavailable" answers, stop for this scan rather than wait out an outage.
+    private bool GivingUp()
+    {
+        if (_unavailableInARow < LibraryMatcher.UnavailableLimit)
+            return false;
+        logger.LogWarning("The catalogue source has been unavailable {Count} times in a row, so updating stops here. The next scan picks up where this one left off.",
+            _unavailableInARow);
+        return true;
     }
 
     private async Task<bool> TryAsync(Func<Task> refresh, string what, CancellationToken ct)
@@ -109,13 +136,23 @@ public sealed class CatalogueRefresher(NavidexDbContext db, CatalogueService cat
         try
         {
             await refresh();
+            _unavailableInARow = 0;
             return true;
         }
         catch (Exception e) when (!ct.IsCancellationRequested)
         {
-            logger.LogWarning(e, "Couldn't update {What}; it will be tried again on the next scan", what);
             // Drop whatever the failed refresh left half-done, so the next save doesn't write it.
             db.ChangeTracker.Clear();
+            if (LibraryMatcher.IsUnavailable(e, ct))
+            {
+                _unavailableInARow++;
+                logger.LogWarning("Couldn't update {What}, it'll be tried again on the next scan: {Reason}", what, e.Message);
+                await Task.Delay(httpOptions.Value.UnavailablePause, ct);
+            }
+            else
+            {
+                logger.LogWarning(e, "Couldn't update {What}; it will be tried again on the next scan", what);
+            }
             return false;
         }
     }

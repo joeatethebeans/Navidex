@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Navidex.Contracts.Catalogue;
 using Navidex.Contracts.Plugins.Index;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
+using Navidex.Core.Plugins;
 
 namespace Navidex.Core.Library;
 
@@ -15,6 +17,7 @@ public sealed class LibraryMatcher(
     NavidexDbContext db,
     CatalogueService catalogue,
     SettingsService settings,
+    IOptions<PluginHttpOptions> httpOptions,
     ILogger<LibraryMatcher> logger)
 {
     // MusicBrainz's "Various Artists": its discography is enormous and never what a compilation should match against.
@@ -23,7 +26,11 @@ public sealed class LibraryMatcher(
     private readonly Dictionary<string, Artist?> _artistsByName = new(StringComparer.OrdinalIgnoreCase);
     private double _threshold;
 
-    public sealed record Result(int Matched, int Review);
+    /// <param name="Deferred">Files left pending because the index was unavailable; the next scan matches them.</param>
+    public sealed record Result(int Matched, int Review, int Deferred);
+
+    /// <summary>Folders in a row the index can't answer for before matching stops until the next scan.</summary>
+    public const int UnavailableLimit = 5;
 
     public async Task<Result> MatchPendingAsync(IProgress<string>? progress, CancellationToken ct)
     {
@@ -40,10 +47,19 @@ public sealed class LibraryMatcher(
             .ThenBy(g => g.Key, StringComparer.Ordinal)
             .ToList();
 
-        int done = 0, matched = 0, review = 0;
+        int done = 0, matched = 0, review = 0, deferred = 0, unavailableInARow = 0;
         foreach (var group in groups)
         {
             ct.ThrowIfCancellationRequested();
+            if (unavailableInARow >= UnavailableLimit)
+            {
+                // The index is down or overloaded: stop asking, and leave the rest for the next scan.
+                var left = pending.Count - done;
+                deferred += left;
+                logger.LogWarning("The catalogue source has been unavailable {Count} times in a row, so matching stops here. {Left} files are left for the next scan.",
+                    unavailableInARow, left);
+                break;
+            }
             // Each group starts with a clear tracker, so catalogue imports don't pile up and slow every later query.
             db.ChangeTracker.Clear();
             var ids = group.Select(x => x.Id).ToList();
@@ -52,12 +68,19 @@ public sealed class LibraryMatcher(
             try
             {
                 await MatchGroupAsync(files, ct);
+                unavailableInARow = 0;
             }
-            catch (Exception e) when (e is HttpRequestException or TaskCanceledException { CancellationToken.IsCancellationRequested: false })
+            catch (Exception e) when (IsUnavailable(e, ct))
             {
-                // Upstream trouble: leave the files pending so the next scan tries again.
-                logger.LogWarning(e, "Couldn't match {Count} files in {Group}; will retry next scan", files.Count, group.Key);
+                // Upstream trouble: leave the files pending so the next scan tries again, and give the source a rest.
+                done += files.Count;
+                deferred += files.Count;
+                unavailableInARow++;
+                logger.LogWarning("[{Done}/{Total}] Left {Count} files in {Where} for the next scan: {Reason}",
+                    done, pending.Count, files.Count, Where(files), e.Message);
                 db.ChangeTracker.Clear();
+                progress?.Report($"Matched {done} of {pending.Count} files (the catalogue source is busy; waiting)");
+                await Task.Delay(httpOptions.Value.UnavailablePause, ct);
                 continue;
             }
 
@@ -66,30 +89,37 @@ public sealed class LibraryMatcher(
                 file.MatchedAt = DateTime.UtcNow;
                 if (file.TrackId is null) review++; else matched++;
             }
-            LogGroup(files);
             await db.SaveChangesAsync(ct);
             done += files.Count;
+            LogGroup(files, done, pending.Count);
             progress?.Report($"Matched {done} of {pending.Count} files");
         }
         db.ChangeTracker.Clear();
 
         await UpdateLibraryArtistsAsync(ct);
-        return new Result(matched, review);
+        return new Result(matched, review, deferred);
     }
 
     private sealed record Candidate(LibraryFile File, FileTags Tags);
 
-    private void LogGroup(List<Candidate> files)
+    /// <summary>A provider failure worth retrying later, as opposed to a bug.</summary>
+    public static bool IsUnavailable(Exception e, CancellationToken ct) =>
+        e is IndexUnavailableException or HttpRequestException || e is TaskCanceledException && !ct.IsCancellationRequested;
+
+    private static string Where(List<Candidate> files) =>
+        files.Count == 1 ? files[0].File.Path : Path.GetDirectoryName(files[0].File.Path)?.Replace('\\', '/') + "/";
+
+    // Each line starts with [files done/total], the same count as the progress in the top bar.
+    private void LogGroup(List<Candidate> files, int done, int total)
     {
         var placed = files.Where(f => f.File.TrackId is not null).ToList();
-        var where = files.Count == 1 ? files[0].File.Path : Path.GetDirectoryName(files[0].File.Path)?.Replace('\\', '/') + "/";
         if (placed.Count > 0)
         {
             var how = string.Join(", ", placed.GroupBy(f => f.File.MatchMethod).Select(g => $"{g.Count()} by {Describe(g.Key)}"));
-            logger.LogInformation("Matched {Matched} of {Total} files in {Where} ({How})", placed.Count, files.Count, where, how);
+            logger.LogInformation("[{Done}/{Total}] Matched {Matched} of {Count} files in {Where} ({How})", done, total, placed.Count, files.Count, Where(files), how);
         }
         foreach (var file in files.Where(f => f.File.TrackId is null))
-            logger.LogWarning("To review: {Path}: {Reason}", file.File.Path, file.File.ReviewReason ?? "no confident match");
+            logger.LogWarning("[{Done}/{Total}] To review: {Path}: {Reason}", done, total, file.File.Path, file.File.ReviewReason ?? "no confident match");
     }
 
     private static string Describe(MatchMethod method) => method switch
