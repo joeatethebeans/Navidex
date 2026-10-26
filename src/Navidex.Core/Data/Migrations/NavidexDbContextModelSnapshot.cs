@@ -101,6 +101,31 @@ namespace Navidex.Core.Data.Migrations
                     b.ToTable("Artists");
                 });
 
+            modelBuilder.Entity("Navidex.Core.Data.ArtworkRecord", b =>
+                {
+                    b.Property<string>("EntityKind")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CheckedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContentType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("File")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("PluginInstanceId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("EntityKind", "EntityId");
+
+                    b.ToTable("Artwork", (string)null);
+                });
+
             modelBuilder.Entity("Navidex.Core.Data.BackgroundTask", b =>
                 {
                     b.Property<Guid>("Id")

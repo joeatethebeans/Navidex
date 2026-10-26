@@ -2,53 +2,160 @@
 @implements IDisposable
 @inject NavidexClient Api
 @inject Preferences Prefs
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@inject NavigationManager Nav
 
 <PageTitle>Library · Navidex</PageTitle>
 
 <h1>Library</h1>
-<p class="muted">Every artist in your music folder, and how much of their catalogue you have.</p>
+<p class="muted">@Intro</p>
 
-@if (_artists is null)
-{
-    <p class="muted">Loading…</p>
-}
-else if (_artists.Count == 0)
-{
-    <div class="empty card">No artists yet. Scan the library to read your music folder.</div>
-}
-else
-{
-    <div class="toolbar">
-        <input type="search" placeholder="Filter artists" @bind="_filter" @bind:event="oninput" />
-        <label class="toggle"><input type="checkbox" checked="@Prefs.OnlyMissing" @onchange="e => Prefs.SetOnlyMissingAsync((bool)e.Value!)" /> Only missing</label>
-    </div>
-    @if (!Visible.Any())
-    {
-        <div class="empty card">@(Prefs.OnlyMissing ? "Nothing missing" : "No artists") @(_filter.Length > 0 ? "matches that filter." : "right now.")</div>
-    }
-    <div class="tiles">
-        @foreach (var artist in Visible)
+<div class="toolbar">
+    <div class="segmented" role="tablist" aria-label="Show">
+        @foreach (var (view, label) in Views)
         {
-            var total = artist.OwnedAlbums + artist.MissingAlbums;
-            <a class="tile" href="artists/@artist.Id" title="@Title(artist)">
-                <Cover Url="@artist.ImageUrl" Artist="true" />
-                <div class="tile-name">@artist.Name</div>
-                <div class="meter" title="@artist.OwnedAlbums of @total"><span style="width:@(total == 0 ? 100 : 100 * artist.OwnedAlbums / total)%"></span></div>
-                <div class="muted small">
-                    @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")
-                </div>
-            </a>
+            <button role="tab" aria-selected="@(_view == view ? "true" : "false")" class="@(_view == view ? "selected" : "")" @onclick="() => ShowAsync(view)">@label</button>
         }
     </div>
+    <input type="search" placeholder="@FilterHint" @bind="_filter" @bind:event="oninput" />
+    @if (_view != "tracks")
+    {
+        <label class="toggle"><input type="checkbox" checked="@Prefs.OnlyMissing" @onchange="e => Prefs.SetOnlyMissingAsync((bool)e.Value!)" /> Only missing</label>
+    }
+    @if (_view == "tracks" && _tracks is { Count: > 0 })
+    {
+        <span class="muted small">@VisibleTracks.Count() of @_tracks.Count tracks</span>
+    }
+</div>
+
+@if (_error is not null)
+{
+    <div class="notice error">Couldn't load the library: @_error <button class="link" @onclick="LoadAsync">Try again</button></div>
+}
+
+@switch (_view)
+{
+    case "albums":
+        @if (_albums is null) { <p class="muted">Loading…</p> }
+        else if (_albums.Count == 0) { <div class="empty card">No albums yet. Scan the library to read your music folder.</div> }
+        else
+        {
+            @if (!VisibleAlbums.Any()) { <div class="empty card">@(Prefs.OnlyMissing ? "No partly owned albums" : "No albums") @(_filter.Length > 0 ? "match that filter." : "right now.")</div> }
+            <div class="tiles">
+                @foreach (var item in VisibleAlbums)
+                {
+                    var album = item.Album;
+                    <a class="tile" href="albums/@album.Id" title="@album.Title · @item.ArtistName">
+                        <Cover Url="@album.CoverUrl" />
+                        <div class="tile-name">@album.Title</div>
+                        <div class="muted small tile-sub">@item.ArtistName@(Format.Year(album.FirstReleaseDate) is { Length: > 0 } year ? $" · {year}" : "")</div>
+                        @if (album.TotalTracks is { } total and > 0)
+                        {
+                            <div class="meter" title="@album.OwnedTracks of @total tracks"><span style="width:@(100 * (album.OwnedTracks ?? 0) / total)%"></span></div>
+                            <div class="muted small">@(album.OwnedTracks == total ? $"All {total} tracks" : $"{album.OwnedTracks} of {total} tracks")</div>
+                        }
+                    </a>
+                }
+            </div>
+        }
+        break;
+
+    case "tracks":
+        @if (_tracks is null) { <p class="muted">Loading…</p> }
+        else if (_tracks.Count == 0) { <div class="empty card">No tracks yet. Scan the library to read your music folder.</div> }
+        else if (!VisibleTracks.Any()) { <div class="empty card">No tracks match that filter.</div> }
+        else
+        {
+            <div class="card">
+                <table class="table track-list">
+                    @* Fixed widths: the first row is the scroller's spacer, which has no cells to size the columns by. *@
+                    <colgroup><col class="cover-col" /><col /><col class="format-col" /><col class="length-col" /></colgroup>
+                    <tbody>
+                        <Virtualize Items="VisibleTracks.ToList()" Context="track" ItemSize="57" SpacerElement="tr" OverscanCount="10">
+                            <tr>
+                                <td class="cover-col">
+                                    @if (track.AlbumId is { } albumId) { <a href="albums/@albumId" tabindex="-1"><Cover Url="@track.CoverUrl" /></a> }
+                                    else { <Cover Url="@track.CoverUrl" /> }
+                                </td>
+                                <td class="track-main">
+                                    <div class="ellipsis">@track.Title</div>
+                                    <div class="muted small ellipsis">
+                                        @if (track.ArtistId is { } artistId) { <a href="artists/@artistId">@track.ArtistCredit</a> } else { @track.ArtistCredit }
+                                        @if (track.AlbumId is { } id) { <span> · <a href="albums/@id">@track.AlbumTitle</a></span> }
+                                    </div>
+                                </td>
+                                <td class="num muted small">@track.Format</td>
+                                <td class="num muted">@Format.Duration(track.DurationSeconds)</td>
+                            </tr>
+                        </Virtualize>
+                    </tbody>
+                </table>
+            </div>
+        }
+        break;
+
+    default:
+        @if (_artists is null) { <p class="muted">Loading…</p> }
+        else if (_artists.Count == 0) { <div class="empty card">No artists yet. Scan the library to read your music folder.</div> }
+        else
+        {
+            @if (!VisibleArtists.Any()) { <div class="empty card">@(Prefs.OnlyMissing ? "Nothing missing" : "No artists") @(_filter.Length > 0 ? "matches that filter." : "right now.")</div> }
+            <div class="tiles">
+                @foreach (var artist in VisibleArtists)
+                {
+                    var total = artist.OwnedAlbums + artist.MissingAlbums;
+                    <a class="tile" href="artists/@artist.Id" title="@Title(artist)">
+                        <Cover Url="@artist.ImageUrl" Artist="true" />
+                        <div class="tile-name">@artist.Name</div>
+                        <div class="meter" title="@artist.OwnedAlbums of @total"><span style="width:@(total == 0 ? 100 : 100 * artist.OwnedAlbums / total)%"></span></div>
+                        <div class="muted small">
+                            @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+        break;
 }
 
 @code {
-    private IReadOnlyList<LibraryArtist>? _artists;
-    private string _filter = "";
+    private static readonly (string View, string Label)[] Views = [("artists", "Artists"), ("albums", "Albums"), ("tracks", "Tracks")];
 
-    private IEnumerable<LibraryArtist> Visible => _artists!
-        .Where(a => _filter.Length == 0 || a.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase))
+    [SupplyParameterFromQuery(Name = "view")] public string? ViewParameter { get; set; }
+
+    private string _view = "artists";
+    private IReadOnlyList<LibraryArtist>? _artists;
+    private IReadOnlyList<LibraryAlbum>? _albums;
+    private IReadOnlyList<LibraryTrack>? _tracks;
+    private string _filter = "";
+    private string? _error;
+
+    private string Intro => _view switch
+    {
+        "albums" => "Every album you have some or all of.",
+        "tracks" => "Every track in your music folder that Navidex has matched.",
+        _ => "Every artist in your music folder, and how much of their catalogue you have.",
+    };
+
+    private string FilterHint => _view switch
+    {
+        "albums" => "Filter by album or artist",
+        "tracks" => "Filter by title, artist or album",
+        _ => "Filter artists",
+    };
+
+    private bool Matches(params string?[] texts) =>
+        _filter.Length == 0 || texts.Any(t => t?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true);
+
+    private IEnumerable<LibraryArtist> VisibleArtists => _artists!
+        .Where(a => Matches(a.Name))
         .Where(a => !Prefs.OnlyMissing || a.MissingAlbums > 0 || a.PartialAlbums > 0);
+
+    private IEnumerable<LibraryAlbum> VisibleAlbums => _albums!
+        .Where(a => Matches(a.Album.Title, a.ArtistName))
+        .Where(a => !Prefs.OnlyMissing || a.Album.Status == AlbumStatus.Partial);
+
+    private IEnumerable<LibraryTrack> VisibleTracks => _tracks!.Where(t => Matches(t.Title, t.ArtistCredit, t.AlbumTitle));
 
     private static string Title(LibraryArtist a) => a.Disambiguation is null ? a.Name : $"{a.Name} ({a.Disambiguation})";
 
@@ -56,12 +163,48 @@ else
     {
         ScanStatus.LibraryChanged += Reload;
         await Prefs.LoadAsync();
-        _artists = await Api.GetLibraryArtistsAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // The address says which view; without one, the last view used.
+        var view = Views.Any(v => v.View == ViewParameter) ? ViewParameter! : await Prefs.GetAsync("libraryView", "artists");
+        if (view != _view || Current is null)
+        {
+            _view = Views.Any(v => v.View == view) ? view : "artists";
+            await LoadAsync();
+        }
+    }
+
+    private object? Current => _view switch { "albums" => _albums, "tracks" => _tracks, _ => _artists };
+
+    private async Task ShowAsync(string view)
+    {
+        await Prefs.SetAsync("libraryView", view);
+        Nav.NavigateTo(view == "artists" ? "" : $"?view={view}", replace: true);
+    }
+
+    private async Task LoadAsync()
+    {
+        _error = null;
+        try
+        {
+            switch (_view)
+            {
+                case "albums": _albums = await Api.GetLibraryAlbumsAsync(); break;
+                case "tracks": _tracks = await Api.GetLibraryTracksAsync(); break;
+                default: _artists = await Api.GetLibraryArtistsAsync(); break;
+            }
+        }
+        catch (HttpRequestException e)
+        {
+            _error = e.Message;
+        }
     }
 
     private void Reload() => InvokeAsync(async () =>
     {
-        _artists = await Api.GetLibraryArtistsAsync();
+        await LoadAsync();
         StateHasChanged();
     });
 

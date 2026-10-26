@@ -104,7 +104,12 @@ public class PluginCatalogTests
         File.WriteAllText(Path.Combine(root, "junk", "notes.dll"), "not an assembly");
         try
         {
-            Assert.Equal([MusicBrainzIndexFactory.PluginId, Navidex.Plugins.Navidrome.NavidromeConnectorFactory.PluginId], Catalog(root).All.Select(p => p.Manifest.Id));
+            Assert.Equal(
+            [
+                Navidex.Plugins.MusicBrainz.CoverArtArchiveFactory.PluginId, MusicBrainzIndexFactory.PluginId,
+                Navidex.Plugins.Navidrome.NavidromeArtworkFactory.PluginId, Navidex.Plugins.Navidrome.NavidromeConnectorFactory.PluginId,
+                Navidex.Plugins.FanartTv.FanartTvFactory.PluginId,
+            ], Catalog(root).All.Select(p => p.Manifest.Id));
         }
         finally
         {

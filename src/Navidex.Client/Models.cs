@@ -101,7 +101,7 @@ public sealed record LibrarySettings
 /// <param name="OwnedAlbums">Albums with an edition in the library.</param>
 /// <param name="MissingAlbums">Albums the missing view lists, after filters and ignores.</param>
 /// <param name="CoveredAlbums">Albums whose tracks are all in the library on other albums.</param>
-/// <param name="ImageUrl">A picture of the artist; null until Navidex fetches artwork.</param>
+/// <param name="ImageUrl">A picture of the artist from the artwork plugins, served by the core; a 404 when there's none.</param>
 /// <param name="PartialAlbums">Owned albums with tracks missing; included in <paramref name="OwnedAlbums"/>.</param>
 public sealed record LibraryArtist(
     Guid Id,
@@ -132,7 +132,7 @@ public sealed record ArtistDetail(
 /// <param name="OwnedTracks">Tracks owned (here or elsewhere) on the owned edition, or the best-covered edition.</param>
 /// <param name="TotalTracks">Tracks on that edition, less ignored ones you don't have; null until the album's editions have been fetched.</param>
 /// <param name="Ignored">The album is ignored, or every track you don't have on it is.</param>
-/// <param name="CoverUrl">The album's cover art; null until Navidex fetches artwork.</param>
+/// <param name="CoverUrl">The cover from the artwork plugins, served by the core: the owned edition's, or the album's. A 404 when there's none.</param>
 public sealed record AlbumSummary(
     Guid Id,
     Guid ArtistId,
@@ -188,6 +188,28 @@ public sealed record TrackRow(
 
 public sealed record MissingAlbum(string ArtistName, AlbumSummary Album);
 
+/// <summary>An album you have some or all of.</summary>
+public sealed record LibraryAlbum(string ArtistName, AlbumSummary Album);
+
+/// <summary>A song you have: one matched file.</summary>
+/// <param name="AlbumId">The album the file is filed under, when it's matched to one.</param>
+/// <param name="Number">Its track number on that album, such as <c>4</c> or <c>A2</c>.</param>
+/// <param name="Path">The file, relative to the music folder.</param>
+public sealed record LibraryTrack(
+    Guid FileId,
+    Guid TrackId,
+    string Title,
+    string ArtistCredit,
+    Guid? ArtistId,
+    Guid? AlbumId,
+    string? AlbumTitle,
+    int? Disc,
+    string? Number,
+    double? DurationSeconds,
+    string Path,
+    string? Format,
+    string? CoverUrl);
+
 /// <summary>A file that couldn't be matched confidently.</summary>
 public sealed record ReviewItem(
     Guid FileId,
@@ -222,7 +244,15 @@ public enum TaskState
     Failed,
 }
 
-public sealed record TaskInfo(Guid Id, string Kind, TaskState State, string? Progress, string? Error, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt);
+/// <param name="Title">What it's working on, such as "Library scan"; filled in by <c>GET /tasks</c>.</param>
+public sealed record TaskInfo(Guid Id, string Kind, TaskState State, string? Progress, string? Error, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt,
+    string? Title = null)
+{
+    public bool Active => State is TaskState.Queued or TaskState.Running;
+
+    /// <summary>When it last changed: finished, started or queued.</summary>
+    public DateTime UpdatedAt => FinishedAt ?? StartedAt ?? CreatedAt;
+}
 
 /// <param name="LastScan">The most recent finished scan, successful or not: its progress says what it found, its error why it failed.</param>
 public sealed record LibraryStatus(int Files, int Matched, int Review, int Pending, DateTime? LastScanAt, TaskInfo? CurrentTask, TaskInfo? LastScan = null);

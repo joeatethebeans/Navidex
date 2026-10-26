@@ -34,12 +34,16 @@ public static class ContractVersions
     /// <summary>Media-server connectors: where music ends up.</summary>
     public static readonly ContractVersion Connector = new(1, 0);
 
+    /// <summary>Artwork plugins: pictures of artists and albums.</summary>
+    public static readonly ContractVersion Artwork = new(1, 0);
+
     /// <summary>The version the core supports for a given plugin type.</summary>
     public static ContractVersion For(PluginType type) => type switch
     {
         PluginType.Index => Index,
         PluginType.Retrieval => Retrieval,
         PluginType.Connector => Connector,
+        PluginType.Artwork => Artwork,
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
     };
 }

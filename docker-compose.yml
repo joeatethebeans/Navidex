@@ -1,6 +1,6 @@
 # Navidex joins an existing Navidrome setup; Navidrome itself isn't part of this stack.
 # Point MUSIC_PATH at the same folder Navidrome reads, and run as the user who owns it (PUID and PGID).
-# After starting, add the plugins in Settings: http://retriever-ytdlp:8080, http://retriever-inbox:8080, and Navidrome.
+# After starting, add Navidrome and the two plugins under Connections; each is offered under Add.
 # On SELinux hosts with podman, files carry the categories of the container that wrote them, and downloads pass from
 # a plugin through beets to the core and Navidrome. Give every container here, and Navidrome, the same
 # `security_opt: ["label=level:s0:c100,c200"]` so they can read each other's files.

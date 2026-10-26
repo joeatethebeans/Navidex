@@ -10,8 +10,8 @@ namespace Navidex.Contracts.Plugins.Index;
 /// <remarks>
 /// Methods return <c>null</c> when an entity doesn't exist and throw for anything else, such as network
 /// failures or upstream errors. Optional features are separate interfaces (<see cref="IIsrcLookup"/>,
-/// <see cref="IUpcLookup"/>, <see cref="IArtworkProvider"/>, <see cref="IPopularityProvider"/>), each
-/// matched by a capability name in the manifest.
+/// <see cref="IUpcLookup"/>, <see cref="IPopularityProvider"/>), each matched by a capability
+/// name in the manifest. Pictures come from artwork plugins (<see cref="Artwork.IArtworkPlugin"/>).
 /// </remarks>
 public interface IIndexPlugin : IPlugin
 {
@@ -74,33 +74,6 @@ public interface IUpcLookup
     Task<IReadOnlyList<IndexAlbumDetail>> LookupUpcAsync(string upc, CancellationToken cancellationToken);
 }
 
-/// <summary>Optional: artwork. Capability <see cref="IndexCapabilities.Artwork"/>.</summary>
-public interface IArtworkProvider
-{
-    /// <summary>Image URLs for an artist, album or edition, best first.</summary>
-    Task<IReadOnlyList<Artwork>> GetArtworkAsync(ArtworkTarget target, string id, CancellationToken cancellationToken);
-}
-
-/// <summary>What artwork is for.</summary>
-public enum ArtworkTarget
-{
-    /// <summary>An artist.</summary>
-    Artist,
-
-    /// <summary>An album.</summary>
-    Album,
-
-    /// <summary>An edition.</summary>
-    Edition,
-}
-
-/// <summary>An image.</summary>
-/// <param name="Url">Where to fetch it.</param>
-/// <param name="Kind">For example <c>front</c>, <c>back</c> or <c>thumb</c>.</param>
-/// <param name="Width">Width in pixels, if known.</param>
-/// <param name="Height">Height in pixels, if known.</param>
-public sealed record Artwork(Uri Url, string Kind, int? Width = null, int? Height = null);
-
 /// <summary>Optional: popularity. Capability <see cref="IndexCapabilities.Popularity"/>.</summary>
 public interface IPopularityProvider
 {
@@ -119,9 +92,6 @@ public static class IndexCapabilities
 
     /// <summary>Fills <c>ExternalIds</c> with links to other providers.</summary>
     public const string ExternalIds = "external-ids";
-
-    /// <summary>Implements <see cref="IArtworkProvider"/>.</summary>
-    public const string Artwork = "artwork";
 
     /// <summary>Implements <see cref="IPopularityProvider"/>.</summary>
     public const string Popularity = "popularity";

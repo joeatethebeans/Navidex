@@ -3,6 +3,7 @@ using Navidex.Client;
 using Navidex.Contracts.Plugins.Index;
 using Navidex.Core;
 using Navidex.Core.Api;
+using Navidex.Core.Artwork;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
 using Navidex.Core.Diagnostics;
@@ -19,9 +20,10 @@ builder.Services.Configure<NavidexOptions>(builder.Configuration.GetSection(Navi
 builder.Services.AddOptions<PluginHttpOptions>();
 
 Directory.CreateDirectory(options.DataPath);
-builder.Services.AddDbContext<NavidexDbContext>(db =>
-    db.UseSqlite(builder.Configuration.GetConnectionString("Navidex")
-                 ?? $"Data Source={Path.Combine(options.DataPath, "navidex.db")}"));
+builder.Services.AddSingleton<LibraryCache>();
+builder.Services.AddDbContext<NavidexDbContext>((services, db) => db
+    .UseSqlite(builder.Configuration.GetConnectionString("Navidex") ?? $"Data Source={Path.Combine(options.DataPath, "navidex.db")}")
+    .AddInterceptors(services.GetRequiredService<LibraryCache>()));
 
 // The activity log the web app shows. Registered as a provider so everything logged reaches it.
 var activity = new ActivityLog();
@@ -36,6 +38,8 @@ builder.Services.AddSingleton<PluginCatalog>();
 builder.Services.AddSingleton<PluginHost>();
 builder.Services.AddScoped<IndexPlugins>();
 builder.Services.AddScoped<ConnectorPlugins>();
+builder.Services.AddScoped<ArtworkPlugins>();
+builder.Services.AddSingleton<ArtworkCache>();
 builder.Services.AddScoped<RetrievalPlugins>();
 builder.Services.AddHttpClient(RetrievalPlugins.HttpClientName, http => http.Timeout = TimeSpan.FromMinutes(2));
 
@@ -78,8 +82,14 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
     await db.Database.MigrateAsync();
+    // Write-ahead logging, so pages keep reading while a scan writes. It's stored in the file, so this is once.
+    await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
     await IndexPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
+    await ArtworkPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
 }
+
+// Work out the library page in the background, so the first visit after starting is quick too.
+_ = app.Services.GetRequiredService<LibraryCache>().GetArtistsAsync(CancellationToken.None);
 
 // A catalogue source that's busy or down is the client's cue to try again later, not a server error.
 app.Use(async (context, next) =>

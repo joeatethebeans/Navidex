@@ -64,6 +64,21 @@ public static class Format
         _ => "active",
     };
 
+    public static string TaskLabel(TaskState state) => state switch
+    {
+        TaskState.Queued => "Waiting",
+        TaskState.Running => "Running",
+        TaskState.Succeeded => "Done",
+        _ => "Failed",
+    };
+
+    public static string TaskBadge(TaskState state) => state switch
+    {
+        TaskState.Succeeded => "owned",
+        TaskState.Failed => "missing",
+        _ => "active",
+    };
+
     /// <summary>How long ago, roughly: "just now", "5 min ago", "3 h ago", or the date.</summary>
     public static string Ago(DateTime utc)
     {

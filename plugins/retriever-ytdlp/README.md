@@ -33,7 +33,7 @@ retriever-ytdlp:
     - staging:/staging
 ```
 
-Then add `http://retriever-ytdlp:8080` under Settings → Plugins in Navidex.
+Then add `http://retriever-ytdlp:8080` under Connections in Navidex (it's one of the templates under Add).
 
 The container needs ffmpeg and deno, which the Dockerfile installs. It contacts `music.youtube.com`,
 `www.youtube.com` and `*.googlevideo.com`. Environment variables: `STAGING_ROOT` (default `/staging`) and

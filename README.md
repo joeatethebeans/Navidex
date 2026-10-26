@@ -13,10 +13,11 @@ beside Navidrome rather than replacing it: Navidex finds, fetches and imports; N
 
 | Path | What |
 | --- | --- |
-| `src/Navidex.Contracts` | Plugin contracts: index plugins, media-server connectors, and the retrieval HTTP wire types |
+| `src/Navidex.Contracts` | Plugin contracts: index, artwork and media-server plugins, and the retrieval HTTP wire types |
 | `src/Navidex.Core` | The core service: public API at `/api/v1`, data model, library scan and matching, task queue |
-| `src/Navidex.Plugins.MusicBrainz` | The built-in index plugin: MusicBrainz, at its one request a second |
-| `src/Navidex.Plugins.Navidrome` | The built-in media-server connector: Navidrome, over the Subsonic API |
+| `src/Navidex.Plugins.MusicBrainz` | Built-in catalogue plugins: MusicBrainz releases, at its one request a second, and Cover Art Archive covers |
+| `src/Navidex.Plugins.Navidrome` | The built-in media-server connector for Navidrome, over the Subsonic API, and its cover art from your own files |
+| `src/Navidex.Plugins.FanartTv` | Built-in artwork plugin: artist pictures from fanart.tv, with your own API key |
 | `src/Navidex.Client` | Typed client and models for the public API |
 | `src/Navidex.Web` | The web app (Blazor WebAssembly), served by the core and talking only to the public API |
 | `tests/Navidex.Core.Tests` | Tests, including the Phase 1 gate against the test library |
@@ -38,7 +39,7 @@ MUSIC_PATH=/path/to/your/music PUID=$(id -u) PGID=$(id -g) docker compose up --b
 ```
 
 Then open `http://localhost:8787` and press **Scan library**. To fetch, add your media server and retrieval plugins
-under **Settings → Plugins**: Navidrome, `http://retriever-ytdlp:8080` and `http://retriever-inbox:8080`. The beets
+under **Connections**: Navidrome, YouTube (yt-dlp) and the inbox folder are offered under **Add**. The beets
 worker is the only container that writes the music folder, so run it as the user who owns it (`PUID` and `PGID`). The OpenAPI document is at `/openapi/v1.json`.
 
 The first scan of a big library takes a while. Matching is quick, but filling in the catalogue (every album's

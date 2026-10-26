@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using Microsoft.Extensions.Options;
 using Navidex.Contracts.Plugins;
+using Navidex.Plugins.FanartTv;
 using Navidex.Plugins.MusicBrainz;
 using Navidex.Plugins.Navidrome;
 
@@ -15,13 +16,14 @@ namespace Navidex.Core.Plugins;
 public sealed record DiscoveredPlugin(PluginManifest Manifest, IPluginFactory? Factory, string Source, string? Rejection);
 
 /// <summary>
-/// Finds in-process plugins (index plugins and connectors) at startup: the ones built into the core, plus every
+/// Finds in-process plugins (index, artwork and media-server plugins) at startup: the ones built into the core, plus every
 /// assembly in a subfolder of the plugins folder. Plugins built for a contract the core doesn't support are listed
 /// with the reason, but never instantiated.
 /// </summary>
 public sealed class PluginCatalog
 {
-    private static readonly Assembly[] BuiltIn = [typeof(MusicBrainzIndexFactory).Assembly, typeof(NavidromeConnectorFactory).Assembly];
+    private static readonly Assembly[] BuiltIn =
+        [typeof(MusicBrainzIndexFactory).Assembly, typeof(NavidromeConnectorFactory).Assembly, typeof(FanartTvFactory).Assembly];
 
     private readonly Dictionary<string, DiscoveredPlugin> _plugins = new(StringComparer.Ordinal);
 

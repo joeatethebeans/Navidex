@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace Navidex.Contracts.Plugins;
 
 /// <summary>
-/// Entry point of an in-process plugin assembly (index plugins and connectors). The core finds every
+/// Entry point of an in-process plugin assembly (index, artwork and media-server plugins). The core finds every
 /// public, non-abstract implementation with a parameterless constructor in the plugins folder at startup,
 /// checks <see cref="PluginManifest.ContractVersion"/>, and refuses plugins built for a contract it doesn't support.
 /// </summary>
@@ -63,7 +63,7 @@ public enum HealthStatus
 
 /// <summary>Result of a health check.</summary>
 /// <param name="Status">Overall state.</param>
-/// <param name="Message">Human-readable detail, shown next to the plugin in Settings.</param>
+/// <param name="Message">Human-readable detail, shown next to the plugin on the Connections page.</param>
 public sealed record HealthReport(HealthStatus Status, string? Message = null)
 {
     /// <summary>A healthy report with no message.</summary>

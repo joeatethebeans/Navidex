@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Navidex.Client;
 using Navidex.Contracts.Plugins;
 using Navidex.Contracts.Plugins.Retrieval;
+using Navidex.Core.Artwork;
 using Navidex.Core.Data;
 using Navidex.Core.Plugins;
 
@@ -24,9 +25,9 @@ public static class PluginEndpoints
                 .Where(p => p.Manifest.Type != PluginType.Retrieval)
                 .Select(p => new AvailablePlugin(p.Manifest, p.Source, p.Rejection)).ToList())
             .WithName("ListAvailablePlugins")
-            .WithSummary("Index plugins and connectors loaded into the core. Retrieval plugins run in their own containers and are added by URL.");
+            .WithSummary("Index, artwork and media-server plugins loaded into the core. Retrieval plugins run in their own containers and are added by URL.");
 
-        plugins.MapPost("", async (AddPlugin body, NavidexDbContext db, PluginCatalog catalog, RetrievalPlugins retrieval, CancellationToken ct) =>
+        plugins.MapPost("", async (AddPlugin body, NavidexDbContext db, PluginCatalog catalog, RetrievalPlugins retrieval, ArtworkCache artwork, CancellationToken ct) =>
             {
                 PluginManifest manifest;
                 string? endpoint = null;
@@ -52,6 +53,8 @@ public static class PluginEndpoints
                 {
                     if (found.Factory is null)
                         return Problem("pluginId", found.Rejection ?? "This plugin can't be loaded.");
+                    if (found.Manifest.UsesSettingsOf is { } lender && !await db.PluginInstances.AnyAsync(p => p.PluginId == lender, ct))
+                        return Problem("pluginId", $"{found.Manifest.Name} uses the connection of {catalog.Find(lender)?.Manifest.Name ?? lender}; set that up first.");
                     manifest = found.Manifest;
                 }
                 else
@@ -81,12 +84,13 @@ public static class PluginEndpoints
                 };
                 db.PluginInstances.Add(instance);
                 await db.SaveChangesAsync(ct);
+                await ArtworkChangedAsync(db, instance, catalog, artwork, ct);
                 return Results.Created($"/api/v1/plugins/{instance.Id}", ToInfo(instance, catalog));
             })
             .WithName("AddPlugin").WithSummary("Set up a plugin: a retrieval plugin by its container URL, or a loaded one by ID. It goes last in the order.")
             .Produces<PluginInfo>(StatusCodes.Status201Created).ProducesValidationProblem();
 
-        plugins.MapPut("/{id:guid}", async (Guid id, UpdatePlugin body, NavidexDbContext db, PluginCatalog catalog, CancellationToken ct) =>
+        plugins.MapPut("/{id:guid}", async (Guid id, UpdatePlugin body, NavidexDbContext db, PluginCatalog catalog, ArtworkCache artwork, CancellationToken ct) =>
             {
                 if (await db.PluginInstances.FindAsync([id], ct) is not { } instance)
                     return Results.NotFound();
@@ -111,12 +115,13 @@ public static class PluginEndpoints
                     instance.Endpoint = endpoint.TrimEnd('/');
                 }
                 await db.SaveChangesAsync(ct);
+                await ArtworkChangedAsync(db, instance, catalog, artwork, ct);
                 return Results.Ok(ToInfo(instance, catalog));
             })
             .WithName("UpdatePlugin").WithSummary("Rename, reconfigure, enable or disable a plugin.")
             .Produces<PluginInfo>().ProducesValidationProblem();
 
-        plugins.MapPut("/order", async (PluginOrder body, NavidexDbContext db, CancellationToken ct) =>
+        plugins.MapPut("/order", async (PluginOrder body, NavidexDbContext db, PluginCatalog catalog, ArtworkCache artwork, CancellationToken ct) =>
             {
                 var instances = await db.PluginInstances.Where(p => body.Ids.Contains(p.Id)).ToListAsync(ct);
                 if (instances.Count != body.Ids.Count || instances.Select(p => p.Type).Distinct().Count() > 1)
@@ -124,9 +129,10 @@ public static class PluginEndpoints
                 for (var i = 0; i < body.Ids.Count; i++)
                     instances.First(p => p.Id == body.Ids[i]).Priority = i;
                 await db.SaveChangesAsync(ct);
+                await ArtworkChangedAsync(db, instances[0], catalog, artwork, ct);
                 return Results.NoContent();
             })
-            .WithName("OrderPlugins").WithSummary("Set the order plugins of one type are used in: the fallback chain, for retrieval plugins.");
+            .WithName("OrderPlugins").WithSummary("Set the order plugins of one type are used in: the fallback chain, for retrieval plugins; which picture wins, for artwork plugins.");
 
         plugins.MapPost("/{id:guid}/test", async (Guid id, NavidexDbContext db, PluginCatalog catalog, PluginHost host, RetrievalPlugins retrieval, CancellationToken ct) =>
             {
@@ -142,9 +148,15 @@ public static class PluginEndpoints
                         instance.ManifestJson = JsonSerializer.Serialize(manifest, RetrievalJson.Options);
                         report = await retrieval.Create(instance).CheckHealthAsync(ct);
                     }
+                    else if (await host.ResolveAsync(db, instance, ct) is { } running)
+                    {
+                        report = await host.Get<IPlugin>(running).CheckHealthAsync(ct);
+                    }
                     else
                     {
-                        report = await host.Get<IPlugin>(instance).CheckHealthAsync(ct);
+                        var lender = catalog.Find(instance.PluginId)?.Manifest.UsesSettingsOf;
+                        report = new HealthReport(HealthStatus.Unhealthy,
+                            $"This uses the connection of {(lender is null ? "another plugin" : catalog.Find(lender)?.Manifest.Name ?? lender)}, which isn't set up.");
                     }
                 }
                 catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
@@ -160,7 +172,7 @@ public static class PluginEndpoints
             .WithName("TestPlugin").WithSummary("Check the plugin works with its settings, and record the result.")
             .Produces<PluginInfo>();
 
-        plugins.MapDelete("/{id:guid}", async (Guid id, NavidexDbContext db, CancellationToken ct) =>
+        plugins.MapDelete("/{id:guid}", async (Guid id, NavidexDbContext db, PluginCatalog catalog, ArtworkCache artwork, CancellationToken ct) =>
             {
                 if (await db.PluginInstances.FindAsync([id], ct) is not { } instance)
                     return Results.NotFound();
@@ -168,11 +180,24 @@ public static class PluginEndpoints
                     return Problem("id", "The catalogue needs an index plugin; add another before removing this one.");
                 db.PluginInstances.Remove(instance);
                 await db.SaveChangesAsync(ct);
+                await ArtworkChangedAsync(db, instance, catalog, artwork, ct);
                 return Results.NoContent();
             })
             .WithName("RemovePlugin");
 
         return api;
+    }
+
+    /// <summary>
+    /// Pictures depend on which artwork plugins run, in what order, with what settings, including settings an artwork
+    /// plugin borrows. After a change to any of those, the cached ones are forgotten.
+    /// </summary>
+    private static async Task ArtworkChangedAsync(NavidexDbContext db, PluginInstance changed, PluginCatalog catalog, ArtworkCache artwork, CancellationToken ct)
+    {
+        var lent = changed.Type != PluginType.Artwork && (await db.PluginInstances.Where(p => p.Type == PluginType.Artwork).Select(p => p.PluginId).ToListAsync(ct))
+            .Any(id => catalog.Find(id)?.Manifest.UsesSettingsOf == changed.PluginId);
+        if (changed.Type == PluginType.Artwork || lent)
+            await artwork.ResetAsync(ct);
     }
 
     private static PluginManifest? Manifest(PluginInstance instance, PluginCatalog catalog) =>

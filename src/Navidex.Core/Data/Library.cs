@@ -253,6 +253,26 @@ public class PluginInstance
 }
 
 /// <summary>A user setting, stored as JSON under a key.</summary>
+/// <summary>
+/// The picture shown for an artist, album or edition, kept under <c>data/artwork</c>, or that no artwork plugin had
+/// one when last asked.
+/// </summary>
+public class ArtworkRecord
+{
+    public EntityKind EntityKind { get; set; }
+    public Guid EntityId { get; set; }
+
+    /// <summary>The image file, relative to the artwork folder; null when there's none.</summary>
+    public string? File { get; set; }
+
+    public string? ContentType { get; set; }
+
+    /// <summary>The artwork plugin it came from.</summary>
+    public Guid? PluginInstanceId { get; set; }
+
+    public DateTime CheckedAt { get; set; } = DateTime.UtcNow;
+}
+
 public class Setting
 {
     public required string Key { get; set; }

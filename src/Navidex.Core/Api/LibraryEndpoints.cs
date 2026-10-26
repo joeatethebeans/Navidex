@@ -1,7 +1,9 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Navidex.Client;
 using Navidex.Contracts.Catalogue;
 using Navidex.Contracts.Plugins.Index;
+using Navidex.Core.Artwork;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
 using Navidex.Core.Library;
@@ -37,8 +39,14 @@ public static class LibraryEndpoints
             .WithName("ScanLibrary").WithSummary("Scan the music folder, match new files and update the catalogue. Returns the queued task.")
             .Produces<TaskInfo>(StatusCodes.Status202Accepted);
 
-        library.MapGet("/artists", (LibraryView view, CancellationToken ct) => view.GetLibraryArtistsAsync(ct))
-            .WithName("GetLibraryArtists").WithSummary("Artists in the library, with owned, missing and covered album counts.");
+        library.MapGet("/artists", (LibraryCache cache, CancellationToken ct) => cache.GetArtistsAsync(ct))
+            .WithName("GetLibraryArtists").WithSummary("Artists in the library, with owned, missing and covered album counts. May lag a scan by a few seconds.");
+
+        library.MapGet("/albums", (LibraryCache cache, CancellationToken ct) => cache.GetAlbumsAsync(ct))
+            .WithName("GetLibraryAlbums").WithSummary("Albums you have some or all of, by artist. May lag a scan by a few seconds.");
+
+        library.MapGet("/tracks", (LibraryCache cache, CancellationToken ct) => cache.GetTracksAsync(ct))
+            .WithName("GetLibraryTracks").WithSummary("Every matched file, by artist and album. May lag a scan by a few seconds.");
 
         library.MapGet("/missing", (LibraryView view, CancellationToken ct) => view.GetMissingAsync(ct))
             .WithName("GetMissing").WithSummary("Missing albums across the library, after the default filters and ignores.");
@@ -72,6 +80,47 @@ public static class LibraryEndpoints
             })
             .WithName("MatchFile").WithSummary("Say which song a file is: accepting a review suggestion, or one picked by searching. It counts as owned at once.")
             .Produces(StatusCodes.Status204NoContent).ProducesValidationProblem();
+
+        api.MapGet("/artwork/{kind}/{id:guid}", async (string kind, Guid id, ArtworkCache artwork, HttpContext http, CancellationToken ct) =>
+            {
+                EntityKind? of = kind switch { "artist" => EntityKind.Artist, "album" => EntityKind.Album, "edition" => EntityKind.Edition, _ => null };
+                if (of is null || await artwork.GetAsync(of.Value, id, ct) is not { } found)
+                    return Results.NotFound();
+                // Revalidated every time, so a change of artwork plugins shows at once; unchanged pictures are a 304.
+                http.Response.Headers.CacheControl = "no-cache";
+                return Results.File(found.Path, found.ContentType, lastModified: found.UpdatedAt,
+                    entityTag: new Microsoft.Net.Http.Headers.EntityTagHeaderValue($"\"{found.UpdatedAt.Ticks:x}\""));
+            })
+            .WithTags("Library").WithName("GetArtwork")
+            .WithSummary("The picture of an artist, album or edition (kind is artist, album or edition), from the artwork plugins. 404 when there's none.")
+            .Produces(StatusCodes.Status200OK, contentType: "image/jpeg").Produces(StatusCodes.Status404NotFound);
+
+        api.MapGet("/tasks", async (NavidexDbContext db, bool? active, int? limit, CancellationToken ct) =>
+            {
+                var query = db.BackgroundTasks.AsQueryable();
+                if (active is { } a)
+                    query = a
+                        ? query.Where(t => t.Status == BackgroundTaskStatus.Queued || t.Status == BackgroundTaskStatus.Running)
+                        : query.Where(t => t.Status != BackgroundTaskStatus.Queued && t.Status != BackgroundTaskStatus.Running);
+                var tasks = await query.OrderByDescending(t => t.CreatedAt).Take(Math.Clamp(limit ?? 50, 1, 500)).ToListAsync(ct);
+
+                // Artist refreshes say whose catalogue they fill in.
+                var artistIds = tasks.Where(t => t.Kind == ArtistRefreshTask.TaskKind && t.PayloadJson is not null)
+                    .Select(t => JsonSerializer.Deserialize<Guid>(t.PayloadJson!)).Distinct().ToList();
+                var names = await db.Artists.Where(x => artistIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.Name, ct);
+                return tasks.Select(t => TaskQueue.ToInfo(t) with
+                {
+                    Title = t.Kind switch
+                    {
+                        LibraryScanTask.TaskKind => "Library scan",
+                        ArtistRefreshTask.TaskKind when t.PayloadJson is not null && names.TryGetValue(JsonSerializer.Deserialize<Guid>(t.PayloadJson), out var name)
+                            => $"Catalogue update · {name}",
+                        ArtistRefreshTask.TaskKind => "Catalogue update",
+                        _ => t.Kind,
+                    },
+                }).ToList();
+            })
+            .WithTags("Library").WithName("ListTasks").WithSummary("Background work such as library scans, newest first.");
 
         api.MapGet("/tasks/{id:guid}", async (Guid id, NavidexDbContext db, CancellationToken ct) =>
                 await db.BackgroundTasks.FindAsync([id], ct) is { } task ? Results.Ok(TaskQueue.ToInfo(task)) : Results.NotFound())

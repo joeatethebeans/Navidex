@@ -6,10 +6,13 @@
 <PageTitle>Activity · Navidex</PageTitle>
 
 <h1>Activity</h1>
-<p class="muted">What's being fetched, and what was. Open a request to see each attempt, its log, and the other candidates a plugin offered.</p>
+<p class="muted">What Navidex is doing and has done: fetching, scanning and updating the catalogue. Open a request to see each attempt, its log, and the other candidates a plugin offered.</p>
 
 <div class="toolbar">
-    <label class="toggle"><input type="checkbox" @bind="_activeOnly" /> Only active</label>
+    <div class="segmented" role="tablist" aria-label="Show">
+        <button role="tab" aria-selected="@(_activeOnly ? "true" : "false")" class="@(_activeOnly ? "selected" : "")" @onclick="() => _activeOnly = true">Now</button>
+        <button role="tab" aria-selected="@(_activeOnly ? "false" : "true")" class="@(_activeOnly ? "" : "selected")" @onclick="() => _activeOnly = false">Everything</button>
+    </div>
     <input type="search" placeholder="Filter by title" @bind="_filter" @bind:event="oninput" />
 </div>
 
@@ -19,13 +22,37 @@
 }
 else if (!Visible.Any())
 {
-    <div class="empty card">@(Tracker.Requests.Count == 0 ? "Nothing requested yet. Use the Get buttons on artist, album and search pages." : "Nothing matches.")</div>
+    <div class="empty card">
+        @if (_filter.Length > 0) { <span>Nothing matches.</span> }
+        else if (_activeOnly)
+        {
+            <span>Nothing's happening right now. </span>
+            @if (Tracker.Requests.Count > 0 || _tasks.Count > 0) { <button class="link" @onclick="() => _activeOnly = false">Show everything</button> }
+        }
+        else { <span>Nothing yet. Scan the library, or use the Get buttons on artist, album and search pages.</span> }
+    </div>
 }
 else
 {
     <div class="card">
-        @foreach (var request in Visible)
+        @foreach (var item in Visible)
         {
+            @if (item.Task is { } task)
+            {
+                <div class="request">
+                    <div class="request-head">
+                        <span class="request-title task-title">@task.Title</span>
+                        <span class="muted small hide-narrow">@(task.Kind == "library-scan" ? "scan" : "catalogue")</span>
+                        <span class="badge @Format.TaskBadge(task.State)">@Format.TaskLabel(task.State)</span>
+                        <span class="spacer"></span>
+                        <span class="muted small hide-narrow" title="@task.UpdatedAt.ToLocalTime()">@Format.Ago(task.UpdatedAt)</span>
+                    </div>
+                    @if (task.Error is not null) { <div class="small request-detail error">@task.Error</div> }
+                    else if (task.Progress is not null) { <div class="muted small request-detail">@task.Progress</div> }
+                </div>
+                continue;
+            }
+            var request = item.Request!;
             var open = _open.ContainsKey(request.Id);
             <div class="request">
                 <div class="request-head">
@@ -57,27 +84,64 @@ else
     [SupplyParameterFromQuery(Name = "open")] public Guid? OpenId { get; set; }
 
     private bool _loaded;
-    private bool _activeOnly;
+    private bool _activeOnly = true;
     private string _filter = "";
+    private IReadOnlyList<TaskInfo> _tasks = [];
+    private Timer? _timer;
+
+    /// <summary>A request or a background task, in one list.</summary>
+    private sealed record Item(DateTime UpdatedAt, RequestInfo? Request = null, TaskInfo? Task = null)
+    {
+        public bool Active => Request?.Active ?? Task!.Active;
+        public string Title => Request?.Title ?? Task!.Title ?? Task.Kind;
+    }
 
     // Open requests, with their parts and jobs once loaded.
     private readonly Dictionary<Guid, RequestInfo?> _open = [];
 
-    private IEnumerable<RequestInfo> Visible => Tracker.Requests
-        .Where(r => !_activeOnly || r.Active)
-        .Where(r => _filter.Length == 0 || r.Title.Contains(_filter, StringComparison.OrdinalIgnoreCase));
+    // Active first, then the most recently changed.
+    private IEnumerable<Item> Visible => Tracker.Requests.Select(r => new Item(r.UpdatedAt, Request: r))
+        .Concat(_tasks.Select(t => new Item(t.UpdatedAt, Task: t)))
+        .Where(i => !_activeOnly || i.Active)
+        .Where(i => _filter.Length == 0 || i.Title.Contains(_filter, StringComparison.OrdinalIgnoreCase))
+        .OrderByDescending(i => i.Active).ThenByDescending(i => i.UpdatedAt);
 
     protected override async Task OnInitializedAsync()
     {
         Tracker.Changed += Refresh;
-        await Tracker.RefreshAsync();
+        await Task.WhenAll(Tracker.RefreshAsync(), LoadTasksAsync());
         _loaded = true;
+        // Tasks are polled here; requests by the tracker. Quicker while something's running.
+        _timer = new Timer(_ => InvokeAsync(async () =>
+        {
+            if (_tasks.Any(t => t.Active) || ++_idlePolls % 5 == 0)
+            {
+                await LoadTasksAsync();
+                StateHasChanged();
+            }
+        }), null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+    }
+
+    private int _idlePolls;
+
+    private async Task LoadTasksAsync()
+    {
+        try
+        {
+            _tasks = await Api.ListTasksAsync(limit: 50);
+        }
+        catch (HttpRequestException)
+        {
+            // Keep what's shown; the next poll tries again.
+        }
     }
 
     protected override async Task OnParametersSetAsync()
     {
         if (OpenId is { } id && !_open.ContainsKey(id))
         {
+            // A link to a request shows it even when it's finished.
+            _activeOnly = false;
             // A link to a part opens its parent too, if it's one.
             var request = await Api.GetRequestAsync(id);
             if (request?.ParentId is { } parent)
@@ -108,5 +172,9 @@ else
             _open[id] = await Api.GetRequestAsync(id);
     }
 
-    public void Dispose() => Tracker.Changed -= Refresh;
+    public void Dispose()
+    {
+        Tracker.Changed -= Refresh;
+        _timer?.Dispose();
+    }
 }

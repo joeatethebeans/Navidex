@@ -147,7 +147,18 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
 
     private static AlbumSummary Summarise(Snapshot s, Evaluation e) => new(
         e.Album.Id, e.Album.ArtistId, e.Album.Title, e.Album.ArtistCredit, e.Album.Type, e.Album.SecondaryTypes, e.Album.FirstReleaseDate,
-        e.Status, !s.Settings.Shows(e.Album), e.Album.Ignored || e.AllIgnored, e.OwnedTracks, e.TotalTracks, s.AlbumIds[e.Album.Id].ToList());
+        e.Status, !s.Settings.Shows(e.Album), e.Album.Ignored || e.AllIgnored, e.OwnedTracks, e.TotalTracks, s.AlbumIds[e.Album.Id].ToList(),
+        CoverUrl(e.Album.Id, e.OwnedEdition?.Id));
+
+    /// <summary>
+    /// The cover, served by the core from the artwork plugins: the edition you have, or else the album's usual one. Some
+    /// have none (a 404), so the web app keeps a placeholder behind it.
+    /// </summary>
+    public static string CoverUrl(Guid albumId, Guid? editionId) =>
+        editionId is { } edition ? $"api/v1/artwork/edition/{edition}" : $"api/v1/artwork/album/{albumId}";
+
+    /// <summary>The artist's picture, served by the core like covers.</summary>
+    public static string ArtistImageUrl(Guid artistId) => $"api/v1/artwork/artist/{artistId}";
 
     private static bool IsListedMissing(Snapshot s, Evaluation e) =>
         e.Status == AlbumStatus.Missing && s.Settings.Shows(e.Album) && !e.Album.Ignored && !e.AllIgnored;
@@ -178,9 +189,42 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
                     albums.Count(e => IsListedMissing(s, e)),
                     albums.Count(e => e.Status == AlbumStatus.Covered && s.Settings.Shows(e.Album)),
                     files.GetValueOrDefault(a.Id),
+                    ArtistImageUrl(a.Id),
                     PartialAlbums: albums.Count(e => e.Status == AlbumStatus.Partial && !e.Album.Ignored));
             })
             .OrderBy(a => a.SortName ?? a.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<LibraryAlbum>> GetLibraryAlbumsAsync(CancellationToken ct)
+    {
+        var artists = await db.Artists.Where(a => a.InLibrary).ToDictionaryAsync(a => a.Id, ct);
+        var s = await LoadAsync(artists.Keys, ct);
+        return Ordered(s.Albums.Select(a => Evaluate(s, a)).Where(e => e.Status is AlbumStatus.Complete or AlbumStatus.Partial))
+            .Select(e => new LibraryAlbum(artists[e.Album.ArtistId].Name, Summarise(s, e)))
+            .OrderBy(a => artists[a.Album.ArtistId].SortName ?? a.ArtistName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<LibraryTrack>> GetLibraryTracksAsync(CancellationToken ct)
+    {
+        var rows = await db.LibraryFiles.Where(f => f.TrackId != null)
+            .Select(f => new
+            {
+                f.Id, f.Path, f.Format, f.Duration, f.EditionId, TrackId = f.TrackId!.Value,
+                f.Track!.Title, f.Track.ArtistCredit, f.Track.ArtistId, TrackDuration = f.Track.Duration,
+                AlbumId = (Guid?)f.Edition!.AlbumId, AlbumTitle = f.Edition.Album.Title, AlbumArtist = f.Edition.Album.ArtistCredit,
+                Listing = db.EditionTracks.Where(et => et.EditionId == f.EditionId && et.TrackId == f.TrackId).Select(et => new { et.Disc, et.Position, et.Number }).FirstOrDefault(),
+            })
+            .ToListAsync(ct);
+
+        return rows
+            .OrderBy(r => r.AlbumArtist ?? r.ArtistCredit, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.AlbumTitle, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.Listing?.Disc).ThenBy(r => r.Listing?.Position)
+            .ThenBy(r => r.Title, StringComparer.OrdinalIgnoreCase)
+            .Select(r => new LibraryTrack(r.Id, r.TrackId, r.Title, r.ArtistCredit, r.ArtistId, r.AlbumId, r.AlbumTitle, r.Listing?.Disc, r.Listing?.Number,
+                (r.Duration ?? r.TrackDuration)?.TotalSeconds, r.Path, r.Format, r.AlbumId is { } album ? CoverUrl(album, r.EditionId) : null))
             .ToList();
     }
 
@@ -194,7 +238,7 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
         var ids = await db.Crosswalk.Where(m => m.EntityKind == EntityKind.Artist && m.EntityId == id)
             .Select(m => new ProviderId(m.Provider, m.Value)).ToListAsync(ct);
         return new ArtistDetail(artist.Id, artist.Name, artist.SortName, artist.Disambiguation, artist.Country, ids,
-            artist.InLibrary, artist.AlbumsRefreshedAt, albums);
+            artist.InLibrary, artist.AlbumsRefreshedAt, albums, ArtistImageUrl(artist.Id));
     }
 
     public async Task<AlbumDetail?> GetAlbumAsync(Guid id, Guid? editionId, CancellationToken ct)

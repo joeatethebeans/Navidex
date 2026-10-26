@@ -46,7 +46,7 @@ public sealed class RequestPipeline(
                 await SplitIntoTracksAsync(request, target, "No retrieval plugin fetches whole albums, so it's fetched track by track", ct);
                 return;
             }
-            await SetAsync(request, RequestStatus.Failed, "No retrieval plugins are set up. Add one in Settings, then retry.", ct);
+            await SetAsync(request, RequestStatus.Failed, "No retrieval plugins are set up. Add one under Connections, then retry.", ct);
             return;
         }
 

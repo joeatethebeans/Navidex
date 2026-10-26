@@ -43,7 +43,6 @@ Each is an extra interface on the same class, declared in the manifest by name.
 | `isrc-lookup` | `IIsrcLookup` | Recordings by ISRC; lets the core match files tagged with only an ISRC |
 | `upc-lookup` | `IUpcLookup` | Editions by barcode |
 | `external-ids` | — | The plugin fills `ExternalIds` with other providers' IDs |
-| `artwork` | `IArtworkProvider` | Image URLs for artists, albums and editions |
 | `popularity` | `IPopularityProvider` | Track popularity from 0 to 1, for ordering |
 
 ## Errors

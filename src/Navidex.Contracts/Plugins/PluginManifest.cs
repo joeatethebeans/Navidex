@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Navidex.Contracts.Plugins;
 
-/// <summary>The three kinds of plugin.</summary>
+/// <summary>The kinds of plugin.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<PluginType>))]
 public enum PluginType
 {
@@ -15,6 +15,9 @@ public enum PluginType
 
     /// <summary>Tells a media server about new music.</summary>
     Connector,
+
+    /// <summary>Pictures of artists and albums. Part of the catalogue, alongside index plugins.</summary>
+    Artwork,
 }
 
 /// <summary>
@@ -45,8 +48,8 @@ public sealed record PluginManifest
     public string? Homepage { get; init; }
 
     /// <summary>
-    /// Capability names from <see cref="Index.IndexCapabilities"/>, <see cref="Retrieval.RetrievalCapabilities"/> or
-    /// <see cref="Connectors.ConnectorCapabilities"/>. The core and API only offer what is declared here.
+    /// Capability names from <see cref="Index.IndexCapabilities"/>, <see cref="Retrieval.RetrievalCapabilities"/>,
+    /// <see cref="Connectors.ConnectorCapabilities"/> or <see cref="Artwork.ArtworkCapabilities"/>. The core and API only offer what is declared here.
     /// </summary>
     public IReadOnlyList<string> Capabilities { get; init; } = [];
 
@@ -58,6 +61,12 @@ public sealed record PluginManifest
 
     /// <summary>What the plugin touches: hosts it calls and paths it reads or writes. Shown before install.</summary>
     public PluginAccess Access { get; init; } = new();
+
+    /// <summary>
+    /// The ID of another plugin whose settings this one uses, for example a media server's connection. The plugin has
+    /// no settings of its own, can only be set up once that plugin is, and gets the first such instance's settings.
+    /// </summary>
+    public string? UsesSettingsOf { get; init; }
 
     /// <summary>The highest request rate the core may send through this plugin, if the upstream service has one.</summary>
     public double? MaxRequestsPerSecond { get; init; }

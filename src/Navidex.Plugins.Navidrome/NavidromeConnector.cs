@@ -16,49 +16,20 @@ namespace Navidex.Plugins.Navidrome;
 /// </summary>
 public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlaylistManager, IFavouritesManager, ILibraryReader
 {
-    private const string ApiVersion = "1.16.1";
-    private const string ClientName = "navidex";
+    private readonly SubsonicClient _client;
 
-    private readonly HttpClient _http;
-    private readonly Uri _server;
-    private readonly string _user;
-    private readonly string _password;
-
-    public NavidromeConnector(PluginContext context)
-    {
-        _http = context.HttpClient;
-        var settings = context.Settings;
-        var url = settings.GetProperty("url").GetString()!.TrimEnd('/');
-        _server = new Uri(url + "/");
-        _user = settings.GetProperty("username").GetString()!;
-        _password = settings.TryGetProperty("password", out var p) ? p.GetString() ?? "" : "";
-    }
+    public NavidromeConnector(PluginContext context) => _client = new SubsonicClient(context);
 
     public async Task<HealthReport> CheckHealthAsync(CancellationToken cancellationToken)
     {
-        try
-        {
-            var response = await CallAsync("ping", [], cancellationToken);
-            var server = response.TryGetProperty("type", out var type) ? type.GetString() : "Subsonic server";
-            var version = response.TryGetProperty("serverVersion", out var v) ? $" {v.GetString()}" : "";
-            if (!response.TryGetProperty("openSubsonic", out var open) || !open.GetBoolean())
-                return new HealthReport(HealthStatus.Degraded,
-                    $"Connected to {server}{version}, but it doesn't support OpenSubsonic, so tracks can't be found by MusicBrainz ID.");
-            return new HealthReport(HealthStatus.Healthy, $"Connected to {server}{version} as {_user}");
-        }
-        catch (SubsonicException e)
-        {
-            return new HealthReport(HealthStatus.Unhealthy, e.Message);
-        }
-        catch (HttpRequestException e)
-        {
-            return new HealthReport(HealthStatus.Unhealthy, $"Can't reach {_server}: {e.Message}");
-        }
-        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return new HealthReport(HealthStatus.Unhealthy, $"{_server} didn't answer in time.");
-        }
+        var (report, response) = await _client.PingAsync(cancellationToken);
+        if (response is { } reply && (!reply.TryGetProperty("openSubsonic", out var open) || !open.GetBoolean()))
+            return new HealthReport(HealthStatus.Degraded, report.Message + ", but it doesn't support OpenSubsonic, so tracks can't be found by MusicBrainz ID.");
+        return report;
     }
+
+    private Task<JsonElement> CallAsync(string endpoint, IEnumerable<(string Name, string Value)> parameters, CancellationToken ct) =>
+        _client.CallAsync(endpoint, parameters, ct);
 
     public Task TriggerScanAsync(IReadOnlyCollection<string> paths, CancellationToken cancellationToken) =>
         CallAsync("startScan", [], cancellationToken);
@@ -144,40 +115,10 @@ public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlay
         return response.TryGetProperty("searchResult3", out var result) ? Array(result, "song").Select(Song.From).ToList() : [];
     }
 
-    /// <summary>Calls a Subsonic endpoint with token authentication and returns the <c>subsonic-response</c> body.</summary>
-    private async Task<JsonElement> CallAsync(string endpoint, IEnumerable<(string Name, string Value)> parameters, CancellationToken ct)
-    {
-        var salt = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(8));
-        var token = Convert.ToHexStringLower(MD5.HashData(Encoding.UTF8.GetBytes(_password + salt)));
-        var query = new StringBuilder($"rest/{endpoint}?u={Uri.EscapeDataString(_user)}&t={token}&s={salt}&v={ApiVersion}&c={ClientName}&f=json");
-        foreach (var (name, value) in parameters)
-            query.Append('&').Append(name).Append('=').Append(Uri.EscapeDataString(value));
-
-        using var response = await _http.GetAsync(new Uri(_server, query.ToString()), ct);
-        if (!response.IsSuccessStatusCode)
-            throw new HttpRequestException($"{_server} answered {(int)response.StatusCode} {response.ReasonPhrase}", null, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
-        if (!body.TryGetProperty("subsonic-response", out var reply))
-            throw new SubsonicException($"{_server} isn't a Subsonic server.");
-        if (reply.GetProperty("status").GetString() != "ok")
-        {
-            var error = reply.TryGetProperty("error", out var e) ? e : default;
-            var code = error.ValueKind == JsonValueKind.Object && error.TryGetProperty("code", out var c) ? c.GetInt32() : 0;
-            var message = error.ValueKind == JsonValueKind.Object ? Text(error, "message") : null;
-            throw new SubsonicException(code switch
-            {
-                40 => "Wrong username or password.",
-                50 => $"{_user} isn't allowed to do that{(endpoint == "startScan" ? "; scanning needs an admin user" : "")}.",
-                _ => message ?? $"{endpoint} failed with Subsonic error {code}.",
-            });
-        }
-        return reply;
-    }
-
-    private static IEnumerable<JsonElement> Array(JsonElement parent, string name) =>
+    internal static IEnumerable<JsonElement> Array(JsonElement parent, string name) =>
         parent.TryGetProperty(name, out var items) && items.ValueKind == JsonValueKind.Array ? items.EnumerateArray() : [];
 
-    private static string? Text(JsonElement element, string name) =>
+    internal static string? Text(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
     private static bool SameIsrc(string a, string b) =>
@@ -186,7 +127,7 @@ public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlay
     private static bool SamePath(string server, string ours) =>
         server.Replace('\\', '/').TrimStart('/').EndsWith(ours.Replace('\\', '/').TrimStart('/'), StringComparison.Ordinal);
 
-    private static bool Same(string? a, string? b) => a is not null && b is not null && Simplify(a) == Simplify(b);
+    internal static bool Same(string? a, string? b) => a is not null && b is not null && Simplify(a) == Simplify(b);
 
     private static string Simplify(string text)
     {
@@ -216,4 +157,8 @@ public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlay
 }
 
 /// <summary>The Subsonic server answered with an error.</summary>
-public sealed class SubsonicException(string message) : Exception(message);
+/// <param name="Code">The Subsonic error code, such as 70 for not found.</param>
+public sealed class SubsonicException(string message, int code = 0) : Exception(message)
+{
+    public int Code { get; } = code;
+}

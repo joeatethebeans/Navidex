@@ -17,6 +17,7 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
     public DbSet<PluginInstance> PluginInstances => Set<PluginInstance>();
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
+    public DbSet<ArtworkRecord> Artwork => Set<ArtworkRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -103,6 +104,12 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
         modelBuilder.Entity<Setting>(e =>
         {
             e.HasKey(s => s.Key);
+        });
+
+        modelBuilder.Entity<ArtworkRecord>(e =>
+        {
+            e.ToTable("Artwork");
+            e.HasKey(a => new { a.EntityKind, a.EntityId });
         });
 
         modelBuilder.Entity<BackgroundTask>(e =>

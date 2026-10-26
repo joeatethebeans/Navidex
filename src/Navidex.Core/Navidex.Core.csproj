@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Navidex.Client\Navidex.Client.csproj" />
     <ProjectReference Include="..\Navidex.Web\Navidex.Web.csproj" />
     <ProjectReference Include="..\Navidex.Plugins.Navidrome\Navidex.Plugins.Navidrome.csproj" />
+    <ProjectReference Include="..\Navidex.Plugins.FanartTv\Navidex.Plugins.FanartTv.csproj" />
   </ItemGroup>
 
 </Project>

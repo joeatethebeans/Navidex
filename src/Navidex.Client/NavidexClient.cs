@@ -14,6 +14,12 @@ public sealed class NavidexClient(HttpClient http)
     public async Task<IReadOnlyList<LibraryArtist>> GetLibraryArtistsAsync(CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<LibraryArtist>>($"{Api}/library/artists", NavidexJson.Options, ct) ?? [];
 
+    public async Task<IReadOnlyList<LibraryAlbum>> GetLibraryAlbumsAsync(CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<LibraryAlbum>>($"{Api}/library/albums", NavidexJson.Options, ct) ?? [];
+
+    public async Task<IReadOnlyList<LibraryTrack>> GetLibraryTracksAsync(CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<LibraryTrack>>($"{Api}/library/tracks", NavidexJson.Options, ct) ?? [];
+
     public async Task<IReadOnlyList<MissingAlbum>> GetMissingAsync(CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<MissingAlbum>>($"{Api}/library/missing", NavidexJson.Options, ct) ?? [];
 
@@ -25,6 +31,12 @@ public sealed class NavidexClient(HttpClient http)
         using var response = await http.PostAsync($"{Api}/library/scan", null, ct);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<TaskInfo>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task<IReadOnlyList<TaskInfo>> ListTasksAsync(bool? active = null, int? limit = null, CancellationToken ct = default)
+    {
+        var query = string.Join('&', new[] { active is { } a ? $"active={a.ToString().ToLowerInvariant()}" : null, limit is { } l ? $"limit={l}" : null }.OfType<string>());
+        return await http.GetFromJsonAsync<List<TaskInfo>>($"{Api}/tasks{(query.Length > 0 ? "?" + query : "")}", NavidexJson.Options, ct) ?? [];
     }
 
     public Task<TaskInfo?> GetTaskAsync(Guid id, CancellationToken ct = default) =>

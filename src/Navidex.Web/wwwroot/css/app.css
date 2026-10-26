@@ -167,10 +167,10 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 
 /* Artwork, or a placeholder icon until artwork is fetched. Square, and as wide as its container. */
 .cover {
-    aspect-ratio: 1; width: 100%; border-radius: 6px; overflow: hidden;
+    position: relative; aspect-ratio: 1; width: 100%; border-radius: 6px; overflow: hidden;
     display: grid; place-items: center; background: var(--bg); border: 1px solid var(--border);
 }
-.cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .cover svg { width: 45%; height: 45%; fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .7; }
 
 /* The library: one square per artist. */
@@ -268,3 +268,31 @@ code { font-size: .85em; background: var(--bg); padding: .05rem .3rem; border-ra
 .plugin-add { display: flex; gap: .5rem; padding: .65rem 1rem; flex-wrap: wrap; }
 .plugin-add input { flex: 1; min-width: 12rem; }
 .card > .plugin-add:first-child { border-top: none; }
+
+/* The library's views: artists, albums and tracks. */
+.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.segmented button { font: inherit; border: none; background: none; padding: .35rem .9rem; color: var(--muted); cursor: pointer; }
+.segmented button + button { border-left: 1px solid var(--border); }
+.segmented button.selected { color: var(--text); background: var(--bg); font-weight: 600; }
+.tile .tile-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.track-list { table-layout: fixed; }
+.track-list td { height: 56px; box-sizing: border-box; }
+.track-list col.cover-col { width: 3.5rem; }
+.track-list col.format-col { width: 4.5rem; }
+.track-list col.length-col { width: 4.5rem; }
+
+/* Connections: a heading with its Add button, and the plugins Navidex knows to offer. */
+.section-head { display: flex; align-items: center; gap: .75rem; margin-top: 1.5rem; }
+.section-head h2, .section-head h3 { margin: 0; }
+.section-head.sub { margin-top: 1rem; }
+h2.section-title { margin: 1.5rem 0 0; }
+.templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .75rem; margin-bottom: .75rem; }
+.template {
+    font: inherit; color: var(--text); text-align: left; cursor: pointer; padding: .75rem 1rem;
+    display: flex; flex-direction: column; align-items: flex-start; gap: .35rem;
+}
+.template:hover:not(:disabled) { border-color: var(--accent); }
+.template:disabled { cursor: default; opacity: .7; }
+.add-form { padding: .75rem 1rem; margin-bottom: .75rem; display: flex; flex-direction: column; gap: .5rem; }
+.request-title.task-title { font-weight: 600; }

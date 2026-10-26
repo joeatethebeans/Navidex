@@ -295,7 +295,7 @@ public sealed class RequestTests(RequestFixture fixture, ITestOutputHelper outpu
         var track = await MissingTrackAsync("Daft Punk", "Homework");
         var done = await fixture.WaitAsync((await Api.CreateRequestAsync(new CreateRequest(RequestKind.Track, track))).Id);
         Assert.Equal(RequestState.Failed, done.State);
-        Assert.Contains("Add one in Settings", done.Detail);
+        Assert.Contains("Add one under Connections", done.Detail);
         await Api.CancelRequestAsync(done.Id);
     }
 

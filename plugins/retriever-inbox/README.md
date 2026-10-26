@@ -37,7 +37,7 @@ retriever-inbox:
     - staging:/staging
 ```
 
-Then add `http://retriever-inbox:8080` under Settings → Plugins in Navidex. The plugin makes no network calls.
+Then add `http://retriever-inbox:8080` under Connections in Navidex (it's one of the templates under Add). The plugin makes no network calls.
 Environment variables: `INBOX_ROOT` (default `/inbox`), `STAGING_ROOT` (default `/staging`) and `PARALLEL_FETCHES`
 (default `2`).
 
