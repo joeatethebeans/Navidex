@@ -364,3 +364,80 @@ tr.playing td:nth-child(2) { color: var(--accent); font-weight: 600; }
     .listen-item { grid-template-columns: 2.5rem minmax(0, 1fr); }
     .listen-actions { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+/* Loading: a spinner beside what's loading. */
+.loading { display: flex; align-items: center; justify-content: center; gap: .6rem; padding: 2rem; color: var(--muted); }
+.loading.inline { display: inline-flex; padding: 0; justify-content: flex-start; }
+.loading .spinner { width: 1rem; height: 1rem; color: var(--accent); }
+
+/* The Log page's level toggles, in the colours of the entries they show. */
+.toggle.level { border-left-width: 3px; }
+.toggle.level input { accent-color: currentColor; }
+.toggle.level.information:has(input:checked) { border-color: var(--border); color: var(--text); background: var(--surface); }
+.toggle.level.warning { border-left-color: var(--partial); }
+.toggle.level.warning:has(input:checked) { border-color: var(--partial); color: var(--partial); background: var(--partial-bg); }
+.toggle.level.error { border-left-color: var(--missing); }
+.toggle.level.error:has(input:checked) { border-color: var(--missing); color: var(--missing); background: var(--missing-bg); }
+.toggle.level:not(:has(input:checked)) { opacity: .65; }
+
+/* The library's ownership bar: owned, partly owned and covered segments over the missing colour. */
+.segmented-meter { display: flex; }
+.segmented-meter > span { flex: none; }
+.segmented-meter > .complete { background: var(--owned); }
+.segmented-meter > .partial { background: var(--partial); }
+.segmented-meter > .covered { background: var(--covered); }
+.segmented-meter > span + span { box-shadow: -1px 0 0 var(--surface); }
+.legend { display: flex; gap: 1rem; flex-wrap: wrap; margin: -.25rem 0 .75rem; }
+.legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.legend i { width: .7rem; height: .7rem; border-radius: 3px; display: inline-block; }
+.legend .complete { background: var(--owned); }
+.legend .partial { background: var(--partial); }
+.legend .covered { background: var(--covered); }
+.legend .missing { background: var(--missing-bg); border: 1px solid var(--missing); }
+
+/* A scan's files on the Activity page: the file while it's read, the song once it's matched. */
+.scan-files { max-height: 26rem; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.scan-file { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: .6rem; align-items: center; padding: .35rem .6rem; }
+.scan-file + .scan-file { border-top: 1px solid var(--border); }
+.scan-file .cover { width: 2.25rem; }
+.scan-file-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; color: var(--muted); }
+.scan-file-icon .spinner { width: 1rem; height: 1rem; color: var(--accent); }
+.scan-file-icon svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.scan-file-text { min-width: 0; }
+.scan-file.matched { animation: matched .6s ease-out; }
+@keyframes matched { from { background: var(--owned-bg); } to { background: transparent; } }
+
+/* Square icon buttons beside albums and tracks: play, listen, get, queue, ignore. Their titles say what they do. */
+.icon-button {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem; vertical-align: middle;
+    min-width: 2rem; height: 2rem; padding: 0; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.icon-button svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.icon-button svg .fill { fill: currentColor; stroke: none; }
+.icon-button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.icon-button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.icon-button.primary:hover:not(:disabled) { color: var(--accent-text); filter: brightness(1.1); }
+.icon-button.large { min-width: 2.5rem; height: 2.5rem; }
+.icon-button.large svg { width: 1.2rem; height: 1.2rem; }
+.icon-button:has(span:not(.spinner)) { padding: 0 .9rem 0 .7rem; }
+.icon-button.done { border-color: var(--owned); color: var(--owned); }
+.icon-button .spinner { width: .9rem; height: .9rem; }
+td.actions > .icon-button + .icon-button, td.actions > .icon-button + .badge, td.actions > .badge + .icon-button { margin-left: .3rem; }
+.album-actions { gap: .4rem; }
+.track-list col.icons-2-col { width: 5.5rem; }
+
+/* Artwork on its way shimmers; the placeholder icon shows only when there's none. */
+.cover.pending svg, .cover.loaded svg { display: none; }
+.cover.pending img { opacity: 0; }
+.cover.loaded img { animation: fade-in .25s ease-out; }
+.cover.pending {
+    background: linear-gradient(100deg, var(--bg) 30%, var(--border) 50%, var(--bg) 70%) 0 0 / 300% 100%;
+    animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    .cover.pending { animation: none; }
+    .cover.loaded img { animation: none; }
+}

@@ -309,6 +309,9 @@ namespace Navidex.Core.Data.Migrations
                     b.Property<Guid?>("EditionId")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("ExcludedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Format")
                         .HasColumnType("TEXT");
 

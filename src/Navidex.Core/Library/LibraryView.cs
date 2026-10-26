@@ -299,9 +299,13 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
             .ToList();
     }
 
-    public async Task<IReadOnlyList<ReviewItem>> GetReviewAsync(CancellationToken ct)
+    /// <param name="excluded">The files excluded from matching instead.</param>
+    public async Task<IReadOnlyList<ReviewItem>> GetReviewAsync(bool excluded, CancellationToken ct)
     {
-        var files = await db.LibraryFiles.Where(f => f.TrackId == null && f.MatchedAt != null).OrderBy(f => f.Path).ToListAsync(ct);
+        var files = await (excluded
+                ? db.LibraryFiles.Where(f => f.ExcludedAt != null)
+                : db.LibraryFiles.Where(f => f.TrackId == null && f.MatchedAt != null && f.ExcludedAt == null))
+            .OrderBy(f => f.Path).ToListAsync(ct);
         var suggestedIds = files.Select(f => f.SuggestedTrackId).OfType<Guid>().ToList();
         var tracks = await db.Tracks.Where(t => suggestedIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, ct);
         var editionIds = files.Select(f => f.SuggestedEditionId).OfType<Guid>().ToList();
@@ -317,7 +321,7 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
                 suggestion = new SuggestedTrack(track.Id, track.Title, track.ArtistCredit, track.Duration?.TotalSeconds, edition?.Id, edition?.AlbumId, edition?.Album.Title);
             }
             return new ReviewItem(f.Id, f.Path, f.ReviewReason, f.MatchConfidence, tags.Title, tags.Artist ?? tags.AlbumArtist, tags.Album,
-                f.Duration?.TotalSeconds, suggestion);
+                f.Duration?.TotalSeconds, suggestion, f.ExcludedAt is not null);
         }).ToList();
     }
 }

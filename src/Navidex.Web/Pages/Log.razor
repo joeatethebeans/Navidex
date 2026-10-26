@@ -16,12 +16,17 @@
             <option value="@source">@source</option>
         }
     </select>
-    <label class="small"><input type="checkbox" @bind="_information" /> Information</label>
-    <label class="small"><input type="checkbox" @bind="_warnings" /> Warnings <span class="muted">(@Count(LogEntryLevel.Warning))</span></label>
-    <label class="small"><input type="checkbox" @bind="_errors" /> Errors <span class="muted">(@Count(LogEntryLevel.Error))</span></label>
+    @* Each toggle wears its entries' colours, so the log explains itself. *@
+    <label class="toggle level information small"><input type="checkbox" @bind="_information" /> Information</label>
+    <label class="toggle level warning small"><input type="checkbox" @bind="_warnings" /> Warnings <span>(@Count(LogEntryLevel.Warning))</span></label>
+    <label class="toggle level error small"><input type="checkbox" @bind="_errors" /> Errors <span>(@Count(LogEntryLevel.Error))</span></label>
 </div>
 
-@if (_entries.Count == 0)
+@if (!_loaded)
+{
+    <Loading />
+}
+else if (_entries.Count == 0)
 {
     <div class="empty card">Nothing yet. Scan the library and it'll show up here.</div>
 }
@@ -70,6 +75,7 @@ else
     private bool _warnings = true;
     private bool _errors = true;
     private Timer? _timer;
+    private bool _loaded;
 
     private IEnumerable<LogEntry> Visible => Enumerable.Reverse(_entries)
         .Where(e => e.Level switch
@@ -115,6 +121,7 @@ else
             if (_entries.Count > Kept)
                 _entries.RemoveRange(0, _entries.Count - Kept);
             _latest = page.Latest;
+            _loaded = true;
         }
         catch (HttpRequestException)
         {

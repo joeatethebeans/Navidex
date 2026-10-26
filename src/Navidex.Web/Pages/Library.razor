@@ -37,7 +37,7 @@
 @switch (_view)
 {
     case "albums":
-        @if (_albums is null) { <p class="muted">Loading…</p> }
+        @if (_albums is null) { <Loading /> }
         else if (_albums.Count == 0) { <div class="empty card">No albums yet. Scan the library to read your music folder.</div> }
         else
         {
@@ -62,7 +62,7 @@
         break;
 
     case "tracks":
-        @if (_tracks is null) { <p class="muted">Loading…</p> }
+        @if (_tracks is null) { <Loading /> }
         else if (_tracks.Count == 0) { <div class="empty card">No tracks yet. Scan the library to read your music folder.</div> }
         else if (!VisibleTracks.Any()) { <div class="empty card">No tracks match that filter.</div> }
         else
@@ -70,7 +70,7 @@
             <div class="card">
                 <table class="table track-list">
                     @* Fixed widths: the first row is the scroller's spacer, which has no cells to size the columns by. *@
-                    <colgroup><col class="cover-col" /><col /><col class="format-col hide-narrow" /><col class="length-col" /><col class="action-col" /></colgroup>
+                    <colgroup><col class="cover-col" /><col /><col class="format-col hide-narrow" /><col class="length-col" /><col class="icons-2-col" /></colgroup>
                     <tbody>
                         <Virtualize Items="VisibleTracks.ToList()" Context="track" ItemSize="57" SpacerElement="tr" OverscanCount="10">
                             <tr>
@@ -87,7 +87,10 @@
                                 </td>
                                 <td class="num muted small hide-narrow">@track.Format</td>
                                 <td class="num muted">@Format.Duration(track.DurationSeconds)</td>
-                                <td class="num actions"><button class="link small" title="Play the tracks listed from here" @onclick="() => PlayFromAsync(track)">Play</button></td>
+                                <td class="num actions">
+                                    <IconButton Icon="play" Title="Play the tracks listed from here" OnClick="() => PlayFromAsync(track)" />
+                                    <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track)])" />
+                                </td>
                             </tr>
                         </Virtualize>
                     </tbody>
@@ -97,11 +100,17 @@
         break;
 
     default:
-        @if (_artists is null) { <p class="muted">Loading…</p> }
+        @if (_artists is null) { <Loading /> }
         else if (_artists.Count == 0) { <div class="empty card">No artists yet. Scan the library to read your music folder.</div> }
         else
         {
             @if (!VisibleArtists.Any()) { <div class="empty card">@(Prefs.OnlyMissing ? "Nothing missing" : "No artists") @(_filter.Length > 0 ? "matches that filter." : "right now.")</div> }
+            <div class="legend small muted">
+                <span><i class="complete"></i>Owned</span>
+                <span><i class="partial"></i>Partly owned</span>
+                <span><i class="covered"></i>Covered by other albums</span>
+                <span><i class="missing"></i>Missing</span>
+            </div>
             <div class="tiles">
                 @foreach (var artist in VisibleArtists)
                 {
@@ -109,9 +118,9 @@
                     <a class="tile" href="artists/@artist.Id" title="@Title(artist)">
                         <Cover Url="@artist.ImageUrl" Artist="true" />
                         <div class="tile-name">@artist.Name</div>
-                        <div class="meter" title="@artist.OwnedAlbums of @total"><span style="width:@(total == 0 ? 100 : 100 * artist.OwnedAlbums / total)%"></span></div>
+                        <OwnershipMeter Complete="artist.OwnedAlbums - artist.PartialAlbums" Partial="artist.PartialAlbums" Covered="artist.CoveredAlbums" Missing="artist.MissingAlbums" />
                         <div class="muted small">
-                            @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")
+                            @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")@(artist.CoveredAlbums > 0 ? $" · {artist.CoveredAlbums} covered" : "")
                         </div>
                     </a>
                 }

@@ -4,6 +4,7 @@ using Navidex.Contracts.Catalogue;
 using Navidex.Contracts.Plugins.Index;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
+using ScanFileState = Navidex.Client.ScanFileState;
 using Navidex.Core.Plugins;
 
 namespace Navidex.Core.Library;
@@ -18,6 +19,7 @@ public sealed class LibraryMatcher(
     CatalogueService catalogue,
     SettingsService settings,
     IOptions<PluginHttpOptions> httpOptions,
+    ScanFeed feed,
     ILogger<LibraryMatcher> logger)
 {
     // MusicBrainz's "Various Artists": its discography is enormous and never what a compilation should match against.
@@ -33,7 +35,7 @@ public sealed class LibraryMatcher(
     {
         var library = await settings.GetLibraryAsync(ct);
         _threshold = library.MatchThreshold;
-        var pending = await db.LibraryFiles.AsNoTracking().Where(f => f.MatchedAt == null).Select(f => new { f.Id, f.Path, f.TagsJson }).ToListAsync(ct);
+        var pending = await db.LibraryFiles.AsNoTracking().Where(f => f.MatchedAt == null && f.ExcludedAt == null).Select(f => new { f.Id, f.Path, f.TagsJson }).ToListAsync(ct);
         var groups = pending
             .Select(f => (f.Id, Tags: FileTags.Parse(f.TagsJson), f.Path))
             .GroupBy(x => x.Tags.Album is null
@@ -56,6 +58,8 @@ public sealed class LibraryMatcher(
             if (backoff.GaveUp)
             {
                 deferred += group.Count();
+                foreach (var x in group)
+                    feed.Set(x.Path, ScanFileState.Waiting, x.Tags.Title, x.Tags.Artist, "The catalogue source is busy; the next scan matches it");
                 continue;
             }
             // Each group starts with a clear tracker, so catalogue imports don't pile up and slow every later query.
@@ -63,6 +67,8 @@ public sealed class LibraryMatcher(
             var ids = group.Select(x => x.Id).ToList();
             var tracked = await db.LibraryFiles.Where(f => ids.Contains(f.Id)).ToDictionaryAsync(f => f.Id, ct);
             var files = group.Where(x => tracked.ContainsKey(x.Id)).Select(x => new Candidate(tracked[x.Id], x.Tags)).ToList();
+            foreach (var file in files)
+                feed.Set(file.File.Path, ScanFileState.Matching, file.Tags.Title, file.Tags.Artist);
             try
             {
                 await MatchGroupAsync(files, ct);
@@ -73,6 +79,9 @@ public sealed class LibraryMatcher(
             catch (Exception e) when (IsUnavailable(e, ct))
             {
                 db.ChangeTracker.Clear();
+                foreach (var file in files)
+                    feed.Set(file.File.Path, ScanFileState.Waiting, file.Tags.Title, file.Tags.Artist,
+                        attempt < library.AttemptsWhenBusy ? "The catalogue source is busy; it's tried again later in the scan" : "The catalogue source is busy; the next scan matches it");
                 if (attempt < library.AttemptsWhenBusy)
                 {
                     queue.Enqueue((group, attempt + 1));
@@ -104,6 +113,7 @@ public sealed class LibraryMatcher(
                 await db.Artists.Where(a => !a.InLibrary && credited.Contains(a.Id)).ExecuteUpdateAsync(s => s.SetProperty(a => a.InLibrary, true), ct);
             done += files.Count;
             LogGroup(files, done, pending.Count);
+            await ReportAsync(files, ct);
             progress?.Report($"Matched {done} of {pending.Count} files");
         }
         if (backoff.GaveUp && deferred > 0)
@@ -115,6 +125,28 @@ public sealed class LibraryMatcher(
     }
 
     private sealed record Candidate(LibraryFile File, FileTags Tags);
+
+    /// <summary>Tells the scan feed what each file turned out to be, with the song as the library shows it.</summary>
+    private async Task ReportAsync(List<Candidate> files, CancellationToken ct)
+    {
+        var trackIds = files.Select(f => f.File.TrackId).OfType<Guid>().Distinct().ToList();
+        var editionIds = files.Select(f => f.File.EditionId).OfType<Guid>().Distinct().ToList();
+        var tracks = await db.Tracks.Where(t => trackIds.Contains(t.Id))
+            .Select(t => new { t.Id, t.Title, t.ArtistCredit, t.ArtistId }).ToDictionaryAsync(t => t.Id, ct);
+        var editions = await db.Editions.Where(e => editionIds.Contains(e.Id))
+            .Select(e => new { e.Id, e.AlbumId, e.Album.Title }).ToDictionaryAsync(e => e.Id, ct);
+        foreach (var (file, tags) in files)
+        {
+            if (file.TrackId is { } trackId && tracks.TryGetValue(trackId, out var track))
+            {
+                var edition = file.EditionId is { } e ? editions.GetValueOrDefault(e) : null;
+                feed.Matched(file.Path, track.Title, track.ArtistCredit, track.ArtistId, edition?.Title, edition?.AlbumId,
+                    edition is null ? null : LibraryView.CoverUrl(edition.AlbumId, file.EditionId));
+            }
+            else
+                feed.Set(file.Path, ScanFileState.Review, tags.Title, tags.Artist, file.ReviewReason ?? "No confident match");
+        }
+    }
 
     /// <summary>A provider failure worth retrying later, as opposed to a bug.</summary>
     public static bool IsUnavailable(Exception e, CancellationToken ct) =>

@@ -1,0 +1,81 @@
+@* A square button with an icon, for the actions beside albums and tracks. The title says what it does. *@
+<button class="icon-button @(Primary ? "primary" : "") @(Large ? "large" : "") @(_done ? "done" : "")" title="@Title" aria-label="@Title"
+        disabled="@(Disabled || _busy)" @onclick="ClickAsync">
+    @if (_busy)
+    {
+        <span class="spinner"></span>
+    }
+    else
+    {
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            @switch (_done ? "done" : Icon)
+            {
+                case "play":
+                    <path class="fill" d="M8 5v14l11-7z" />
+                    break;
+                case "listen":
+                    <path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3" y="14" width="4" height="6" rx="1.5" /><rect x="17" y="14" width="4" height="6" rx="1.5" />
+                    break;
+                case "get":
+                    <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+                    break;
+                case "queue":
+                    <path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6" />
+                    break;
+                case "ignore":
+                    <path d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c5 0 8.5 4 9.5 6a13 13 0 0 1-2.9 3.6M6.4 7.6A13.4 13.4 0 0 0 2.5 12c1 2 4.5 6 9.5 6a9.5 9.5 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+                    break;
+                case "unignore":
+                    <path d="M2.5 12c1-2 4.5-6 9.5-6s8.5 4 9.5 6c-1 2-4.5 6-9.5 6s-8.5-4-9.5-6z" /><circle cx="12" cy="12" r="3" />
+                    break;
+                case "retry":
+                    <path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" />
+                    break;
+                case "done":
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                    break;
+            }
+        </svg>
+    }
+    @if (Label is not null) { <span>@Label</span> }
+</button>
+
+@code {
+    /// <summary>play, listen, get, queue, ignore, unignore or retry.</summary>
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool Primary { get; set; }
+
+    /// <summary>Bigger, for the head of an album page.</summary>
+    [Parameter] public bool Large { get; set; }
+
+    /// <summary>Text beside the icon, for a button that needs it.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Shows a tick for a moment afterwards, for actions with nothing else to show, such as adding to the queue.</summary>
+    [Parameter] public bool Confirm { get; set; }
+
+    private bool _busy;
+    private bool _done;
+
+    private async Task ClickAsync()
+    {
+        _busy = true;
+        try
+        {
+            await OnClick.InvokeAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+        if (!Confirm)
+            return;
+        _done = true;
+        StateHasChanged();
+        await Task.Delay(1500);
+        _done = false;
+    }
+}

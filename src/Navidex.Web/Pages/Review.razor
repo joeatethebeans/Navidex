@@ -35,11 +35,14 @@
 }
 
 <h2>Files</h2>
-<p class="muted small">Files that couldn't be matched confidently. They don't count as owned until they're matched.</p>
+<p class="muted small">
+    Files that couldn't be matched confidently. They don't count as owned until they're matched. <strong>Exclude</strong> music
+    no catalogue knows, such as your own recordings: it's never matched again, and stays in your music folder.
+</p>
 
 @if (_items is null)
 {
-    <p class="muted">Loading…</p>
+    <Loading />
 }
 else if (_items.Count == 0)
 {
@@ -49,6 +52,10 @@ else
 {
     <div class="toolbar">
         <input type="search" placeholder="Filter, for example a title, artist or folder" @bind="_filter" @bind:event="oninput" />
+        @if (_filter.Length > 0 && Visible.Any())
+        {
+            <button disabled="@_busy" title="Exclude every file the filter shows, for example a whole folder" @onclick="ExcludeShownAsync">Exclude these @Visible.Count()</button>
+        }
     </div>
     @if (!Visible.Any())
     {
@@ -91,13 +98,47 @@ else
                     <button class="primary" disabled="@_busy" @onclick="() => ApproveAsync(item, suggestion)">Approve</button>
                 }
                 <a class="button" href="@SearchLink(item)">Search</a>
+                <button disabled="@_busy" title="Never match this file: no catalogue knows it" @onclick="() => SetExcludedAsync(item, true)">Exclude</button>
             </div>
+        </div>
+    }
+}
+
+@if (_excluded is { Count: > 0 })
+{
+    <h2 class="section">
+        <button class="section-toggle" aria-expanded="@(_showExcluded ? "true" : "false")" @onclick="() => _showExcluded = !_showExcluded">
+            <span class="chevron @(_showExcluded ? "open" : "")" aria-hidden="true"></span>
+            Excluded files <span class="muted small">(@_excluded.Count)</span>
+        </button>
+    </h2>
+    @if (_showExcluded)
+    {
+        <div class="card">
+            <table class="table">
+                <tbody>
+                    @foreach (var item in _excluded)
+                    {
+                        <tr>
+                            <td>
+                                <div>@(item.Title ?? "(no title)") <span class="muted">· @(item.Artist ?? "unknown artist")</span></div>
+                                <div class="muted small path">@item.Path</div>
+                            </td>
+                            <td class="num actions">
+                                <button class="link small" disabled="@_busy" title="Match it again at the next scan" @onclick="() => SetExcludedAsync(item, false)">Include</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     }
 }
 
 @code {
     private IReadOnlyList<ReviewItem>? _items;
+    private IReadOnlyList<ReviewItem>? _excluded;
+    private bool _showExcluded;
     private string _filter = "";
     private bool _busy;
 
@@ -114,7 +155,33 @@ else
     {
         Tracker.Changed += Refresh;
         await Tracker.EnsureLoadedAsync();
-        _items = await Api.GetReviewAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var items = Api.GetReviewAsync();
+        var excluded = Api.GetReviewAsync(excluded: true);
+        _items = await items;
+        _excluded = await excluded;
+    }
+
+    private async Task SetExcludedAsync(ReviewItem item, bool excluded)
+    {
+        _busy = true;
+        await Api.SetFileExcludedAsync(item.FileId, excluded);
+        await LoadAsync();
+        _busy = false;
+    }
+
+    private async Task ExcludeShownAsync()
+    {
+        _busy = true;
+        foreach (var item in Visible.ToList())
+            await Api.SetFileExcludedAsync(item.FileId, true);
+        _filter = "";
+        await LoadAsync();
+        _busy = false;
     }
 
     private void Refresh() => InvokeAsync(StateHasChanged);

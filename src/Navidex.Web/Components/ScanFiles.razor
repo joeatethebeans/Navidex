@@ -1,0 +1,104 @@
+@implements IDisposable
+@inject NavidexClient Api
+
+@* What a scan is doing, file by file: the file's name while it's read and matched, then the song it turned out to be. *@
+@if (_files is null)
+{
+    <Loading Inline="true" />
+}
+else if (_files.Count == 0)
+{
+    <div class="muted small">Nothing new to read: every file is as it was at the last scan.</div>
+}
+else
+{
+    <div class="scan-files">
+        @foreach (var file in _files)
+        {
+            <div class="scan-file @file.State.ToString().ToLowerInvariant()">
+                @if (file.State == ScanFileState.Matched)
+                {
+                    @if (file.AlbumId is { } album) { <a href="albums/@album" tabindex="-1"><Cover Url="@file.CoverUrl" /></a> }
+                    else { <Cover Url="@file.CoverUrl" /> }
+                    <div class="scan-file-text">
+                        <div class="ellipsis">@file.Title</div>
+                        <div class="muted small ellipsis">
+                            @if (file.ArtistId is { } artist) { <a href="artists/@artist">@file.ArtistCredit</a> } else { @file.ArtistCredit }
+                            @if (file.AlbumId is { } id) { <span> · <a href="albums/@id">@file.AlbumTitle</a></span> }
+                        </div>
+                    </div>
+                    <span class="badge owned">Matched</span>
+                }
+                else
+                {
+                    <div class="scan-file-icon">
+                        @if (file.State is ScanFileState.Reading or ScanFileState.Matching) { <span class="spinner"></span> }
+                        else
+                        {
+                            <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /></svg>
+                        }
+                    </div>
+                    <div class="scan-file-text">
+                        <div class="ellipsis" title="@file.Path">@System.IO.Path.GetFileName(file.Path)</div>
+                        <div class="muted small ellipsis" title="@(file.Detail ?? file.Path)">
+                            @(file.Detail ?? (file.Title is not null ? $"{file.Title}{(file.ArtistCredit is null ? "" : $" · {file.ArtistCredit}")}" : System.IO.Path.GetDirectoryName(file.Path)))
+                        </div>
+                    </div>
+                    @switch (file.State)
+                    {
+                        case ScanFileState.Reading:
+                            <span class="badge active">Reading</span>
+                            break;
+                        case ScanFileState.Matching:
+                            <span class="badge active">Matching</span>
+                            break;
+                        case ScanFileState.Review:
+                            <a class="badge partial" href="review">To review</a>
+                            break;
+                        default:
+                            <span class="badge neutral">Waiting</span>
+                            break;
+                    }
+                }
+            </div>
+        }
+    </div>
+    @if (_files.Count >= 300)
+    {
+        <div class="muted small" style="margin-top: .4rem;">The latest 300 files. The <a href="log">log</a> has the rest.</div>
+    }
+}
+
+@code {
+    /// <summary>Whether the scan is still running, so the list keeps updating.</summary>
+    [Parameter] public bool Active { get; set; }
+
+    private IReadOnlyList<ScanFile>? _files;
+    private Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        _timer = new Timer(_ => InvokeAsync(async () =>
+        {
+            if (!Active)
+                return;
+            await LoadAsync();
+            StateHasChanged();
+        }), null, TimeSpan.FromSeconds(1.5), TimeSpan.FromSeconds(1.5));
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _files = await Api.GetScanFilesAsync();
+        }
+        catch (HttpRequestException)
+        {
+            _files ??= [];
+        }
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

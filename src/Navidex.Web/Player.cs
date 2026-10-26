@@ -115,6 +115,23 @@ public sealed class Player : IAsyncDisposable
     /// </summary>
     public async Task PlayAlbumAsync(AlbumDetail album, Guid? fromTrack = null)
     {
+        var (entries, start) = await AlbumEntriesAsync(album, fromTrack);
+        await PlayAsync(entries, start);
+    }
+
+    /// <summary>Adds an album to the end of the queue, fetching tracks you don't have to listen to.</summary>
+    public async Task QueueAlbumAsync(AlbumDetail album) => await AddAsync((await AlbumEntriesAsync(album, null)).Entries);
+
+    /// <summary>Adds an album from a list to the end of the queue, loading its tracks first.</summary>
+    public async Task QueueAlbumAsync(Guid albumId)
+    {
+        if (await _api.GetAlbumAsync(albumId) is { } album)
+            await QueueAlbumAsync(album);
+    }
+
+    /// <summary>The album's tracks in order: tracks you have, and the missing ones fetched to listen to.</summary>
+    private async Task<(List<PlayerEntry> Entries, int Start)> AlbumEntriesAsync(AlbumDetail album, Guid? fromTrack)
+    {
         Error = null;
         var tracks = album.Tracks.Where(t => t.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere or TrackStatus.Missing).ToList();
         var listening = new Dictionary<Guid, ListenNowInfo>();
@@ -141,7 +158,7 @@ public sealed class Player : IAsyncDisposable
             else if (listening.TryGetValue(track.TrackId, out var item))
                 entries.Add(PlayerEntry.Listening(item));
         }
-        await PlayAsync(entries, start);
+        return (entries, start);
     }
 
     /// <summary>Plays an album from a list, loading its tracks first.</summary>

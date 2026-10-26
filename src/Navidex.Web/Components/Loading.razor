@@ -1,0 +1,10 @@
+@* Shown while something loads, so it doesn't look empty. *@
+<div class="loading @(Inline ? "inline" : "")" role="status">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>@Text</span>
+</div>
+
+@code {
+    [Parameter] public string Text { get; set; } = "Loading…";
+    [Parameter] public bool Inline { get; set; }
+}

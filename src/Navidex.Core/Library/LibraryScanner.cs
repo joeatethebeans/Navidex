@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Navidex.Core.Data;
+using ScanFileState = Navidex.Client.ScanFileState;
 
 namespace Navidex.Core.Library;
 
@@ -33,7 +34,7 @@ public sealed record FileTags
 }
 
 /// <summary>Walks the music folder and records every audio file and its tags. It never writes to the library.</summary>
-public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions> options, ILogger<LibraryScanner> logger)
+public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions> options, ScanFeed feed, ILogger<LibraryScanner> logger)
 {
     public static readonly HashSet<string> AudioExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -78,12 +79,22 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
             if (known.TryGetValue(path, out var existing) && existing.Size == info.Length && existing.ModifiedAt == modified)
                 continue;
 
+            if (existing?.ExcludedAt is not null)
+            {
+                // Excluded files are kept as they are: nothing will match them.
+                existing.Size = info.Length;
+                existing.ModifiedAt = modified;
+                continue;
+            }
+            feed.Set(path, ScanFileState.Reading);
             var read = Read(fullPath);
             if (read is null)
             {
                 unreadable++;
+                feed.Set(path, ScanFileState.Review, detail: "Couldn't read the file");
                 continue;
             }
+            feed.Set(path, ScanFileState.Matching, read.Value.Tags.Title, read.Value.Tags.Artist);
 
             if (existing is null)
             {

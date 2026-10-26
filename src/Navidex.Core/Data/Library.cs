@@ -59,6 +59,12 @@ public class LibraryFile
 
     public string? MediaServerTrackId { get; set; }
     public DateTime ScannedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// When the user excluded it from matching, for a file no catalogue knows. It's never matched, isn't on the review
+    /// list, and stays excluded across scans, even if it changes.
+    /// </summary>
+    public DateTime? ExcludedAt { get; set; }
 }
 
 public enum RequestMode

@@ -1,0 +1,38 @@
+@* An artist's albums as one bar: owned, partly owned, covered by tracks on other albums, and missing. *@
+@{ var total = Complete + Partial + Covered + Missing; }
+<div class="meter segmented-meter" title="@Summary()">
+    @if (total == 0)
+    {
+        <span class="complete" style="width: 100%"></span>
+    }
+    else
+    {
+        @Segment("complete", Complete, total)
+        @Segment("partial", Partial, total)
+        @Segment("covered", Covered, total)
+    }
+</div>
+
+@code {
+    [Parameter] public int Complete { get; set; }
+    [Parameter] public int Partial { get; set; }
+    [Parameter] public int Covered { get; set; }
+    [Parameter] public int Missing { get; set; }
+
+    // Missing is the bar's own background, so only the other three are drawn.
+    private static RenderFragment Segment(string kind, int count, int total) => __builder =>
+    {
+        if (count > 0)
+        {
+            <span class="@kind" style="width: @((100.0 * count / total).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+        }
+    };
+
+    private string Summary() => string.Join(", ", new[]
+    {
+        Complete > 0 ? $"{Complete} owned" : null,
+        Partial > 0 ? $"{Partial} partly owned" : null,
+        Covered > 0 ? $"{Covered} covered" : null,
+        Missing > 0 ? $"{Missing} missing" : null,
+    }.Where(p => p is not null));
+}

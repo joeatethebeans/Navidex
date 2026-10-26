@@ -5,7 +5,7 @@
 <div class="row small">
     @if (_status?.CurrentTask is { } task)
     {
-        <a class="muted" href="log" title="See the log">@(task.Progress ?? "Starting…")</a>
+        <a class="muted" href="activity" title="See what it's doing">@(task.Progress ?? "Starting…")</a>
     }
     else if (_status?.LastScan is { State: TaskState.Failed } failed)
     {

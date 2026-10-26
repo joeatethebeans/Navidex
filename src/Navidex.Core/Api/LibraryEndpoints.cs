@@ -22,15 +22,16 @@ public static class LibraryEndpoints
             {
                 var files = await db.LibraryFiles.CountAsync(ct);
                 var matched = await db.LibraryFiles.CountAsync(f => f.TrackId != null, ct);
-                var pending = await db.LibraryFiles.CountAsync(f => f.MatchedAt == null, ct);
+                var pending = await db.LibraryFiles.CountAsync(f => f.MatchedAt == null && f.ExcludedAt == null, ct);
+                var excluded = await db.LibraryFiles.CountAsync(f => f.ExcludedAt != null, ct);
                 var lastScan = await db.BackgroundTasks.Where(t => t.Kind == LibraryScanTask.TaskKind && t.Status == BackgroundTaskStatus.Succeeded)
                     .MaxAsync(t => (DateTime?)t.FinishedAt, ct);
                 var current = await db.BackgroundTasks.Where(t => t.Status == BackgroundTaskStatus.Running || t.Status == BackgroundTaskStatus.Queued)
                     .OrderBy(t => t.CreatedAt).FirstOrDefaultAsync(ct);
                 var lastFinished = await db.BackgroundTasks.Where(t => t.Kind == LibraryScanTask.TaskKind && t.FinishedAt != null)
                     .OrderByDescending(t => t.FinishedAt).FirstOrDefaultAsync(ct);
-                return new LibraryStatus(files, matched, files - matched - pending, pending, lastScan, current is null ? null : TaskQueue.ToInfo(current),
-                    lastFinished is null ? null : TaskQueue.ToInfo(lastFinished), await reading.IsBusyAsync(db, ct));
+                return new LibraryStatus(files, matched, files - matched - pending - excluded, pending, lastScan, current is null ? null : TaskQueue.ToInfo(current),
+                    lastFinished is null ? null : TaskQueue.ToInfo(lastFinished), await reading.IsBusyAsync(db, ct), excluded);
             })
             .WithName("GetLibraryStatus").WithSummary("File counts, the last scan, and any task in progress.");
 
@@ -51,8 +52,41 @@ public static class LibraryEndpoints
         library.MapGet("/missing", (LibraryView view, CancellationToken ct) => view.GetMissingAsync(ct))
             .WithName("GetMissing").WithSummary("Missing albums across the library, after the default filters and ignores.");
 
-        library.MapGet("/review", (LibraryView view, CancellationToken ct) => view.GetReviewAsync(ct))
-            .WithName("GetReview").WithSummary("Files that couldn't be matched confidently, with the best suggestion.");
+        library.MapGet("/scan/files", (ScanFeed feed, int? limit) => feed.Latest(Math.Clamp(limit ?? ScanFeed.Kept, 1, ScanFeed.Kept)))
+            .WithName("ScanFiles")
+            .WithSummary("The files the running or last scan read or matched, most recently changed first: each file's name while it's read, "
+                         + "then the song it matched or why it needs review. The latest 300.");
+
+        library.MapGet("/review", (LibraryView view, bool? excluded, CancellationToken ct) => view.GetReviewAsync(excluded == true, ct))
+            .WithName("GetReview").WithSummary("Files that couldn't be matched confidently, with the best suggestion. With excluded=true, the files excluded from matching.");
+
+        library.MapPut("/files/{id:guid}/excluded", async (Guid id, ExcludeFile body, NavidexDbContext db, CancellationToken ct) =>
+            {
+                if (await db.LibraryFiles.FindAsync([id], ct) is not { } file)
+                    return Results.NotFound();
+                if (body.Excluded)
+                {
+                    file.ExcludedAt ??= DateTime.UtcNow;
+                    file.TrackId = file.EditionId = file.SuggestedTrackId = file.SuggestedEditionId = null;
+                    file.ArtistId = null;
+                    file.MatchMethod = MatchMethod.Unmatched;
+                    file.MatchConfidence = null;
+                    file.ReviewReason = null;
+                    file.MatchedAt ??= DateTime.UtcNow;
+                }
+                else if (file.ExcludedAt is not null)
+                {
+                    // Matched again by the next scan.
+                    file.ExcludedAt = null;
+                    file.MatchedAt = null;
+                }
+                await db.SaveChangesAsync(ct);
+                return Results.NoContent();
+            })
+            .WithName("ExcludeFile")
+            .WithSummary("Exclude a file from matching, for music no catalogue knows: it's never matched and leaves the review list. "
+                         + "Including it again matches it at the next scan.")
+            .Produces(StatusCodes.Status204NoContent).Produces(StatusCodes.Status404NotFound);
 
         library.MapPost("/files/{id:guid}/match", async (Guid id, MatchFile body, NavidexDbContext db, RequestPlanner planner, CancellationToken ct) =>
             {

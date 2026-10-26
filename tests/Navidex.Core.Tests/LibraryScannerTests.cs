@@ -21,9 +21,9 @@ public sealed class LibraryScannerTests : IDisposable
     {
         Directory.CreateDirectory(_music);
         _connection.Open();
-        _db = new NavidexDbContext(new DbContextOptionsBuilder<NavidexDbContext>().UseSqlite(_connection).Options);
+        _db = new NavidexDbContext(new DbContextOptionsBuilder<NavidexDbContext>().UseSqlite(_connection, NavidexDbContext.Sqlite).Options);
         _db.Database.Migrate();
-        _scanner = new LibraryScanner(_db, Options.Create(new NavidexOptions { LibraryPath = _music }), NullLogger<LibraryScanner>.Instance);
+        _scanner = new LibraryScanner(_db, Options.Create(new NavidexOptions { LibraryPath = _music }), new ScanFeed(), NullLogger<LibraryScanner>.Instance);
     }
 
     public void Dispose()

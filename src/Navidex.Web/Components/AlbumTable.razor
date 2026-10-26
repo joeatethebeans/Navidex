@@ -29,18 +29,31 @@
                     <td><StatusBadge Album="album.Status" /></td>
                     <td class="num hide-narrow muted">@Format.Tracks(album)</td>
                     <td class="num actions">
-                        @if (!album.Ignored)
-                        {
-                            <button class="link small" title="@(album.Status is AlbumStatus.Complete or AlbumStatus.Covered ? "Play the album" : "Play it in order, fetching tracks you don't have to listen to")"
-                                    @onclick="() => Player.PlayAlbumAsync(album.Id)">@(album.Status == AlbumStatus.Missing ? "Listen" : "Play")</button>
+                        @{
+                            var missing = album.Status == AlbumStatus.Missing;
+                            RenderFragment play = @<text>
+                                <IconButton Icon="@(missing ? "listen" : "play")" Title="@(missing ? "Listen: fetch it to play now, without adding it to your library" : album.Status == AlbumStatus.Partial ? "Play, fetching the tracks you don't have to listen to" : "Play")"
+                                            OnClick="() => Player.PlayAlbumAsync(album.Id)" />
+                                <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.QueueAlbumAsync(album.Id)" />
+                            </text>;
                         }
-                        @if (album.Status == AlbumStatus.Partial || album.Status == AlbumStatus.Missing && !album.Ignored)
+                        @if (album.Ignored)
                         {
-                            <FetchButton Kind="RequestKind.Album" Id="album.Id" Hint="@(album.Status == AlbumStatus.Partial ? "Fetch the tracks you're missing" : "Fetch this album")" />
+                            <IconButton Icon="unignore" Title="Unignore: count this album again" OnClick="() => OnIgnore.InvokeAsync(album)" />
                         }
-                        @if (album.Status == AlbumStatus.Missing)
+                        else if (album.Status is AlbumStatus.Partial or AlbumStatus.Missing)
                         {
-                            <button class="link small" @onclick="() => OnIgnore.InvokeAsync(album)">@(album.Ignored ? "Unignore" : "Ignore")</button>
+                            <FetchButton Kind="RequestKind.Album" Id="album.Id" Hint="@(album.Status == AlbumStatus.Partial ? "Get the tracks you're missing" : "Get this album")">
+                                @play
+                                @if (missing)
+                                {
+                                    <IconButton Icon="ignore" Title="Ignore: stop counting this album as missing" OnClick="() => OnIgnore.InvokeAsync(album)" />
+                                }
+                            </FetchButton>
+                        }
+                        else
+                        {
+                            @play
                         }
                     </td>
                 </tr>

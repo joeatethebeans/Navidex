@@ -1,18 +1,29 @@
 @implements IDisposable
 @inject RequestTracker Tracker
 
-@* Asks for an artist, album or track to be fetched, or shows how that's going. *@
+@*
+    Asks for an artist, album or track to be fetched, or shows how that's going. The other actions for the same thing
+    (play, listen, ignore and so on) are its child content: they go once it's asked for, leaving the status chip.
+*@
 @if (Tracker.Find(Kind, Id) is { } request)
 {
     <a class="badge @Format.RequestBadge(request.State)" href="activity?open=@request.Id" title="@request.Detail">@Format.RequestLabel(request)</a>
     @if (!request.Active)
     {
-        <button class="link small" disabled="@(_busy || ScanStatus.Reading)" title="@(ScanStatus.Reading ? WaitHint : null)" @onclick="GetAsync">Try again</button>
+        <IconButton Icon="retry" Title="@(ScanStatus.Reading ? WaitHint : "Try again")" Disabled="@(_busy || ScanStatus.Reading)" OnClick="GetAsync" />
     }
 }
 else
 {
-    <button class="@(Primary ? "primary" : "link small")" disabled="@(_busy || ScanStatus.Reading)" title="@(ScanStatus.Reading ? WaitHint : Hint)" @onclick="GetAsync">@Label</button>
+    @ChildContent
+    @if (Primary)
+    {
+        <button class="primary" disabled="@(_busy || ScanStatus.Reading)" title="@(ScanStatus.Reading ? WaitHint : Hint)" @onclick="GetAsync">@Label</button>
+    }
+    else
+    {
+        <IconButton Icon="get" Title="@(ScanStatus.Reading ? WaitHint : Hint ?? Label)" Disabled="@(_busy || ScanStatus.Reading)" OnClick="GetAsync" />
+    }
 }
 @if (_error is not null)
 {
@@ -26,6 +37,9 @@ else
     [Parameter] public string Label { get; set; } = "Get";
     [Parameter] public string? Hint { get; set; }
     [Parameter] public bool Primary { get; set; }
+
+    /// <summary>The other actions, shown until it's asked for.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private const string WaitHint = "The library is being scanned. Wait until it has read your files, so Navidex knows what you already have.";
 

@@ -23,7 +23,7 @@
 
 @if (_busy)
 {
-    <p class="muted">Searching…</p>
+    <Loading Text="Searching…" />
 }
 else if (_searchError is not null)
 {
@@ -75,11 +75,21 @@ else if (_results is not null)
                             </td>
                             <td class="num"><StatusBadge Album="album.Status" /></td>
                             <td class="num actions">
-                                <button class="link small" title="@(album.Status is AlbumStatus.Complete or AlbumStatus.Covered ? "Play the album" : "Play it in order, fetching tracks you don't have to listen to")"
-                                        @onclick="() => Player.PlayAlbumAsync(album.Id)">@(album.Status == AlbumStatus.Missing ? "Listen" : "Play")</button>
+                                @{
+                                    var missing = album.Status == AlbumStatus.Missing;
+                                    RenderFragment play = @<text>
+                                        <IconButton Icon="@(missing ? "listen" : "play")" Title="@(missing ? "Listen: fetch it to play now, without adding it to your library" : album.Status == AlbumStatus.Partial ? "Play, fetching the tracks you don't have to listen to" : "Play")"
+                                                    OnClick="() => Player.PlayAlbumAsync(album.Id)" />
+                                        <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.QueueAlbumAsync(album.Id)" />
+                                    </text>;
+                                }
                                 @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
                                 {
-                                    <FetchButton Kind="RequestKind.Album" Id="album.Id" />
+                                    <FetchButton Kind="RequestKind.Album" Id="album.Id" Hint="@(missing ? "Get this album" : "Get the tracks you're missing")">@play</FetchButton>
+                                }
+                                else
+                                {
+                                    @play
                                 }
                             </td>
                         </tr>
@@ -95,12 +105,15 @@ else if (_results is not null)
             <StatusBadge Track="track.Owned ? TrackStatus.Owned : TrackStatus.Missing" />
             @if (track.Owned)
             {
-                <button class="link small" @onclick="() => Player.PlayAsync([PlayerEntry.Owned(track)])">Play</button>
+                <IconButton Icon="play" Title="Play" OnClick="() => Player.PlayAsync([PlayerEntry.Owned(track)])" />
+                <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track)])" />
             }
             else
             {
-                <button class="link small" title="Fetch it to listen to, without adding it to your library" @onclick="() => Player.ListenAsync(track.Id)">Listen</button>
-                <FetchButton Kind="RequestKind.Track" Id="track.Id" />
+                <FetchButton Kind="RequestKind.Track" Id="track.Id" Hint="Get it into your library">
+                    <IconButton Icon="listen" Title="Listen: fetch it to play now, without adding it to your library" OnClick="() => Player.ListenAsync(track.Id)" />
+                    <IconButton Icon="queue" Title="Add to the queue, fetching it to listen to" Confirm="true" OnClick="() => Player.ListenAsync(track.Id, next: true)" />
+                </FetchButton>
             }
         </text>)
     }

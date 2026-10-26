@@ -18,6 +18,7 @@ public sealed class LibraryScanTask(
     LibraryMatcher matcher,
     CatalogueRefresher refresher,
     LibraryReading reading,
+    ScanFeed feed,
     NavidexDbContext db) : ITaskHandler
 {
     public const string TaskKind = "library-scan";
@@ -31,6 +32,7 @@ public sealed class LibraryScanTask(
         using (reading.Begin())
         {
             progress.Report("Reading files");
+            feed.Clear();
             scan = await scanner.ScanAsync(progress, ct);
             progress.Report($"Found {scan.Files} files ({scan.Added} new, {scan.Changed} changed, {scan.Removed} removed); matching");
             match = await matcher.MatchPendingAsync(progress, ct);

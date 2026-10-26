@@ -69,6 +69,7 @@ builder.Services.AddOptions<RequestPipelineOptions>();
 builder.Services.AddHttpClient<IImportWorker, HttpImportWorker>(HttpImportWorker.Configure);
 builder.Services.AddSingleton<RequestSignal>();
 builder.Services.AddSingleton<LibraryReading>();
+builder.Services.AddSingleton<ScanFeed>();
 builder.Services.AddSingleton<RequestCancellations>();
 builder.Services.AddScoped<RequestService>();
 builder.Services.AddScoped<RequestPlanner>();

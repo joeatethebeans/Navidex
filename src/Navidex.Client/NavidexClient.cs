@@ -23,8 +23,15 @@ public sealed class NavidexClient(HttpClient http)
     public async Task<IReadOnlyList<MissingAlbum>> GetMissingAsync(CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<MissingAlbum>>($"{Api}/library/missing", NavidexJson.Options, ct) ?? [];
 
-    public async Task<IReadOnlyList<ReviewItem>> GetReviewAsync(CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<List<ReviewItem>>($"{Api}/library/review", NavidexJson.Options, ct) ?? [];
+    public async Task<IReadOnlyList<ReviewItem>> GetReviewAsync(bool excluded = false, CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<ReviewItem>>($"{Api}/library/review{(excluded ? "?excluded=true" : "")}", NavidexJson.Options, ct) ?? [];
+
+    /// <summary>Excludes a file from matching, or includes it again.</summary>
+    public async Task SetFileExcludedAsync(Guid fileId, bool excluded, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/library/files/{fileId}/excluded", new ExcludeFile(excluded), NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+    }
 
     public async Task<TaskInfo> ScanLibraryAsync(CancellationToken ct = default)
     {
@@ -81,6 +88,9 @@ public sealed class NavidexClient(HttpClient http)
     }
 
     /// <summary>Activity log entries newer than <paramref name="after"/>, oldest first.</summary>
+    public async Task<IReadOnlyList<ScanFile>> GetScanFilesAsync(CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<IReadOnlyList<ScanFile>>($"{Api}/library/scan/files", NavidexJson.Options, ct) ?? [];
+
     public async Task<LogPage> GetLogAsync(long after = 0, int limit = 1000, CancellationToken ct = default) =>
         await http.GetFromJsonAsync<LogPage>($"{Api}/log?after={after}&limit={limit}", NavidexJson.Options, ct) ?? new LogPage([], after);
 

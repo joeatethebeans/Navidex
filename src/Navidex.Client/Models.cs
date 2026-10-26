@@ -220,7 +220,11 @@ public sealed record ReviewItem(
     string? Artist,
     string? Album,
     double? DurationSeconds,
-    SuggestedTrack? Suggestion);
+    SuggestedTrack? Suggestion,
+    bool Excluded = false);
+
+/// <summary>Body of <c>PUT /library/files/{id}/excluded</c>.</summary>
+public sealed record ExcludeFile(bool Excluded);
 
 /// <summary>Body of <c>POST /library/files/{id}/match</c>. Without an edition, the suggestion's or the likeliest one is used.</summary>
 public sealed record MatchFile(Guid TrackId, Guid? EditionId = null);
@@ -260,8 +264,9 @@ public sealed record TaskInfo(Guid Id, string Kind, TaskState State, string? Pro
 
 /// <param name="LastScan">The most recent finished scan, successful or not: its progress says what it found, its error why it failed.</param>
 /// <param name="Reading">A scan is reading and matching files, or about to: new requests are refused and queued ones wait until it's done.</param>
+/// <param name="Excluded">Files excluded from matching; they're counted in <paramref name="Files"/> but not under review.</param>
 public sealed record LibraryStatus(int Files, int Matched, int Review, int Pending, DateTime? LastScanAt, TaskInfo? CurrentTask, TaskInfo? LastScan = null,
-    bool Reading = false);
+    bool Reading = false, int Excluded = 0);
 
 public enum LogEntryLevel
 {
@@ -290,3 +295,39 @@ public sealed record LogSettings
 
 /// <param name="Latest">The newest entry's sequence number, even when no entries are returned.</param>
 public sealed record LogPage(IReadOnlyList<LogEntry> Entries, long Latest);
+
+/// <summary>Where a file is in the current scan.</summary>
+public enum ScanFileState
+{
+    /// <summary>Its tags are being read.</summary>
+    Reading,
+
+    /// <summary>Read, and waiting to be matched or being matched.</summary>
+    Matching,
+
+    /// <summary>Matched to a song; the song's details are filled in.</summary>
+    Matched,
+
+    /// <summary>No confident match; it's on the Review page.</summary>
+    Review,
+
+    /// <summary>The catalogue source was busy; it's tried again later in the scan, or next scan.</summary>
+    Waiting,
+}
+
+/// <summary>A file the running (or last) scan has read or matched, from <c>GET /library/scan/files</c>.</summary>
+/// <param name="Path">Relative to the music folder.</param>
+/// <param name="Title">The song once matched; before that, the file's title tag if it has one.</param>
+/// <param name="Detail">Why it needs review, or what it's waiting for.</param>
+public sealed record ScanFile(
+    long Seq,
+    string Path,
+    ScanFileState State,
+    string? Title,
+    string? ArtistCredit,
+    Guid? ArtistId,
+    string? AlbumTitle,
+    Guid? AlbumId,
+    string? CoverUrl,
+    string? Detail,
+    DateTime At);

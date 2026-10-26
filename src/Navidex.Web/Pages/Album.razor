@@ -12,7 +12,7 @@
 }
 else if (_album is null)
 {
-    <p class="muted">Loading…</p>
+    <Loading />
 }
 else
 {
@@ -33,17 +33,25 @@ else
             @if (_album.Editions.Count > 0 && _album.Tracks.Any(t => t.Status is not TrackStatus.Ignored))
             {
                 var missing = _album.Tracks.Any(t => t.Status == TrackStatus.Missing);
-                <div class="row" style="margin-top: .5rem;">
-                    <button class="primary play-link" disabled="@_starting"
-                            title="@(missing ? "Play it in order; tracks you don't have are fetched to listen to, without adding them to your library" : "Play the album")"
-                            @onclick="() => PlayAlbumAsync(null)">
-                        <svg viewBox="0 0 24 24"><path d="M7 4.5v15L19 12z" /></svg>@(_album.Tracks.Any(t => t.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere) ? "Play" : "Listen now")
-                    </button>
+                var playLabel = _album.Tracks.Any(t => t.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere) ? "Play" : "Listen now";
+                var playHint = missing ? $"{playLabel}: in order, fetching the tracks you don't have to listen to, without adding them to your library" : "Play the album";
+                RenderFragment play = @<text>
+                    <IconButton Icon="play" Primary="true" Large="true" Label="@playLabel" Title="@playHint" OnClick="() => Player.PlayAlbumAsync(_album!)" />
+                    <IconButton Icon="queue" Large="true" Confirm="true" Title="@(missing ? "Add to the queue, fetching the tracks you don't have to listen to" : "Add to the queue")"
+                                OnClick="() => Player.QueueAlbumAsync(_album!)" />
+                </text>;
+                <div class="row album-actions" style="margin-top: .5rem;">
                     @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
                     {
                         <FetchButton Kind="RequestKind.Album" Id="album.Id" EditionId="_album.ShownEditionId"
                                      Label="@(album.Status == AlbumStatus.Partial ? "Get missing tracks" : "Get album")"
-                                     Hint="Fetch it into your library as the edition shown below" />
+                                     Hint="@(album.Status == AlbumStatus.Partial ? "Get the missing tracks into your library, as the edition shown below" : "Get the album into your library, as the edition shown below")">
+                            @play
+                        </FetchButton>
+                    }
+                    else
+                    {
+                        @play
                     }
                 </div>
             }
@@ -98,21 +106,24 @@ else
                             <td class="num actions">
                                 @if (track.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere)
                                 {
-                                    <button class="link small" title="Play the tracks you have from here" @onclick="() => PlayOwnedFromAsync(track)">Play</button>
+                                    <IconButton Icon="play" Title="Play the tracks you have from here" OnClick="() => PlayOwnedFromAsync(track)" />
+                                    <IconButton Icon="queue" Title="Add to the queue" Confirm="true"
+                                                OnClick="() => Player.AddAsync([PlayerEntry.Owned(track, album, _album.ShownEditionId)])" />
                                 }
-                                else if (track.Status == TrackStatus.Missing)
+                                else if (track.Status == TrackStatus.Missing && Tracker.Find(RequestKind.Album, album.Id) is not { Active: true })
                                 {
-                                    <button class="link small" title="Fetch it to listen to, without adding it to your library"
-                                            @onclick="() => Player.ListenAsync(track.TrackId, _album.ShownEditionId)">Listen</button>
+                                    <FetchButton Kind="RequestKind.Track" Id="track.TrackId" EditionId="_album.ShownEditionId" Hint="Get it into your library">
+                                        <IconButton Icon="listen" Title="Listen: fetch it to play now, without adding it to your library"
+                                                    OnClick="() => Player.ListenAsync(track.TrackId, _album.ShownEditionId)" />
+                                        <IconButton Icon="queue" Title="Add to the queue, fetching it to listen to" Confirm="true"
+                                                    OnClick="() => Player.ListenAsync(track.TrackId, _album.ShownEditionId, next: true)" />
+                                        <IconButton Icon="ignore" Title="Ignore: stop counting this song as missing, on every album it's on"
+                                                    OnClick="() => ToggleTrackIgnoredAsync(track)" />
+                                    </FetchButton>
                                 }
-                                @if (track.Status == TrackStatus.Missing && Tracker.Find(RequestKind.Album, album.Id) is not { Active: true })
+                                @if (track.Status == TrackStatus.Ignored || track.Ignored)
                                 {
-                                    <FetchButton Kind="RequestKind.Track" Id="track.TrackId" EditionId="_album.ShownEditionId" Hint="Fetch this track" />
-                                }
-                                @if (track.Status is TrackStatus.Missing or TrackStatus.Ignored || track.Ignored)
-                                {
-                                    <button class="link small" title="@(track.Ignored ? "Count this song again" : "Stop counting this song as missing, on every album it's on")"
-                                            @onclick="() => ToggleTrackIgnoredAsync(track)">@(track.Ignored ? "Unignore" : "Ignore")</button>
+                                    <IconButton Icon="unignore" Title="Unignore: count this song again" OnClick="() => ToggleTrackIgnoredAsync(track)" />
                                 }
                             </td>
                         </tr>
@@ -155,15 +166,6 @@ else
         ScanStatus.LibraryChanged -= Reload;
         Tracker.Changed -= Redraw;
         Player.Changed -= Redraw;
-    }
-
-    private bool _starting;
-
-    private async Task PlayAlbumAsync(Guid? fromTrack)
-    {
-        _starting = true;
-        await Player.PlayAlbumAsync(_album!, fromTrack);
-        _starting = false;
     }
 
     private Task PlayOwnedFromAsync(TrackRow from)
