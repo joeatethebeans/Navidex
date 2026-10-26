@@ -13,7 +13,7 @@ public sealed class DataModelTests : IDisposable
     public DataModelTests()
     {
         _connection.Open();
-        _db = new NavidexDbContext(new DbContextOptionsBuilder<NavidexDbContext>().UseSqlite(_connection).Options);
+        _db = new NavidexDbContext(new DbContextOptionsBuilder<NavidexDbContext>().UseSqlite(_connection, NavidexDbContext.Sqlite).Options);
         _db.Database.Migrate();
     }
 
@@ -27,6 +27,14 @@ public sealed class DataModelTests : IDisposable
     public void Model_has_no_pending_changes_against_the_migrations()
     {
         Assert.False(_db.Database.HasPendingModelChanges());
+    }
+
+    [Fact]
+    public async Task Queries_can_look_up_more_ids_than_sqlite_has_variables()
+    {
+        // A big library's view looks up every edition of every artist at once; SQLite allows 32,766 variables.
+        var ids = Enumerable.Range(0, 40_000).Select(_ => Guid.NewGuid()).ToList();
+        Assert.Equal(0, await _db.Albums.CountAsync(a => ids.Contains(a.ArtistId)));
     }
 
     [Fact]

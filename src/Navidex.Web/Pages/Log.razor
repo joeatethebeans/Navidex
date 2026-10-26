@@ -34,8 +34,15 @@ else
                 <span class="log-time muted" title="@entry.Time.ToLocalTime().ToString("F")">@entry.Time.ToLocalTime().ToString("HH:mm:ss")</span>
                 <span class="log-source muted hide-narrow">@entry.Source</span>
                 <span class="log-message">
-                    @entry.Message
-                    @if (entry.Error is not null && !entry.Message.Contains(entry.Error)) { <span class="muted"> · @entry.Error</span> }
+                    @{ var whole = entry.Error is not null && !entry.Message.Contains(entry.Error) ? $"{entry.Message} · {entry.Error}" : entry.Message; }
+                    @if (whole.Length > Brief && !_expanded.Contains(entry.Seq))
+                    {
+                        @whole[..Brief]<text>… </text><button class="link small" @onclick="() => _expanded.Add(entry.Seq)">Show all</button>
+                    }
+                    else
+                    {
+                        @whole
+                    }
                 </span>
             </div>
         }
@@ -49,6 +56,11 @@ else
 @code {
     private const int Kept = 5000;
     private const int Shown = 1000;
+
+    /// <summary>How much of a long entry shows until it's opened.</summary>
+    private const int Brief = 500;
+
+    private readonly HashSet<long> _expanded = [];
 
     private readonly List<LogEntry> _entries = [];
     private long _latest;

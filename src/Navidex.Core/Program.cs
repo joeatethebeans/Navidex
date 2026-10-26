@@ -25,7 +25,8 @@ Directory.CreateDirectory(options.DataPath);
 builder.Services.AddSingleton<LibraryCache>();
 builder.Services.AddSingleton<EventFeed>();
 builder.Services.AddDbContext<NavidexDbContext>((services, db) => db
-    .UseSqlite(builder.Configuration.GetConnectionString("Navidex") ?? $"Data Source={Path.Combine(options.DataPath, "navidex.db")}")
+    .UseSqlite(builder.Configuration.GetConnectionString("Navidex") ?? $"Data Source={Path.Combine(options.DataPath, "navidex.db")}",
+        NavidexDbContext.Sqlite)
     .AddInterceptors(services.GetRequiredService<LibraryCache>(), services.GetRequiredService<EventFeed>()));
 
 // The activity log the web app shows. Registered as a provider so everything logged reaches it.

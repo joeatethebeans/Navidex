@@ -160,7 +160,7 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 .log-entry.success .log-message { color: var(--owned); }
 .log-time { font-variant-numeric: tabular-nums; }
 .log-source { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.log-message { overflow-wrap: anywhere; }
+.log-message { overflow-wrap: anywhere; min-width: 0; }
 @media (max-width: 640px) {
     .log-entry { grid-template-columns: 4rem 1fr; gap: .5rem; padding: .3rem .75rem; }
 }

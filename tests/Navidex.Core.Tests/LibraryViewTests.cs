@@ -87,6 +87,9 @@ public sealed class LibraryViewTests : IDisposable
         while (_coverArt.Requests == 0 && DateTime.UtcNow < deadline)
             await Task.Delay(100);
         Assert.NotEqual(0, _coverArt.Requests);
+        // Let it finish warming the other covers, so the counts below are only this test's.
+        for (var seen = -1; seen != _coverArt.Requests && DateTime.UtcNow < deadline; await Task.Delay(1000))
+            seen = _coverArt.Requests;
 
         using (var response = await http.GetAsync(dummy.Album.CoverUrl))
         {

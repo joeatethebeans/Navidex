@@ -19,6 +19,19 @@ public class ActivityLogTests
     }
 
     [Fact]
+    public void Huge_messages_are_cut_short()
+    {
+        var log = new ActivityLog();
+        log.Add(LogEntryLevel.Error, "Command", "Failed executing DbCommand " + new string('x', 100_000), "short");
+
+        var entry = log.After(0, 1).Single();
+        Assert.True(entry.Message.Length < ActivityLog.MaxLength + 100);
+        Assert.StartsWith("Failed executing DbCommand", entry.Message);
+        Assert.EndsWith("more characters)", entry.Message);
+        Assert.Equal("short", entry.Error);
+    }
+
+    [Fact]
     public void A_limit_returns_the_newest_entries()
     {
         var log = new ActivityLog();

@@ -1,9 +1,17 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Navidex.Core.Data;
 
 public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// SQLite options for every context. A list in a query (<c>ids.Contains(x)</c>) goes as one JSON parameter: by
+    /// default EF Core makes a parameter per item, and SQLite refuses more than 32,766, which a big library passes.
+    /// </summary>
+    public static void Sqlite(SqliteDbContextOptionsBuilder sqlite) =>
+        sqlite.UseParameterizedCollectionMode(ParameterTranslationMode.Parameter);
+
     public DbSet<Artist> Artists => Set<Artist>();
     public DbSet<Album> Albums => Set<Album>();
     public DbSet<Edition> Editions => Set<Edition>();

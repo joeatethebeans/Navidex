@@ -30,8 +30,16 @@ public sealed class ActivityLog
     /// <summary>Entries waiting to be written to the archive.</summary>
     public ChannelReader<LogEntry> Unwritten => _unwritten.Reader;
 
+    /// <summary>
+    /// The most of a message or error that's kept. A failed database command logs its whole SQL, which can run to
+    /// megabytes; the start says what went wrong.
+    /// </summary>
+    public const int MaxLength = 4000;
+
     public void Add(LogEntryLevel level, string source, string message, string? error)
     {
+        message = Shorten(message)!;
+        error = Shorten(error);
         LogEntry entry;
         lock (_lock)
         {
@@ -42,6 +50,9 @@ public sealed class ActivityLog
         }
         _unwritten.Writer.TryWrite(entry);
     }
+
+    private static string? Shorten(string? text) =>
+        text is { Length: > MaxLength } ? $"{text[..MaxLength]}… ({text.Length - MaxLength:N0} more characters)" : text;
 
     /// <summary>Entries after <paramref name="after"/>, oldest first, at most <paramref name="limit"/> of the newest.</summary>
     public IReadOnlyList<LogEntry> After(long after, int limit)
