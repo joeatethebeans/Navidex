@@ -3,11 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Navidex.Client;
 using Navidex.Contracts.Plugins.Retrieval;
 using Navidex.Core.Data;
+using Navidex.Core.Library;
 
 namespace Navidex.Core.Requests;
 
 /// <summary>Creates, cancels and retries requests, and reports on them.</summary>
-public sealed class RequestService(NavidexDbContext db, RequestSignal signal, RequestCancellations cancellations)
+public sealed class RequestService(NavidexDbContext db, RequestSignal signal, RequestCancellations cancellations, LibraryReading reading)
 {
     public static readonly RequestStatus[] Finished = [RequestStatus.InLibrary, RequestStatus.NeedsReview, RequestStatus.Failed, RequestStatus.Cancelled];
 
@@ -28,6 +29,8 @@ public sealed class RequestService(NavidexDbContext db, RequestSignal signal, Re
             .OrderBy(r => r.CreatedAt).FirstOrDefaultAsync(ct);
         if (existing is not null)
             return (existing, false);
+        if (await reading.IsBusyAsync(db, ct))
+            throw new LibraryBusyException();
 
         var title = await TitleAsync(kind, create.Id, ct);
         if (title is null)

@@ -11,7 +11,7 @@ namespace Navidex.Core.Requests;
 /// <summary>
 /// Works through queued requests, oldest first, a few at a time (Settings: parallel fetches). Planning splits artist
 /// and album requests into parts, which join the queue; everything else goes through the pipeline. Requests a restart
-/// interrupted start again from the top.
+/// interrupted start again from the top. Nothing starts while a scan is reading the library.
 /// </summary>
 public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal signal, RequestCancellations cancellations, ILogger<RequestWorker> logger)
     : BackgroundService
@@ -36,7 +36,8 @@ public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal sig
                 parallel = Math.Clamp((await scope.ServiceProvider.GetRequiredService<SettingsService>().GetFetchAsync(stoppingToken)).ParallelFetches, 1, 8);
                 var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
                 var busy = _running.Keys.ToList();
-                next = await db.Requests.Where(r => r.Status == RequestStatus.Queued && !busy.Contains(r.Id))
+                // While a scan reads the library, queued requests wait: the scan may find they're already there.
+                next = await scope.ServiceProvider.GetRequiredService<LibraryReading>().IsBusyAsync(db, stoppingToken) ? [] : await db.Requests.Where(r => r.Status == RequestStatus.Queued && !busy.Contains(r.Id))
                     .OrderBy(r => r.CreatedAt).Select(r => r.Id).Take(Math.Max(0, parallel - _running.Count)).ToListAsync(stoppingToken);
             }
 

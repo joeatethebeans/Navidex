@@ -42,8 +42,15 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
     public Task<IReadOnlyList<LibraryTrack>> GetTracksAsync(CancellationToken ct) =>
         GetAsync("tracks", (view, c) => view.GetLibraryTracksAsync(c), ct);
 
+    /// <summary>Raised after library data is written, as views are marked stale. Handlers must return quickly.</summary>
+    public event Action? Changed;
+
     /// <summary>Marks every view stale.</summary>
-    public void Invalidate() => Interlocked.Increment(ref _generation);
+    public void Invalidate()
+    {
+        Interlocked.Increment(ref _generation);
+        Changed?.Invoke();
+    }
 
     private async Task<T> GetAsync<T>(string key, Func<LibraryView, CancellationToken, Task<T>> compute, CancellationToken ct) where T : class
     {

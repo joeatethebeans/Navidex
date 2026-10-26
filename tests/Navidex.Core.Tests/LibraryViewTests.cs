@@ -82,6 +82,12 @@ public sealed class LibraryViewTests : IDisposable
         var http = _factory.CreateClient();
         var dummy = (await _api.GetLibraryAlbumsAsync()).Single(a => a.Album.Title == "Dummy");
 
+        // Covers of what you have are fetched during the scan, before anyone looks.
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+        while (_coverArt.Requests == 0 && DateTime.UtcNow < deadline)
+            await Task.Delay(100);
+        Assert.NotEqual(0, _coverArt.Requests);
+
         using (var response = await http.GetAsync(dummy.Album.CoverUrl))
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);

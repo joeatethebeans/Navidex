@@ -138,6 +138,20 @@ public sealed class RequestTests(RequestFixture fixture, ITestOutputHelper outpu
     }
 
     [TestLibraryFact]
+    public async Task Nothing_can_be_asked_for_while_a_scan_reads_the_library()
+    {
+        var album = await fixture.AlbumAsync("Daft Punk", "Homework");
+        using (fixture.Factory.Services.GetRequiredService<Navidex.Core.Library.LibraryReading>().Begin())
+        {
+            Assert.True((await Api.GetLibraryStatusAsync())!.Reading);
+            var refused = await Assert.ThrowsAsync<NavidexApiException>(() => Api.CreateRequestAsync(new CreateRequest(RequestKind.Album, album.Id)));
+            Assert.Equal(System.Net.HttpStatusCode.Conflict, refused.Status);
+            Assert.Contains("scan", refused.Message);
+        }
+        Assert.False((await Api.GetLibraryStatusAsync())!.Reading);
+    }
+
+    [TestLibraryFact]
     public async Task A_missing_album_is_fetched_track_by_track_and_shows_as_owned()
     {
         await fixture.AddSourceAsync(new FakeSource("tracks"));

@@ -171,6 +171,15 @@ public sealed class CatalogueService(NavidexDbContext db, IndexPlugins indexPlug
         return album;
     }
 
+    /// <summary>
+    /// The album as the core knows it, or imported from partial details, such as the album a search result's track is
+    /// from: what's already known isn't overwritten with them.
+    /// </summary>
+    public async Task<Album> ImportAlbumUnlessKnownAsync(IndexAlbum source, CancellationToken ct) =>
+        await FindTrackedAsync(EntityKind.Album, source.Id, ct) is { } known
+            ? db.Albums.Local.FirstOrDefault(a => a.Id == known) ?? (await db.Albums.FindAsync([known], ct))!
+            : await ImportAlbumAsync(source, null, ct);
+
     /// <summary>The album with this provider ID, with its editions loaded, fetching whatever isn't cached.</summary>
     public async Task<Album?> GetAlbumAsync(ProviderId id, CancellationToken ct)
     {

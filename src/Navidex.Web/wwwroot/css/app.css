@@ -281,6 +281,10 @@ code { font-size: .85em; background: var(--bg); padding: .05rem .3rem; border-ra
 .track-list col.cover-col { width: 3.5rem; }
 .track-list col.format-col { width: 4.5rem; }
 .track-list col.length-col { width: 4.5rem; }
+.track-list col.status-col { width: 8rem; }
+.track-list col.action-col { width: 5rem; }
+.track-list col.wide-action-col { width: 11rem; }
+@media (max-width: 640px) { .track-list col.hide-narrow { width: 0; } .track-list col.status-col { width: 6.5rem; } .track-list col.wide-action-col { width: 8.5rem; } }
 
 /* Connections: a heading with its Add button, and the plugins Navidex knows to offer. */
 .section-head { display: flex; align-items: center; gap: .75rem; margin-top: 1.5rem; }

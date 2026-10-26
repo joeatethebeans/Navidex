@@ -25,10 +25,14 @@ public static class RequestEndpoints
                 {
                     return Results.ValidationProblem(new Dictionary<string, string[]> { ["editionId"] = [e.Message] });
                 }
+                catch (LibraryBusyException e)
+                {
+                    return Results.Problem(e.Message, statusCode: StatusCodes.Status409Conflict, title: "The library is being scanned");
+                }
             })
             .WithName("CreateRequest")
-            .WithSummary("Fetch an artist, album or track into the library. Asking for something already queued returns that request (200) instead of a new one (202).")
-            .Produces<RequestInfo>(StatusCodes.Status202Accepted).Produces<RequestInfo>().Produces(StatusCodes.Status404NotFound);
+            .WithSummary("Fetch an artist, album or track into the library. Asking for something already queued returns that request (200) instead of a new one (202). Refused (409) while a scan is reading the library.")
+            .Produces<RequestInfo>(StatusCodes.Status202Accepted).Produces<RequestInfo>().Produces(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
         requests.MapGet("", (RequestService service, bool? active, int? limit, CancellationToken ct) =>
                 service.ListAsync(active ?? false, Math.Clamp(limit ?? 100, 1, 500), ct))

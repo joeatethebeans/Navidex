@@ -40,6 +40,7 @@ builder.Services.AddScoped<IndexPlugins>();
 builder.Services.AddScoped<ConnectorPlugins>();
 builder.Services.AddScoped<ArtworkPlugins>();
 builder.Services.AddSingleton<ArtworkCache>();
+builder.Services.AddHostedService<ArtworkWarmer>();
 builder.Services.AddScoped<RetrievalPlugins>();
 builder.Services.AddHttpClient(RetrievalPlugins.HttpClientName, http => http.Timeout = TimeSpan.FromMinutes(2));
 
@@ -63,6 +64,7 @@ builder.Services.Configure<ImportWorkerOptions>(builder.Configuration.GetSection
 builder.Services.AddOptions<RequestPipelineOptions>();
 builder.Services.AddHttpClient<IImportWorker, HttpImportWorker>(HttpImportWorker.Configure);
 builder.Services.AddSingleton<RequestSignal>();
+builder.Services.AddSingleton<LibraryReading>();
 builder.Services.AddSingleton<RequestCancellations>();
 builder.Services.AddScoped<RequestService>();
 builder.Services.AddScoped<RequestPlanner>();

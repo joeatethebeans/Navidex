@@ -200,9 +200,11 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
     {
         var artists = await db.Artists.Where(a => a.InLibrary).ToDictionaryAsync(a => a.Id, ct);
         var s = await LoadAsync(artists.Keys, ct);
-        return Ordered(s.Albums.Select(a => Evaluate(s, a)).Where(e => e.Status is AlbumStatus.Complete or AlbumStatus.Partial))
+        return s.Albums.Select(a => Evaluate(s, a)).Where(e => e.Status is AlbumStatus.Complete or AlbumStatus.Partial)
             .Select(e => new LibraryAlbum(artists[e.Album.ArtistId].Name, Summarise(s, e)))
-            .OrderBy(a => artists[a.Album.ArtistId].SortName ?? a.ArtistName, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(a => a.Album.Title, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(a => artists[a.Album.ArtistId].SortName ?? a.ArtistName, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(a => a.Album.FirstReleaseDate ?? "9999", StringComparer.Ordinal)
             .ToList();
     }
 
@@ -213,16 +215,15 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
             {
                 f.Id, f.Path, f.Format, f.Duration, f.EditionId, TrackId = f.TrackId!.Value,
                 f.Track!.Title, f.Track.ArtistCredit, f.Track.ArtistId, TrackDuration = f.Track.Duration,
-                AlbumId = (Guid?)f.Edition!.AlbumId, AlbumTitle = f.Edition.Album.Title, AlbumArtist = f.Edition.Album.ArtistCredit,
+                AlbumId = (Guid?)f.Edition!.AlbumId, AlbumTitle = f.Edition.Album.Title,
                 Listing = db.EditionTracks.Where(et => et.EditionId == f.EditionId && et.TrackId == f.TrackId).Select(et => new { et.Disc, et.Position, et.Number }).FirstOrDefault(),
             })
             .ToListAsync(ct);
 
         return rows
-            .OrderBy(r => r.AlbumArtist ?? r.ArtistCredit, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(r => r.AlbumTitle, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(r => r.Listing?.Disc).ThenBy(r => r.Listing?.Position)
-            .ThenBy(r => r.Title, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(r => r.ArtistCredit, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(r => r.AlbumTitle, StringComparer.CurrentCultureIgnoreCase)
             .Select(r => new LibraryTrack(r.Id, r.TrackId, r.Title, r.ArtistCredit, r.ArtistId, r.AlbumId, r.AlbumTitle, r.Listing?.Disc, r.Listing?.Number,
                 (r.Duration ?? r.TrackDuration)?.TotalSeconds, r.Path, r.Format, r.AlbumId is { } album ? CoverUrl(album, r.EditionId) : null))
             .ToList();

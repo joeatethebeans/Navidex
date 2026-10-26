@@ -57,7 +57,7 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
             ? (await _query.FindReleaseGroupsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)).Results.Select(r => MapAlbum(r.Item, null)).ToList()
             : [];
         var tracks = Wants(SearchKind.Track)
-            ? (await _query.FindRecordingsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)).Results.Select(r => MapTrack(r.Item)).ToList()
+            ? (await _query.FindRecordingsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)).Results.Select(r => MapTrack(r.Item) with { Album = BestKnownAlbum(r.Item) }).ToList()
             : [];
         return new IndexSearchResults(artists, albums, tracks);
     }
@@ -222,6 +222,34 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
         Credit(recording.ArtistCredit),
         recording.Length,
         recording.Isrcs?.ToList() ?? []);
+
+    /// <summary>
+    /// Of the releases a search lists for a recording, the album it's best known from: an official release before
+    /// others, an album before EPs and singles, a studio album before compilations and live albums, then the earliest.
+    /// </summary>
+    private static IndexAlbum? BestKnownAlbum(IRecording recording)
+    {
+        var releases = recording.Releases?.Where(r => r.ReleaseGroup is not null).ToList() ?? [];
+        var best = releases
+            .OrderBy(r => string.Equals(r.Status, "Official", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(r => MapType(r.ReleaseGroup!.PrimaryType) switch { AlbumType.Album => 0, AlbumType.Ep => 1, AlbumType.Single => 2, _ => 3 })
+            .ThenBy(r => r.ReleaseGroup!.SecondaryTypes?.Count ?? 0)
+            .ThenBy(r => Date(r.Date) ?? "9999", StringComparer.Ordinal)
+            .FirstOrDefault();
+        if (best is null)
+            return null;
+
+        var group = best.ReleaseGroup!;
+        var sameGroup = releases.Where(r => r.ReleaseGroup!.Id == group.Id).ToList();
+        // Search results leave out a release's artist when it's the recording's.
+        var credit = best.ArtistCredit ?? group.ArtistCredit ?? recording.ArtistCredit;
+        return MapAlbum(group, sameGroup.Any(r => string.Equals(r.Status, "Official", StringComparison.OrdinalIgnoreCase)) ? true : null) with
+        {
+            Artist = PrimaryArtist(credit),
+            ArtistCredit = Credit(credit),
+            FirstReleaseDate = Date(group.FirstReleaseDate) ?? sameGroup.Select(r => Date(r.Date)).OfType<string>().Order(StringComparer.Ordinal).FirstOrDefault(),
+        };
+    }
 
     private static AlbumType MapType(string? type) => type?.ToLowerInvariant() switch
     {

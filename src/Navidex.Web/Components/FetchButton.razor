@@ -7,12 +7,12 @@
     <a class="badge @Format.RequestBadge(request.State)" href="activity?open=@request.Id" title="@request.Detail">@Format.RequestLabel(request)</a>
     @if (!request.Active)
     {
-        <button class="link small" disabled="@_busy" @onclick="GetAsync">Try again</button>
+        <button class="link small" disabled="@(_busy || ScanStatus.Reading)" title="@(ScanStatus.Reading ? WaitHint : null)" @onclick="GetAsync">Try again</button>
     }
 }
 else
 {
-    <button class="@(Primary ? "primary" : "link small")" disabled="@_busy" title="@Hint" @onclick="GetAsync">@Label</button>
+    <button class="@(Primary ? "primary" : "link small")" disabled="@(_busy || ScanStatus.Reading)" title="@(ScanStatus.Reading ? WaitHint : Hint)" @onclick="GetAsync">@Label</button>
 }
 @if (_error is not null)
 {
@@ -27,12 +27,15 @@ else
     [Parameter] public string? Hint { get; set; }
     [Parameter] public bool Primary { get; set; }
 
+    private const string WaitHint = "The library is being scanned. Wait until it has read your files, so Navidex knows what you already have.";
+
     private bool _busy;
     private string? _error;
 
     protected override async Task OnInitializedAsync()
     {
         Tracker.Changed += Refresh;
+        ScanStatus.ReadingChanged += Refresh;
         await Tracker.EnsureLoadedAsync();
     }
 
@@ -53,5 +56,9 @@ else
         _busy = false;
     }
 
-    public void Dispose() => Tracker.Changed -= Refresh;
+    public void Dispose()
+    {
+        Tracker.Changed -= Refresh;
+        ScanStatus.ReadingChanged -= Refresh;
+    }
 }

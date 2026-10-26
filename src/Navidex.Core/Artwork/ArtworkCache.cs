@@ -55,6 +55,9 @@ public sealed class ArtworkCache(IServiceScopeFactory scopes, IOptions<NavidexOp
         }
     }
 
+    /// <summary>Raised after <see cref="ResetAsync"/>, so pictures can be fetched again.</summary>
+    public event Action? Reset;
+
     /// <summary>Forgets every picture, so the next look uses the artwork plugins as they now are.</summary>
     public async Task ResetAsync(CancellationToken ct)
     {
@@ -72,6 +75,7 @@ public sealed class ArtworkCache(IServiceScopeFactory scopes, IOptions<NavidexOp
                 logger.LogWarning("Couldn't clear the artwork folder: {Message}", e.Message);
             }
         }
+        Reset?.Invoke();
     }
 
     private async Task<CachedArtwork?> FindAsync(EntityKind kind, Guid id)

@@ -22,6 +22,8 @@
     <ProjectReference Include="..\Navidex.Web\Navidex.Web.csproj" />
     <ProjectReference Include="..\Navidex.Plugins.Navidrome\Navidex.Plugins.Navidrome.csproj" />
     <ProjectReference Include="..\Navidex.Plugins.FanartTv\Navidex.Plugins.FanartTv.csproj" />
+    <ProjectReference Include="..\Navidex.Plugins.Wikimedia\Navidex.Plugins.Wikimedia.csproj" />
+    <ProjectReference Include="..\Navidex.Plugins.Deezer\Navidex.Plugins.Deezer.csproj" />
   </ItemGroup>
 
 </Project>

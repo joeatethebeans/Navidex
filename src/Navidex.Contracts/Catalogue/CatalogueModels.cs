@@ -158,6 +158,10 @@ public sealed record IndexTrackListing(int Position, string Number, string Title
 /// <param name="Duration">Length.</param>
 /// <param name="Isrcs">ISRCs assigned to the recording.</param>
 /// <param name="ExternalIds">This track's IDs in other providers' schemes.</param>
+/// <param name="Album">
+/// In search results, the album the track is best known from, so it can be shown with its cover; null elsewhere, and
+/// when the plugin can't tell. Its date and status may be partial: the core only uses it for albums it doesn't know yet.
+/// </param>
 public sealed record IndexTrack(
     ProviderId Id,
     string Title,
@@ -165,4 +169,5 @@ public sealed record IndexTrack(
     string ArtistCredit,
     TimeSpan? Duration,
     IReadOnlyList<string> Isrcs,
-    IReadOnlyList<ProviderId>? ExternalIds = null);
+    IReadOnlyList<ProviderId>? ExternalIds = null,
+    IndexAlbum? Album = null);

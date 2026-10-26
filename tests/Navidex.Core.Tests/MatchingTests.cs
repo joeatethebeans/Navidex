@@ -108,7 +108,8 @@ public class PluginCatalogTests
             [
                 Navidex.Plugins.MusicBrainz.CoverArtArchiveFactory.PluginId, MusicBrainzIndexFactory.PluginId,
                 Navidex.Plugins.Navidrome.NavidromeArtworkFactory.PluginId, Navidex.Plugins.Navidrome.NavidromeConnectorFactory.PluginId,
-                Navidex.Plugins.FanartTv.FanartTvFactory.PluginId,
+                Navidex.Plugins.FanartTv.FanartTvFactory.PluginId, Navidex.Plugins.Wikimedia.WikimediaCommonsFactory.PluginId,
+                Navidex.Plugins.Deezer.DeezerFactory.PluginId,
             ], Catalog(root).All.Select(p => p.Manifest.Id));
         }
         finally

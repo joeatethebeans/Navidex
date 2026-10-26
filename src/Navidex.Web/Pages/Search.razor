@@ -37,50 +37,41 @@ else if (_results is not null)
     @if (_file is not null && _results.Tracks.Count > 0)
     {
         <h2>Tracks</h2>
-        <div class="card">
-            <table class="table">
-                <tbody>
-                    @foreach (var track in _results.Tracks)
-                    {
-                        <tr>
-                            <td>@track.Title <span class="muted small">· @track.ArtistCredit</span></td>
-                            <td class="num muted">@Format.Duration(track.DurationSeconds)</td>
-                            <td class="num"><button class="primary" disabled="@_matching" @onclick="() => MatchAsync(track)">This one</button></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
         @if (_error is not null) { <div class="notice error">@_error</div> }
+        @TrackList(track => @<button class="primary small" disabled="@_matching" @onclick="() => MatchAsync(track)">This one</button>)
     }
     @if (_results.Artists.Count > 0)
     {
         <h2>Artists</h2>
-        <div class="card">
-            <table class="table">
-                <tbody>
-                    @foreach (var artist in _results.Artists)
-                    {
-                        <tr>
-                            <td><a href="artists/@artist.Id">@artist.Name</a> @if (artist.Disambiguation is not null) { <span class="muted small">(@artist.Disambiguation)</span> }</td>
-                            <td class="num">@if (artist.InLibrary) { <span class="badge owned">In library</span> }</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div class="tiles">
+            @foreach (var artist in _results.Artists)
+            {
+                <a class="tile" href="artists/@artist.Id" title="@(artist.Disambiguation is null ? artist.Name : $"{artist.Name} ({artist.Disambiguation})")">
+                    <Cover Url="@artist.ImageUrl" Artist="true" />
+                    <div class="tile-name">@artist.Name</div>
+                    @if (artist.Disambiguation is not null) { <div class="muted small tile-sub">@artist.Disambiguation</div> }
+                    @if (artist.InLibrary) { <div><span class="badge owned">In library</span></div> }
+                </a>
+            }
         </div>
     }
     @if (_results.Albums.Count > 0)
     {
         <h2>Albums</h2>
         <div class="card">
-            <table class="table">
+            <table class="table track-list">
+                <colgroup><col class="cover-col" /><col /><col class="status-col" /><col class="action-col" /></colgroup>
                 <tbody>
                     @foreach (var album in _results.Albums)
                     {
                         <tr>
-                            <td><a href="albums/@album.Id">@album.Title</a> <span class="muted small">· @album.ArtistCredit · @Format.Year(album.FirstReleaseDate)</span></td>
-                            <td class="muted hide-narrow">@Format.TypeLabel(album.Type)</td>
+                            <td class="cover-col"><a href="albums/@album.Id" tabindex="-1"><Cover Url="@album.CoverUrl" /></a></td>
+                            <td class="track-main">
+                                <div class="ellipsis"><a href="albums/@album.Id">@album.Title</a></div>
+                                <div class="muted small ellipsis">
+                                    <a href="artists/@album.ArtistId">@album.ArtistCredit</a>@(Format.Year(album.FirstReleaseDate) is { Length: > 0 } year ? $" · {year}" : "") · @Format.TypeLabel(album.Type)
+                                </div>
+                            </td>
                             <td class="num"><StatusBadge Album="album.Status" /></td>
                             <td class="num actions">
                                 @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
@@ -97,21 +88,10 @@ else if (_results is not null)
     @if (_file is null && _results.Tracks.Count > 0)
     {
         <h2>Tracks</h2>
-        <div class="card">
-            <table class="table">
-                <tbody>
-                    @foreach (var track in _results.Tracks)
-                    {
-                        <tr>
-                            <td>@track.Title <span class="muted small">· @track.ArtistCredit</span></td>
-                            <td class="num muted hide-narrow">@Format.Duration(track.DurationSeconds)</td>
-                            <td class="num"><StatusBadge Track="track.Owned ? TrackStatus.Owned : TrackStatus.Missing" /></td>
-                            <td class="num actions">@if (!track.Owned) { <FetchButton Kind="RequestKind.Track" Id="track.Id" /> }</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        @TrackList(track => @<text>
+            <StatusBadge Track="track.Owned ? TrackStatus.Owned : TrackStatus.Missing" />
+            @if (!track.Owned) { <FetchButton Kind="RequestKind.Track" Id="track.Id" /> }
+        </text>)
     }
 }
 
@@ -157,6 +137,36 @@ else if (_results is not null)
         Navigation.NavigateTo($"search?q={Uri.EscapeDataString(_query)}{(_file is null ? "" : $"&file={_file.FileId}")}");
         return Task.CompletedTask;
     }
+
+    /// <summary>Tracks as the library lists them, with their album's cover, and what can be done with each.</summary>
+    private RenderFragment TrackList(RenderFragment<SearchTrack> actions) => __builder =>
+    {
+        <div class="card">
+            <table class="table track-list">
+                <colgroup><col class="cover-col" /><col /><col class="length-col hide-narrow" /><col class="wide-action-col" /></colgroup>
+                <tbody>
+                    @foreach (var track in _results!.Tracks)
+                    {
+                        <tr>
+                            <td class="cover-col">
+                                @if (track.AlbumId is { } albumId) { <a href="albums/@albumId" tabindex="-1"><Cover Url="@track.CoverUrl" /></a> }
+                                else { <Cover Url="@track.CoverUrl" /> }
+                            </td>
+                            <td class="track-main">
+                                <div class="ellipsis">@track.Title</div>
+                                <div class="muted small ellipsis">
+                                    @if (track.ArtistId is { } artistId) { <a href="artists/@artistId">@track.ArtistCredit</a> } else { @track.ArtistCredit }
+                                    @if (track.AlbumId is { } id) { <span> · <a href="albums/@id">@track.AlbumTitle</a></span> }
+                                </div>
+                            </td>
+                            <td class="num muted hide-narrow">@Format.Duration(track.DurationSeconds)</td>
+                            <td class="num actions">@actions(track)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    };
 
     private async Task MatchAsync(SearchTrack track)
     {

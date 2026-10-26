@@ -17,6 +17,8 @@ beside Navidrome rather than replacing it: Navidex finds, fetches and imports; N
 | `src/Navidex.Core` | The core service: public API at `/api/v1`, data model, library scan and matching, task queue |
 | `src/Navidex.Plugins.MusicBrainz` | Built-in catalogue plugins: MusicBrainz releases, at its one request a second, and Cover Art Archive covers |
 | `src/Navidex.Plugins.Navidrome` | The built-in media-server connector for Navidrome, over the Subsonic API, and its cover art from your own files |
+| `src/Navidex.Plugins.Wikimedia` | Built-in artwork plugin: artist photos from Wikimedia Commons, by MusicBrainz ID through Wikidata |
+| `src/Navidex.Plugins.Deezer` | Built-in artwork plugin: artist pictures from Deezer's public catalogue, by name |
 | `src/Navidex.Plugins.FanartTv` | Built-in artwork plugin: artist pictures from fanart.tv, with your own API key |
 | `src/Navidex.Client` | Typed client and models for the public API |
 | `src/Navidex.Web` | The web app (Blazor WebAssembly), served by the core and talking only to the public API |

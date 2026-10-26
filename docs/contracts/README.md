@@ -8,7 +8,7 @@ go with the catalogue. Each has its own contract:
 | [Index plugin](index-plugins.md) | What exists | In process (.NET assembly) | `IIndexPlugin` v1.0 | MusicBrainz |
 | [Retrieval plugin](retrieval-plugins.md) | How music is fetched | Own container, over HTTP | [`retrieval-v1.openapi.yaml`](retrieval-v1.openapi.yaml) v1.0 | yt-dlp |
 | [Media-server connector](media-server-connectors.md) | Where music ends up | In process (.NET assembly) | `IMediaServerConnector` v1.0 | Navidrome (Subsonic API) |
-| [Artwork plugin](artwork-plugins.md) | What it looks like | In process (.NET assembly) | `IArtworkPlugin` v1.0 | Cover Art Archive |
+| [Artwork plugin](artwork-plugins.md) | What it looks like | In process (.NET assembly) | `IArtworkPlugin` v1.0 | Cover Art Archive, Wikimedia Commons, Deezer |
 
 The .NET types live in the `Navidex.Contracts` package (`src/Navidex.Contracts`). The XML docs on those types
 are normative; these pages explain the intent and the rules around them.

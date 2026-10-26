@@ -7,6 +7,8 @@ COPY src/Navidex.Web/Navidex.Web.csproj src/Navidex.Web/
 COPY src/Navidex.Plugins.MusicBrainz/Navidex.Plugins.MusicBrainz.csproj src/Navidex.Plugins.MusicBrainz/
 COPY src/Navidex.Plugins.Navidrome/Navidex.Plugins.Navidrome.csproj src/Navidex.Plugins.Navidrome/
 COPY src/Navidex.Plugins.FanartTv/Navidex.Plugins.FanartTv.csproj src/Navidex.Plugins.FanartTv/
+COPY src/Navidex.Plugins.Wikimedia/Navidex.Plugins.Wikimedia.csproj src/Navidex.Plugins.Wikimedia/
+COPY src/Navidex.Plugins.Deezer/Navidex.Plugins.Deezer.csproj src/Navidex.Plugins.Deezer/
 COPY src/Navidex.Core/Navidex.Core.csproj src/Navidex.Core/
 RUN dotnet restore src/Navidex.Core/Navidex.Core.csproj
 COPY src/ src/

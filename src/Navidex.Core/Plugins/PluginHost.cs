@@ -7,7 +7,9 @@ using Navidex.Contracts.Plugins.Artwork;
 using Navidex.Contracts.Plugins.Connectors;
 using Navidex.Contracts.Plugins.Index;
 using Navidex.Core.Data;
+using Navidex.Plugins.Deezer;
 using Navidex.Plugins.MusicBrainz;
+using Navidex.Plugins.Wikimedia;
 
 namespace Navidex.Core.Plugins;
 
@@ -134,21 +136,48 @@ public sealed class ArtworkPlugins(NavidexDbContext db, PluginHost host, PluginC
         return plugins;
     }
 
-    /// <summary>On first run, sets up the Cover Art Archive, so albums have covers out of the box. Once only, so removing it sticks.</summary>
+    /// <summary>The artwork plugins set up out of the box, in order: none needs an account.</summary>
+    public static readonly string[] Defaults = [CoverArtArchiveFactory.PluginId, WikimediaCommonsFactory.PluginId, DeezerFactory.PluginId];
+
+    /// <summary>
+    /// Sets up each default artwork plugin once, after any already there, so covers and artist pictures work out of the
+    /// box. The setting remembers which were offered, so removing one sticks and a new default reaches existing installs.
+    /// </summary>
     public static async Task EnsureDefaultAsync(NavidexDbContext db, PluginCatalog catalog)
     {
-        if (await db.Settings.AnyAsync(s => s.Key == DefaultsSetting))
+        var setting = await db.Settings.FindAsync(DefaultsSetting);
+        // Before the setting listed plugins, it was "true" once the archive had been offered.
+        var offered = setting?.ValueJson switch
+        {
+            null => [],
+            "true" => [CoverArtArchiveFactory.PluginId],
+            var json => JsonSerializer.Deserialize<List<string>>(json) ?? [],
+        };
+        var missing = Defaults.Except(offered).ToList();
+        if (missing.Count == 0)
             return;
-        if (!await db.PluginInstances.AnyAsync(p => p.Type == PluginType.Artwork) && catalog.Find(CoverArtArchiveFactory.PluginId) is { } found)
+
+        var existing = await db.PluginInstances.Where(p => p.Type == PluginType.Artwork).ToListAsync();
+        var priority = existing.Count == 0 ? 0 : existing.Max(p => p.Priority) + 1;
+        foreach (var id in missing)
+        {
+            if (existing.Any(p => p.PluginId == id) || catalog.Find(id) is not { } found)
+                continue;
             db.PluginInstances.Add(new PluginInstance
             {
                 PluginId = found.Manifest.Id,
                 Type = PluginType.Artwork,
                 Name = found.Manifest.Name,
+                Priority = priority++,
                 ContractVersion = found.Manifest.ContractVersion,
                 SettingsJson = SettingsSchema.Defaults(found.Manifest.SettingsSchema).ToJsonString(),
             });
-        db.Settings.Add(new Setting { Key = DefaultsSetting, ValueJson = "true" });
+        }
+        var value = JsonSerializer.Serialize(offered.Concat(missing).ToList());
+        if (setting is null)
+            db.Settings.Add(new Setting { Key = DefaultsSetting, ValueJson = value });
+        else
+            setting.ValueJson = value;
         await db.SaveChangesAsync();
     }
 }

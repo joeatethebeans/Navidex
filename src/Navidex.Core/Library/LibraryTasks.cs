@@ -17,6 +17,7 @@ public sealed class LibraryScanTask(
     LibraryScanner scanner,
     LibraryMatcher matcher,
     CatalogueRefresher refresher,
+    LibraryReading reading,
     NavidexDbContext db) : ITaskHandler
 {
     public const string TaskKind = "library-scan";
@@ -25,10 +26,15 @@ public sealed class LibraryScanTask(
 
     public async Task RunAsync(BackgroundTask task, IProgress<string> progress, CancellationToken ct)
     {
-        progress.Report("Reading files");
-        var scan = await scanner.ScanAsync(progress, ct);
-        progress.Report($"Found {scan.Files} files ({scan.Added} new, {scan.Changed} changed, {scan.Removed} removed); matching");
-        var match = await matcher.MatchPendingAsync(progress, ct);
+        LibraryScanner.Result scan;
+        LibraryMatcher.Result match;
+        using (reading.Begin())
+        {
+            progress.Report("Reading files");
+            scan = await scanner.ScanAsync(progress, ct);
+            progress.Report($"Found {scan.Files} files ({scan.Added} new, {scan.Changed} changed, {scan.Removed} removed); matching");
+            match = await matcher.MatchPendingAsync(progress, ct);
+        }
 
         var artists = await db.Artists.Where(a => a.InLibrary).Select(a => a.Id).ToListAsync(ct);
         var failures = await refresher.RefreshArtistsAsync(artists, progress, ct);

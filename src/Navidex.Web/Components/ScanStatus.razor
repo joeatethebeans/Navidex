@@ -30,6 +30,12 @@
     /// </summary>
     public static event Action? LibraryChanged;
 
+    /// <summary>A scan is reading the library, so nothing can be asked for until it knows what you have.</summary>
+    public static bool Reading { get; private set; }
+
+    /// <summary>Raised when <see cref="Reading"/> changes.</summary>
+    public static event Action? ReadingChanged;
+
     /// <summary>For other things that change the library, such as a request being filed.</summary>
     public static void RaiseLibraryChanged() => LibraryChanged?.Invoke();
 
@@ -49,6 +55,11 @@
         {
             return;
         }
+        if (_status is not null && _status.Reading != Reading)
+        {
+            Reading = _status.Reading;
+            ReadingChanged?.Invoke();
+        }
         var running = _status?.CurrentTask is not null;
         if (_wasRunning && !running || running && ++_polls % 5 == 0)
             LibraryChanged?.Invoke();
@@ -59,6 +70,8 @@
     private async Task ScanAsync()
     {
         await Api.ScanLibraryAsync();
+        Reading = true;
+        ReadingChanged?.Invoke();
         await RefreshAsync();
     }
 

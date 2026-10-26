@@ -13,6 +13,10 @@ the catalogue side of the comparison that produces the missing view. Code: `Navi
 | `IndexTrack` | A recording, which can appear on several editions | Recording MBID, plus ISRCs |
 | `IndexTrackListing` | A recording's place on one medium of one edition | — |
 
+In search results, an `IndexTrack` may also carry the `Album` it's best known from, so the track can be shown with
+its cover. The core only imports it when it doesn't know the album yet, so a partial date or status there doesn't
+overwrite better details.
+
 Every entity carries its own `Id` as a `ProviderId` in the plugin's scheme (for example `musicbrainz:5b11f4ce-…`)
 and may carry `ExternalIds` in other schemes when the plugin knows them. Durations are `TimeSpan`; dates are
 strings as precise as known (`yyyy`, `yyyy-MM` or `yyyy-MM-dd`).

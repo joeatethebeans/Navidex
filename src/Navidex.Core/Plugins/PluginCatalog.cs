@@ -2,7 +2,9 @@ using System.Reflection;
 using System.Runtime.Loader;
 using Microsoft.Extensions.Options;
 using Navidex.Contracts.Plugins;
+using Navidex.Plugins.Deezer;
 using Navidex.Plugins.FanartTv;
+using Navidex.Plugins.Wikimedia;
 using Navidex.Plugins.MusicBrainz;
 using Navidex.Plugins.Navidrome;
 
@@ -23,7 +25,8 @@ public sealed record DiscoveredPlugin(PluginManifest Manifest, IPluginFactory? F
 public sealed class PluginCatalog
 {
     private static readonly Assembly[] BuiltIn =
-        [typeof(MusicBrainzIndexFactory).Assembly, typeof(NavidromeConnectorFactory).Assembly, typeof(FanartTvFactory).Assembly];
+        [typeof(MusicBrainzIndexFactory).Assembly, typeof(NavidromeConnectorFactory).Assembly, typeof(FanartTvFactory).Assembly,
+         typeof(WikimediaCommonsFactory).Assembly, typeof(DeezerFactory).Assembly];
 
     private readonly Dictionary<string, DiscoveredPlugin> _plugins = new(StringComparer.Ordinal);
 

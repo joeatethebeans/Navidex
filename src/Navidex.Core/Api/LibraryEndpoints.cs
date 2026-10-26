@@ -18,7 +18,7 @@ public static class LibraryEndpoints
     {
         var library = api.MapGroup("/library").WithTags("Library");
 
-        library.MapGet("", async (NavidexDbContext db, CancellationToken ct) =>
+        library.MapGet("", async (NavidexDbContext db, LibraryReading reading, CancellationToken ct) =>
             {
                 var files = await db.LibraryFiles.CountAsync(ct);
                 var matched = await db.LibraryFiles.CountAsync(f => f.TrackId != null, ct);
@@ -30,7 +30,7 @@ public static class LibraryEndpoints
                 var lastFinished = await db.BackgroundTasks.Where(t => t.Kind == LibraryScanTask.TaskKind && t.FinishedAt != null)
                     .OrderByDescending(t => t.FinishedAt).FirstOrDefaultAsync(ct);
                 return new LibraryStatus(files, matched, files - matched - pending, pending, lastScan, current is null ? null : TaskQueue.ToInfo(current),
-                    lastFinished is null ? null : TaskQueue.ToInfo(lastFinished));
+                    lastFinished is null ? null : TaskQueue.ToInfo(lastFinished), await reading.IsBusyAsync(db, ct));
             })
             .WithName("GetLibraryStatus").WithSummary("File counts, the last scan, and any task in progress.");
 
@@ -159,21 +159,23 @@ public static class LibraryEndpoints
                 foreach (var hit in results.Artists)
                 {
                     var artist = await service.ImportArtistAsync(hit, ct);
-                    artists.Add(new SearchArtist(artist.Id, artist.Name, artist.Disambiguation, artist.InLibrary, [hit.Id]));
+                    artists.Add(new SearchArtist(artist.Id, artist.Name, artist.Disambiguation, artist.InLibrary, [hit.Id], LibraryView.ArtistImageUrl(artist.Id)));
                 }
                 var albumIds = new List<Guid>();
                 foreach (var hit in results.Albums)
                     albumIds.Add((await service.ImportAlbumAsync(hit, null, ct)).Id);
-                var tracks = new List<Track>();
+                var tracks = new List<(Track Track, Album? Album)>();
                 foreach (var hit in results.Tracks)
-                    tracks.Add(await service.ImportTrackAsync(hit, ct));
+                    tracks.Add((await service.ImportTrackAsync(hit, ct), hit.Album is { } from ? await service.ImportAlbumUnlessKnownAsync(from, ct) : null));
                 await db.SaveChangesAsync(ct);
 
-                var trackIds = tracks.Select(t => t.Id).ToList();
+                var trackIds = tracks.Select(t => t.Track.Id).ToList();
                 var owned = await db.LibraryFiles.Where(f => f.TrackId != null && trackIds.Contains(f.TrackId.Value)).Select(f => f.TrackId!.Value).ToListAsync(ct);
-                var albums = await view.GetAlbumSummariesAsync(albumIds, ct);
-                return Results.Ok(new SearchResults(artists, albums,
-                    tracks.Select((t, i) => new SearchTrack(t.Id, t.Title, t.ArtistCredit, t.Duration?.TotalSeconds, owned.Contains(t.Id), [results.Tracks[i].Id])).ToList()));
+                var summaries = (await view.GetAlbumSummariesAsync([.. albumIds.Union(tracks.Select(t => t.Album?.Id).OfType<Guid>())], ct)).ToDictionary(a => a.Id);
+                return Results.Ok(new SearchResults(artists, [.. albumIds.Where(summaries.ContainsKey).Select(id => summaries[id])],
+                    tracks.Select((t, i) => new SearchTrack(t.Track.Id, t.Track.Title, t.Track.ArtistCredit, t.Track.Duration?.TotalSeconds, owned.Contains(t.Track.Id),
+                        [results.Tracks[i].Id], t.Track.ArtistId, t.Album?.Id, t.Album?.Title,
+                        t.Album is { } album ? summaries.GetValueOrDefault(album.Id)?.CoverUrl ?? LibraryView.CoverUrl(album.Id, null) : null)).ToList()));
             })
             .WithName("SearchCatalogue").WithSummary("Search artists, albums and tracks through the index plugin, with owned status.")
             .Produces<SearchResults>();

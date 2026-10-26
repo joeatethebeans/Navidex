@@ -232,9 +232,13 @@ public sealed record SearchResults(
     IReadOnlyList<AlbumSummary> Albums,
     IReadOnlyList<SearchTrack> Tracks);
 
-public sealed record SearchArtist(Guid Id, string Name, string? Disambiguation, bool InLibrary, IReadOnlyList<ProviderId> Ids);
+/// <param name="ImageUrl">A picture of the artist, served by the core; a 404 when there's none.</param>
+public sealed record SearchArtist(Guid Id, string Name, string? Disambiguation, bool InLibrary, IReadOnlyList<ProviderId> Ids, string? ImageUrl = null);
 
-public sealed record SearchTrack(Guid Id, string Title, string ArtistCredit, double? DurationSeconds, bool Owned, IReadOnlyList<ProviderId> Ids);
+/// <param name="AlbumId">The album the track is best known from, when the catalogue says.</param>
+/// <param name="CoverUrl">That album's cover, served by the core.</param>
+public sealed record SearchTrack(Guid Id, string Title, string ArtistCredit, double? DurationSeconds, bool Owned, IReadOnlyList<ProviderId> Ids,
+    Guid? ArtistId = null, Guid? AlbumId = null, string? AlbumTitle = null, string? CoverUrl = null);
 
 public enum TaskState
 {
@@ -255,7 +259,9 @@ public sealed record TaskInfo(Guid Id, string Kind, TaskState State, string? Pro
 }
 
 /// <param name="LastScan">The most recent finished scan, successful or not: its progress says what it found, its error why it failed.</param>
-public sealed record LibraryStatus(int Files, int Matched, int Review, int Pending, DateTime? LastScanAt, TaskInfo? CurrentTask, TaskInfo? LastScan = null);
+/// <param name="Reading">A scan is reading and matching files, or about to: new requests are refused and queued ones wait until it's done.</param>
+public sealed record LibraryStatus(int Files, int Matched, int Review, int Pending, DateTime? LastScanAt, TaskInfo? CurrentTask, TaskInfo? LastScan = null,
+    bool Reading = false);
 
 public enum LogEntryLevel
 {
