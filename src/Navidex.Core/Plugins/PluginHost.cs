@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Navidex.Contracts.Plugins;
+using Navidex.Contracts.Plugins.Connectors;
 using Navidex.Contracts.Plugins.Index;
 using Navidex.Core.Data;
 using Navidex.Plugins.MusicBrainz;
@@ -77,5 +78,18 @@ public sealed class IndexPlugins(NavidexDbContext db, PluginHost host)
             SettingsJson = """{"server":"https://musicbrainz.org"}""",
         });
         await db.SaveChangesAsync();
+    }
+}
+
+/// <summary>The active media-server connector, if one is set up: the enabled instance with the lowest priority.</summary>
+public sealed class ConnectorPlugins(NavidexDbContext db, PluginHost host)
+{
+    public async Task<(PluginInstance Instance, IMediaServerConnector Connector)?> GetActiveAsync(CancellationToken cancellationToken)
+    {
+        var instance = await db.PluginInstances
+            .Where(p => p.Type == PluginType.Connector && p.Enabled)
+            .OrderBy(p => p.Priority)
+            .FirstOrDefaultAsync(cancellationToken);
+        return instance is null ? null : (instance, host.Get<IMediaServerConnector>(instance));
     }
 }

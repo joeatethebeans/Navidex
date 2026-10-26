@@ -14,7 +14,7 @@ track, and the server's track ID is recorded so apps can switch to it. Code: `Na
 | `CheckHealthAsync()` | A `HealthReport` | Backs the Test button: check the URL and credentials. |
 
 `TrackLookup` carries everything the core knows about the file. Try the most specific fields first: the path, then
-the MusicBrainz recording ID, then title, artist, album and duration.
+the MusicBrainz recording ID or ISRC, then title, artist, album and duration.
 
 ## Optional capabilities
 

@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Navidex.Client", "src\Navid
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Navidex.Web", "src\Navidex.Web\Navidex.Web.csproj", "{1CC9A8B1-ECCD-455A-ADCA-E92A8396A04A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Navidex.Plugins.Navidrome", "src\Navidex.Plugins.Navidrome\Navidex.Plugins.Navidrome.csproj", "{84D10A7C-F318-4D43-ABC9-3822451E0939}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -98,6 +100,18 @@ Global
 		{1CC9A8B1-ECCD-455A-ADCA-E92A8396A04A}.Release|x64.Build.0 = Release|Any CPU
 		{1CC9A8B1-ECCD-455A-ADCA-E92A8396A04A}.Release|x86.ActiveCfg = Release|Any CPU
 		{1CC9A8B1-ECCD-455A-ADCA-E92A8396A04A}.Release|x86.Build.0 = Release|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Debug|x64.Build.0 = Debug|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Debug|x86.Build.0 = Debug|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Release|x64.ActiveCfg = Release|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Release|x64.Build.0 = Release|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Release|x86.ActiveCfg = Release|Any CPU
+		{84D10A7C-F318-4D43-ABC9-3822451E0939}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,5 +123,6 @@ Global
 		{BBAAE02B-D398-4E17-B1C1-1F9CF8B333C4} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{A7E50943-F60C-4BC1-9D99-6E7EF6674AAC} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{1CC9A8B1-ECCD-455A-ADCA-E92A8396A04A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{84D10A7C-F318-4D43-ABC9-3822451E0939} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

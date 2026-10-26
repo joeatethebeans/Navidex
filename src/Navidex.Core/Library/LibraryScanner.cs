@@ -35,7 +35,7 @@ public sealed record FileTags
 /// <summary>Walks the music folder and records every audio file and its tags. It never writes to the library.</summary>
 public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions> options, ILogger<LibraryScanner> logger)
 {
-    private static readonly HashSet<string> AudioExtensions = new(StringComparer.OrdinalIgnoreCase)
+    public static readonly HashSet<string> AudioExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".mp3", ".flac", ".m4a", ".mp4", ".aac", ".ogg", ".oga", ".opus", ".wma", ".wav", ".aif", ".aiff", ".ape", ".wv", ".mpc", ".dsf",
     };
@@ -168,24 +168,7 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
     {
         try
         {
-            using var file = TagLib.File.Create(path);
-            var tag = file.Tag;
-            return (new FileTags
-            {
-                Title = Blank(tag.Title),
-                Artist = Blank(tag.JoinedPerformers),
-                AlbumArtist = Blank(tag.JoinedAlbumArtists),
-                Album = Blank(tag.Album),
-                Track = tag.Track == 0 ? null : (int)tag.Track,
-                Disc = tag.Disc == 0 ? null : (int)tag.Disc,
-                Date = tag.Year == 0 ? null : tag.Year.ToString(),
-                Isrc = Blank(tag.ISRC),
-                MusicBrainzRecordingId = Blank(tag.MusicBrainzTrackId),
-                MusicBrainzReleaseId = Blank(tag.MusicBrainzReleaseId),
-                MusicBrainzReleaseGroupId = Blank(tag.MusicBrainzReleaseGroupId),
-                MusicBrainzArtistId = Blank(tag.MusicBrainzArtistId?.Split('/', ';')[0]),
-                MusicBrainzAlbumArtistId = Blank(tag.MusicBrainzReleaseArtistId?.Split('/', ';')[0]),
-            }, file.Properties?.Duration is { Ticks: > 0 } d ? d : null);
+            return ReadTags(path);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
@@ -196,6 +179,29 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
             logger.LogWarning("Couldn't read {Path}: {Reason}", RelativePath(path), reason);
             return null;
         }
+    }
+
+    /// <summary>A file's tags and length. Throws if it can't be read as audio.</summary>
+    public static (FileTags Tags, TimeSpan? Duration) ReadTags(string path)
+    {
+        using var file = TagLib.File.Create(path);
+        var tag = file.Tag;
+        return (new FileTags
+        {
+            Title = Blank(tag.Title),
+            Artist = Blank(tag.JoinedPerformers),
+            AlbumArtist = Blank(tag.JoinedAlbumArtists),
+            Album = Blank(tag.Album),
+            Track = tag.Track == 0 ? null : (int)tag.Track,
+            Disc = tag.Disc == 0 ? null : (int)tag.Disc,
+            Date = tag.Year == 0 ? null : tag.Year.ToString(),
+            Isrc = Blank(tag.ISRC),
+            MusicBrainzRecordingId = Blank(tag.MusicBrainzTrackId),
+            MusicBrainzReleaseId = Blank(tag.MusicBrainzReleaseId),
+            MusicBrainzReleaseGroupId = Blank(tag.MusicBrainzReleaseGroupId),
+            MusicBrainzArtistId = Blank(tag.MusicBrainzArtistId?.Split('/', ';')[0]),
+            MusicBrainzAlbumArtistId = Blank(tag.MusicBrainzReleaseArtistId?.Split('/', ';')[0]),
+        }, file.Properties?.Duration is { Ticks: > 0 } d ? d : null);
     }
 
     private string RelativePath(string path) =>

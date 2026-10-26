@@ -3,6 +3,7 @@ using System.Runtime.Loader;
 using Microsoft.Extensions.Options;
 using Navidex.Contracts.Plugins;
 using Navidex.Plugins.MusicBrainz;
+using Navidex.Plugins.Navidrome;
 
 namespace Navidex.Core.Plugins;
 
@@ -20,7 +21,7 @@ public sealed record DiscoveredPlugin(PluginManifest Manifest, IPluginFactory? F
 /// </summary>
 public sealed class PluginCatalog
 {
-    private static readonly Assembly[] BuiltIn = [typeof(MusicBrainzIndexFactory).Assembly];
+    private static readonly Assembly[] BuiltIn = [typeof(MusicBrainzIndexFactory).Assembly, typeof(NavidromeConnectorFactory).Assembly];
 
     private readonly Dictionary<string, DiscoveredPlugin> _plugins = new(StringComparer.Ordinal);
 

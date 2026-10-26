@@ -69,14 +69,22 @@ public enum RequestMode
 
 public enum RequestStatus
 {
+    /// <summary>Waiting for the worker; artist and album requests are split up when it picks them.</summary>
     Queued,
+
+    /// <summary>An artist or album request whose parts are being fetched.</summary>
+    InProgress,
+
     Searching,
     Fetching,
     Verifying,
     Importing,
     Notifying,
     InLibrary,
+
+    /// <summary>Every retrieval plugin was tried and none gave a file that passed verification.</summary>
     NeedsReview,
+
     Failed,
     Cancelled,
 }
@@ -90,6 +98,25 @@ public class Request
     public EntityKind TargetKind { get; set; }
 
     public Guid TargetId { get; set; }
+
+    /// <summary>
+    /// For album and track requests, the edition to fetch: the one asked for, the one already owned, or the one the
+    /// planner chose. Fixed once planned, so every track of an album lands on the same edition.
+    /// </summary>
+    public Guid? EditionId { get; set; }
+
+    /// <summary>What it's for, for example <c>Get Lucky · Daft Punk</c>; kept so the Activity page needs no lookups.</summary>
+    public string Title { get; set; } = "";
+
+    /// <summary>What's happening now, or why it stopped, in words.</summary>
+    public string? Detail { get; set; }
+
+    /// <summary>
+    /// A candidate the user picked on the Activity page, tried next instead of searching: a <see cref="Requests.Choice"/>
+    /// as JSON. Cleared once tried.
+    /// </summary>
+    public string? ChoiceJson { get; set; }
+
     public RequestMode Mode { get; set; }
 
     /// <summary>The admin or the API key's name.</summary>
@@ -139,6 +166,12 @@ public class Job
 
     /// <summary>The chosen retrieval candidate, as JSON.</summary>
     public string? CandidateJson { get; set; }
+
+    /// <summary>Every candidate the plugin offered, best first, as JSON; the Activity page lets the user pick another.</summary>
+    public string? CandidatesJson { get; set; }
+
+    /// <summary>Where the plugin wrote the files, relative to the staging volume; kept for review until resolved.</summary>
+    public string? StagingDirectory { get; set; }
 
     public VerificationResult Verification { get; set; }
     public string? VerificationDetail { get; set; }
@@ -205,6 +238,9 @@ public class PluginInstance
 
     /// <summary>For retrieval plugins, the base URL of the plugin's container.</summary>
     public string? Endpoint { get; set; }
+
+    /// <summary>For retrieval plugins, the manifest as the container last served it, so capabilities are known offline.</summary>
+    public string? ManifestJson { get; set; }
 
     /// <summary>Lower runs first: fallback order for retrieval plugins, field priority for index plugins.</summary>
     public int Priority { get; set; }

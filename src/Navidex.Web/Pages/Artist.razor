@@ -29,6 +29,11 @@ else
     </div>
 
     <div class="toolbar">
+        @if (Missing > 0 || _artist.Albums.Any(a => a.Status == AlbumStatus.Partial && !a.Ignored))
+        {
+            <FetchButton Kind="RequestKind.Artist" Id="_artist.Id" Primary="true" Label="Get everything missing"
+                         Hint="Fetch the missing albums shown here, and the missing tracks of albums you partly own" />
+        }
         <label class="toggle"><input type="checkbox" checked="@Prefs.OnlyMissing" @onchange="e => Prefs.SetOnlyMissingAsync((bool)e.Value!)" /> Only missing</label>
     </div>
 

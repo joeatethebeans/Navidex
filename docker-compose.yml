@@ -1,5 +1,9 @@
 # Navidex joins an existing Navidrome setup; Navidrome itself isn't part of this stack.
-# Point MUSIC_PATH at the same folder Navidrome reads.
+# Point MUSIC_PATH at the same folder Navidrome reads, and run as the user who owns it (PUID and PGID).
+# After starting, add the plugins in Settings: http://retriever-ytdlp:8080, http://retriever-inbox:8080, and Navidrome.
+# On SELinux hosts with podman, files carry the categories of the container that wrote them, and downloads pass from
+# a plugin through beets to the core and Navidrome. Give every container here, and Navidrome, the same
+# `security_opt: ["label=level:s0:c100,c200"]` so they can read each other's files.
 
 services:
   core:
@@ -15,21 +19,40 @@ services:
       - ${MUSIC_PATH:-./music}:/music:ro
       - staging:/staging
       - listen-now:/listen-now
-      - ./plugins:/plugins:ro
+    depends_on:
+      - beets-worker
     restart: unless-stopped
 
-  # Phase 2: the import engine. Writes the library; the core and Navidrome only read it.
-  # beets-worker:
-  #   image: navidex/beets-worker:dev
-  #   volumes:
-  #     - ${MUSIC_PATH:-./music}:/music
-  #     - staging:/staging
+  # The import engine, and the only thing that writes the library; the core and Navidrome only read it.
+  beets-worker:
+    build: beets-worker
+    image: navidex/beets-worker:dev
+    container_name: navidex-beets-worker
+    user: "${PUID:-1000}:${PGID:-1000}"
+    volumes:
+      - ${MUSIC_PATH:-./music}:/music
+      - staging:/staging
+    restart: unless-stopped
 
-  # Phase 2: one container per retrieval plugin, each from its own repository.
-  # retriever-ytdlp:
-  #   image: navidex/retriever-ytdlp:dev
-  #   volumes:
-  #     - staging:/staging
+  # Retrieval plugins, one container each. They live in plugins/ for now and will move to their own repositories.
+  retriever-ytdlp:
+    build: plugins/retriever-ytdlp
+    image: navidex/retriever-ytdlp:dev
+    container_name: navidex-retriever-ytdlp
+    user: "${PUID:-1000}:${PGID:-1000}"
+    volumes:
+      - staging:/staging
+    restart: unless-stopped
+
+  retriever-inbox:
+    build: plugins/retriever-inbox
+    image: navidex/retriever-inbox:dev
+    container_name: navidex-retriever-inbox
+    user: "${PUID:-1000}:${PGID:-1000}"
+    volumes:
+      - ${INBOX_PATH:-./inbox}:/inbox
+      - staging:/staging
+    restart: unless-stopped
 
 volumes:
   config:

@@ -1,0 +1,92 @@
+"""The beets worker's HTTP API, called by the Navidex core. See docs/import-worker.md."""
+
+from __future__ import annotations
+
+import os
+from typing import Any
+
+import beets
+from fastapi import FastAPI, Request
+from fastapi.exceptions import HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
+
+from .importer import Importer, ImportFailed, Release, StagedFile
+
+STAGING = os.environ.get("STAGING_ROOT") or "/staging"
+LIBRARY = os.environ.get("LIBRARY_ROOT") or "/music"
+
+
+class Model(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="ignore")
+
+
+class ImportRelease(Model):
+    music_brainz_id: str
+    title: str
+    artist: str
+    date: str | None = None
+    track_count: int = 0
+
+
+class ImportFile(Model):
+    path: str
+    recording_id: str
+    track_id: str | None = None
+    title: str
+    artist: str
+    disc: int = 1
+    position: int
+
+
+class ImportRequest(Model):
+    staging_directory: str
+    release: ImportRelease
+    files: list[ImportFile]
+    destination_directory: str | None = None
+    path_template: str = "$albumartist/$album%aunique{}/$track $title"
+    music_brainz_server: str | None = None
+
+
+app = FastAPI(title="Navidex beets worker", version="0.1.0")
+importer: Importer | None = None
+
+
+def get_importer() -> Importer:
+    global importer
+    if importer is None:
+        importer = Importer(STAGING, LIBRARY)
+    return importer
+
+
+@app.exception_handler(HTTPException)
+async def contract_error(_: Request, e: HTTPException) -> JSONResponse:
+    body = e.detail if isinstance(e.detail, dict) else {"error": str(e.detail)}
+    return JSONResponse(body, status_code=e.status_code)
+
+
+@app.get("/v1/health")
+def health() -> dict[str, Any]:
+    for name, path in (("staging", STAGING), ("library", LIBRARY)):
+        if not os.path.isdir(path):
+            return {"status": "unhealthy", "message": f"The {name} folder {path} isn't mounted."}
+    if not os.access(LIBRARY, os.W_OK):
+        return {"status": "unhealthy", "message": f"The library folder {LIBRARY} isn't writable."}
+    return {"status": "healthy", "message": f"beets {beets.__version__}"}
+
+
+@app.post("/v1/import")
+async def run_import(body: ImportRequest) -> dict[str, Any]:
+    if not body.files:
+        raise HTTPException(400, {"error": "No files to import.", "code": "invalid-request"})
+    release = Release(body.release.music_brainz_id, body.release.title, body.release.artist, body.release.date,
+                      body.release.track_count)
+    files = [StagedFile(f.path, f.recording_id, f.track_id, f.title, f.artist, f.disc, f.position) for f in body.files]
+    try:
+        imported = await run_in_threadpool(get_importer().run, body.staging_directory, release, files,
+                                           body.destination_directory, body.path_template, body.music_brainz_server)
+    except ImportFailed as e:
+        raise HTTPException(422, {"error": str(e), "code": "import-failed"})
+    return {"files": [{k: v for k, v in f.items() if v is not None} for f in imported]}

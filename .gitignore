@@ -8,5 +8,10 @@ riderModule.iml
 /data/
 src/Navidex.Core/data/
 /music/
-/plugins/
+src/Navidex.Core/plugins/
+__pycache__/
+.venv/
+.pytest_cache/
 .env
+sandbox/music/
+sandbox/inbox/

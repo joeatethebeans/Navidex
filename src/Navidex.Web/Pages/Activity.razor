@@ -1,0 +1,112 @@
+@page "/activity"
+@implements IDisposable
+@inject NavidexClient Api
+@inject RequestTracker Tracker
+
+<PageTitle>Activity · Navidex</PageTitle>
+
+<h1>Activity</h1>
+<p class="muted">What's being fetched, and what was. Open a request to see each attempt, its log, and the other candidates a plugin offered.</p>
+
+<div class="toolbar">
+    <label class="toggle"><input type="checkbox" @bind="_activeOnly" /> Only active</label>
+    <input type="search" placeholder="Filter by title" @bind="_filter" @bind:event="oninput" />
+</div>
+
+@if (!_loaded)
+{
+    <p class="muted">Loading…</p>
+}
+else if (!Visible.Any())
+{
+    <div class="empty card">@(Tracker.Requests.Count == 0 ? "Nothing requested yet. Use the Get buttons on artist, album and search pages." : "Nothing matches.")</div>
+}
+else
+{
+    <div class="card">
+        @foreach (var request in Visible)
+        {
+            var open = _open.ContainsKey(request.Id);
+            <div class="request">
+                <div class="request-head">
+                    <button class="section-toggle" aria-expanded="@(open ? "true" : "false")" @onclick="() => ToggleAsync(request.Id)">
+                        <span class="chevron @(open ? "open" : "")" aria-hidden="true"></span>
+                        <span class="request-title">@request.Title</span>
+                    </button>
+                    <span class="muted small hide-narrow">@request.Kind</span>
+                    <span class="badge @Format.RequestBadge(request.State)">@Format.RequestLabel(request)</span>
+                    <span class="spacer"></span>
+                    <span class="muted small hide-narrow" title="@request.UpdatedAt.ToLocalTime()">@Format.Ago(request.UpdatedAt)</span>
+                    <Actions Request="request" OnChanged="ChangedAsync" />
+                </div>
+                @if (request.Detail is not null) { <div class="muted small request-detail">@request.Detail</div> }
+                @if (request.Parts is { Total: > 0 } parts)
+                {
+                    <div class="meter request-meter" title="@parts.InLibrary of @parts.Total in the library"><span style="width: @(100 * parts.InLibrary / parts.Total)%"></span></div>
+                }
+                @if (open && _open[request.Id] is { } detail)
+                {
+                    <RequestDetail Request="detail" OnChanged="ChangedAsync" />
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "open")] public Guid? OpenId { get; set; }
+
+    private bool _loaded;
+    private bool _activeOnly;
+    private string _filter = "";
+
+    // Open requests, with their parts and jobs once loaded.
+    private readonly Dictionary<Guid, RequestInfo?> _open = [];
+
+    private IEnumerable<RequestInfo> Visible => Tracker.Requests
+        .Where(r => !_activeOnly || r.Active)
+        .Where(r => _filter.Length == 0 || r.Title.Contains(_filter, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tracker.Changed += Refresh;
+        await Tracker.RefreshAsync();
+        _loaded = true;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (OpenId is { } id && !_open.ContainsKey(id))
+        {
+            // A link to a part opens its parent too, if it's one.
+            var request = await Api.GetRequestAsync(id);
+            if (request?.ParentId is { } parent)
+                _open[parent] = await Api.GetRequestAsync(parent);
+            _open[id] = request;
+        }
+    }
+
+    private void Refresh() => InvokeAsync(async () =>
+    {
+        // Open requests that are still moving are reloaded with the list.
+        foreach (var id in _open.Keys.ToList())
+            if (Tracker.Requests.FirstOrDefault(r => r.Id == id) is not { Active: false } || _open[id]?.Children?.Any(c => c.Active) == true)
+                _open[id] = await Api.GetRequestAsync(id);
+        StateHasChanged();
+    });
+
+    private async Task ToggleAsync(Guid id)
+    {
+        if (!_open.Remove(id))
+            _open[id] = await Api.GetRequestAsync(id);
+    }
+
+    private async Task ChangedAsync()
+    {
+        await Tracker.RefreshAsync();
+        foreach (var id in _open.Keys.ToList())
+            _open[id] = await Api.GetRequestAsync(id);
+    }
+
+    public void Dispose() => Tracker.Changed -= Refresh;
+}

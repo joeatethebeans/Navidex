@@ -1,5 +1,7 @@
 @page "/albums/{Id:guid}"
+@implements IDisposable
 @inject NavidexClient Api
+@inject RequestTracker Tracker
 
 <PageTitle>@(_album?.Album.Title ?? "Album") · Navidex</PageTitle>
 
@@ -27,6 +29,14 @@ else
                 @if (album.Ignored) { <span class="badge neutral">Ignored</span> }
                 <ProviderIds Ids="album.Ids" Entity="release-group" />
             </div>
+            @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial && _album.Editions.Count > 0)
+            {
+                <div class="row" style="margin-top: .5rem;">
+                    <FetchButton Kind="RequestKind.Album" Id="album.Id" EditionId="_album.ShownEditionId" Primary="true"
+                                 Label="@(album.Status == AlbumStatus.Partial ? "Get missing tracks" : "Get album")"
+                                 Hint="Fetch it as the edition shown below" />
+                </div>
+            }
         </div>
     </div>
 
@@ -75,7 +85,11 @@ else
                             </td>
                             <td class="num hide-narrow muted">@Format.Duration(track.DurationSeconds)</td>
                             <td><StatusBadge Track="track.Status" /></td>
-                            <td class="num">
+                            <td class="num actions">
+                                @if (track.Status == TrackStatus.Missing && Tracker.Find(RequestKind.Album, album.Id) is not { Active: true })
+                                {
+                                    <FetchButton Kind="RequestKind.Track" Id="track.TrackId" EditionId="_album.ShownEditionId" Hint="Fetch this track" />
+                                }
                                 @if (track.Status is TrackStatus.Missing or TrackStatus.Ignored || track.Ignored)
                                 {
                                     <button class="link small" title="@(track.Ignored ? "Count this song again" : "Stop counting this song as missing, on every album it's on")"
@@ -98,7 +112,28 @@ else
 
     private bool MultiDisc => _album!.Tracks.Select(t => t.Disc).Distinct().Count() > 1;
 
-    protected override Task OnParametersSetAsync() => LoadAsync(null);
+    protected override Task OnParametersSetAsync()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        ScanStatus.LibraryChanged += Reload;
+        Tracker.Changed -= Redraw;
+        Tracker.Changed += Redraw;
+        return LoadAsync(null);
+    }
+
+    private void Reload() => InvokeAsync(async () =>
+    {
+        await LoadAsync(_album?.ShownEditionId);
+        StateHasChanged();
+    });
+
+    private void Redraw() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        Tracker.Changed -= Redraw;
+    }
 
     private async Task LoadAsync(Guid? editionId)
     {

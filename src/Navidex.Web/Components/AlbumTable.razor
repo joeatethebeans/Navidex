@@ -26,7 +26,11 @@
                     <td class="hide-narrow muted">@Format.Year(album.FirstReleaseDate)</td>
                     <td><StatusBadge Album="album.Status" /></td>
                     <td class="num hide-narrow muted">@Format.Tracks(album)</td>
-                    <td class="num">
+                    <td class="num actions">
+                        @if (album.Status == AlbumStatus.Partial || album.Status == AlbumStatus.Missing && !album.Ignored)
+                        {
+                            <FetchButton Kind="RequestKind.Album" Id="album.Id" Hint="@(album.Status == AlbumStatus.Partial ? "Fetch the tracks you're missing" : "Fetch this album")" />
+                        }
                         @if (album.Status == AlbumStatus.Missing)
                         {
                             <button class="link small" @onclick="() => OnIgnore.InvokeAsync(album)">@(album.Ignored ? "Unignore" : "Ignore")</button>

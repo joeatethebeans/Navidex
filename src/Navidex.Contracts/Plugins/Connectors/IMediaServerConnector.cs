@@ -31,7 +31,7 @@ public sealed record ScanStatus(bool Scanning, DateTimeOffset? LastScanFinishedA
 
 /// <summary>
 /// What to look a track up by. Connectors should try the most specific fields first: the path, then the
-/// MusicBrainz recording ID, then title, artist, album and duration.
+/// MusicBrainz recording ID or ISRC, then title, artist, album and duration.
 /// </summary>
 /// <param name="Path">Library-relative path of the file.</param>
 /// <param name="MusicBrainzRecordingId">MusicBrainz recording ID from the file's tags.</param>
@@ -40,6 +40,7 @@ public sealed record ScanStatus(bool Scanning, DateTimeOffset? LastScanFinishedA
 /// <param name="Artist">Track artist.</param>
 /// <param name="Album">Album title.</param>
 /// <param name="Duration">Length.</param>
+/// <param name="Isrc">ISRC from the file's tags.</param>
 public sealed record TrackLookup(
     string? Path = null,
     string? MusicBrainzRecordingId = null,
@@ -47,7 +48,8 @@ public sealed record TrackLookup(
     string? Title = null,
     string? Artist = null,
     string? Album = null,
-    TimeSpan? Duration = null);
+    TimeSpan? Duration = null,
+    string? Isrc = null);
 
 /// <summary>Optional: full rescan. Capability <see cref="ConnectorCapabilities.FullScan"/>.</summary>
 public interface IFullScan

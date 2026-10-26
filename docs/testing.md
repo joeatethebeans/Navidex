@@ -67,24 +67,27 @@ It's skipped if the library hasn't been generated. CI generates it first.
 
 ## The sandbox
 
-`sandbox/sandbox.sh` runs Navidrome 0.64.2 and Navidex side by side over the test library, with podman or docker:
+`sandbox/sandbox.sh` runs the whole stack over a copy of the test library, with podman or docker: Navidrome 0.64.2,
+the Navidex core, the beets worker, and both retrieval plugins.
 
 ```bash
 sandbox/sandbox.sh up
 ```
 
-This generates the library if it isn't there, builds the Navidex image if needed, starts both containers on a
-private network, creates a Navidrome admin, scans, and reports what Navidrome indexed.
+This generates the library if it isn't there, copies it to `sandbox/music` (the beets worker writes into it, so the
+generated library stays as the answer key expects), builds any image that's missing, starts everything on a private
+network, creates a Navidrome admin, adds Navidrome and both plugins to Navidex, and scans.
 
 - Navidrome: http://localhost:4533. The user is `admin`; the password is generated into `sandbox/.env` on first run.
-- Navidex: http://localhost:8787
-- Inside the network, Navidex reaches Navidrome at `http://navidrome:4533`, ready for the Phase 2 connector.
+- Navidex: http://localhost:8787. Press **Scan library**, then use the Get buttons.
+- The inbox plugin reads `sandbox/inbox`. Drop files there, then press Retry on the request.
 
-The music folder is mounted read-only in both containers. `sandbox/sandbox.sh scan` rescans after you regenerate,
-`status` reports, and `down` removes the containers and their data.
+The beets worker and the plugins run as you, so the files they write in `sandbox/music` and take from `sandbox/inbox`
+stay yours. `build` rebuilds the images after a change, `scan` rescans Navidrome, `status` reports, `down` removes the
+containers and their data, and `reset` also throws away the library copy and the inbox.
 
 ## Moving on to a real library
 
-Phase 1 only reads the library, so the final check that the missing view is right can run against your real files
-read-only (Compose mounts the music folder `:ro`). Files without MusicBrainz IDs will match less reliably until
-they're adopted with beets. To try the adopt step without risk, run it on a copy.
+Scanning only reads the library, so you can check the missing view against your real files before fetching anything:
+the core mounts the music folder read-only, and only the beets worker writes it, when a request lands. Files without
+MusicBrainz IDs will match less reliably until they're adopted with beets. To try the adopt step without risk, run it on a copy.

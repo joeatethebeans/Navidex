@@ -1,0 +1,38 @@
+@inject NavidexClient Api
+
+@* Cancel for a request that's running, Retry for one that stopped short. *@
+@if (Request.Active)
+{
+    <button class="link small" disabled="@_busy" @onclick="CancelAsync">Cancel</button>
+}
+else if (Request.State is RequestState.NeedsReview or RequestState.Failed or RequestState.Cancelled
+         || Request.Parts is { } p && p.NeedsReview + p.Failed + p.Cancelled > 0)
+{
+    <button class="link small" disabled="@_busy" @onclick="RetryAsync">Retry</button>
+}
+
+@code {
+    [Parameter, EditorRequired] public RequestInfo Request { get; set; } = null!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private bool _busy;
+
+    private Task CancelAsync() => RunAsync(() => Api.CancelRequestAsync(Request.Id));
+
+    private Task RetryAsync() => RunAsync(() => Api.RetryRequestAsync(Request.Id));
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        _busy = true;
+        try
+        {
+            await action();
+        }
+        catch (NavidexApiException)
+        {
+            // It finished or started meanwhile; the refresh shows where it is now.
+        }
+        _busy = false;
+        await OnChanged.InvokeAsync();
+    }
+}

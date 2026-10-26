@@ -6,8 +6,10 @@ using Navidex.Core.Api;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
 using Navidex.Core.Diagnostics;
+using Navidex.Core.Import;
 using Navidex.Core.Library;
 using Navidex.Core.Plugins;
+using Navidex.Core.Requests;
 using Navidex.Core.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +27,7 @@ builder.Services.AddDbContext<NavidexDbContext>(db =>
 var activity = new ActivityLog();
 builder.Services.AddSingleton(activity);
 builder.Logging.AddProvider(new ActivityLogProvider(activity));
+builder.Services.AddHostedService<LogArchive>();
 
 builder.Services.ConfigureHttpJsonOptions(json => NavidexJson.Configure(json.SerializerOptions));
 
@@ -32,6 +35,9 @@ builder.Services.ConfigureHttpJsonOptions(json => NavidexJson.Configure(json.Ser
 builder.Services.AddSingleton<PluginCatalog>();
 builder.Services.AddSingleton<PluginHost>();
 builder.Services.AddScoped<IndexPlugins>();
+builder.Services.AddScoped<ConnectorPlugins>();
+builder.Services.AddScoped<RetrievalPlugins>();
+builder.Services.AddHttpClient(RetrievalPlugins.HttpClientName, http => http.Timeout = TimeSpan.FromMinutes(2));
 
 // Catalogue and library
 builder.Services.AddScoped<CatalogueService>();
@@ -47,6 +53,17 @@ builder.Services.AddScoped<TaskQueue>();
 builder.Services.AddScoped<ITaskHandler, LibraryScanTask>();
 builder.Services.AddScoped<ITaskHandler, ArtistRefreshTask>();
 builder.Services.AddHostedService<TaskWorker>();
+
+// Requests: fetch, verify, import with beets, tell the media server
+builder.Services.Configure<ImportWorkerOptions>(builder.Configuration.GetSection("Navidex:ImportWorker"));
+builder.Services.AddOptions<RequestPipelineOptions>();
+builder.Services.AddHttpClient<IImportWorker, HttpImportWorker>(HttpImportWorker.Configure);
+builder.Services.AddSingleton<RequestSignal>();
+builder.Services.AddSingleton<RequestCancellations>();
+builder.Services.AddScoped<RequestService>();
+builder.Services.AddScoped<RequestPlanner>();
+builder.Services.AddScoped<RequestPipeline>();
+builder.Services.AddHostedService<RequestWorker>();
 
 builder.Services.AddOpenApi("v1", openApi => openApi.AddDocumentTransformer((document, _, _) =>
 {
@@ -87,6 +104,8 @@ var api = app.MapGroup("/api/v1");
 api.MapSystemEndpoints();
 api.MapLibraryEndpoints();
 api.MapCatalogueEndpoints();
+api.MapRequestEndpoints();
+api.MapPluginEndpoints();
 
 // The web app: Blazor WebAssembly, served from the same origin and talking only to the public API.
 app.MapStaticAssets();

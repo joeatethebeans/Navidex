@@ -1,0 +1,116 @@
+@using System.Globalization
+@using System.Text.Json
+@using System.Text.Json.Nodes
+
+@* A plugin's settings form, built from the JSON Schema in its manifest. Secrets start empty and keep their saved value unless typed over. *@
+@if (Fields.Count == 0)
+{
+    <div class="muted small">This plugin has no settings.</div>
+}
+@foreach (var (name, field) in Fields)
+{
+    var type = Text(field, "type");
+    var title = Text(field, "title") ?? name;
+    var help = Text(field, "description");
+    var secret = field.TryGetProperty("writeOnly", out var w) && w.ValueKind == JsonValueKind.True;
+    <div class="field">
+        @if (type == "boolean")
+        {
+            <label><input type="checkbox" checked="@(Values[name]?.GetValue<bool>() == true)" @onchange="e => Values[name] = (bool)e.Value!" /> @title</label>
+        }
+        else
+        {
+            <label class="field-label" for="@($"{_prefix}-{name}")">@title@(Required.Contains(name) ? " *" : "")</label>
+            @if (field.TryGetProperty("enum", out var options) && options.ValueKind == JsonValueKind.Array)
+            {
+                <select id="@($"{_prefix}-{name}")" value="@Values[name]?.ToString()" @onchange="e => Values[name] = Parse(type, e.Value?.ToString())">
+                    @foreach (var option in options.EnumerateArray())
+                    {
+                        <option value="@option.ToString()">@option.ToString()</option>
+                    }
+                </select>
+            }
+            else if (type is "integer" or "number")
+            {
+                <input id="@($"{_prefix}-{name}")" type="number" step="@(type == "integer" ? "1" : "any")"
+                       min="@(field.TryGetProperty("minimum", out var min) ? min.ToString() : null)"
+                       max="@(field.TryGetProperty("maximum", out var max) ? max.ToString() : null)"
+                       value="@Values[name]?.ToString()" @onchange="e => Values[name] = Parse(type, e.Value?.ToString())" />
+            }
+            else
+            {
+                <input id="@($"{_prefix}-{name}")" type="@(secret ? "password" : "text")" autocomplete="@(secret ? "new-password" : "off")"
+                       placeholder="@(secret && HasSaved ? "Saved; type to change" : null)"
+                       value="@Values[name]?.ToString()" @onchange="e => Values[name] = Parse(type, e.Value?.ToString())" />
+            }
+        }
+        @if (help is not null) { <div class="muted small">@help</div> }
+    </div>
+}
+
+@code {
+    /// <summary>The manifest's settings schema.</summary>
+    [Parameter] public JsonElement? Schema { get; set; }
+
+    /// <summary>The current settings, or null for a new instance (the schema's defaults).</summary>
+    [Parameter] public JsonElement? Settings { get; set; }
+
+    /// <summary>Whether the settings are saved ones, so empty secrets mean "unchanged".</summary>
+    [Parameter] public bool HasSaved { get; set; }
+
+    /// <summary>The values as edited; read them with <see cref="ToJson"/>.</summary>
+    public Dictionary<string, JsonNode?> Values { get; } = [];
+
+    private readonly string _prefix = Guid.NewGuid().ToString("N")[..8];
+    private List<(string Name, JsonElement Field)> Fields { get; set; } = [];
+    private HashSet<string> Required { get; set; } = [];
+
+    private string? _loaded;
+
+    protected override void OnParametersSet()
+    {
+        // The parent re-renders while the form is being edited; only start over when the plugin itself changes.
+        var key = $"{Schema?.GetRawText()}|{Settings?.GetRawText()}";
+        if (key == _loaded)
+            return;
+        _loaded = key;
+        Fields = Schema is { ValueKind: JsonValueKind.Object } s && s.TryGetProperty("properties", out var properties)
+            ? properties.EnumerateObject().Select(p => (p.Name, p.Value)).ToList()
+            : [];
+        Required = Schema is { ValueKind: JsonValueKind.Object } r && r.TryGetProperty("required", out var required) && required.ValueKind == JsonValueKind.Array
+            ? required.EnumerateArray().Select(n => n.GetString()!).ToHashSet()
+            : [];
+        Values.Clear();
+        foreach (var (name, field) in Fields)
+        {
+            var saved = Settings is { ValueKind: JsonValueKind.Object } current && current.TryGetProperty(name, out var value) ? value : (JsonElement?)null;
+            var initial = saved ?? (Settings is null && field.TryGetProperty("default", out var d) ? d : null);
+            Values[name] = initial is { } v ? JsonNode.Parse(v.GetRawText()) : null;
+        }
+    }
+
+    /// <summary>The settings to send: unset fields are left out, so the server keeps saved secrets and applies defaults.</summary>
+    public JsonElement ToJson()
+    {
+        var result = new JsonObject();
+        foreach (var (name, value) in Values)
+            if (value is not null && !(value is JsonValue v && v.TryGetValue<string>(out var text) && text.Length == 0))
+                result[name] = value.DeepClone();
+        return JsonDocument.Parse(result.ToJsonString()).RootElement.Clone();
+    }
+
+    private static string? Text(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    private static JsonNode? Parse(string? type, string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return null;
+        return type switch
+        {
+            "integer" when long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) => n,
+            "number" when double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) => d,
+            _ => text,
+        };
+    }
+}

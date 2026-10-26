@@ -137,7 +137,7 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 .table.albums th:nth-child(4) { width: 8rem; }
 .table.albums th:nth-child(5) { width: 6.5rem; }
 .table.albums td:nth-child(5) { white-space: nowrap; }
-.table.albums th:nth-child(6) { width: 5.5rem; }
+.table.albums th:nth-child(6) { width: 9.5rem; }
 .table.albums td:nth-child(2) { overflow-wrap: anywhere; }
 @media (max-width: 640px) {
     .table.albums th:nth-child(4) { width: 6.5rem; }
@@ -211,3 +211,60 @@ h2.section { margin: 1.5rem 0 .5rem; }
 /* A long option, such as an edition's full description, mustn't push the page wider than the screen. */
 .toolbar label { max-width: 100%; min-width: 0; }
 .toolbar select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
+
+/* Requests on their way: a badge in the accent colour, linking to the Activity page. */
+.badge.active { color: var(--accent); background: var(--bg); border: 1px solid var(--accent); }
+a.badge:hover { text-decoration: none; filter: brightness(1.1); }
+td.actions { white-space: nowrap; }
+td.actions > * + * { margin-left: .6rem; }
+
+/* Review: the file on the left, the suggestion beside it, the actions at the end. Stacks on a phone. */
+.review-item { display: grid; grid-template-columns: 1fr 1fr 11rem; gap: 1rem; padding: .75rem 1rem; margin-bottom: .75rem; align-items: start; }
+.review-item .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; margin-bottom: .15rem; }
+.review-item .path { overflow-wrap: anywhere; }
+.review-actions { display: flex; gap: .5rem; align-items: center; justify-content: flex-end; }
+.suggestion { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.confidence { font-size: .78rem; font-weight: 700; padding: .05rem .45rem; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.confidence.high { color: var(--owned); background: var(--owned-bg); }
+.confidence.medium { color: var(--partial); background: var(--partial-bg); }
+.confidence.low { color: var(--missing); background: var(--missing-bg); }
+a.button { display: inline-block; color: var(--text); }
+a.button:hover { text-decoration: none; border-color: var(--accent); }
+@media (max-width: 640px) {
+    .review-item { grid-template-columns: 1fr; gap: .6rem; }
+    .review-actions { justify-content: flex-start; }
+}
+
+/* Activity: one row per request, opening to its parts and attempts. */
+.request { padding: .6rem 1rem; }
+.request + .request { border-top: 1px solid var(--border); }
+.request-head { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.request-title { overflow-wrap: anywhere; text-align: left; }
+.request-detail { margin-left: 1rem; overflow-wrap: anywhere; }
+.request-meter { margin: .4rem 0 0 1rem; max-width: 320px; }
+.request-body { margin: .6rem 0 0 1rem; }
+.request-body .table td { padding-left: 0; }
+.section-toggle.small { font-weight: 500; font-size: .9rem; text-align: left; }
+.job { padding: .5rem 0; border-top: 1px dashed var(--border); }
+.job details > summary { margin: .3rem 0; }
+.job-log { margin: 0; padding: .5rem .75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-size: .8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notice.error { max-width: none; white-space: normal; }
+
+/* Settings forms and plugin rows. */
+h3 { font-size: 1rem; margin: 1.25rem 0 .25rem; }
+.field { margin: .6rem 0; }
+.field-label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: .2rem; }
+.field input[type=text], .field input[type=password], .field select { width: 100%; max-width: 32rem; }
+input[type=password] { font: inherit; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+code { font-size: .85em; background: var(--bg); padding: .05rem .3rem; border-radius: 4px; border: 1px solid var(--border); overflow-wrap: anywhere; }
+.plugin { padding: .65rem 1rem; }
+.plugin + .plugin, .plugin + .plugin-add { border-top: 1px solid var(--border); }
+.plugin.dim .plugin-name { opacity: .6; }
+.plugin-head { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.plugin-name { min-width: 0; overflow-wrap: anywhere; }
+.plugin-head .actions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.plugin-message { color: var(--partial); margin-top: .3rem; overflow-wrap: anywhere; }
+.plugin-form { margin-top: .5rem; padding: .5rem .75rem; background: var(--bg); border-radius: 6px; }
+.plugin-add { display: flex; gap: .5rem; padding: .65rem 1rem; flex-wrap: wrap; }
+.plugin-add input { flex: 1; min-width: 12rem; }
+.card > .plugin-add:first-child { border-top: none; }

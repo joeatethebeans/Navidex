@@ -29,16 +29,66 @@ public class ActivityLogTests
     }
 
     [Fact]
-    public void Only_the_newest_entries_are_kept()
+    public void Memory_never_holds_more_than_the_ceiling()
     {
         var log = new ActivityLog();
-        for (var i = 1; i <= ActivityLog.Capacity + 10; i++)
+        for (var i = 1; i <= ActivityLog.MaxEntries + 10; i++)
             log.Add(LogEntryLevel.Information, "Test", $"event {i}", null);
 
-        var all = log.After(0, ActivityLog.Capacity);
-        Assert.Equal(ActivityLog.Capacity, all.Count);
-        Assert.Equal("event 11", all[0].Message);
-        Assert.Equal($"event {ActivityLog.Capacity + 10}", all[^1].Message);
+        var newest = log.After(0, ActivityLog.PageLimit);
+        Assert.Equal(ActivityLog.PageLimit, newest.Count);
+        Assert.Equal($"event {ActivityLog.MaxEntries + 10}", newest[^1].Message);
+        Assert.Equal("event 11", log.After(0, ActivityLog.MaxEntries)[0].Message);
+    }
+
+    [Fact]
+    public void Trimming_forgets_old_entries_but_keeps_the_numbering()
+    {
+        var log = new ActivityLog();
+        for (var i = 1; i <= 3; i++)
+            log.Add(LogEntryLevel.Information, "Test", $"event {i}", null);
+        log.Trim(DateTime.UtcNow.AddSeconds(1));
+        Assert.Empty(log.After(0, 100));
+        Assert.Equal(3, log.Latest);
+
+        log.Add(LogEntryLevel.Information, "Test", "event 4", null);
+        Assert.Equal([4L], log.After(0, 100).Select(e => e.Seq));
+    }
+
+    [Fact]
+    public void Entries_from_before_a_restart_come_back_first()
+    {
+        var log = new ActivityLog();
+        log.Add(LogEntryLevel.Information, "Test", "since the restart", null);
+        var day = DateTime.UtcNow.AddDays(-2);
+        log.Restore([new LogEntry(0, day, LogEntryLevel.Warning, "Test", "before", null)]);
+
+        Assert.Equal(["before", "since the restart"], log.After(0, 10).Select(e => e.Message));
+        Assert.Equal([1L, 2L], log.After(0, 10).Select(e => e.Seq));
+    }
+
+    [Fact]
+    public void The_archive_reads_back_entries_since_a_cutoff_and_skips_broken_lines()
+    {
+        var directory = Directory.CreateTempSubdirectory("navidex-log").FullName;
+        try
+        {
+            var today = DateTime.UtcNow;
+            File.WriteAllLines(LogArchive.FileFor(directory, today.AddDays(-10)),
+                [$$"""{"time":"{{today.AddDays(-10):O}}","level":"information","source":"Old","message":"too old"}"""]);
+            File.WriteAllLines(LogArchive.FileFor(directory, today),
+                [$$"""{"time":"{{today:O}}","level":"error","source":"New","message":"kept","error":"boom"}""", "{ not json"]);
+
+            var entries = LogArchive.Read(directory, today.AddDays(-7));
+            var entry = Assert.Single(entries);
+            Assert.Equal("kept", entry.Message);
+            Assert.Equal(LogEntryLevel.Error, entry.Level);
+            Assert.Equal("boom", entry.Error);
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
     }
 
     [Fact]

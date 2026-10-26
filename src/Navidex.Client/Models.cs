@@ -200,6 +200,9 @@ public sealed record ReviewItem(
     double? DurationSeconds,
     SuggestedTrack? Suggestion);
 
+/// <summary>Body of <c>POST /library/files/{id}/match</c>. Without an edition, the suggestion's or the likeliest one is used.</summary>
+public sealed record MatchFile(Guid TrackId, Guid? EditionId = null);
+
 public sealed record SuggestedTrack(Guid TrackId, string Title, string ArtistCredit, double? DurationSeconds, Guid? EditionId, Guid? AlbumId, string? AlbumTitle);
 
 public sealed record SearchResults(
@@ -238,6 +241,16 @@ public enum LogEntryLevel
 /// <param name="Source">The part of Navidex it came from, such as LibraryScanner or LibraryMatcher.</param>
 /// <param name="Error">The underlying error's message, if there was one.</param>
 public sealed record LogEntry(long Seq, DateTime Time, LogEntryLevel Level, string Source, string Message, string? Error);
+
+/// <summary>How long the activity log is kept.</summary>
+public sealed record LogSettings
+{
+    /// <summary>Days of entries the Log page shows, from 1 to 90.</summary>
+    public int MemoryDays { get; init; } = 7;
+
+    /// <summary>Days the backup files under <c>data/logs</c> are kept, from 1 to 3650; at least <see cref="MemoryDays"/>.</summary>
+    public int FileDays { get; init; } = 30;
+}
 
 /// <param name="Latest">The newest entry's sequence number, even when no entries are returned.</param>
 public sealed record LogPage(IReadOnlyList<LogEntry> Entries, long Latest);

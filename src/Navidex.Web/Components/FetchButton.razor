@@ -1,0 +1,57 @@
+@implements IDisposable
+@inject RequestTracker Tracker
+
+@* Asks for an artist, album or track to be fetched, or shows how that's going. *@
+@if (Tracker.Find(Kind, Id) is { } request)
+{
+    <a class="badge @Format.RequestBadge(request.State)" href="activity?open=@request.Id" title="@request.Detail">@Format.RequestLabel(request)</a>
+    @if (!request.Active)
+    {
+        <button class="link small" disabled="@_busy" @onclick="GetAsync">Try again</button>
+    }
+}
+else
+{
+    <button class="@(Primary ? "primary" : "link small")" disabled="@_busy" title="@Hint" @onclick="GetAsync">@Label</button>
+}
+@if (_error is not null)
+{
+    <span class="error small" title="@_error">@_error</span>
+}
+
+@code {
+    [Parameter, EditorRequired] public RequestKind Kind { get; set; }
+    [Parameter, EditorRequired] public Guid Id { get; set; }
+    [Parameter] public Guid? EditionId { get; set; }
+    [Parameter] public string Label { get; set; } = "Get";
+    [Parameter] public string? Hint { get; set; }
+    [Parameter] public bool Primary { get; set; }
+
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Tracker.Changed += Refresh;
+        await Tracker.EnsureLoadedAsync();
+    }
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    private async Task GetAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Tracker.CreateAsync(new CreateRequest(Kind, Id, EditionId));
+        }
+        catch (NavidexApiException e)
+        {
+            _error = e.Message;
+        }
+        _busy = false;
+    }
+
+    public void Dispose() => Tracker.Changed -= Refresh;
+}

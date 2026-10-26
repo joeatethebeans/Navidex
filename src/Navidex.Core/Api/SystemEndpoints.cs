@@ -3,6 +3,7 @@ using Navidex.Contracts.Plugins;
 using Navidex.Client;
 using Navidex.Core.Data;
 using Navidex.Core.Diagnostics;
+using Navidex.Core.Library;
 
 namespace Navidex.Core.Api;
 
@@ -39,9 +40,29 @@ public static class SystemEndpoints
             .WithSummary("Service version and the plugin contract versions it supports.");
 
         group.MapGet("/log", (ActivityLog log, long after = 0, int limit = 1000) =>
-                new LogPage(log.After(after, Math.Clamp(limit, 1, ActivityLog.Capacity)), log.Latest))
+                new LogPage(log.After(after, Math.Clamp(limit, 1, ActivityLog.PageLimit)), log.Latest))
             .WithName("GetLog")
-            .WithSummary("Recent activity since the server started: scans, matches, catalogue updates, warnings and errors.");
+            .WithSummary("Recent activity, as far back as the log settings keep in memory: scans, matches, requests, warnings and errors.");
+
+        var settings = api.MapGroup("/settings").WithTags("Settings");
+        settings.MapGet("/log", (SettingsService s, CancellationToken ct) => s.GetLogAsync(ct)).WithName("GetLogSettings");
+        settings.MapPut("/log", async (LogSettings value, SettingsService s, IEnumerable<IHostedService> services, CancellationToken ct) =>
+            {
+                var errors = new Dictionary<string, string[]>();
+                if (value.MemoryDays is < 1 or > 90)
+                    errors["memoryDays"] = ["Must be between 1 and 90."];
+                if (value.FileDays is < 1 or > 3650)
+                    errors["fileDays"] = ["Must be between 1 and 3650."];
+                else if (value.FileDays < value.MemoryDays)
+                    errors["fileDays"] = ["Must be at least as long as the Log page keeps entries."];
+                if (errors.Count > 0)
+                    return Results.ValidationProblem(errors);
+                await s.SaveLogAsync(value, ct);
+                if (services.OfType<LogArchive>().FirstOrDefault() is { } archive)
+                    await archive.TidyAsync(ct);
+                return Results.NoContent();
+            })
+            .WithName("SaveLogSettings").WithSummary("Applies at once: older entries leave the Log page, and older backup files are deleted.");
 
         return api;
     }

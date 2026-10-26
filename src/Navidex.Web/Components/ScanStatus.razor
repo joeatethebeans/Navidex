@@ -30,6 +30,9 @@
     /// </summary>
     public static event Action? LibraryChanged;
 
+    /// <summary>For other things that change the library, such as a request being filed.</summary>
+    public static void RaiseLibraryChanged() => LibraryChanged?.Invoke();
+
     protected override async Task OnInitializedAsync()
     {
         await RefreshAsync();

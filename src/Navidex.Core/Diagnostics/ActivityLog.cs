@@ -1,31 +1,46 @@
+using System.Threading.Channels;
 using Navidex.Client;
 
 namespace Navidex.Core.Diagnostics;
 
 /// <summary>
 /// The recent activity the web app's Log page shows: Navidex's own events from Information up, and warnings and
-/// errors from everything else. Kept in memory, so it covers the time since the server started.
+/// errors from everything else. Every entry is also written to the day's file by <see cref="LogArchive"/>; memory
+/// holds the last week or so (see <see cref="LogSettings"/>), reloaded from the files when the server starts.
 /// </summary>
 public sealed class ActivityLog
 {
-    public const int Capacity = 5000;
+    /// <summary>The most a single read returns.</summary>
+    public const int PageLimit = 5000;
 
-    private readonly LogEntry?[] _entries = new LogEntry?[Capacity];
+    /// <summary>A ceiling on what's kept in memory however long the retention, in case something logs in a loop.</summary>
+    public const int MaxEntries = 100_000;
+
+    // Sequence numbers are contiguous: _entries[i].Seq == _first + i.
+    private readonly List<LogEntry> _entries = [];
     private readonly Lock _lock = new();
-    private long _latest;
+    private readonly Channel<LogEntry> _unwritten = Channel.CreateUnbounded<LogEntry>(new UnboundedChannelOptions { SingleReader = true });
+    private long _first = 1;
 
     public long Latest
     {
-        get { lock (_lock) return _latest; }
+        get { lock (_lock) return _first + _entries.Count - 1; }
     }
+
+    /// <summary>Entries waiting to be written to the archive.</summary>
+    public ChannelReader<LogEntry> Unwritten => _unwritten.Reader;
 
     public void Add(LogEntryLevel level, string source, string message, string? error)
     {
+        LogEntry entry;
         lock (_lock)
         {
-            _latest++;
-            _entries[_latest % Capacity] = new LogEntry(_latest, DateTime.UtcNow, level, source, message, error);
+            entry = new LogEntry(_first + _entries.Count, DateTime.UtcNow, level, source, message, error);
+            _entries.Add(entry);
+            if (_entries.Count > MaxEntries)
+                Drop(_entries.Count - MaxEntries);
         }
+        _unwritten.Writer.TryWrite(entry);
     }
 
     /// <summary>Entries after <paramref name="after"/>, oldest first, at most <paramref name="limit"/> of the newest.</summary>
@@ -33,13 +48,43 @@ public sealed class ActivityLog
     {
         lock (_lock)
         {
-            var from = Math.Max(Math.Max(after, _latest - Capacity), _latest - limit) + 1;
-            var result = new List<LogEntry>((int)Math.Max(0, _latest - from + 1));
-            for (var seq = from; seq <= _latest; seq++)
-                if (_entries[seq % Capacity] is { } entry)
-                    result.Add(entry);
-            return result;
+            var latest = _first + _entries.Count - 1;
+            var from = Math.Max(Math.Max(after + 1, _first), latest - limit + 1);
+            return from > latest ? [] : _entries.GetRange((int)(from - _first), (int)(latest - from + 1));
         }
+    }
+
+    /// <summary>Forgets entries older than the cutoff; they stay in the archive.</summary>
+    public void Trim(DateTime olderThan)
+    {
+        lock (_lock)
+        {
+            var count = 0;
+            while (count < _entries.Count && _entries[count].Time < olderThan)
+                count++;
+            Drop(count);
+        }
+    }
+
+    /// <summary>
+    /// Puts entries from before a restart back in front of what's been logged since, oldest first. Everything is
+    /// numbered again from 1, which the web app takes as a restart anyway.
+    /// </summary>
+    public void Restore(IReadOnlyList<LogEntry> earlier)
+    {
+        lock (_lock)
+        {
+            var all = earlier.Concat(_entries).Select((e, i) => e with { Seq = i + 1 }).ToList();
+            _entries.Clear();
+            _entries.AddRange(all.Count > MaxEntries ? all[^MaxEntries..] : all);
+            _first = _entries.Count > 0 ? _entries[0].Seq : 1;
+        }
+    }
+
+    private void Drop(int count)
+    {
+        _entries.RemoveRange(0, count);
+        _first += count;
     }
 }
 

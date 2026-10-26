@@ -5,6 +5,7 @@ using Navidex.Contracts.Plugins.Index;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
 using Navidex.Core.Library;
+using Navidex.Core.Requests;
 using Navidex.Core.Tasks;
 
 namespace Navidex.Core.Api;
@@ -44,6 +45,33 @@ public static class LibraryEndpoints
 
         library.MapGet("/review", (LibraryView view, CancellationToken ct) => view.GetReviewAsync(ct))
             .WithName("GetReview").WithSummary("Files that couldn't be matched confidently, with the best suggestion.");
+
+        library.MapPost("/files/{id:guid}/match", async (Guid id, MatchFile body, NavidexDbContext db, RequestPlanner planner, CancellationToken ct) =>
+            {
+                if (await db.LibraryFiles.FindAsync([id], ct) is not { } file)
+                    return Results.NotFound();
+                if (await db.Tracks.FindAsync([body.TrackId], ct) is not { } track)
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["trackId"] = ["No such track in the catalogue."] });
+                var editionId = body.EditionId
+                                ?? (file.SuggestedTrackId == track.Id ? file.SuggestedEditionId : null)
+                                ?? await planner.ChooseEditionForTrackAsync(track.Id, ct);
+                if (editionId is { } edition && !await db.EditionTracks.AnyAsync(et => et.EditionId == edition && et.TrackId == track.Id, ct))
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["editionId"] = ["That track isn't on that edition."] });
+
+                file.TrackId = track.Id;
+                file.EditionId = editionId;
+                file.ArtistId = track.ArtistId;
+                file.MatchMethod = MatchMethod.Manual;
+                file.MatchConfidence = 1;
+                file.ReviewReason = null;
+                file.SuggestedTrackId = null;
+                file.SuggestedEditionId = null;
+                file.MatchedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(ct);
+                return Results.NoContent();
+            })
+            .WithName("MatchFile").WithSummary("Say which song a file is: accepting a review suggestion, or one picked by searching. It counts as owned at once.")
+            .Produces(StatusCodes.Status204NoContent).ProducesValidationProblem();
 
         api.MapGet("/tasks/{id:guid}", async (Guid id, NavidexDbContext db, CancellationToken ct) =>
                 await db.BackgroundTasks.FindAsync([id], ct) is { } task ? Results.Ok(TaskQueue.ToInfo(task)) : Results.NotFound())

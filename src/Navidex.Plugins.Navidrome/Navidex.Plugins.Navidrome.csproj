@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Navidex.Plugins.Navidrome</RootNamespace>
+    <Description>Navidex media-server connector for Navidrome, over the Subsonic API.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Navidex.Contracts\Navidex.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

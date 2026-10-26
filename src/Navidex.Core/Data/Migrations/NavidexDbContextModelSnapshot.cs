@@ -222,6 +222,9 @@ namespace Navidex.Core.Data.Migrations
                     b.Property<string>("CandidateJson")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CandidatesJson")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -236,6 +239,9 @@ namespace Navidex.Core.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("RequestId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StagingDirectory")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("StartedAt")
@@ -415,6 +421,9 @@ namespace Navidex.Core.Data.Migrations
                     b.Property<string>("HealthMessage")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ManifestJson")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -488,7 +497,16 @@ namespace Navidex.Core.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ChoiceJson")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Detail")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("EditionId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Mode")
@@ -510,6 +528,10 @@ namespace Navidex.Core.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TargetKind")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

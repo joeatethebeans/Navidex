@@ -6,6 +6,15 @@
 
 <h1>Search</h1>
 
+@if (_file is not null)
+{
+    <div class="notice">
+        Choosing the song for <strong>@(_file.Title ?? "(no title)")</strong> <span class="muted">· @(_file.Artist ?? "unknown artist") · @Format.Duration(_file.DurationSeconds)</span>
+        <div class="muted small">@_file.Path</div>
+        <div class="row" style="margin-top: .4rem;"><a class="small" href="review">Back to Review</a></div>
+    </div>
+}
+
 <form class="toolbar" @onsubmit="SubmitAsync">
     <input type="search" placeholder="Artist, album or track" @bind="_query" />
     <button class="primary" type="submit" disabled="@_busy">Search</button>
@@ -15,11 +24,34 @@
 {
     <p class="muted">Searching…</p>
 }
+else if (_searchError is not null)
+{
+    <div class="notice error">@_searchError</div>
+}
 else if (_results is not null)
 {
     @if (_results.Artists.Count + _results.Albums.Count + _results.Tracks.Count == 0)
     {
         <div class="empty card">No results.</div>
+    }
+    @if (_file is not null && _results.Tracks.Count > 0)
+    {
+        <h2>Tracks</h2>
+        <div class="card">
+            <table class="table">
+                <tbody>
+                    @foreach (var track in _results.Tracks)
+                    {
+                        <tr>
+                            <td>@track.Title <span class="muted small">· @track.ArtistCredit</span></td>
+                            <td class="num muted">@Format.Duration(track.DurationSeconds)</td>
+                            <td class="num"><button class="primary" disabled="@_matching" @onclick="() => MatchAsync(track)">This one</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_error is not null) { <div class="notice error">@_error</div> }
     }
     @if (_results.Artists.Count > 0)
     {
@@ -50,13 +82,19 @@ else if (_results is not null)
                             <td><a href="albums/@album.Id">@album.Title</a> <span class="muted small">· @album.ArtistCredit · @Format.Year(album.FirstReleaseDate)</span></td>
                             <td class="muted hide-narrow">@Format.TypeLabel(album.Type)</td>
                             <td class="num"><StatusBadge Album="album.Status" /></td>
+                            <td class="num actions">
+                                @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
+                                {
+                                    <FetchButton Kind="RequestKind.Album" Id="album.Id" />
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
     }
-    @if (_results.Tracks.Count > 0)
+    @if (_file is null && _results.Tracks.Count > 0)
     {
         <h2>Tracks</h2>
         <div class="card">
@@ -68,6 +106,7 @@ else if (_results is not null)
                             <td>@track.Title <span class="muted small">· @track.ArtistCredit</span></td>
                             <td class="num muted hide-narrow">@Format.Duration(track.DurationSeconds)</td>
                             <td class="num"><StatusBadge Track="track.Owned ? TrackStatus.Owned : TrackStatus.Missing" /></td>
+                            <td class="num actions">@if (!track.Owned) { <FetchButton Kind="RequestKind.Track" Id="track.Id" /> }</td>
                         </tr>
                     }
                 </tbody>
@@ -79,25 +118,59 @@ else if (_results is not null)
 @code {
     [SupplyParameterFromQuery(Name = "q")] public string? Query { get; set; }
 
+    /// <summary>A file from the Review page to choose the song for.</summary>
+    [SupplyParameterFromQuery(Name = "file")] public Guid? FileId { get; set; }
+
     private string _query = "";
     private SearchResults? _results;
+    private ReviewItem? _file;
+    private string? _error;
+    private string? _searchError;
     private bool _busy;
+    private bool _matching;
 
     protected override async Task OnParametersSetAsync()
     {
         _query = Query ?? "";
+        _file = FileId is { } fileId ? (await Api.GetReviewAsync()).FirstOrDefault(i => i.FileId == fileId) : null;
         _results = null;
+        _searchError = null;
         if (_query.Length > 0)
         {
             _busy = true;
-            _results = await Api.SearchAsync(_query);
+            try
+            {
+                _results = await Api.SearchAsync(_query);
+            }
+            catch (HttpRequestException e)
+            {
+                _searchError = e.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable
+                    ? "The catalogue is busy right now. Try again in a moment."
+                    : "Searching failed. Try again in a moment.";
+            }
             _busy = false;
         }
     }
 
     private Task SubmitAsync()
     {
-        Navigation.NavigateTo($"search?q={Uri.EscapeDataString(_query)}");
+        Navigation.NavigateTo($"search?q={Uri.EscapeDataString(_query)}{(_file is null ? "" : $"&file={_file.FileId}")}");
         return Task.CompletedTask;
+    }
+
+    private async Task MatchAsync(SearchTrack track)
+    {
+        _matching = true;
+        _error = null;
+        try
+        {
+            await Api.MatchFileAsync(_file!.FileId, new MatchFile(track.Id));
+            Navigation.NavigateTo("review");
+        }
+        catch (NavidexApiException e)
+        {
+            _error = e.Message;
+        }
+        _matching = false;
     }
 }
