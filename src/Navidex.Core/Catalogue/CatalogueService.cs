@@ -43,7 +43,7 @@ public sealed class CatalogueService(NavidexDbContext db, IndexPlugins indexPlug
     {
         if (string.IsNullOrEmpty(id.Value))
             return;
-        var exists = db.Crosswalk.Local.Any(m => m.EntityKind == kind && m.EntityId == entityId && m.Provider == id.Provider && m.Value == id.Value)
+        var exists = Tracked(db.Crosswalk).Any(m => m.EntityKind == kind && m.EntityId == entityId && m.Provider == id.Provider && m.Value == id.Value)
                      || await db.Crosswalk.AnyAsync(m => m.EntityKind == kind && m.EntityId == entityId && m.Provider == id.Provider && m.Value == id.Value, ct);
         if (!exists)
             db.Crosswalk.Add(new ProviderIdMapping
@@ -53,8 +53,26 @@ public sealed class CatalogueService(NavidexDbContext db, IndexPlugins indexPlug
             });
     }
 
+    /// <summary>
+    /// Entities the context already holds, without <c>Local</c>'s scan of every one for changes: an import of a big
+    /// album looks things up thousands of times, and those scans made it quadratic.
+    /// </summary>
+    private IEnumerable<T> Tracked<T>(DbSet<T> set) where T : class
+    {
+        var detect = db.ChangeTracker.AutoDetectChangesEnabled;
+        db.ChangeTracker.AutoDetectChangesEnabled = false;
+        try
+        {
+            return set.Local;
+        }
+        finally
+        {
+            db.ChangeTracker.AutoDetectChangesEnabled = detect;
+        }
+    }
+
     private async Task<Guid?> FindTrackedAsync(EntityKind kind, ProviderId id, CancellationToken ct) =>
-        db.Crosswalk.Local.FirstOrDefault(m => m.EntityKind == kind && m.Provider == id.Provider && m.Value == id.Value)?.EntityId
+        Tracked(db.Crosswalk).FirstOrDefault(m => m.EntityKind == kind && m.Provider == id.Provider && m.Value == id.Value)?.EntityId
         ?? await FindAsync(kind, id, ct);
 
     // ---- Artists ----
@@ -97,7 +115,7 @@ public sealed class CatalogueService(NavidexDbContext db, IndexPlugins indexPlug
     private async Task<Artist> ArtistForRefAsync(ArtistRef reference, CancellationToken ct)
     {
         if (await FindTrackedAsync(EntityKind.Artist, reference.Id, ct) is { } known)
-            return db.Artists.Local.FirstOrDefault(a => a.Id == known) ?? (await db.Artists.FindAsync([known], ct))!;
+            return Tracked(db.Artists).FirstOrDefault(a => a.Id == known) ?? (await db.Artists.FindAsync([known], ct))!;
         return await ImportArtistAsync(new IndexArtist(reference.Id, reference.Name), ct);
     }
 
@@ -150,7 +168,7 @@ public sealed class CatalogueService(NavidexDbContext db, IndexPlugins indexPlug
     {
         var id = await FindTrackedAsync(EntityKind.Album, source.Id, ct);
         var album = id is { } existing
-            ? db.Albums.Local.FirstOrDefault(a => a.Id == existing) ?? await db.Albums.FindAsync([existing], ct)
+            ? Tracked(db.Albums).FirstOrDefault(a => a.Id == existing) ?? await db.Albums.FindAsync([existing], ct)
             : null;
         if (album is null)
         {
@@ -177,7 +195,7 @@ public sealed class CatalogueService(NavidexDbContext db, IndexPlugins indexPlug
     /// </summary>
     public async Task<Album> ImportAlbumUnlessKnownAsync(IndexAlbum source, CancellationToken ct) =>
         await FindTrackedAsync(EntityKind.Album, source.Id, ct) is { } known
-            ? db.Albums.Local.FirstOrDefault(a => a.Id == known) ?? (await db.Albums.FindAsync([known], ct))!
+            ? Tracked(db.Albums).FirstOrDefault(a => a.Id == known) ?? (await db.Albums.FindAsync([known], ct))!
             : await ImportAlbumAsync(source, null, ct);
 
     /// <summary>The album with this provider ID, with its editions loaded, fetching whatever isn't cached.</summary>
@@ -275,7 +293,7 @@ public sealed class CatalogueService(NavidexDbContext db, IndexPlugins indexPlug
     {
         var id = await FindTrackedAsync(EntityKind.Track, source.Id, ct);
         var track = id is { } existing
-            ? db.Tracks.Local.FirstOrDefault(t => t.Id == existing) ?? await db.Tracks.FindAsync([existing], ct)
+            ? Tracked(db.Tracks).FirstOrDefault(t => t.Id == existing) ?? await db.Tracks.FindAsync([existing], ct)
             : null;
         if (track is null)
         {

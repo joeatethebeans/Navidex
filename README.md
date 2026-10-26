@@ -4,10 +4,12 @@ A self-hosted service for music in the style of Sonarr and Radarr. It shows what
 fetches it through plugins you choose, imports it through beets, and tells your media server about it. It sits
 beside Navidrome rather than replacing it: Navidex finds, fetches and imports; Navidrome keeps streaming.
 
-> **Status: Phase 2 (fetching).** Navidex scans your library, matches it against MusicBrainz, and shows each
+> **Status: Phase 3 (listen now).** Navidex scans your library, matches it against MusicBrainz, and shows each
 > artist's albums as owned, partly owned, covered or missing. Ask for a track, an album or everything an artist is
 > missing, and it fetches each one through your retrieval plugins in turn, checks it, files it through beets, and
-> tells Navidrome to scan. The Activity page shows every attempt; Review holds what needs a person.
+> tells Navidrome to scan. The Activity page shows every attempt; Review holds what needs a person. Or press
+> **Listen** to hear something before deciding: it's fetched to a separate store, plays in the web app's player
+> beside the music you have, and is deleted an hour after you last play it unless you add it to the library.
 
 ## Layout
 
@@ -54,6 +56,22 @@ From source (.NET 10 SDK):
 ```bash
 dotnet run --project src/Navidex.Core
 ```
+
+### Listen now and events
+
+Tracks fetched to listen to live in `Navidex:ListenNowPath` (the `listen-now` volume), never in the music folder.
+Each one is kept for the time set under **Settings → Fetching** after it was last played (an hour by default), then
+deleted; **Add to library** files the same file through beets without fetching it again. The API for other apps:
+
+| Call | What |
+| --- | --- |
+| `POST /api/v1/listen` `{kind, id, editionId?}` | Fetch a track, or an album's missing tracks in order. Returns one item per track. |
+| `GET /api/v1/listen/{id}` | Its state (`requested`, `fetching`, `playable`, `importing`, `inLibrary`, `failed`, `expired`), and a signed `streamUrl` with its `mediaType` while playable |
+| `POST /api/v1/listen/{id}/add`, `DELETE /api/v1/listen/{id}` | Add it to the library, or discard it now |
+| `GET /api/v1/tracks/{id}/play` | A signed stream URL for a track you have |
+| `GET /api/v1/events` | Server-sent events naming what changed (`requests`, `listen`, `library`, `tasks`), so apps reload instead of polling |
+
+Stream URLs need no credentials, support range requests for seeking, and stop working after 12 hours.
 
 The database lives in `Navidex:DataPath` (`data/` by default) and is migrated on startup. Override any path with
 environment variables such as `Navidex__LibraryPath=/music`.

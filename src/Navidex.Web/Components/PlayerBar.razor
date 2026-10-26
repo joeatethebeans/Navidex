@@ -1,0 +1,149 @@
+@implements IDisposable
+@inject Player Player
+
+@* The player along the bottom of every page, once something has been played. The queue opens above it. *@
+@if (Player.Queue.Count > 0)
+{
+    var now = Player.Now;
+    <div class="player-space"></div>
+    <div class="player">
+        @if (_showQueue)
+        {
+            <div class="player-queue card">
+                <div class="section-head" style="margin: 0 0 .25rem;">
+                    <h3>Queue</h3>
+                    <span class="spacer"></span>
+                    <button class="link small" @onclick="Player.ClearAsync">Clear</button>
+                </div>
+                <ol>
+                    @for (var i = 0; i < Player.Queue.Count; i++)
+                    {
+                        var index = i;
+                        var entry = Player.Queue[i];
+                        <li class="@(index == Player.Current ? "now" : "") @(entry.Unplayable ? "dim" : "")">
+                            <button class="link queue-title" @onclick="() => Player.JumpAsync(index)">
+                                <span class="ellipsis">@entry.Title</span>
+                                <span class="muted small ellipsis">@entry.ArtistCredit</span>
+                            </button>
+                            <span class="small muted nowrap">@EntryState(entry)</span>
+                            <button class="link small" title="Remove from the queue" @onclick="() => Player.RemoveAsync(index)">✕</button>
+                        </li>
+                    }
+                </ol>
+            </div>
+        }
+        <div class="player-bar">
+            <div class="player-track">
+                <Cover Url="@now?.CoverUrl" />
+                <div class="player-text">
+                    @if (now is null)
+                    {
+                        <div class="muted">End of the queue</div>
+                    }
+                    else
+                    {
+                        <div class="ellipsis player-title">
+                            @if (now.AlbumId is { } album) { <a href="albums/@album">@now.Title</a> } else { @now.Title }
+                        </div>
+                        <div class="muted small ellipsis">
+                            @if (now.ArtistId is { } artist) { <a class="muted" href="artists/@artist">@now.ArtistCredit</a> } else { @now.ArtistCredit }
+                            @if (now.ListenId is not null)
+                            {
+                                <span> · </span>
+                                @switch (now.ListenState)
+                                {
+                                    case ListenNowState.Requested or ListenNowState.Fetching:
+                                        <span title="@now.Detail">Fetching to listen…</span>
+                                        break;
+                                    case ListenNowState.Playable:
+                                        <span title="Fetched to listen to; it's deleted if you don't play it for a while">Not in library</span>
+                                        <button class="link small" @onclick="() => Player.AddToLibraryAsync(now)">Add to library</button>
+                                        break;
+                                    case ListenNowState.Importing:
+                                        <span>Adding to library…</span>
+                                        break;
+                                    case ListenNowState.InLibrary:
+                                        <span>In library</span>
+                                        break;
+                                    default:
+                                        <span class="error" title="@now.Detail">@(now.Detail ?? "Couldn't fetch it")</span>
+                                        break;
+                                }
+                            }
+                        </div>
+                    }
+                    @if (Player.Error is { } error)
+                    {
+                        <div class="error small" title="@error">@error</div>
+                    }
+                </div>
+            </div>
+            <div class="player-controls">
+                <button class="icon" title="Previous" disabled="@(now is null)" @onclick="Player.PreviousAsync">
+                    <svg viewBox="0 0 24 24"><path d="M6 5v14M18 5 8 12l10 7z" /></svg>
+                </button>
+                <button class="icon play" title="@(Player.Playing ? "Pause" : "Play")" disabled="@(now is null)" @onclick="Player.ToggleAsync">
+                    @if (now?.Waiting == true)
+                    {
+                        <span class="spinner"></span>
+                    }
+                    else if (Player.Playing)
+                    {
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></svg>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24"><path d="M7 4.5v15L19 12z" /></svg>
+                    }
+                </button>
+                <button class="icon" title="Next" disabled="@(now is null || Player.Current + 1 >= Player.Queue.Count)" @onclick="Player.NextAsync">
+                    <svg viewBox="0 0 24 24"><path d="M18 5v14M6 5l10 7-10 7z" /></svg>
+                </button>
+            </div>
+            <div class="player-seek">
+                <span class="small muted time">@Format.Duration(Player.Position)</span>
+                <input type="range" min="0" max="@Math.Max(Player.Duration, 1).ToString("0")" step="1" value="@Player.Position.ToString("0")"
+                       disabled="@(now is null || now.Waiting)" aria-label="Position" @onchange="SeekAsync" />
+                <span class="small muted time">@Format.Duration(Player.Duration)</span>
+            </div>
+            <div class="player-end">
+                <button class="icon @(_showQueue ? "on" : "")" title="Queue (@Player.Queue.Count)" @onclick="() => _showQueue = !_showQueue">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h10M17 15v6l4-3z" /></svg>
+                </button>
+                <button class="icon" title="Stop and clear the queue" @onclick="Player.ClearAsync">
+                    <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _showQueue;
+
+    protected override void OnInitialized()
+    {
+        Player.Changed += Redraw;
+        Player.TimeChanged += Redraw;
+    }
+
+    private void Redraw() => InvokeAsync(StateHasChanged);
+
+    private Task SeekAsync(ChangeEventArgs e) =>
+        double.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, out var s) ? Player.SeekAsync(s) : Task.CompletedTask;
+
+    private static string EntryState(PlayerEntry entry) => entry switch
+    {
+        { Unplayable: true } => entry.Detail is { Length: < 40 } d ? d : "Can't play",
+        { Waiting: true } => "Fetching…",
+        { ListenState: ListenNowState.Playable } => "Listen now",
+        { ListenState: ListenNowState.Importing } => "Adding…",
+        _ => Format.Duration(entry.DurationSeconds),
+    };
+
+    public void Dispose()
+    {
+        Player.Changed -= Redraw;
+        Player.TimeChanged -= Redraw;
+    }
+}

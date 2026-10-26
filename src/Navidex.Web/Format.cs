@@ -49,6 +49,7 @@ public static class Format
         Client.RequestState.Verifying => "Checking",
         Client.RequestState.Importing or Client.RequestState.Notifying => "Filing",
         Client.RequestState.InLibrary => "In library",
+        Client.RequestState.Playable => "Ready to play",
         Client.RequestState.NeedsReview => "Needs review",
         Client.RequestState.Failed => "Failed",
         _ => "Cancelled",
@@ -58,6 +59,7 @@ public static class Format
     public static string RequestBadge(Client.RequestState state) => state switch
     {
         Client.RequestState.InLibrary => "owned",
+        Client.RequestState.Playable => "covered",
         Client.RequestState.NeedsReview => "partial",
         Client.RequestState.Failed => "missing",
         Client.RequestState.Cancelled => "neutral",
@@ -88,4 +90,22 @@ public static class Format
             : age.TotalDays < 1 ? $"{(int)age.TotalHours} h ago"
             : utc.ToLocalTime().ToString("d MMM");
     }
+
+    /// <summary>How soon, roughly: "in 5 min", "in 3 h", or the date.</summary>
+    public static string Until(DateTime utc)
+    {
+        var left = utc - DateTime.UtcNow;
+        return left.TotalMinutes < 1 ? "any minute"
+            : left.TotalHours < 1 ? $"in {(int)left.TotalMinutes} min"
+            : left.TotalDays < 1 ? $"in {(int)left.TotalHours} h {left.Minutes} min"
+            : $"on {utc.ToLocalTime():d MMM}";
+    }
+
+    /// <summary>A number of minutes as people say it: "45 minutes", "1 hour", "2 days".</summary>
+    public static string Minutes(int minutes) =>
+        minutes % 1440 == 0 ? Plural(minutes / 1440, "day")
+        : minutes % 60 == 0 ? Plural(minutes / 60, "hour")
+        : Plural(minutes, "minute");
+
+    private static string Plural(int n, string unit) => n == 1 ? $"1 {unit}" : $"{n} {unit}s";
 }

@@ -10,7 +10,7 @@ namespace Navidex.Core.Requests;
 /// <summary>Creates, cancels and retries requests, and reports on them.</summary>
 public sealed class RequestService(NavidexDbContext db, RequestSignal signal, RequestCancellations cancellations, LibraryReading reading)
 {
-    public static readonly RequestStatus[] Finished = [RequestStatus.InLibrary, RequestStatus.NeedsReview, RequestStatus.Failed, RequestStatus.Cancelled];
+    public static readonly RequestStatus[] Finished = [RequestStatus.InLibrary, RequestStatus.NeedsReview, RequestStatus.Failed, RequestStatus.Cancelled, RequestStatus.Playable];
 
     /// <summary>
     /// Queues a request, or returns the active one for the same target, whether asked for directly or as part of an
@@ -71,7 +71,7 @@ public sealed class RequestService(NavidexDbContext db, RequestSignal signal, Re
     /// <summary>Queues a finished request again, and any parts of it that didn't make it into the library.</summary>
     public async Task<bool> RetryAsync(Request request, CancellationToken ct)
     {
-        if (!Finished.Contains(request.Status) || request.Status == RequestStatus.InLibrary)
+        if (!Finished.Contains(request.Status) || request.Status is RequestStatus.InLibrary or RequestStatus.Playable)
             return false;
         var ids = await SubtreeAsync(request.Id, ct);
         var children = ids.Where(id => id != request.Id).ToList();
@@ -197,7 +197,7 @@ public sealed class RequestService(NavidexDbContext db, RequestSignal signal, Re
     {
         var parts = r.TargetKind == EntityKind.Track ? null : await PartsAsync(r.Id, ct);
         return new RequestInfo(r.Id, ToKind(r.TargetKind), r.TargetId, r.EditionId, r.Title, (RequestState)(int)r.Status, r.Detail,
-            r.ParentRequestId, r.CreatedAt, r.UpdatedAt, parts is { Total: > 0 } ? parts : null);
+            r.ParentRequestId, r.CreatedAt, r.UpdatedAt, parts is { Total: > 0 } ? parts : null, ListenNow: r.Mode == RequestMode.ListenNow);
     }
 
     public static RequestKind ToKind(EntityKind kind) => kind switch

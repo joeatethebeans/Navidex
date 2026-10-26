@@ -137,7 +137,7 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 .table.albums th:nth-child(4) { width: 8rem; }
 .table.albums th:nth-child(5) { width: 6.5rem; }
 .table.albums td:nth-child(5) { white-space: nowrap; }
-.table.albums th:nth-child(6) { width: 9.5rem; }
+.table.albums th:nth-child(6) { width: 12.5rem; }
 .table.albums td:nth-child(2) { overflow-wrap: anywhere; }
 @media (max-width: 640px) {
     .table.albums th:nth-child(4) { width: 6.5rem; }
@@ -300,3 +300,67 @@ h2.section-title { margin: 1.5rem 0 0; }
 .template:disabled { cursor: default; opacity: .7; }
 .add-form { padding: .75rem 1rem; margin-bottom: .75rem; display: flex; flex-direction: column; gap: .5rem; }
 .request-title.task-title { font-weight: 600; }
+
+/* The player: fixed along the bottom, with the queue opening above it. The spacer keeps it off the page's end. */
+.player-space { height: 5.5rem; }
+.player { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; }
+.player-bar {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.2fr) auto; gap: 1rem; align-items: center;
+    padding: .6rem 1rem; background: var(--surface); border-top: 1px solid var(--border);
+}
+.player-track { display: flex; gap: .75rem; align-items: center; min-width: 0; }
+.player-track > .cover { width: 3rem; flex: none; }
+.player-text { min-width: 0; }
+.player-title a { color: var(--text); font-weight: 600; }
+.player-controls, .player-end { display: flex; gap: .35rem; align-items: center; }
+.player-seek { display: flex; gap: .6rem; align-items: center; }
+.player-seek input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.player-seek .time { width: 3rem; text-align: center; font-variant-numeric: tabular-nums; }
+button.icon {
+    display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border-radius: 999px;
+    border: none; background: none; color: var(--text);
+}
+button.icon:hover:not(:disabled), button.icon.on { background: var(--bg); }
+button.icon svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+button.icon.play { width: 2.75rem; height: 2.75rem; background: var(--accent); color: var(--accent-text); }
+button.icon.play:hover:not(:disabled) { background: var(--accent); filter: brightness(1.1); }
+button.icon.play svg { fill: currentColor; }
+.spinner {
+    width: 1.1rem; height: 1.1rem; border-radius: 999px; border: 2px solid currentColor; border-right-color: transparent;
+    animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.player-queue {
+    position: absolute; right: 1rem; bottom: calc(100% + .5rem); width: min(26rem, calc(100vw - 2rem));
+    max-height: 60vh; overflow: auto; padding: .6rem .75rem; box-shadow: 0 6px 24px rgb(0 0 0 / .18);
+}
+.player-queue ol { list-style: none; margin: 0; padding: 0; }
+.player-queue li { display: flex; gap: .5rem; align-items: center; padding: .3rem .25rem; border-radius: 6px; }
+.player-queue li.now { background: var(--bg); }
+.player-queue li.now .queue-title > span:first-child { font-weight: 700; color: var(--accent); }
+.player-queue li.dim { opacity: .55; }
+.player-queue .queue-title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; text-align: left; color: var(--text); }
+.player-queue .queue-title > span { max-width: 100%; }
+@media (max-width: 760px) {
+    /* On a phone the seek bar takes a row of its own. */
+    .player-space { height: 8rem; }
+    .player-bar { grid-template-columns: minmax(0, 1fr) auto auto; gap: .4rem .5rem; padding: .5rem .75rem; }
+    .player-seek { grid-column: 1 / -1; grid-row: 2; }
+    .player-controls { grid-column: 2; grid-row: 1; gap: 0; }
+    .player-end { grid-column: 3; grid-row: 1; gap: 0; }
+}
+
+/* Play and Listen buttons beside tracks and albums. */
+button.play-link { display: inline-flex; align-items: center; gap: .3rem; }
+button.play-link svg { width: .8rem; height: .8rem; fill: currentColor; }
+tr.playing td { background: var(--bg); }
+tr.playing td:nth-child(2) { color: var(--accent); font-weight: 600; }
+
+/* Listen now: one row per track, with how long it's kept. */
+.listen-item { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .6rem 1rem; }
+.listen-item + .listen-item { border-top: 1px solid var(--border); }
+.listen-actions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 640px) {
+    .listen-item { grid-template-columns: 2.5rem minmax(0, 1fr); }
+    .listen-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}

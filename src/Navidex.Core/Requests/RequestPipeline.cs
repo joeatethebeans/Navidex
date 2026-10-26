@@ -8,6 +8,7 @@ using Navidex.Contracts.Plugins.Retrieval;
 using Navidex.Core.Data;
 using Navidex.Core.Import;
 using Navidex.Core.Library;
+using Navidex.Core.Listening;
 using Navidex.Core.Plugins;
 
 namespace Navidex.Core.Requests;
@@ -18,6 +19,10 @@ namespace Navidex.Core.Requests;
 /// first that passes is handed to beets, pinned to the edition's MusicBrainz release, recorded as owned, and announced
 /// to the media server. When every plugin has had its turn, the request goes to the review list.
 /// </summary>
+/// <remarks>
+/// A listen-now request stops after the checks: its file goes to the listen-now store instead of to beets. Adding it
+/// to the library later runs the request again as an ordinary one, which files that same file without fetching.
+/// </remarks>
 public sealed class RequestPipeline(
     NavidexDbContext db,
     RetrievalPlugins retrieval,
@@ -25,6 +30,7 @@ public sealed class RequestPipeline(
     ConnectorPlugins connectors,
     SettingsService settings,
     RequestService requests,
+    ListenNowService listen,
     IOptions<NavidexOptions> options,
     IOptions<RequestPipelineOptions> pipelineOptions,
     ILogger<RequestPipeline> logger)
@@ -33,6 +39,14 @@ public sealed class RequestPipeline(
     public async Task RunAsync(Request request, CancellationToken ct)
     {
         var fetch = await settings.GetFetchAsync(ct);
+        if (request.Mode == RequestMode.Permanent
+            && await db.ListenNowItems.FirstOrDefaultAsync(i => i.RequestId == request.Id && i.State == Data.ListenNowState.Importing, ct) is { } adding
+            && listen.FullPath(adding) is { } kept && File.Exists(kept))
+        {
+            await AddListenedAsync(request, adding, kept, fetch, ct);
+            return;
+        }
+
         var whole = request.TargetKind == EntityKind.Album;
         var chain = (await retrieval.GetChainAsync(ct))
             .Where(p => p.Capabilities.Contains(whole ? RetrievalCapabilities.FetchAlbum : RetrievalCapabilities.FetchTrack))
@@ -183,9 +197,48 @@ public sealed class RequestPipeline(
             return Outcome.NextCandidate;
         }
 
+        return await VerifyAndFileAsync(request, target, job, directory, status.Files ?? [], fetch, ct);
+    }
+
+    /// <summary>Adds a track fetched for listen now: its file is checked and filed like a fresh fetch, without fetching again.</summary>
+    private async Task AddListenedAsync(Request request, ListenNowItem adding, string kept, FetchSettings fetch, CancellationToken ct)
+    {
+        var target = await FetchTarget.LoadAsync(db, request, false, ct);
+        var attempt = await db.Jobs.Where(j => j.RequestId == request.Id).MaxAsync(j => (int?)j.Attempt, ct) ?? 0;
+        var job = new Job { RequestId = request.Id, Attempt = attempt + 1, Status = JobStatus.Running, StartedAt = DateTime.UtcNow };
+        db.Jobs.Add(job);
+        await db.SaveChangesAsync(ct);
+
+        job.StagingDirectory = job.Id.ToString("N");
+        var directory = Path.Combine(Path.GetFullPath(options.Value.StagingPath), job.StagingDirectory);
+        Directory.CreateDirectory(directory);
+        if (!OperatingSystem.IsWindows())
+            File.SetUnixFileMode(directory, (UnixFileMode)0b111_111_111);
+        // A copy, so the track stays playable if filing fails.
+        var name = "listened" + Path.GetExtension(kept);
+        File.Copy(kept, Path.Combine(directory, name), overwrite: true);
+        if (!OperatingSystem.IsWindows())
+            File.SetUnixFileMode(Path.Combine(directory, name), (UnixFileMode)0b110_110_110);
+        Log(job, "Using the file fetched for listen now");
+
+        var outcome = await VerifyAndFileAsync(request, target, job, directory, [new FetchedFile(name, adding.Codec, adding.Container, adding.BitrateKbps, null)], fetch, ct);
+        if (outcome == Outcome.NextCandidate)
+        {
+            DeleteStaging(job);
+            await SetAsync(request, RequestStatus.Failed, $"Couldn't add it: {job.VerificationDetail ?? LastLine(job.Log)}", ct);
+        }
+    }
+
+    /// <summary>
+    /// Checks fetched files against the catalogue, then files them: with beets for an ordinary request, or in the
+    /// listen-now store for a listen-now one.
+    /// </summary>
+    private async Task<Outcome> VerifyAndFileAsync(Request request, FetchTarget target, Job job, string directory, IReadOnlyList<FetchedFile> reported,
+        FetchSettings fetch, CancellationToken ct)
+    {
         // Verify
         await SetAsync(request, RequestStatus.Verifying, "Checking the files", ct);
-        var verified = Verifier.Check(directory, status.Files ?? [], target.Tracks, fetch);
+        var verified = Verifier.Check(directory, reported, target.Tracks, fetch);
         job.Verification = verified.Result;
         job.VerificationDetail = verified.Detail;
         if (verified.Result != VerificationResult.Passed)
@@ -195,6 +248,12 @@ public sealed class RequestPipeline(
             return Outcome.NextCandidate;
         }
         Log(job, $"Checked: {verified.Detail}");
+
+        if (request.Mode == RequestMode.ListenNow)
+        {
+            await StoreForListeningAsync(request, job, directory, verified.Files[0], reported, ct);
+            return Outcome.Imported;
+        }
 
         // Import
         await SetAsync(request, RequestStatus.Importing, "Filing with beets", ct);
@@ -216,11 +275,47 @@ public sealed class RequestPipeline(
         DeleteStaging(job);
         await DeleteOtherStagingAsync(request.Id, job.Id, ct);
 
+        // Added from listen now: the library has it now, so the listen-now copy goes.
+        if (await db.ListenNowItems.FirstOrDefaultAsync(i => i.RequestId == request.Id && i.State == Data.ListenNowState.Importing, ct) is { } added)
+        {
+            listen.DeleteFile(added);
+            added.State = Data.ListenNowState.InLibrary;
+            await db.SaveChangesAsync(ct);
+        }
+
         // Notify
         var detail = await NotifyAsync(request, files, ct);
         await SetAsync(request, RequestStatus.InLibrary, detail, ct);
         logger.LogInformation(Diagnostics.LogEvents.Success, "[{Request}] In the library: {Detail}", request.Title, detail);
         return Outcome.Imported;
+    }
+
+    /// <summary>Moves a checked file into the listen-now store and marks the track playable, for the expiry setting from now.</summary>
+    private async Task StoreForListeningAsync(Request request, Job job, string directory, Verifier.Matched file, IReadOnlyList<FetchedFile> reported,
+        CancellationToken ct)
+    {
+        var item = await db.ListenNowItems.FirstAsync(i => i.RequestId == request.Id, ct);
+        var store = listen.Store;
+        Directory.CreateDirectory(store);
+        var name = item.Id.ToString("N") + Path.GetExtension(file.Path).ToLowerInvariant();
+        var destination = Path.Combine(store, name);
+        // Staging and the store are often separate volumes, where a move is a copy and a delete.
+        File.Move(Path.Combine(directory, file.Path), destination, overwrite: true);
+
+        var said = reported.FirstOrDefault(f => f.Path == file.Path);
+        var probed = MediaTypes.Probe(destination);
+        item.FilePath = name;
+        item.Codec = said?.Codec?.ToLowerInvariant() ?? probed.Codec ?? MediaTypes.CodecFor(name);
+        item.Container = said?.Container?.ToLowerInvariant() ?? MediaTypes.ContainerFor(name);
+        item.BitrateKbps = said?.BitrateKbps ?? probed.BitrateKbps;
+        item.EditionId = request.EditionId;
+        item.State = Data.ListenNowState.Playable;
+        item.ExpiresAt = DateTime.UtcNow + await listen.ExpiryAsync(ct);
+        await FinishJobAsync(job, JobStatus.Succeeded, $"Ready to play ({item.Codec ?? "unknown codec"}{(item.BitrateKbps is { } kbps ? $", {kbps} kbps" : "")})", ct);
+        DeleteStaging(job);
+        await DeleteOtherStagingAsync(request.Id, job.Id, ct);
+        await SetAsync(request, RequestStatus.Playable, "Ready to play", ct);
+        logger.LogInformation(Diagnostics.LogEvents.Success, "[{Request}] Ready to listen to", request.Title);
     }
 
     /// <summary>

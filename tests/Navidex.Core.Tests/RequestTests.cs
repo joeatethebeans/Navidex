@@ -21,6 +21,7 @@ public sealed class RequestFixture : IAsyncLifetime
 
     public string Music => Path.Combine(_root, "music");
     public string Staging => Path.Combine(_root, "staging");
+    public string ListenNow => Path.Combine(_root, "listen-now");
     public WebApplicationFactory<Program> Factory { get; private set; } = null!;
     public NavidexClient Api { get; private set; } = null!;
     public FakeRetrieval Retrieval { get; private set; } = null!;
@@ -38,6 +39,7 @@ public sealed class RequestFixture : IAsyncLifetime
             .UseSetting("Navidex:DataPath", Path.Combine(_root, "data"))
             .UseSetting("Navidex:LibraryPath", Music)
             .UseSetting("Navidex:StagingPath", Staging)
+            .UseSetting("Navidex:ListenNowPath", ListenNow)
             .ConfigureServices(services =>
             {
                 services.Configure<PluginHttpOptions>(http =>

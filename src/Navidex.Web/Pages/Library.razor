@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject NavidexClient Api
 @inject Preferences Prefs
+@inject Player Player
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @inject NavigationManager Nav
 
@@ -69,7 +70,7 @@
             <div class="card">
                 <table class="table track-list">
                     @* Fixed widths: the first row is the scroller's spacer, which has no cells to size the columns by. *@
-                    <colgroup><col class="cover-col" /><col /><col class="format-col" /><col class="length-col" /></colgroup>
+                    <colgroup><col class="cover-col" /><col /><col class="format-col hide-narrow" /><col class="length-col" /><col class="action-col" /></colgroup>
                     <tbody>
                         <Virtualize Items="VisibleTracks.ToList()" Context="track" ItemSize="57" SpacerElement="tr" OverscanCount="10">
                             <tr>
@@ -84,8 +85,9 @@
                                         @if (track.AlbumId is { } id) { <span> · <a href="albums/@id">@track.AlbumTitle</a></span> }
                                     </div>
                                 </td>
-                                <td class="num muted small">@track.Format</td>
+                                <td class="num muted small hide-narrow">@track.Format</td>
                                 <td class="num muted">@Format.Duration(track.DurationSeconds)</td>
+                                <td class="num actions"><button class="link small" title="Play the tracks listed from here" @onclick="() => PlayFromAsync(track)">Play</button></td>
                             </tr>
                         </Virtualize>
                     </tbody>
@@ -154,6 +156,12 @@
     private IEnumerable<LibraryAlbum> VisibleAlbums => _albums!
         .Where(a => Matches(a.Album.Title, a.ArtistName))
         .Where(a => !Prefs.OnlyMissing || a.Album.Status == AlbumStatus.Partial);
+
+    private Task PlayFromAsync(LibraryTrack from)
+    {
+        var tracks = VisibleTracks.ToList();
+        return Player.PlayAsync(tracks.Select(PlayerEntry.Owned).ToList(), tracks.IndexOf(from));
+    }
 
     private IEnumerable<LibraryTrack> VisibleTracks => _tracks!.Where(t => Matches(t.Title, t.ArtistCredit, t.AlbumTitle));
 

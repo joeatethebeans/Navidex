@@ -11,6 +11,8 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<NavidexClient>();
 builder.Services.AddScoped<Preferences>();
+builder.Services.AddScoped<ServerEvents>();
 builder.Services.AddScoped<RequestTracker>();
+builder.Services.AddScoped<Player>();
 
 await builder.Build().RunAsync();

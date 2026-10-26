@@ -87,6 +87,9 @@ public enum RequestStatus
 
     Failed,
     Cancelled,
+
+    /// <summary>A listen-now request whose file is ready to play; it isn't in the library unless added.</summary>
+    Playable,
 }
 
 /// <summary>Something a user or app asked for.</summary>
@@ -201,6 +204,10 @@ public class ListenNowItem
     public Request Request { get; set; } = null!;
     public Guid TrackId { get; set; }
     public Track Track { get; set; } = null!;
+
+    /// <summary>The edition the track is fetched as, and filed under if it's added to the library.</summary>
+    public Guid? EditionId { get; set; }
+
     public ListenNowState State { get; set; }
 
     /// <summary>Path relative to the listen-now store.</summary>
@@ -211,7 +218,10 @@ public class ListenNowItem
     public int? BitrateKbps { get; set; }
     public DateTime? LastPlayedAt { get; set; }
 
-    /// <summary>One hour after the last play; each play pushes it back.</summary>
+    /// <summary>
+    /// When the file is deleted unless it's added: the expiry setting (an hour by default) after it became playable or
+    /// was last played, whichever is later.
+    /// </summary>
     public DateTime? ExpiresAt { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

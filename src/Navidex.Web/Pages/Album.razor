@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject NavidexClient Api
 @inject RequestTracker Tracker
+@inject Player Player
 
 <PageTitle>@(_album?.Album.Title ?? "Album") · Navidex</PageTitle>
 
@@ -29,12 +30,21 @@ else
                 @if (album.Ignored) { <span class="badge neutral">Ignored</span> }
                 <ProviderIds Ids="album.Ids" Entity="release-group" />
             </div>
-            @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial && _album.Editions.Count > 0)
+            @if (_album.Editions.Count > 0 && _album.Tracks.Any(t => t.Status is not TrackStatus.Ignored))
             {
+                var missing = _album.Tracks.Any(t => t.Status == TrackStatus.Missing);
                 <div class="row" style="margin-top: .5rem;">
-                    <FetchButton Kind="RequestKind.Album" Id="album.Id" EditionId="_album.ShownEditionId" Primary="true"
-                                 Label="@(album.Status == AlbumStatus.Partial ? "Get missing tracks" : "Get album")"
-                                 Hint="Fetch it as the edition shown below" />
+                    <button class="primary play-link" disabled="@_starting"
+                            title="@(missing ? "Play it in order; tracks you don't have are fetched to listen to, without adding them to your library" : "Play the album")"
+                            @onclick="() => PlayAlbumAsync(null)">
+                        <svg viewBox="0 0 24 24"><path d="M7 4.5v15L19 12z" /></svg>@(_album.Tracks.Any(t => t.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere) ? "Play" : "Listen now")
+                    </button>
+                    @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
+                    {
+                        <FetchButton Kind="RequestKind.Album" Id="album.Id" EditionId="_album.ShownEditionId"
+                                     Label="@(album.Status == AlbumStatus.Partial ? "Get missing tracks" : "Get album")"
+                                     Hint="Fetch it into your library as the edition shown below" />
+                    }
                 </div>
             }
         </div>
@@ -76,7 +86,7 @@ else
                 <tbody>
                     @foreach (var track in _album.Tracks)
                     {
-                        <tr class="@(track.Status == TrackStatus.Ignored ? "dim" : "")">
+                        <tr class="@(track.Status == TrackStatus.Ignored ? "dim" : "") @(Player.IsNow(track.TrackId) ? "playing" : "")">
                             <td class="num muted nowrap">@(MultiDisc ? $"{track.Disc}-" : "")@track.Number</td>
                             <td>
                                 @track.Title
@@ -86,6 +96,15 @@ else
                             <td class="num hide-narrow muted">@Format.Duration(track.DurationSeconds)</td>
                             <td><StatusBadge Track="track.Status" /></td>
                             <td class="num actions">
+                                @if (track.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere)
+                                {
+                                    <button class="link small" title="Play the tracks you have from here" @onclick="() => PlayOwnedFromAsync(track)">Play</button>
+                                }
+                                else if (track.Status == TrackStatus.Missing)
+                                {
+                                    <button class="link small" title="Fetch it to listen to, without adding it to your library"
+                                            @onclick="() => Player.ListenAsync(track.TrackId, _album.ShownEditionId)">Listen</button>
+                                }
                                 @if (track.Status == TrackStatus.Missing && Tracker.Find(RequestKind.Album, album.Id) is not { Active: true })
                                 {
                                     <FetchButton Kind="RequestKind.Track" Id="track.TrackId" EditionId="_album.ShownEditionId" Hint="Fetch this track" />
@@ -118,6 +137,8 @@ else
         ScanStatus.LibraryChanged += Reload;
         Tracker.Changed -= Redraw;
         Tracker.Changed += Redraw;
+        Player.Changed -= Redraw;
+        Player.Changed += Redraw;
         return LoadAsync(null);
     }
 
@@ -133,6 +154,22 @@ else
     {
         ScanStatus.LibraryChanged -= Reload;
         Tracker.Changed -= Redraw;
+        Player.Changed -= Redraw;
+    }
+
+    private bool _starting;
+
+    private async Task PlayAlbumAsync(Guid? fromTrack)
+    {
+        _starting = true;
+        await Player.PlayAlbumAsync(_album!, fromTrack);
+        _starting = false;
+    }
+
+    private Task PlayOwnedFromAsync(TrackRow from)
+    {
+        var owned = _album!.Tracks.Where(t => t.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere).ToList();
+        return Player.PlayAsync(owned.Select(t => PlayerEntry.Owned(t, _album.Album, _album.ShownEditionId)).ToList(), owned.IndexOf(from));
     }
 
     private async Task LoadAsync(Guid? editionId)

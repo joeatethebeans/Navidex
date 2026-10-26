@@ -104,6 +104,15 @@ else
                 of each source's results before moving to the next source
             </label>
         </div>
+        <div class="field">
+            <label>
+                Keep listen-now tracks for
+                <input type="number" min="5" max="10080" style="width: 5rem;" value="@_fetch.ListenNowExpiryMinutes"
+                       @onchange="e => _fetch = _fetch with { ListenNowExpiryMinutes = Clamp(e, 5, 10080, _fetch.ListenNowExpiryMinutes) }" />
+                minutes after they were last played
+            </label>
+            <div class="muted small">A track fetched to listen to, and not added to the library, is deleted after this.</div>
+        </div>
     </div>
 
     <h2>Log</h2>

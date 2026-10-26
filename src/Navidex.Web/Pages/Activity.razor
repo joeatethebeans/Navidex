@@ -60,7 +60,7 @@ else
                         <span class="chevron @(open ? "open" : "")" aria-hidden="true"></span>
                         <span class="request-title">@request.Title</span>
                     </button>
-                    <span class="muted small hide-narrow">@request.Kind</span>
+                    <span class="muted small hide-narrow">@(request.ListenNow ? "listen now" : request.Kind.ToString())</span>
                     <span class="badge @Format.RequestBadge(request.State)">@Format.RequestLabel(request)</span>
                     <span class="spacer"></span>
                     <span class="muted small hide-narrow" title="@request.UpdatedAt.ToLocalTime()">@Format.Ago(request.UpdatedAt)</span>

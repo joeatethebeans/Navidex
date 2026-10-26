@@ -7,8 +7,10 @@ using Navidex.Core.Artwork;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
 using Navidex.Core.Diagnostics;
+using Navidex.Core.Events;
 using Navidex.Core.Import;
 using Navidex.Core.Library;
+using Navidex.Core.Listening;
 using Navidex.Core.Plugins;
 using Navidex.Core.Requests;
 using Navidex.Core.Tasks;
@@ -21,9 +23,10 @@ builder.Services.AddOptions<PluginHttpOptions>();
 
 Directory.CreateDirectory(options.DataPath);
 builder.Services.AddSingleton<LibraryCache>();
+builder.Services.AddSingleton<EventFeed>();
 builder.Services.AddDbContext<NavidexDbContext>((services, db) => db
     .UseSqlite(builder.Configuration.GetConnectionString("Navidex") ?? $"Data Source={Path.Combine(options.DataPath, "navidex.db")}")
-    .AddInterceptors(services.GetRequiredService<LibraryCache>()));
+    .AddInterceptors(services.GetRequiredService<LibraryCache>(), services.GetRequiredService<EventFeed>()));
 
 // The activity log the web app shows. Registered as a provider so everything logged reaches it.
 var activity = new ActivityLog();
@@ -69,6 +72,9 @@ builder.Services.AddSingleton<RequestCancellations>();
 builder.Services.AddScoped<RequestService>();
 builder.Services.AddScoped<RequestPlanner>();
 builder.Services.AddScoped<RequestPipeline>();
+builder.Services.AddSingleton<StreamSigner>();
+builder.Services.AddScoped<ListenNowService>();
+builder.Services.AddHostedService<ListenNowSweeper>();
 builder.Services.AddHostedService<RequestWorker>();
 
 builder.Services.AddOpenApi("v1", openApi => openApi.AddDocumentTransformer((document, _, _) =>
@@ -88,6 +94,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
     await IndexPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
     await ArtworkPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
+    await app.Services.GetRequiredService<StreamSigner>().InitialiseAsync(db);
 }
 
 // Work out the library page in the background, so the first visit after starting is quick too.
@@ -117,6 +124,7 @@ api.MapSystemEndpoints();
 api.MapLibraryEndpoints();
 api.MapCatalogueEndpoints();
 api.MapRequestEndpoints();
+api.MapListenEndpoints();
 api.MapPluginEndpoints();
 
 // The web app: Blazor WebAssembly, served from the same origin and talking only to the public API.

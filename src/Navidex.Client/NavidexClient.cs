@@ -100,6 +100,39 @@ public sealed class NavidexClient(HttpClient http)
     public Task<RequestInfo?> GetRequestAsync(Guid id, CancellationToken ct = default) =>
         GetOrNullAsync<RequestInfo>($"{Api}/requests/{id}", ct);
 
+    // ---- Listen now ----
+
+    /// <summary>Starts listening to a track, or to an album's missing tracks in order.</summary>
+    public async Task<IReadOnlyList<ListenNowInfo>> StartListeningAsync(StartListen start, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/listen", start, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<List<ListenNowInfo>>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task<IReadOnlyList<ListenNowInfo>> ListListeningAsync(CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<ListenNowInfo>>($"{Api}/listen", NavidexJson.Options, ct) ?? [];
+
+    public Task<ListenNowInfo?> GetListeningAsync(Guid id, CancellationToken ct = default) => GetOrNullAsync<ListenNowInfo>($"{Api}/listen/{id}", ct);
+
+    /// <summary>Adds a playable listen-now track to the library.</summary>
+    public async Task<ListenNowInfo> AddListeningAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsync($"{Api}/listen/{id}/add", null, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<ListenNowInfo>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task DiscardListeningAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await http.DeleteAsync($"{Api}/listen/{id}", ct);
+        await EnsureAsync(response, ct);
+    }
+
+    /// <summary>How to play a track you have; null if you don't have it.</summary>
+    public Task<PlayInfo?> GetPlayInfoAsync(Guid trackId, Guid? editionId = null, CancellationToken ct = default) =>
+        GetOrNullAsync<PlayInfo>($"{Api}/tracks/{trackId}/play{(editionId is { } e ? $"?edition={e}" : "")}", ct);
+
     public async Task CancelRequestAsync(Guid id, CancellationToken ct = default)
     {
         using var response = await http.DeleteAsync($"{Api}/requests/{id}", ct);

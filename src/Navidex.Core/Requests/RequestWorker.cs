@@ -11,7 +11,9 @@ namespace Navidex.Core.Requests;
 /// <summary>
 /// Works through queued requests, oldest first, a few at a time (Settings: parallel fetches). Planning splits artist
 /// and album requests into parts, which join the queue; everything else goes through the pipeline. Requests a restart
-/// interrupted start again from the top. Nothing starts while a scan is reading the library.
+/// interrupted start again from the top. Nothing starts while a scan is reading the library, except listen-now
+/// requests, which don't touch it. Listen-now requests have slots of their own, so someone waiting to hear a track
+/// isn't stuck behind a long album fetch.
 /// </summary>
 public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal signal, RequestCancellations cancellations, ILogger<RequestWorker> logger)
     : BackgroundService
@@ -20,6 +22,7 @@ public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal sig
         [RequestStatus.Searching, RequestStatus.Fetching, RequestStatus.Verifying, RequestStatus.Importing, RequestStatus.Notifying];
 
     private readonly ConcurrentDictionary<Guid, Task> _running = new();
+    private readonly ConcurrentDictionary<Guid, bool> _listening = new();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -27,22 +30,32 @@ public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal sig
         while (!stoppingToken.IsCancellationRequested)
         {
             foreach (var done in _running.Where(r => r.Value.IsCompleted).Select(r => r.Key).ToList())
-                _running.TryRemove(done, out _);
-
-            int parallel;
-            List<Guid> next;
-            using (var scope = scopes.CreateScope())
             {
-                parallel = Math.Clamp((await scope.ServiceProvider.GetRequiredService<SettingsService>().GetFetchAsync(stoppingToken)).ParallelFetches, 1, 8);
-                var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
-                var busy = _running.Keys.ToList();
-                // While a scan reads the library, queued requests wait: the scan may find they're already there.
-                next = await scope.ServiceProvider.GetRequiredService<LibraryReading>().IsBusyAsync(db, stoppingToken) ? [] : await db.Requests.Where(r => r.Status == RequestStatus.Queued && !busy.Contains(r.Id))
-                    .OrderBy(r => r.CreatedAt).Select(r => r.Id).Take(Math.Max(0, parallel - _running.Count)).ToListAsync(stoppingToken);
+                _running.TryRemove(done, out _);
+                _listening.TryRemove(done, out _);
             }
 
-            foreach (var id in next)
+            var next = new List<(Guid Id, bool Listening)>();
+            using (var scope = scopes.CreateScope())
+            {
+                var parallel = Math.Clamp((await scope.ServiceProvider.GetRequiredService<SettingsService>().GetFetchAsync(stoppingToken)).ParallelFetches, 1, 8);
+                var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
+                var busy = _running.Keys.ToList();
+                var listening = _listening.Count;
+                next.AddRange((await db.Requests.Where(r => r.Status == RequestStatus.Queued && r.Mode == RequestMode.ListenNow && !busy.Contains(r.Id))
+                    .OrderBy(r => r.CreatedAt).Select(r => r.Id).Take(Math.Max(0, parallel - listening)).ToListAsync(stoppingToken)).Select(id => (id, true)));
+                // While a scan reads the library, other requests wait: the scan may find they're already there.
+                if (!await scope.ServiceProvider.GetRequiredService<LibraryReading>().IsBusyAsync(db, stoppingToken))
+                    next.AddRange((await db.Requests.Where(r => r.Status == RequestStatus.Queued && r.Mode == RequestMode.Permanent && !busy.Contains(r.Id))
+                        .OrderBy(r => r.CreatedAt).Select(r => r.Id).Take(Math.Max(0, parallel - (_running.Count - listening))).ToListAsync(stoppingToken)).Select(id => (id, false)));
+            }
+
+            foreach (var (id, listening) in next)
+            {
+                if (listening)
+                    _listening[id] = true;
                 _running[id] = Task.Run(() => RunAsync(id, stoppingToken), CancellationToken.None);
+            }
 
             // Wake on new work, or when a slot frees up.
             var wait = signal.WaitAsync(TimeSpan.FromSeconds(30), stoppingToken);

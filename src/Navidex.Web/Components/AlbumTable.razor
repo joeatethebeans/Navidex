@@ -1,4 +1,6 @@
 @* A list of albums with their status. *@
+@inject Player Player
+
 <div class="card">
     <table class="table albums">
         <thead>
@@ -27,6 +29,11 @@
                     <td><StatusBadge Album="album.Status" /></td>
                     <td class="num hide-narrow muted">@Format.Tracks(album)</td>
                     <td class="num actions">
+                        @if (!album.Ignored)
+                        {
+                            <button class="link small" title="@(album.Status is AlbumStatus.Complete or AlbumStatus.Covered ? "Play the album" : "Play it in order, fetching tracks you don't have to listen to")"
+                                    @onclick="() => Player.PlayAlbumAsync(album.Id)">@(album.Status == AlbumStatus.Missing ? "Listen" : "Play")</button>
+                        }
                         @if (album.Status == AlbumStatus.Partial || album.Status == AlbumStatus.Missing && !album.Ignored)
                         {
                             <FetchButton Kind="RequestKind.Album" Id="album.Id" Hint="@(album.Status == AlbumStatus.Partial ? "Fetch the tracks you're missing" : "Fetch this album")" />

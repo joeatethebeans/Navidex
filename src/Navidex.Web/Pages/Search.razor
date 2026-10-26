@@ -1,6 +1,7 @@
 @page "/search"
 @inject NavidexClient Api
 @inject NavigationManager Navigation
+@inject Player Player
 
 <PageTitle>Search · Navidex</PageTitle>
 
@@ -60,7 +61,7 @@ else if (_results is not null)
         <h2>Albums</h2>
         <div class="card">
             <table class="table track-list">
-                <colgroup><col class="cover-col" /><col /><col class="status-col" /><col class="action-col" /></colgroup>
+                <colgroup><col class="cover-col" /><col /><col class="status-col" /><col class="wide-action-col" /></colgroup>
                 <tbody>
                     @foreach (var album in _results.Albums)
                     {
@@ -74,6 +75,8 @@ else if (_results is not null)
                             </td>
                             <td class="num"><StatusBadge Album="album.Status" /></td>
                             <td class="num actions">
+                                <button class="link small" title="@(album.Status is AlbumStatus.Complete or AlbumStatus.Covered ? "Play the album" : "Play it in order, fetching tracks you don't have to listen to")"
+                                        @onclick="() => Player.PlayAlbumAsync(album.Id)">@(album.Status == AlbumStatus.Missing ? "Listen" : "Play")</button>
                                 @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
                                 {
                                     <FetchButton Kind="RequestKind.Album" Id="album.Id" />
@@ -90,7 +93,15 @@ else if (_results is not null)
         <h2>Tracks</h2>
         @TrackList(track => @<text>
             <StatusBadge Track="track.Owned ? TrackStatus.Owned : TrackStatus.Missing" />
-            @if (!track.Owned) { <FetchButton Kind="RequestKind.Track" Id="track.Id" /> }
+            @if (track.Owned)
+            {
+                <button class="link small" @onclick="() => Player.PlayAsync([PlayerEntry.Owned(track)])">Play</button>
+            }
+            else
+            {
+                <button class="link small" title="Fetch it to listen to, without adding it to your library" @onclick="() => Player.ListenAsync(track.Id)">Listen</button>
+                <FetchButton Kind="RequestKind.Track" Id="track.Id" />
+            }
         </text>)
     }
 }

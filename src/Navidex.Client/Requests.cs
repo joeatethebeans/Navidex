@@ -26,6 +26,9 @@ public enum RequestState
     NeedsReview,
     Failed,
     Cancelled,
+
+    /// <summary>A listen-now request whose file is ready to play.</summary>
+    Playable,
 }
 
 /// <summary>Body of <c>POST /requests</c>.</summary>
@@ -43,6 +46,7 @@ public sealed record ChooseCandidate(Guid JobId, string CandidateId);
 /// <param name="Parts">For artist and album requests: how many parts there are and where they stand.</param>
 /// <param name="Children">The parts themselves, on <c>GET /requests/{id}</c> only.</param>
 /// <param name="Jobs">Attempts through retrieval plugins, oldest first, on <c>GET /requests/{id}</c> only.</param>
+/// <param name="ListenNow">A track fetched to listen to, not for the library; see <c>/listen</c>.</param>
 public sealed record RequestInfo(
     Guid Id,
     RequestKind Kind,
@@ -56,10 +60,11 @@ public sealed record RequestInfo(
     DateTime UpdatedAt,
     RequestParts? Parts = null,
     IReadOnlyList<RequestInfo>? Children = null,
-    IReadOnlyList<JobInfo>? Jobs = null)
+    IReadOnlyList<JobInfo>? Jobs = null,
+    bool ListenNow = false)
 {
     /// <summary>Whether it can still change: not in the library, failed, needing review or cancelled.</summary>
-    public bool Active => State is not (RequestState.InLibrary or RequestState.NeedsReview or RequestState.Failed or RequestState.Cancelled);
+    public bool Active => State is not (RequestState.InLibrary or RequestState.NeedsReview or RequestState.Failed or RequestState.Cancelled or RequestState.Playable);
 }
 
 /// <summary>How the parts of an artist or album request stand.</summary>
@@ -131,4 +136,7 @@ public sealed record FetchSettings
 
     /// <summary>How many of a plugin's candidates to try before moving on to the next plugin, from 1 to 5.</summary>
     public int CandidatesPerPlugin { get; init; } = 2;
+
+    /// <summary>How long a listen-now track that isn't added is kept after it was last played, from 5 minutes to a week.</summary>
+    public int ListenNowExpiryMinutes { get; init; } = 60;
 }
