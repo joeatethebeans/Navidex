@@ -18,20 +18,28 @@
     </div>
 }
 
-<form class="toolbar" @onsubmit="SubmitAsync">
-    <input type="search" placeholder="Artist, album or track" @bind="_query" @bind:event="oninput" @bind:after="TypedAsync" aria-label="Search" />
-    <button class="primary" type="submit" disabled="@(_query.Trim().Length == 0)">Search</button>
-    @if (_remoteBusy || _localBusy)
+<div class="library-bar search-bar">
+    <div class="toolbar one-line">
+        <input class="filter search-box" type="search" placeholder="@SearchHint" aria-label="Search" @bind="_query" @bind:event="oninput" @bind:after="TypedAsync"
+               @onkeydown="KeyAsync" />
+        <button class="icon-button filter-toggle @(_searchOpen ? "on" : "")" type="button" title="Search" aria-label="Search"
+                aria-expanded="@(_searchOpen ? "true" : "false")" @onclick="ToggleSearch">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
+        </button>
+        <Segmented T="string" Value="_kind" Options="Kinds" OnChange="KindAsync" Label="Show" />
+        <Segmented T="string" Value="_owned" Options="OwnedOptions" OnChange="v => _owned = v" Label="In your library" />
+        <SortMenu Options="SortOptions" Value="@_sort" Descending="_descending" CanReverse="@(_sort != "relevance")" DirectionHint="@DirectionHint"
+                  OnChange="key => _sort = key" OnReverse="() => _descending = !_descending" />
+        <span class="spinner ownership-busy @(_remoteBusy || _localBusy ? "on" : "")" role="status" aria-label="@(_remoteBusy || _localBusy ? "Searching" : null)"></span>
+    </div>
+    @* Where there's no room for the box in the row, it shows below it, open to start with: searching is what the page is for. *@
+    @if (_searchOpen)
     {
-        <span class="spinner search-busy" role="status" aria-label="Searching"></span>
+        <div class="filter-drop">
+            <input type="search" placeholder="@SearchHint" aria-label="Search" @ref="_searchDrop" @bind="_query" @bind:event="oninput" @bind:after="TypedAsync"
+                   @onkeydown="KeyAsync" />
+        </div>
     }
-</form>
-
-<div class="toolbar">
-    <Segmented T="string" Value="_kind" Options="Kinds" OnChange="KindAsync" Label="Show" />
-    <Segmented T="string" Value="_owned" Options="OwnedOptions" OnChange="v => _owned = v" Label="In your library" />
-    <SortMenu Options="SortOptions" Value="@_sort" Descending="_descending" CanReverse="@(_sort != "relevance")" DirectionHint="@DirectionHint"
-              OnChange="key => _sort = key" OnReverse="() => _descending = !_descending" />
 </div>
 
 @if (_results is null)
@@ -40,21 +48,50 @@
     {
         <div class="notice error">@_searchError</div>
     }
-    else if (_recent.Count > 0)
+    else if (_recentArtists.Count > 0 || _recent.Count > 0)
     {
-        <div class="section-head">
-            <h2>Recent searches</h2>
-            <button class="link small muted" @onclick="ClearRecentAsync">Clear</button>
-        </div>
-        <div class="recent-searches">
-            @foreach (var recent in _recent)
-            {
-                <span class="chip">
-                    <a href="@SearchLink(recent)">@recent</a>
-                    <button class="chip-remove" title="Forget this search" aria-label="Forget @recent" @onclick="() => ForgetAsync(recent)">×</button>
-                </span>
-            }
-        </div>
+        @if (_recentArtists.Count > 0)
+        {
+            <div class="section-head">
+                <h2>Recent artists</h2>
+                <button class="link small muted" @onclick="ClearRecentArtistsAsync">Clear</button>
+            </div>
+            <div class="tiles recent-artists">
+                @foreach (var artist in _recentArtists)
+                {
+                    <div class="tile-wrap" @key="artist.Id">
+                        <a class="tile" href="artists/@artist.Id" title="@(artist.Disambiguation is null ? artist.Name : $"{artist.Name} ({artist.Disambiguation})")"
+                           @onclick="() => RememberArtistAsync(artist)">
+                            <Cover Url="@artist.ImageUrl" Artist="true" />
+                            <div class="tile-name">@artist.Name</div>
+                            @if (artist.Disambiguation is not null) { <div class="muted small tile-sub">@artist.Disambiguation</div> }
+                        </a>
+                        <IconButton Icon="cancel" Class="remove tile-remove" Title="@($"Forget {artist.Name}")" OnClick="() => ForgetArtistAsync(artist)" />
+                    </div>
+                }
+            </div>
+        }
+        @if (_recent.Count > 0)
+        {
+            <div class="section-head">
+                <h2>Recent searches</h2>
+                <button class="link small muted" @onclick="ClearRecentAsync">Clear</button>
+            </div>
+            <div class="recent-searches">
+                @foreach (var recent in _recent)
+                {
+                    <span class="chip">
+                        <a href="@SearchLink(recent)">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M12 8v4l2.5 2.5" /></svg>
+                            <span class="ellipsis">@recent</span>
+                        </a>
+                        <button class="chip-remove" title="Forget this search" aria-label="Forget @recent" @onclick="() => ForgetAsync(recent)">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" /></svg>
+                        </button>
+                    </span>
+                }
+            </div>
+        }
     }
     else
     {
@@ -66,6 +103,8 @@
 }
 else
 {
+    @* Using a result (opening it, playing it, fetching it) is what makes a search worth remembering. *@
+    <div class="search-results" @onclick="UsedResultsAsync">
     @if (_remoteBusy)
     {
         <Loading Inline="true" Text="@(_localOnly ? "Showing what Navidex already knows; searching MusicBrainz…" : "Searching MusicBrainz…")" />
@@ -91,7 +130,8 @@ else
         <div class="tiles">
             @foreach (var artist in Artists)
             {
-                <a class="tile" href="artists/@artist.Id" title="@(artist.Disambiguation is null ? artist.Name : $"{artist.Name} ({artist.Disambiguation})")">
+                <a class="tile" href="artists/@artist.Id" title="@(artist.Disambiguation is null ? artist.Name : $"{artist.Name} ({artist.Disambiguation})")"
+                   @onclick="() => RememberArtistAsync(new RecentArtist(artist.Id, artist.Name, artist.Disambiguation, artist.ImageUrl))">
                     <Cover Url="@artist.ImageUrl" Artist="true" />
                     <div class="tile-name">@artist.Name</div>
                     @if (artist.Disambiguation is not null) { <div class="muted small tile-sub">@artist.Disambiguation</div> }
@@ -146,7 +186,6 @@ else
     {
         <h2>Tracks</h2>
         @TrackList(track => @<text>
-            <StatusBadge Track="track.Owned ? TrackStatus.Owned : TrackStatus.Missing" />
             @if (track.Owned)
             {
                 <IconButton Icon="play" Title="Play" OnClick="() => Player.PlayAsync([PlayerEntry.Owned(track)])" />
@@ -161,6 +200,7 @@ else
             }
         </text>)
     }
+    </div>
 }
 
 @code {
@@ -173,7 +213,12 @@ else
         [("", "All", null), ("artists", "Artists", "Only artists, which is quicker"), ("albums", "Albums", "Only albums, which is quicker"), ("tracks", "Tracks", "Only tracks, which is quicker")];
 
     private static readonly IReadOnlyList<(string Value, string Label, string? Hint)> OwnedOptions =
-        [("", "Any", null), ("owned", "In library", "Only what you have"), ("missing", "Not in library", "Only what you don't have")];
+        [("", "All", "Whether you have it or not"), ("owned", "Owned", "Only what you have"), ("missing", "Missing", "Only what you don't have")];
+
+    private const string SearchHint = "Artist, album or track";
+
+    /// <summary>An artist opened from the search results, kept to open again.</summary>
+    public sealed record RecentArtist(Guid Id, string Name, string? Disambiguation, string? ImageUrl);
 
     private static readonly IReadOnlyList<(string Key, string Label)> SortOptions = [("relevance", "Best match"), ("name", "Name"), ("year", "Year")];
 
@@ -185,7 +230,19 @@ else
     };
 
     private const string RecentKey = "recentSearches";
+    private const string RecentArtistsKey = "recentArtists";
     private const int RecentCount = 12;
+
+    /// <summary>How long typing pauses before MusicBrainz is asked, too: long enough not to ask about half a word.</summary>
+    private static readonly TimeSpan RemotePause = TimeSpan.FromMilliseconds(700);
+
+    private List<RecentArtist> _recentArtists = [];
+    private bool _searchOpen = true;
+    private bool _focusSearch;
+    private ElementReference _searchDrop;
+
+    // The search the page has run itself, as you typed: its address changing needn't run it again.
+    private string? _shown;
 
     private string _query = "";
     private string _kind = "";
@@ -226,10 +283,18 @@ else
 
     private List<SearchTrack> Tracks => _results is null ? [] : Sort(_results.Tracks.Where(t => Shows(t.Owned)), t => t.Title, _ => null).ToList();
 
-    protected override async Task OnInitializedAsync() => _recent = await Prefs.GetAsync<List<string>>(RecentKey, []);
+    protected override async Task OnInitializedAsync()
+    {
+        _recent = await Prefs.GetAsync<List<string>>(RecentKey, []);
+        _recentArtists = await Prefs.GetAsync<List<RecentArtist>>(RecentArtistsKey, []);
+    }
 
     protected override async Task OnParametersSetAsync()
     {
+        // The address followed what's being typed; what's typed may have moved on since, so leave it be.
+        if (_shown is not null && (Query ?? "").Trim() == _shown)
+            return;
+        _shown = null;
         _query = Query ?? "";
         _file = FileId is { } fileId ? (await Api.GetReviewAsync()).FirstOrDefault(i => i.FileId == fileId) : null;
         _searchError = null;
@@ -243,12 +308,13 @@ else
     // Matches from what Navidex already holds show at once. MusicBrainz is asked for artists, albums and tracks
     // separately, and each answer is added as it comes, so quick ones (artists, usually) needn't wait for the slowest:
     // what's shown keeps its place, with MusicBrainz's newer details, and the rest follows.
-    private async Task SearchAsync(string text)
+    private async Task SearchAsync(string text, bool remember = true)
     {
         var search = ++_searches;
         _remoteBusy = true;
         _searchError = null;
-        await RememberAsync(text);
+        if (remember)
+            await RememberAsync(text);
         var pending = (KindList ?? AllKinds).Select(kind => Api.SearchAsync(text, [kind])).ToList();
         // What's shown may still be the last search's, kept so the page doesn't flash: the first answer replaces it.
         var ours = false;
@@ -303,11 +369,23 @@ else
         return [.. shown.Select(s => newer.GetValueOrDefault(id(s), s)), .. found.Where(f => shown.All(s => id(s) != id(f)))];
     }
 
-    // As you type, what Navidex already holds; Enter asks MusicBrainz.
+    // As you type, what Navidex already holds; when typing pauses a little longer, MusicBrainz too, and the address
+    // follows. Enter asks MusicBrainz at once.
     private async Task TypedAsync()
     {
         _typing?.Cancel();
         var text = _query.Trim();
+        if (text.Length == 0)
+        {
+            // Cleared: back to the recent artists and searches.
+            ++_searches;
+            _results = null;
+            _searchError = null;
+            _remoteBusy = _localBusy = false;
+            _shown = "";
+            Navigation.NavigateTo(SearchLink(""), replace: true);
+            return;
+        }
         if (text.Length < 2)
             return;
         var typing = _typing = new CancellationTokenSource();
@@ -324,6 +402,13 @@ else
             _localOnly = true;
             _remoteBusy = false;
             _searchError = null;
+            _localBusy = false;
+            StateHasChanged();
+
+            await Task.Delay(RemotePause, typing.Token);
+            _shown = text;
+            Navigation.NavigateTo(SearchLink(text), replace: true);
+            await SearchAsync(text, remember: false);
         }
         catch (OperationCanceledException)
         {
@@ -336,6 +421,55 @@ else
             if (_typing == typing)
                 _localBusy = false;
         }
+    }
+
+    private async Task KeyAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await SubmitAsync();
+    }
+
+    private void ToggleSearch()
+    {
+        _searchOpen = !_searchOpen;
+        _focusSearch = _searchOpen;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusSearch)
+        {
+            _focusSearch = false;
+            await _searchDrop.FocusAsync();
+        }
+    }
+
+    // Opening, playing or fetching something from the results.
+    private async Task UsedResultsAsync()
+    {
+        var text = _query.Trim();
+        if (text.Length > 0 && _recent.FirstOrDefault() != text)
+            await RememberAsync(text);
+    }
+
+    private async Task RememberArtistAsync(RecentArtist artist)
+    {
+        _recentArtists = [artist, .. _recentArtists.Where(a => a.Id != artist.Id)];
+        if (_recentArtists.Count > RecentCount)
+            _recentArtists = _recentArtists[..RecentCount];
+        await Prefs.SetAsync(RecentArtistsKey, _recentArtists);
+    }
+
+    private async Task ForgetArtistAsync(RecentArtist artist)
+    {
+        _recentArtists = _recentArtists.Where(a => a.Id != artist.Id).ToList();
+        await Prefs.SetAsync(RecentArtistsKey, _recentArtists);
+    }
+
+    private async Task ClearRecentArtistsAsync()
+    {
+        _recentArtists = [];
+        await Prefs.SetAsync(RecentArtistsKey, _recentArtists);
     }
 
     private async Task KindAsync(string kind)
@@ -375,19 +509,26 @@ else
             return Task.CompletedTask;
         // The same search again (a press of Enter after typing) doesn't change the address, so run it here.
         if (text == (Query ?? "").Trim())
-            return SearchAsync(text);
+            return _shown == text && !_remoteBusy && _searchError is null ? RememberAsync(text) : SearchAsync(text);
         Navigation.NavigateTo(SearchLink(text));
         return Task.CompletedTask;
     }
 
     public void Dispose() => _typing?.Cancel();
 
-    /// <summary>Tracks as the library lists them, with their album's cover, and what can be done with each.</summary>
+    /// <summary>
+    /// Tracks as the library lists them, with their album's cover and what can be done with each; and whether you have
+    /// them, unless a file's song is being chosen.
+    /// </summary>
     private RenderFragment TrackList(RenderFragment<SearchTrack> actions) => __builder =>
     {
         <div class="card">
             <table class="table track-list">
-                <colgroup><col class="cover-col" /><col /><col class="length-col hide-narrow" /><col class="wide-action-col" /></colgroup>
+                <colgroup>
+                    <col class="cover-col" /><col /><col class="length-col hide-narrow" />
+                    @if (_file is null) { <col class="status-col" /> }
+                    <col class="wide-action-col" />
+                </colgroup>
                 <tbody>
                     @foreach (var track in Tracks)
                     {
@@ -404,6 +545,10 @@ else
                                 </div>
                             </td>
                             <td class="num muted hide-narrow">@Format.Duration(track.DurationSeconds)</td>
+                            @if (_file is null)
+                            {
+                                <td class="num"><StatusBadge Track="track.Owned ? TrackStatus.Owned : TrackStatus.Missing" /></td>
+                            }
                             <td class="num actions">@actions(track)</td>
                         </tr>
                     }

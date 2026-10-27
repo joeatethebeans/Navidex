@@ -63,6 +63,7 @@ public static class Format
         Client.RequestState.NeedsReview => "partial",
         Client.RequestState.Failed => "missing",
         Client.RequestState.Cancelled => "neutral",
+        Client.RequestState.Queued => "active waiting",
         _ => "active",
     };
 
@@ -78,6 +79,7 @@ public static class Format
     {
         TaskState.Succeeded => "owned",
         TaskState.Failed => "missing",
+        TaskState.Queued => "active waiting",
         _ => "active",
     };
 

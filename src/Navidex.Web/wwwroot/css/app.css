@@ -219,6 +219,13 @@ h2.section { margin: 1.5rem 0 .5rem; }
 
 /* Requests on their way: a badge in the accent colour, linking to the Activity page. */
 .badge.active { color: var(--accent); background: var(--bg); border: 1px solid var(--accent); }
+/* Something happening right now shimmers; something only waiting its turn doesn't. */
+.badge.active:not(.waiting) {
+    background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--accent) 28%, transparent) 50%, transparent 70%);
+    background-size: 250% 100%; background-repeat: no-repeat; animation: badge-shimmer 1.6s linear infinite;
+}
+@keyframes badge-shimmer { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+@media (prefers-reduced-motion: reduce) { .badge.active:not(.waiting) { animation: none; } }
 a.badge:hover { text-decoration: none; filter: brightness(1.1); }
 td.actions { white-space: nowrap; }
 td.actions > * + * { margin-left: .6rem; }
@@ -563,6 +570,8 @@ button .spinner { width: .85rem; height: .85rem; vertical-align: -2px; margin-ri
 /* The library's sort: what by, and which way. */
 /* Toolbar controls share one height, so a row of them lines up. */
 .toolbar { --control: 2.25rem; }
+/* Blazor focuses the heading after navigating, for screen readers; it needn't show. */
+h1:focus { outline: none; }
 .toolbar input[type=search], .toolbar select, .toolbar .icon-button, .toolbar > button, .toolbar .segmented { height: var(--control); box-sizing: border-box; }
 .toolbar .icon-button { min-width: var(--control); }
 .toolbar .segmented button { padding-top: 0; padding-bottom: 0; }
@@ -604,17 +613,39 @@ svg.flip { transform: scaleY(-1); }
     .toolbar.one-line { flex-wrap: wrap; }
 }
 
-/* Recent searches on the Search page. */
-.recent-searches { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+/* Recent artists and searches on the Search page, before anything's typed. */
+.recent-artists { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); margin: .75rem 0 1.5rem; }
+.recent-searches { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0 1.5rem; }
 .chip {
-    display: inline-flex; align-items: center; gap: .15rem; padding: .2rem .25rem .2rem .7rem;
-    border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+    display: inline-flex; align-items: center; gap: .25rem; height: 2.25rem; box-sizing: border-box; max-width: 100%;
+    padding: 0 .3rem 0 .8rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+    transition: border-color .15s;
 }
-.chip a { color: var(--text); }
-.chip-remove { border: none; background: none; color: var(--muted); padding: 0 .35rem; font-size: 1rem; line-height: 1; cursor: pointer; }
-.chip-remove:hover { color: var(--missing); }
+.chip:hover { border-color: var(--accent); }
+.chip a { display: inline-flex; align-items: center; gap: .45rem; min-width: 0; color: var(--text); text-decoration: none; }
+.chip a svg { width: .95rem; height: .95rem; flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
+.chip-remove {
+    display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; flex: none; padding: 0;
+    border: none; border-radius: 50%; background: none; color: var(--muted); cursor: pointer;
+}
+.chip-remove svg { width: .85rem; height: .85rem; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.chip-remove:hover { color: var(--missing); background: var(--missing-bg); }
+.toolbar.one-line .search-box { max-width: none; }
+/* The search page has more to fit: its box becomes a button sooner, and when even the rest won't fit on one line, the
+   box takes the first line to itself and the rest wrap below it, rather than a lone button. */
+@container (max-width: 900px) {
+    .search-bar .toolbar.one-line .filter { display: none; }
+    .search-bar .toolbar.one-line .filter-toggle { display: inline-flex; }
+    .search-bar .filter-drop { display: block; }
+}
+@container (max-width: 760px) {
+    .search-bar .toolbar.one-line { flex-wrap: wrap; }
+    .search-bar .toolbar.one-line .filter { display: block; flex: 1 1 100%; max-width: none; }
+    .search-bar .toolbar.one-line .filter-toggle, .search-bar .filter-drop { display: none; }
+    /* It would wrap to a line of its own; "Searching MusicBrainz…" below says as much. */
+    .search-bar .ownership-busy { display: none; }
+}
 .search-note { margin-bottom: .5rem; }
-.search-busy { width: 1rem; height: 1rem; color: var(--accent); }
 
 /* Settings: its sections down the left, or across the top on narrow screens. */
 .settings-page { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }

@@ -132,7 +132,8 @@
     private static string JobBadge(JobInfo job) => job.State switch
     {
         JobState.Succeeded => "owned",
-        JobState.Running or JobState.Queued => "active",
+        JobState.Running => "active",
+        JobState.Queued => "active waiting",
         JobState.Cancelled => "neutral",
         _ => "missing",
     };
