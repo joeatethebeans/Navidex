@@ -1,9 +1,9 @@
 @page "/settings"
+@layout SettingsLayout
 @inject NavidexClient Api
 
 <PageTitle>Settings · Navidex</PageTitle>
 
-<h1>Settings</h1>
 
 @if (_settings is null || _fetch is null || _log is null)
 {
@@ -142,7 +142,7 @@ else
         @if (_saveError is not null) { <span class="error small" title="@_saveError">@_saveError</span> }
     </div>
 
-    <p class="muted small">Plugins (sources, the media server and the catalogue) are set up under <a href="connections">Connections</a>.</p>
+    <p class="muted small">Plugins (sources, the media server and the catalogue) are set up under <a href="settings/connections">Connections</a>.</p>
 }
 
 @code {

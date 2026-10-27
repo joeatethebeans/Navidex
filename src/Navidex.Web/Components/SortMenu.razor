@@ -1,0 +1,51 @@
+@*
+    How a list is sorted, as two small buttons: one opens the list of ways to sort, the other reverses the order.
+*@
+<div class="sort-menu">
+    <button class="icon-button @(_open ? "on" : "")" type="button" title="Sort by: @Current" aria-label="Sort by: @Current" aria-haspopup="menu"
+            aria-expanded="@(_open ? "true" : "false")" @onclick="() => _open = !_open">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+    </button>
+    @if (_open)
+    {
+        <div class="menu-backdrop" @onclick="() => _open = false"></div>
+        <div class="menu" role="menu">
+            @foreach (var (key, label) in Options)
+            {
+                <button type="button" role="menuitemradio" aria-checked="@(key == Value ? "true" : "false")" class="@(key == Value ? "selected" : "")"
+                        @onclick="() => ChooseAsync(key)">@label</button>
+            }
+        </div>
+    }
+    <button class="icon-button" type="button" disabled="@(!CanReverse)" title="@DirectionHint" aria-label="@DirectionHint" @onclick="OnReverse">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="@(Descending ? "flip" : "")"><path d="M7 4v16M3 16l4 4 4-4" /><path d="M14 5h7M14 10h5M14 15h3" /></svg>
+    </button>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<(string Key, string Label)> Options { get; set; } = [];
+
+    [Parameter] public string Value { get; set; } = "";
+
+    [Parameter] public bool Descending { get; set; }
+
+    /// <summary>What the order is now and that clicking reverses it, for the direction button's tooltip.</summary>
+    [Parameter] public string DirectionHint { get; set; } = "Reverse the order";
+
+    [Parameter] public bool CanReverse { get; set; } = true;
+
+    [Parameter] public EventCallback<string> OnChange { get; set; }
+
+    [Parameter] public EventCallback OnReverse { get; set; }
+
+    private bool _open;
+
+    private string Current => Options.FirstOrDefault(o => o.Key == Value).Label ?? "";
+
+    private async Task ChooseAsync(string key)
+    {
+        _open = false;
+        if (key != Value)
+            await OnChange.InvokeAsync(key);
+    }
+}

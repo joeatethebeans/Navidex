@@ -9,7 +9,7 @@
     }
     else if (_status?.LastScan is { State: TaskState.Failed } failed)
     {
-        <a class="error" href="log" title="@failed.Error">Scan failed: @failed.Error</a>
+        <a class="error" href="settings/log" title="@failed.Error">Scan failed: @failed.Error</a>
     }
     else if (_status is not null)
     {

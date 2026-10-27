@@ -1,11 +1,11 @@
-@page "/log"
+@page "/settings/log"
+@layout SettingsLayout
 @implements IDisposable
 @inject NavidexClient Api
 
 <PageTitle>Log · Navidex</PageTitle>
 
-<h1>Log</h1>
-<p class="muted">What Navidex has been doing: scans, matches, requests, catalogue updates, and anything that went wrong. Newest first. How far back it goes, and how long the backup files under <code>data/logs</code> are kept, is set in <a href="settings">Settings</a>.</p>
+<p class="muted">What Navidex has been doing: scans, matches, requests, catalogue updates, and anything that went wrong. Newest first. How far back it goes, and how long the backup files under <code>data/logs</code> are kept, is set under <a href="settings">General</a>.</p>
 
 <div class="toolbar">
     <input type="search" placeholder="Filter, for example a folder or artist" @bind="_filter" @bind:event="oninput" />

@@ -1,10 +1,10 @@
-@page "/connections"
+@page "/settings/connections"
+@layout SettingsLayout
 @using Navidex.Contracts.Plugins
 @inject NavidexClient Api
 
 <PageTitle>Connections · Navidex</PageTitle>
 
-<h1>Connections</h1>
 <p class="muted">The plugins Navidex works through: where music comes from, the media server it files music for, and the catalogue it checks your library against, with its pictures.</p>
 
 @if (_plugins is null)

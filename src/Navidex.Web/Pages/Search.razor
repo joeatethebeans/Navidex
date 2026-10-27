@@ -20,21 +20,18 @@
 
 <form class="toolbar" @onsubmit="SubmitAsync">
     <input type="search" placeholder="Artist, album or track" @bind="_query" @bind:event="oninput" @bind:after="TypedAsync" aria-label="Search" />
-    <button class="primary" type="submit" disabled="@(_remoteBusy || _query.Trim().Length == 0)">Search</button>
+    <button class="primary" type="submit" disabled="@(_query.Trim().Length == 0)">Search</button>
+    @if (_remoteBusy || _localBusy)
+    {
+        <span class="spinner search-busy" role="status" aria-label="Searching"></span>
+    }
 </form>
 
 <div class="toolbar">
     <Segmented T="string" Value="_kind" Options="Kinds" OnChange="KindAsync" Label="Show" />
     <Segmented T="string" Value="_owned" Options="OwnedOptions" OnChange="v => _owned = v" Label="In your library" />
-    <div class="sort">
-        <select aria-label="Sort by" value="@_sort" @onchange="e => _sort = e.Value?.ToString() ?? SortOptions[0].Key">
-            @foreach (var (key, label) in SortOptions) { <option value="@key">@label</option> }
-        </select>
-        <button class="icon-button" disabled="@(_sort == "relevance")" title="Reverse the order" aria-label="Reverse the order" @onclick="() => _descending = !_descending">
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="@(_descending ? "flip" : "")"><path d="M7 4v16M3 16l4 4 4-4" /><path d="M14 5h7M14 10h5M14 15h3" /></svg>
-            <span class="small">@(_sort == "year" ? (_descending ? "Newest" : "Oldest") : (_descending ? "Z–A" : "A–Z"))</span>
-        </button>
-    </div>
+    <SortMenu Options="SortOptions" Value="@_sort" Descending="_descending" CanReverse="@(_sort != "relevance")" DirectionHint="@DirectionHint"
+              OnChange="key => _sort = key" OnReverse="() => _descending = !_descending" />
 </div>
 
 @if (_results is null)
@@ -178,7 +175,14 @@ else
     private static readonly IReadOnlyList<(string Value, string Label, string? Hint)> OwnedOptions =
         [("", "Any", null), ("owned", "In library", "Only what you have"), ("missing", "Not in library", "Only what you don't have")];
 
-    private static readonly (string Key, string Label)[] SortOptions = [("relevance", "Best match"), ("name", "Name"), ("year", "Year")];
+    private static readonly IReadOnlyList<(string Key, string Label)> SortOptions = [("relevance", "Best match"), ("name", "Name"), ("year", "Year")];
+
+    private string DirectionHint => _sort switch
+    {
+        "relevance" => "Best matches first",
+        "year" => $"{(_descending ? "Newest" : "Oldest")} first; click to reverse",
+        _ => $"Sorted {(_descending ? "Z to A" : "A to Z")}; click to reverse",
+    };
 
     private const string RecentKey = "recentSearches";
     private const int RecentCount = 12;
@@ -191,6 +195,7 @@ else
     private SearchResults? _results;
     private bool _localOnly;
     private bool _remoteBusy;
+    private bool _localBusy;
     private List<string> _recent = [];
     private ReviewItem? _file;
     private string? _error;
@@ -227,10 +232,12 @@ else
     {
         _query = Query ?? "";
         _file = FileId is { } fileId ? (await Api.GetReviewAsync()).FirstOrDefault(i => i.FileId == fileId) : null;
-        _results = null;
         _searchError = null;
+        // What's shown (matches found while typing, say) stays until the search has something to replace it with.
         if (_query.Trim().Length > 0)
             await SearchAsync(_query.Trim());
+        else
+            _results = null;
     }
 
     // Matches from what Navidex already holds show at once. MusicBrainz's answer is added when it comes: what's shown
@@ -296,6 +303,8 @@ else
         try
         {
             await Task.Delay(250, typing.Token);
+            _localBusy = true;
+            StateHasChanged();
             var search = ++_searches;
             var local = await Api.SearchAsync(text, KindList, local: true, typing.Token);
             if (search != _searches)
@@ -310,6 +319,11 @@ else
         }
         catch (HttpRequestException)
         {
+        }
+        finally
+        {
+            if (_typing == typing)
+                _localBusy = false;
         }
     }
 

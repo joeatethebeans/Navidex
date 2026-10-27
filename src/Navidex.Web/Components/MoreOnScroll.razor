@@ -2,12 +2,18 @@
 @using Microsoft.JSInterop
 @inject IJSRuntime Js
 
-@* Put after a long list drawn a page at a time: asks for more as it nears the screen. *@
-<div class="more-on-scroll" @ref="_element" aria-hidden="true"></div>
+@*
+    Put straight after a long list drawn a page at a time: asks for more as it nears the screen. It takes up the room the
+    rest of the list will, so the scrollbar is the size of the whole list from the start.
+*@
+<div class="more-on-scroll" @ref="_element" data-remaining="@Remaining" aria-hidden="true"></div>
 
 @code {
     /// <summary>Draws the next page.</summary>
     [Parameter, EditorRequired] public EventCallback OnMore { get; set; }
+
+    /// <summary>How many items are still to be drawn.</summary>
+    [Parameter] public int Remaining { get; set; }
 
     private ElementReference _element;
     private DotNetObjectReference<MoreOnScroll>? _self;
@@ -17,7 +23,11 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
+        {
+            if (_observer is not null)
+                await _observer.InvokeVoidAsync("size");
             return;
+        }
         _self = DotNetObjectReference.Create(this);
         _module = await Js.InvokeAsync<IJSObjectReference>("import", "./js/more.js");
         _observer = await _module.InvokeAsync<IJSObjectReference>("observe", _element, _self);

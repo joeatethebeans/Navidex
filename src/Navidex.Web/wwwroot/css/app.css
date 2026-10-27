@@ -523,10 +523,45 @@ button .spinner { width: .85rem; height: .85rem; vertical-align: -2px; margin-ri
 .icon-button.remove:hover:not(:disabled) { color: var(--missing); border-color: var(--missing); }
 
 /* The library's sort: what by, and which way. */
-.sort { display: inline-flex; gap: .3rem; align-items: center; }
-.sort select { height: 2rem; }
-.sort .icon-button { padding: 0 .6rem 0 .45rem; gap: .3rem; }
-.sort svg.flip { transform: scaleY(-1); }
+/* Toolbar controls share one height, so a row of them lines up. */
+.toolbar { --control: 2.25rem; }
+.toolbar input[type=search], .toolbar select, .toolbar .icon-button, .toolbar > button, .toolbar .segmented { height: var(--control); box-sizing: border-box; }
+.toolbar .icon-button { min-width: var(--control); }
+.toolbar .segmented button { padding-top: 0; padding-bottom: 0; }
+.icon-button.on { border-color: var(--accent); color: var(--accent); }
+
+/* Sorting: a button that opens the ways to sort, and one that reverses the order. */
+.sort-menu { position: relative; display: inline-flex; gap: .3rem; flex: none; }
+.sort-menu svg.flip { transform: scaleY(-1); }
+.menu-backdrop { position: fixed; inset: 0; z-index: 30; }
+.menu {
+    position: absolute; top: calc(100% + .3rem); left: 0; z-index: 31; min-width: 11rem; padding: .25rem;
+    display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / .3);
+}
+.menu button { border: none; background: none; text-align: left; padding: .45rem .7rem; border-radius: 6px; white-space: nowrap; }
+.menu button:hover { background: var(--bg); }
+.menu button.selected { color: var(--accent); font-weight: 600; }
+
+/* The library's toolbar keeps to one line; when it runs short of room the filter box becomes a button that opens it
+   below, and only on narrow screens does the row wrap. */
+.library-bar { container-type: inline-size; margin: 1rem 0; }
+.library-bar .toolbar { margin: 0; }
+.toolbar.one-line { flex-wrap: nowrap; }
+.toolbar.one-line > * { flex: none; }
+.toolbar.one-line .filter { flex: 1 1 12rem; min-width: 8rem; max-width: 420px; }
+.toolbar.one-line .count { margin-left: auto; white-space: nowrap; }
+.filter-toggle, .filter-drop { display: none; }
+.filter-drop { margin-top: .6rem; }
+.filter-drop input[type=search] { max-width: none; }
+@container (max-width: 760px) {
+    .toolbar.one-line .filter { display: none; }
+    .toolbar.one-line .filter-toggle { display: inline-flex; }
+    .filter-drop { display: block; }
+}
+@container (max-width: 560px) {
+    .toolbar.one-line { flex-wrap: wrap; }
+}
 
 /* Recent searches on the Search page. */
 .recent-searches { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
@@ -538,3 +573,17 @@ button .spinner { width: .85rem; height: .85rem; vertical-align: -2px; margin-ri
 .chip-remove { border: none; background: none; color: var(--muted); padding: 0 .35rem; font-size: 1rem; line-height: 1; cursor: pointer; }
 .chip-remove:hover { color: var(--missing); }
 .search-note { margin-bottom: .5rem; }
+.search-busy { width: 1rem; height: 1rem; color: var(--accent); }
+
+/* Settings: its sections down the left, or across the top on narrow screens. */
+.settings-page { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.settings-nav { display: flex; flex-direction: column; gap: .15rem; position: sticky; top: 4.5rem; }
+.settings-nav a { padding: .45rem .75rem; border-radius: 6px; color: var(--muted); text-decoration: none; }
+.settings-nav a:hover { background: var(--surface); color: var(--text); }
+.settings-nav a.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+.settings-body > :first-child { margin-top: 0; }
+@media (max-width: 720px) {
+    .settings-page { grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+    .settings-nav { flex-direction: row; position: static; overflow-x: auto; }
+    .settings-nav a.active { box-shadow: inset 0 -2px 0 var(--accent); }
+}

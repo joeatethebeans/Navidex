@@ -43,7 +43,7 @@ MUSIC_PATH=/path/to/your/music PUID=$(id -u) PGID=$(id -g) docker compose up --b
 ```
 
 Then open `http://localhost:8787` and press **Scan library**. To fetch, add your media server and retrieval plugins
-under **Connections**: Navidrome, YouTube (yt-dlp) and the inbox folder are offered under **Add**. The beets
+under **Settings → Connections**: Navidrome, YouTube (yt-dlp) and the inbox folder are offered under **Add**. The beets
 worker is the only container that writes the music folder, so run it as the user who owns it (`PUID` and `PGID`). The OpenAPI document is at `/openapi/v1.json`.
 
 The first scan of a big library takes a while. Matching is quick, but filling in the catalogue (every album's

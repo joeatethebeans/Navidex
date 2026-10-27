@@ -12,29 +12,36 @@
 <h1>Library</h1>
 <p class="muted">@Intro</p>
 
-<div class="toolbar">
-    <Segmented T="string" Value="_view" Options="Views" OnChange="ShowAsync" Label="View" />
-    <input type="search" placeholder="@FilterHint" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
-    <div class="sort">
-        <select aria-label="Sort by" value="@_sort.Key" @onchange="SortChangedAsync">
-            @foreach (var option in SortOptions)
-            {
-                <option value="@option.Key">@option.Label</option>
-            }
-        </select>
-        <button class="icon-button" title="@DirectionHint" aria-label="@DirectionHint" @onclick="() => SortAsync(_sort.Key, !_sort.Descending)">
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="@(_sort.Descending ? "flip" : "")"><path d="M7 4v16M3 16l4 4 4-4" /><path d="M14 5h7M14 10h5M14 15h3" /></svg>
-            <span class="small">@DirectionLabel</span>
+@* One line where there's room: the filter box gives way first, to a button that opens it below. *@
+<div class="library-bar">
+    <div class="toolbar one-line">
+        <Segmented T="string" Value="_picked" Options="Views" OnChange="ShowAsync" Label="View" />
+        <input class="filter" type="search" placeholder="@FilterHint" aria-label="@FilterHint" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
+        <button class="icon-button filter-toggle @(_filterOpen || _filter.Length > 0 ? "on" : "")" type="button" title="@FilterHint" aria-label="@FilterHint"
+                aria-expanded="@(_filterOpen ? "true" : "false")" @onclick="ToggleFilter">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
         </button>
+        <SortMenu Options="SortMenuOptions" Value="@_sort.Key" Descending="_sort.Descending" DirectionHint="@DirectionHint"
+                  OnChange="key => SortAsync(key, null)" OnReverse="() => SortAsync(_sort.Key, !_sort.Descending)" />
+        @if (_view != "tracks")
+        {
+            <OwnershipFilter OnChange="ResetLimit" Busy="_switching" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
+                             MissingHint="@(_view == "albums" ? "Only albums with tracks missing" : "Only artists with something missing")" />
+        }
+        else
+        {
+            <span class="spinner ownership-busy @(_switching ? "on" : "")" role="status" aria-label="@(_switching ? "Loading" : null)"></span>
+            @if (Store.Tracks is { Count: > 0 } tracks)
+            {
+                <span class="muted small count">@VisibleTracks.Count() of @tracks.Count</span>
+            }
+        }
     </div>
-    @if (_view != "tracks")
+    @if (_filterOpen)
     {
-        <OwnershipFilter OnChange="ResetLimit" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
-                         MissingHint="@(_view == "albums" ? "Only albums with tracks missing" : "Only artists with something missing")" />
-    }
-    @if (_view == "tracks" && Store.Tracks is { Count: > 0 } tracks)
-    {
-        <span class="muted small">@VisibleTracks.Count() of @tracks.Count tracks</span>
+        <div class="filter-drop">
+            <input type="search" placeholder="@FilterHint" aria-label="@FilterHint" @ref="_filterDrop" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
+        </div>
     }
 </div>
 
@@ -77,7 +84,7 @@
                     </div>
                 }
             </div>
-            @if (albums.Count > _limit) { <MoreOnScroll OnMore="More" /> }
+            @if (albums.Count > _limit) { <MoreOnScroll OnMore="More" Remaining="albums.Count - _limit" /> }
         }
         break;
 
@@ -87,12 +94,14 @@
         else if (!VisibleTracks.Any()) { <div class="empty card">No tracks match that filter.</div> }
         else
         {
+            var tracks = VisibleTracks.ToList();
             <div class="card">
                 <table class="table track-list">
-                    @* Fixed widths: the first row is the scroller's spacer, which has no cells to size the columns by. *@
+                    @* Fixed widths, so the columns stay put as more rows are drawn. *@
                     <colgroup><col class="cover-col" /><col /><col class="format-col hide-narrow" /><col class="length-col" /><col class="icons-3-col" /></colgroup>
                     <tbody>
-                        <Virtualize Items="VisibleTracks.ToList()" Context="track" ItemSize="57" SpacerElement="tr" OverscanCount="10">
+                        @foreach (var track in tracks.Take(_limit))
+                        {
                             <tr @key="track.FileId">
                                 <td class="cover-col">
                                     @if (track.AlbumId is { } albumId) { <a href="albums/@albumId" tabindex="-1"><Cover Url="@track.CoverUrl" /></a> }
@@ -114,9 +123,10 @@
                                                 OnClick="() => RemoveTrack(track)" />
                                 </td>
                             </tr>
-                        </Virtualize>
+                        }
                     </tbody>
                 </table>
+                @if (tracks.Count > _limit) { <MoreOnScroll OnMore="More" Remaining="tracks.Count - _limit" /> }
             </div>
         }
         break;
@@ -152,7 +162,7 @@
                     </div>
                 }
             </div>
-            @if (artists.Count > _limit) { <MoreOnScroll OnMore="More" /> }
+            @if (artists.Count > _limit) { <MoreOnScroll OnMore="More" Remaining="artists.Count - _limit" /> }
         }
         break;
 }
@@ -185,12 +195,10 @@
 
     private SortOption[] SortOptions => Sorts.GetValueOrDefault(_view) ?? Sorts["artists"];
     private SortOption CurrentSort => SortOptions.FirstOrDefault(o => o.Key == _sort.Key) ?? SortOptions[0];
-    private string DirectionLabel => CurrentSort.Numeric ? (_sort.Descending ? "Most" : "Least") : (_sort.Descending ? "Z–A" : "A–Z");
+    private IReadOnlyList<(string Key, string Label)> SortMenuOptions => SortOptions.Select(o => (o.Key, o.Label)).ToList();
     private string DirectionHint => $"Sorted {(CurrentSort.Numeric ? (_sort.Descending ? "most first" : "least first") : (_sort.Descending ? "Z to A" : "A to Z"))}; click to reverse";
 
     private static string SortKey(string view) => $"librarySort.{view}";
-
-    private Task SortChangedAsync(ChangeEventArgs e) => SortAsync(e.Value?.ToString() ?? "", null);
 
     private async Task SortAsync(string key, bool? descending)
     {
@@ -219,12 +227,18 @@
 
     private static double Ratio(int? part, int? whole) => whole is > 0 ? (double)(part ?? 0) / whole.Value : 0;
 
-    // Tiles are drawn a page at a time as the page is scrolled: drawing hundreds at once makes every change slow.
+    // Tiles and tracks are drawn a page at a time as the page is scrolled: drawing hundreds at once makes every change slow.
     private const int Page = 60;
 
     [SupplyParameterFromQuery(Name = "view")] public string? ViewParameter { get; set; }
 
     private string _view = "";
+    // The view picked, which the picker shows at once while the view itself is drawn.
+    private string _picked = "";
+    private bool _switching;
+    private bool _filterOpen;
+    private bool _focusFilter;
+    private ElementReference _filterDrop;
     private string _filter = "";
     private string? _error;
     private int _limit = Page;
@@ -294,7 +308,22 @@
 
     private void ResetLimit() => _limit = Page;
 
-    private void More() => _limit += Page * 2;
+    private void More() => _limit += Page;
+
+    private void ToggleFilter()
+    {
+        _filterOpen = !_filterOpen;
+        _focusFilter = _filterOpen;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusFilter)
+        {
+            _focusFilter = false;
+            await _filterDrop.FocusAsync();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -306,20 +335,37 @@
     {
         // The address says which view; without one, the last view used.
         var view = Views.Any(v => v.Value == ViewParameter) ? ViewParameter! : await Prefs.GetAsync("libraryView", "artists");
-        if (view == _view)
-            return;
-        _view = view;
-        _limit = Page;
-        _sort = await Prefs.GetAsync<SortChoice?>(SortKey(view), null) is { } saved && SortOptions.Any(o => o.Key == saved.Key)
-            ? saved
-            : new SortChoice(SortOptions[0].Key, false);
-        // What was loaded last shows straight away, while a fresh copy loads.
-        await LoadAsync();
+        await ApplyViewAsync(view);
+    }
+
+    private async Task ApplyViewAsync(string view)
+    {
+        if (view != _view)
+        {
+            _view = _picked = view;
+            _limit = Page;
+            _sort = await Prefs.GetAsync<SortChoice?>(SortKey(view), null) is { } saved && SortOptions.Any(o => o.Key == saved.Key)
+                ? saved
+                : new SortChoice(SortOptions[0].Key, false);
+            // What was loaded last shows straight away, while a fresh copy loads.
+            await LoadAsync();
+        }
+        _switching = false;
     }
 
     private async Task ShowAsync(string view)
     {
+        if (view == _view)
+            return;
+        // The picker moves and the spinner shows before the new view is drawn, which can take a moment.
+        _picked = view;
+        _switching = true;
+        StateHasChanged();
+        await Task.Delay(1);
         await Prefs.SetAsync("libraryView", view);
+        // Shown here rather than left to the address changing: going to artists from the last view used, at the bare
+        // address, doesn't change it.
+        await ApplyViewAsync(view);
         Nav.NavigateTo(view == "artists" ? "" : $"?view={view}", replace: true);
     }
 

@@ -1,7 +1,7 @@
 # Artwork plugins (contract v1.0)
 
 Artwork plugins find pictures: artist photos, album covers, and the covers of particular editions. They're part of
-the catalogue alongside index plugins, and sit under Catalogue on the Connections page, but are a type of their own,
+the catalogue alongside index plugins, and sit under Catalogue in Settings → Connections, but are a type of their own,
 because a source of pictures usually can't answer the questions an index plugin must (fanart.tv can't search for
 albums). Code: `Navidex.Contracts.Plugins.Artwork`.
 

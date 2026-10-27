@@ -7,11 +7,14 @@
 *@
 <Segmented T="OwnershipView" Value="Prefs.Ownership" Options="Options" OnChange="ChooseAsync" Class="@($"ownership {Prefs.Ownership.ToString().ToLowerInvariant()}")" Label="Show" />
 @* Shown only if the change takes more than a moment. *@
-<span class="spinner ownership-busy @(_busy ? "on" : "")" role="status" aria-label="@(_busy ? "Updating" : null)"></span>
+<span class="spinner ownership-busy @(_busy || Busy ? "on" : "")" role="status" aria-label="@(_busy || Busy ? "Updating" : null)"></span>
 
 @code {
     /// <summary>Called once the choice is saved, to show it.</summary>
     [Parameter] public EventCallback OnChange { get; set; }
+
+    /// <summary>Shows the spinner for something else the page is doing, such as drawing another view.</summary>
+    [Parameter] public bool Busy { get; set; }
 
     [Parameter] public string OwnedHint { get; set; } = "Only what you have all of";
     [Parameter] public string MissingHint { get; set; } = "Only what has something missing";

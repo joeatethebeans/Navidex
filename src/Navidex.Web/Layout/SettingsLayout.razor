@@ -1,0 +1,13 @@
+@inherits LayoutComponentBase
+@layout MainLayout
+
+@* Settings, the log and connections, as sections listed down the left; across the top on narrow screens. *@
+<h1>Settings</h1>
+<div class="settings-page">
+    <nav class="settings-nav" aria-label="Settings sections">
+        <NavLink href="settings" Match="NavLinkMatch.All">General</NavLink>
+        <NavLink href="settings/log">Log</NavLink>
+        <NavLink href="settings/connections">Connections</NavLink>
+    </nav>
+    <div class="settings-body">@Body</div>
+</div>

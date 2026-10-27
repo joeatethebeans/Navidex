@@ -15,7 +15,16 @@ namespace Navidex.Core.Api;
 public static class LibraryEndpoints
 {
     /// <summary>How long a request for a picture waits for it to be fetched before answering 503.</summary>
-    private static readonly TimeSpan ArtworkPatience = TimeSpan.FromSeconds(1.5);
+    private static readonly TimeSpan ArtworkPatience = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>How long the artwork status waits for pictures it was asked about before answering.</summary>
+    private static readonly TimeSpan ArtworkStatusPatience = TimeSpan.FromMilliseconds(250);
+
+    private static readonly System.Text.RegularExpressions.Regex ArtworkPath =
+        new(@"artwork/(artist|album|edition)/([0-9a-fA-F-]{36})", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static EntityKind? ArtworkKind(string kind) =>
+        kind switch { "artist" => EntityKind.Artist, "album" => EntityKind.Album, "edition" => EntityKind.Edition, _ => null };
 
     public static RouteGroupBuilder MapLibraryEndpoints(this RouteGroupBuilder api)
     {
@@ -133,12 +142,12 @@ public static class LibraryEndpoints
 
         api.MapGet("/artwork/{kind}/{id:guid}", async (string kind, Guid id, ArtworkCache artwork, HttpContext http, CancellationToken ct) =>
             {
-                EntityKind? of = kind switch { "artist" => EntityKind.Artist, "album" => EntityKind.Album, "edition" => EntityKind.Edition, _ => null };
+                var of = ArtworkKind(kind);
                 if (of is null)
                     return Results.NotFound();
                 // A picture not fetched yet can take a while, as artwork sources are rate-limited. Browsers make only a
                 // few requests at once to a server, so a page of pictures still on their way would hold up everything
-                // else: answer 503 instead, and the search goes on, so asking again in a moment finds it.
+                // else: answer 503 at once instead, and the search goes on. The page asks after them all together, below.
                 var finding = artwork.GetAsync(of.Value, id, ct);
                 if (await Task.WhenAny(finding, Task.Delay(ArtworkPatience, ct)) != finding)
                 {
@@ -156,6 +165,21 @@ public static class LibraryEndpoints
             .WithSummary("The picture of an artist, album or edition (kind is artist, album or edition), from the artwork plugins. 404 when there's none; "
                          + "503 with Retry-After while it's still being fetched.")
             .Produces(StatusCodes.Status200OK, contentType: "image/jpeg").Produces(StatusCodes.Status404NotFound).Produces(StatusCodes.Status503ServiceUnavailable);
+
+        api.MapPost("/artwork/status", async (string[] urls, ArtworkCache artwork) =>
+            {
+                // Each is looked for at once, and those still on their way after a moment are pending.
+                var asked = urls.Distinct().Take(500).Select(url => (Url: url, Match: ArtworkPath.Match(url))).ToList();
+                var finding = asked.Where(a => a.Match.Success).ToDictionary(a => a.Url,
+                    a => artwork.GetAsync(ArtworkKind(a.Match.Groups[1].Value)!.Value, Guid.Parse(a.Match.Groups[2].Value), CancellationToken.None));
+                await Task.WhenAny(Task.WhenAll(finding.Values), Task.Delay(ArtworkStatusPatience));
+                return asked.ToDictionary(a => a.Url, a => !finding.TryGetValue(a.Url, out var found) ? "none"
+                    : !found.IsCompleted ? "pending"
+                    : found.IsCompletedSuccessfully && found.Result is not null ? "ready" : "none");
+            })
+            .WithTags("Library").WithName("GetArtworkStatus")
+            .WithSummary("For pictures that answered 503, which are ready now, which there are none of, and which are still pending, by URL. "
+                         + "One request for a page of them, rather than one each.");
 
         api.MapGet("/tasks", async (NavidexDbContext db, bool? active, int? limit, CancellationToken ct) =>
             {
