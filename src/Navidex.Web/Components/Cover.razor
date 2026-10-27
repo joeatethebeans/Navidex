@@ -13,10 +13,13 @@
     }
     @if (Url is not null)
     {
-        @* The classes are set by the browser as the picture arrives; Blazor leaves them alone until the URL changes. *@
+        @*
+            The classes are set by the browser as the picture arrives; Blazor leaves them alone until the URL changes. A
+            picture that fails is hidden, not removed: Blazor still counts it, and removing it breaks later updates.
+        *@
         <img src="@Url" alt="" loading="lazy"
              onload="this.parentElement.classList.replace('pending', 'loaded')"
-             onerror="this.parentElement.classList.replace('pending', 'empty'); this.remove()" />
+             onerror="this.parentElement.classList.replace('pending', 'empty')" />
     }
 </div>
 

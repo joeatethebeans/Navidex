@@ -11,8 +11,8 @@ public sealed class Preferences(IJSRuntime js)
 {
     private const string Prefix = "navidex.";
 
-    /// <summary>Show only what's missing: artists with missing albums, and on an artist's page only those albums.</summary>
-    public bool OnlyMissing { get; private set; }
+    /// <summary>What the library and artist pages show: only what you have, everything, or only what's missing.</summary>
+    public OwnershipView Ownership { get; private set; } = OwnershipView.All;
 
     private bool _loaded;
 
@@ -20,14 +20,15 @@ public sealed class Preferences(IJSRuntime js)
     {
         if (_loaded)
             return;
-        OnlyMissing = await GetAsync("onlyMissing", false);
+        // Before there were three, there was a tick box for only missing.
+        Ownership = await GetAsync("ownership", await GetAsync("onlyMissing", false) ? OwnershipView.Missing : OwnershipView.All);
         _loaded = true;
     }
 
-    public Task SetOnlyMissingAsync(bool value)
+    public Task SetOwnershipAsync(OwnershipView value)
     {
-        OnlyMissing = value;
-        return SetAsync("onlyMissing", value);
+        Ownership = value;
+        return SetAsync("ownership", value);
     }
 
     public async Task<T> GetAsync<T>(string key, T fallback)
@@ -53,4 +54,16 @@ public sealed class Preferences(IJSRuntime js)
         {
         }
     }
+}
+
+/// <summary>The library's three-way filter.</summary>
+public enum OwnershipView
+{
+    /// <summary>Only what you have all of.</summary>
+    Owned,
+
+    All,
+
+    /// <summary>Only what has something missing.</summary>
+    Missing,
 }

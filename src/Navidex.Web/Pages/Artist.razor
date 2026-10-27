@@ -34,16 +34,16 @@ else
             <FetchButton Kind="RequestKind.Artist" Id="_artist.Id" Primary="true" Label="Get everything missing"
                          Hint="Fetch the missing albums shown here, and the missing tracks of albums you partly own" />
         }
-        <label class="toggle"><input type="checkbox" checked="@Prefs.OnlyMissing" @onchange="e => Prefs.SetOnlyMissingAsync((bool)e.Value!)" /> Only missing</label>
+        <OwnershipFilter OnChange="StateHasChanged" OwnedHint="Only albums you have" MissingHint="Only missing albums, and albums with tracks missing" />
     </div>
 
     @if (_artist.Albums.Count == 0)
     {
         <div class="empty card">No albums in the catalogue for this artist.</div>
     }
-    else if (Prefs.OnlyMissing && !Shown.Any())
+    else if (Prefs.Ownership != OwnershipView.All && !Shown.Any())
     {
-        <div class="empty card">Nothing missing for @_artist.Name.</div>
+        <div class="empty card">@(Prefs.Ownership == OwnershipView.Missing ? "Nothing missing" : "Nothing owned") for @_artist.Name.</div>
     }
 
     @foreach (var group in Shown.GroupBy(a => a.Type).OrderBy(g => g.Key))
@@ -61,7 +61,7 @@ else
         }
     }
 
-    @if (!Prefs.OnlyMissing && Hidden.Any())
+    @if (Prefs.Ownership == OwnershipView.All && Hidden.Any())
     {
         <details>
             <summary>@Hidden.Count() more hidden by the default filters (live, compilations, remixes, bootlegs…)</summary>
@@ -82,10 +82,13 @@ else
     private Dictionary<AlbumType, bool> _sections = [];
 
     // Owned albums always show; the default filters only hide albums you don't have. With only missing on, the albums
-    // the library counts as missing, and owned ones with tracks still missing.
-    private IEnumerable<AlbumSummary> Shown => Prefs.OnlyMissing
-        ? _artist!.Albums.Where(a => IsMissing(a) || a.Status == AlbumStatus.Partial && !a.Ignored)
-        : _artist!.Albums.Where(a => !a.HiddenByDefault || a.Status is AlbumStatus.Complete or AlbumStatus.Partial);
+    // the library counts as missing, and owned ones with tracks still missing. With only owned, the albums you have.
+    private IEnumerable<AlbumSummary> Shown => Prefs.Ownership switch
+    {
+        OwnershipView.Missing => _artist!.Albums.Where(a => IsMissing(a) || a.Status == AlbumStatus.Partial && !a.Ignored),
+        OwnershipView.Owned => _artist!.Albums.Where(a => a.Status is AlbumStatus.Complete or AlbumStatus.Partial),
+        _ => _artist!.Albums.Where(a => !a.HiddenByDefault || a.Status is AlbumStatus.Complete or AlbumStatus.Partial),
+    };
     private IEnumerable<AlbumSummary> Hidden => _artist!.Albums.Except(Shown);
     private static bool IsMissing(AlbumSummary a) => a.Status == AlbumStatus.Missing && !a.HiddenByDefault && !a.Ignored;
     private int Owned => _artist!.Albums.Count(a => a.Status is AlbumStatus.Complete or AlbumStatus.Partial);

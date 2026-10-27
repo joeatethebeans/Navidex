@@ -55,7 +55,8 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
         int added = 0, changed = 0, unreadable = 0;
 
         var walk = Walk(root);
-        var files = walk.Files.Where(f => AudioExtensions.Contains(Path.GetExtension(f))).ToList();
+        // In path order, so the Activity page lists them as they'd appear in a file browser.
+        var files = walk.Files.Where(f => AudioExtensions.Contains(Path.GetExtension(f))).Order(StringComparer.Ordinal).ToList();
         if (files.Count == 0)
             // Never treat an empty or unreadable folder as "everything was deleted".
             throw new InvalidOperationException(NothingFound(root, walk));
@@ -94,7 +95,7 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
                 feed.Set(path, ScanFileState.Review, detail: "Couldn't read the file");
                 continue;
             }
-            feed.Set(path, ScanFileState.Matching, read.Value.Tags.Title, read.Value.Tags.Artist);
+            feed.Set(path, ScanFileState.Queued, read.Value.Tags.Title, read.Value.Tags.Artist);
 
             if (existing is null)
             {

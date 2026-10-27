@@ -18,7 +18,8 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
         foreach (var file in new[] { dummy, Path.Combine(fixture.Music, review.Path) })
             File.SetLastWriteTimeUtc(file, DateTime.UtcNow);
         await ScanAsync();
-        var files = await Api.GetScanFilesAsync();
+        var page = await Api.GetScanFilesAsync();
+        var files = page.Files;
 
         var matched = files.First(f => f.Path.StartsWith("Portishead/Dummy", StringComparison.Ordinal) && f.State == ScanFileState.Matched);
         Assert.Equal("Dummy", matched.AlbumTitle);
@@ -26,9 +27,14 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
         Assert.NotNull(matched.AlbumId);
         Assert.NotNull(matched.CoverUrl);
         Assert.Contains(files, f => f.Path == review.Path && f.State == ScanFileState.Review && f.Detail is not null);
-        Assert.DoesNotContain(files, f => f.State is ScanFileState.Reading or ScanFileState.Matching);
-        // Newest first.
-        Assert.Equal(files.OrderByDescending(f => f.Seq).Select(f => f.Seq), files.Select(f => f.Seq));
+        Assert.DoesNotContain(files, f => f.State is ScanFileState.Reading or ScanFileState.Matching or ScanFileState.Queued);
+        // Each file keeps the place it was first read in, which is path order.
+        Assert.Equal(files.Select(f => f.Order).Order(), files.Select(f => f.Order));
+        Assert.Equal(files.Select(f => f.Path).Order(StringComparer.Ordinal), files.Select(f => f.Path));
+        // Nothing has changed since, so asking for later changes gets none.
+        var later = await Api.GetScanFilesAsync(page.Latest);
+        Assert.Equal(page.Scan, later.Scan);
+        Assert.Empty(later.Files);
     }
 
     [TestLibraryFact]

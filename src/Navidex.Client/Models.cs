@@ -302,7 +302,7 @@ public enum ScanFileState
     /// <summary>Its tags are being read.</summary>
     Reading,
 
-    /// <summary>Read, and waiting to be matched or being matched.</summary>
+    /// <summary>Being matched.</summary>
     Matching,
 
     /// <summary>Matched to a song; the song's details are filled in.</summary>
@@ -313,14 +313,20 @@ public enum ScanFileState
 
     /// <summary>The catalogue source was busy; it's tried again later in the scan, or next scan.</summary>
     Waiting,
+
+    /// <summary>Read, and waiting its turn to be matched.</summary>
+    Queued,
 }
 
 /// <summary>A file the running (or last) scan has read or matched, from <c>GET /library/scan/files</c>.</summary>
+/// <param name="Seq">When it last changed: pass the highest seen as <c>since</c> to get only later changes.</param>
+/// <param name="Order">Its place in the list, which it keeps as it's read and matched.</param>
 /// <param name="Path">Relative to the music folder.</param>
 /// <param name="Title">The song once matched; before that, the file's title tag if it has one.</param>
 /// <param name="Detail">Why it needs review, or what it's waiting for.</param>
 public sealed record ScanFile(
     long Seq,
+    long Order,
     string Path,
     ScanFileState State,
     string? Title,
@@ -331,3 +337,9 @@ public sealed record ScanFile(
     string? CoverUrl,
     string? Detail,
     DateTime At);
+
+/// <summary>The scan's files that changed since a sequence number, from <c>GET /library/scan/files</c>.</summary>
+/// <param name="Scan">Which scan they belong to. When it changes, a new scan has started: start the list again.</param>
+/// <param name="Latest">The newest change's sequence number, to pass as <c>since</c> next time.</param>
+/// <param name="Files">In list order.</param>
+public sealed record ScanFeedPage(Guid Scan, long Latest, IReadOnlyList<ScanFile> Files);

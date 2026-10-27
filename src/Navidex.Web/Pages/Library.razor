@@ -21,7 +21,8 @@
     <input type="search" placeholder="@FilterHint" @bind="_filter" @bind:event="oninput" />
     @if (_view != "tracks")
     {
-        <label class="toggle"><input type="checkbox" checked="@Prefs.OnlyMissing" @onchange="e => Prefs.SetOnlyMissingAsync((bool)e.Value!)" /> Only missing</label>
+        <OwnershipFilter OnChange="StateHasChanged" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
+                         MissingHint="@(_view == "albums" ? "Only albums with tracks missing" : "Only artists with something missing")" />
     }
     @if (_view == "tracks" && _tracks is { Count: > 0 })
     {
@@ -41,12 +42,12 @@
         else if (_albums.Count == 0) { <div class="empty card">No albums yet. Scan the library to read your music folder.</div> }
         else
         {
-            @if (!VisibleAlbums.Any()) { <div class="empty card">@(Prefs.OnlyMissing ? "No partly owned albums" : "No albums") @(_filter.Length > 0 ? "match that filter." : "right now.")</div> }
+            @if (!VisibleAlbums.Any()) { <div class="empty card">@(Prefs.Ownership switch { OwnershipView.Missing => "No partly owned albums", OwnershipView.Owned => "No complete albums", _ => "No albums" }) @(_filter.Length > 0 ? "match that filter." : "right now.")</div> }
             <div class="tiles">
-                @foreach (var item in VisibleAlbums)
+                @foreach (var (item, i) in VisibleAlbums.Select((a, i) => (a, i)))
                 {
                     var album = item.Album;
-                    <a class="tile" href="albums/@album.Id" title="@album.Title · @item.ArtistName">
+                    <a class="tile" href="albums/@album.Id" title="@album.Title · @item.ArtistName" style="@TransitionName(album.Id, i)">
                         <Cover Url="@album.CoverUrl" />
                         <div class="tile-name">@album.Title</div>
                         <div class="muted small tile-sub">@item.ArtistName@(Format.Year(album.FirstReleaseDate) is { Length: > 0 } year ? $" · {year}" : "")</div>
@@ -104,7 +105,7 @@
         else if (_artists.Count == 0) { <div class="empty card">No artists yet. Scan the library to read your music folder.</div> }
         else
         {
-            @if (!VisibleArtists.Any()) { <div class="empty card">@(Prefs.OnlyMissing ? "Nothing missing" : "No artists") @(_filter.Length > 0 ? "matches that filter." : "right now.")</div> }
+            @if (!VisibleArtists.Any()) { <div class="empty card">@(Prefs.Ownership switch { OwnershipView.Missing => "Nothing missing", OwnershipView.Owned => "No artist you have everything of", _ => "No artists" }) @(_filter.Length > 0 ? "matches that filter." : "right now.")</div> }
             <div class="legend small muted">
                 <span><i class="complete"></i>Owned</span>
                 <span><i class="partial"></i>Partly owned</span>
@@ -112,10 +113,10 @@
                 <span><i class="missing"></i>Missing</span>
             </div>
             <div class="tiles">
-                @foreach (var artist in VisibleArtists)
+                @foreach (var (artist, i) in VisibleArtists.Select((a, i) => (a, i)))
                 {
                     var total = artist.OwnedAlbums + artist.MissingAlbums;
-                    <a class="tile" href="artists/@artist.Id" title="@Title(artist)">
+                    <a class="tile" href="artists/@artist.Id" title="@Title(artist)" style="@TransitionName(artist.Id, i)">
                         <Cover Url="@artist.ImageUrl" Artist="true" />
                         <div class="tile-name">@artist.Name</div>
                         <OwnershipMeter Complete="artist.OwnedAlbums - artist.PartialAlbums" Partial="artist.PartialAlbums" Covered="artist.CoveredAlbums" Missing="artist.MissingAlbums" />
@@ -158,13 +159,18 @@
     private bool Matches(params string?[] texts) =>
         _filter.Length == 0 || texts.Any(t => t?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true);
 
+    // Owned and missing split the list in two: an artist or album is one or the other.
     private IEnumerable<LibraryArtist> VisibleArtists => _artists!
         .Where(a => Matches(a.Name))
-        .Where(a => !Prefs.OnlyMissing || a.MissingAlbums > 0 || a.PartialAlbums > 0);
+        .Where(a => Prefs.Ownership == OwnershipView.All || (a.MissingAlbums > 0 || a.PartialAlbums > 0) == (Prefs.Ownership == OwnershipView.Missing));
 
     private IEnumerable<LibraryAlbum> VisibleAlbums => _albums!
         .Where(a => Matches(a.Album.Title, a.ArtistName))
-        .Where(a => !Prefs.OnlyMissing || a.Album.Status == AlbumStatus.Partial);
+        .Where(a => Prefs.Ownership == OwnershipView.All || (a.Album.Status == AlbumStatus.Partial) == (Prefs.Ownership == OwnershipView.Missing));
+
+    // Tiles near the top are named for view transitions, so they slide to their new places when the filter changes.
+    // Only those: the browser takes a picture of every named one, and the rest are off screen anyway.
+    private static string? TransitionName(Guid id, int index) => index < 120 ? $"view-transition-name: t{id:N}" : null;
 
     private Task PlayFromAsync(LibraryTrack from)
     {

@@ -52,10 +52,10 @@ public static class LibraryEndpoints
         library.MapGet("/missing", (LibraryView view, CancellationToken ct) => view.GetMissingAsync(ct))
             .WithName("GetMissing").WithSummary("Missing albums across the library, after the default filters and ignores.");
 
-        library.MapGet("/scan/files", (ScanFeed feed, int? limit) => feed.Latest(Math.Clamp(limit ?? ScanFeed.Kept, 1, ScanFeed.Kept)))
+        library.MapGet("/scan/files", (ScanFeed feed, long? since) => feed.Since(since ?? 0))
             .WithName("ScanFiles")
-            .WithSummary("The files the running or last scan read or matched, most recently changed first: each file's name while it's read, "
-                         + "then the song it matched or why it needs review. The latest 300.");
+            .WithSummary("The files the running or last scan read or matched, in the order it first saw them: each file's name while it's read, "
+                         + "then the song it matched or why it needs review. Pass since (the last response's latest) to get only what changed.");
 
         library.MapGet("/review", (LibraryView view, bool? excluded, CancellationToken ct) => view.GetReviewAsync(excluded == true, ct))
             .WithName("GetReview").WithSummary("Files that couldn't be matched confidently, with the best suggestion. With excluded=true, the files excluded from matching.");

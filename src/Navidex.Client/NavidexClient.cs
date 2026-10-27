@@ -88,8 +88,9 @@ public sealed class NavidexClient(HttpClient http)
     }
 
     /// <summary>Activity log entries newer than <paramref name="after"/>, oldest first.</summary>
-    public async Task<IReadOnlyList<ScanFile>> GetScanFilesAsync(CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<IReadOnlyList<ScanFile>>($"{Api}/library/scan/files", NavidexJson.Options, ct) ?? [];
+    /// <param name="since">The <see cref="ScanFeedPage.Latest"/> from the last call, to get only what changed; 0 for every file.</param>
+    public async Task<ScanFeedPage> GetScanFilesAsync(long since = 0, CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<ScanFeedPage>($"{Api}/library/scan/files?since={since}", NavidexJson.Options, ct))!;
 
     public async Task<LogPage> GetLogAsync(long after = 0, int limit = 1000, CancellationToken ct = default) =>
         await http.GetFromJsonAsync<LogPage>($"{Api}/log?after={after}&limit={limit}", NavidexJson.Options, ct) ?? new LogPage([], after);
