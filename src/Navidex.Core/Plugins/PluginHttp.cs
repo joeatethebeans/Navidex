@@ -37,12 +37,17 @@ public static class PluginHttp
         new("(https://github.com/joeatethebeans/Navidex)"),
     ];
 
-    /// <summary>A client with the core's user agent, retries on 503 and 429, and the plugin's rate limit.</summary>
+    /// <summary>
+    /// A client with the core's user agent, the plugin's rate limit, and retries on 503 and 429. Retries take their turn
+    /// under the rate limit like any other request, so they never push the plugin over it.
+    /// </summary>
     public static HttpClient CreateClient(PluginHttpOptions options, double? maxRequestsPerSecond)
     {
-        HttpMessageHandler handler = new RetryHandler(options.RetryDelay) { InnerHandler = options.PrimaryHandler() };
-        if (options.RateLimit && maxRequestsPerSecond is > 0)
-            handler = new RateLimitHandler(TimeSpan.FromSeconds(1 / maxRequestsPerSecond.Value)) { InnerHandler = handler };
+        var limiter = options.RateLimit && maxRequestsPerSecond is > 0 ? new RateLimiter(TimeSpan.FromSeconds(1 / maxRequestsPerSecond.Value)) : null;
+        HttpMessageHandler handler = options.PrimaryHandler();
+        if (limiter is not null)
+            handler = new RateLimitHandler(limiter) { InnerHandler = handler };
+        handler = new RetryHandler(options.RetryDelay, limiter) { InnerHandler = handler };
 
         var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(60) };
         foreach (var product in UserAgent)
@@ -51,18 +56,23 @@ public static class PluginHttp
     }
 
     /// <summary>
-    /// Spaces requests at least <c>interval</c> apart, across every caller of the client. While an interactive request
-    /// waits, background ones hold back, so it goes next.
+    /// Spaces requests at least <c>interval</c> apart, across every caller of the client. Background requests take a
+    /// little less than the limit, leaving room for searches; while an interactive request waits, background ones hold
+    /// back, so it goes next. When the source says it's busy, everyone waits out the same pause.
     /// </summary>
-    private sealed class RateLimitHandler(TimeSpan interval) : DelegatingHandler
+    private sealed class RateLimiter(TimeSpan interval)
     {
+        /// <summary>The share of the limit background work uses: the rest is kept for someone searching.</summary>
+        private const double BackgroundShare = 0.8;
+
         private static readonly TimeSpan Recheck = TimeSpan.FromMilliseconds(50);
 
         private readonly Lock _lock = new();
+        private readonly TimeSpan _backgroundInterval = interval / BackgroundShare;
         private DateTime _next = DateTime.MinValue;
         private int _interactiveWaiting;
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public async Task WaitTurnAsync(CancellationToken cancellationToken)
         {
             var interactive = Interactive.Value;
             if (interactive)
@@ -77,8 +87,8 @@ public static class PluginHttp
                         var now = DateTime.UtcNow;
                         if (_next <= now && (interactive || Volatile.Read(ref _interactiveWaiting) == 0))
                         {
-                            _next = now + interval;
-                            break;
+                            _next = now + (interactive ? interval : _backgroundInterval);
+                            return;
                         }
                         wait = _next > now ? _next - now : Recheck;
                     }
@@ -90,21 +100,43 @@ public static class PluginHttp
                 if (interactive)
                     Interlocked.Decrement(ref _interactiveWaiting);
             }
+        }
+
+        /// <summary>No one sends anything for this long: the source asked for a rest.</summary>
+        public void Pause(TimeSpan delay)
+        {
+            lock (_lock)
+            {
+                var until = DateTime.UtcNow + delay;
+                if (until > _next)
+                    _next = until;
+            }
+        }
+    }
+
+    private sealed class RateLimitHandler(RateLimiter limiter) : DelegatingHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            await limiter.WaitTurnAsync(cancellationToken);
             return await base.SendAsync(request, cancellationToken);
         }
     }
 
     /// <summary>
     /// Retries when the upstream says it's overloaded or rate-limiting, honouring Retry-After, and retries GETs whose
-    /// connection failed.
+    /// connection failed. A busy answer pauses every request to the source, not only this one. Someone searching gets
+    /// fewer tries, so they hear the source is busy in seconds rather than a minute.
     /// </summary>
-    private sealed class RetryHandler(TimeSpan firstDelay) : DelegatingHandler
+    private sealed class RetryHandler(TimeSpan firstDelay, RateLimiter? limiter) : DelegatingHandler
     {
         private const int Attempts = 6;
+        private const int InteractiveAttempts = 3;
         private static readonly TimeSpan MaxDelay = TimeSpan.FromSeconds(30);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            var attempts = Interactive.Value ? InteractiveAttempts : Attempts;
             for (var attempt = 1; ; attempt++)
             {
                 HttpResponseMessage response;
@@ -112,16 +144,22 @@ public static class PluginHttp
                 {
                     response = await base.SendAsync(request, cancellationToken);
                 }
-                catch (HttpRequestException) when (request.Method == HttpMethod.Get && attempt < Attempts)
+                catch (HttpRequestException) when (request.Method == HttpMethod.Get && attempt < attempts)
                 {
                     await Task.Delay(Backoff(attempt), cancellationToken);
                     continue;
                 }
-                if (response.StatusCode is not (HttpStatusCode.ServiceUnavailable or HttpStatusCode.TooManyRequests) || attempt == Attempts)
+                if (response.StatusCode is not (HttpStatusCode.ServiceUnavailable or HttpStatusCode.TooManyRequests) || attempt == attempts)
                     return response;
                 var delay = response.Headers.RetryAfter?.Delta ?? Backoff(attempt);
+                if (delay > MaxDelay)
+                    delay = MaxDelay;
                 response.Dispose();
-                await Task.Delay(delay > MaxDelay ? MaxDelay : delay, cancellationToken);
+                // With a rate limit, the pause holds back everyone and the retry waits its turn behind it.
+                if (limiter is not null)
+                    limiter.Pause(delay);
+                else
+                    await Task.Delay(delay, cancellationToken);
             }
         }
 

@@ -16,6 +16,8 @@ public sealed class CatalogueSearch(NavidexDbContext db, CatalogueService servic
 {
     private const int Limit = 10;
 
+    private static readonly SemaphoreSlim Importing = new(1, 1);
+
     public async Task<SearchResults> SearchAsync(string text, IReadOnlySet<SearchKind>? kinds, bool local, CancellationToken ct)
     {
         text = text.Trim();
@@ -37,15 +39,25 @@ public sealed class CatalogueSearch(NavidexDbContext db, CatalogueService servic
         });
 
         var artists = new List<Artist>();
-        foreach (var hit in results.Artists)
-            artists.Add(await service.ImportArtistAsync(hit, ct));
         var albumIds = new List<Guid>();
-        foreach (var hit in results.Albums)
-            albumIds.Add((await service.ImportAlbumAsync(hit, null, ct)).Id);
         var tracks = new List<(Track Track, Album? Album)>();
-        foreach (var hit in results.Tracks)
-            tracks.Add((await service.ImportTrackAsync(hit, ct), hit.Album is { } from ? await service.ImportAlbumUnlessKnownAsync(from, ct) : null));
-        await db.SaveChangesAsync(ct);
+        // The web app asks for artists, albums and tracks separately, at once. Their answers often share an artist or
+        // album, so they're filed one at a time, or two would add the same one.
+        await Importing.WaitAsync(ct);
+        try
+        {
+            foreach (var hit in results.Artists)
+                artists.Add(await service.ImportArtistAsync(hit, ct));
+            foreach (var hit in results.Albums)
+                albumIds.Add((await service.ImportAlbumAsync(hit, null, ct)).Id);
+            foreach (var hit in results.Tracks)
+                tracks.Add((await service.ImportTrackAsync(hit, ct), hit.Album is { } from ? await service.ImportAlbumUnlessKnownAsync(from, ct) : null));
+            await db.SaveChangesAsync(ct);
+        }
+        finally
+        {
+            Importing.Release();
+        }
         return await ResultsAsync(artists, albumIds, tracks, ct);
     }
 

@@ -240,22 +240,25 @@ else
             _results = null;
     }
 
-    // Matches from what Navidex already holds show at once. MusicBrainz's answer is added when it comes: what's shown
-    // keeps its place, with MusicBrainz's newer details, and the rest follows.
+    // Matches from what Navidex already holds show at once. MusicBrainz is asked for artists, albums and tracks
+    // separately, and each answer is added as it comes, so quick ones (artists, usually) needn't wait for the slowest:
+    // what's shown keeps its place, with MusicBrainz's newer details, and the rest follows.
     private async Task SearchAsync(string text)
     {
         var search = ++_searches;
         _remoteBusy = true;
         _searchError = null;
         await RememberAsync(text);
-        var remote = Api.SearchAsync(text, KindList);
+        var pending = (KindList ?? AllKinds).Select(kind => Api.SearchAsync(text, [kind])).ToList();
+        // What's shown may still be the last search's, kept so the page doesn't flash: the first answer replaces it.
+        var ours = false;
         try
         {
             var local = await Api.SearchAsync(text, KindList, local: true);
-            if (search == _searches && !remote.IsCompleted)
+            if (search == _searches)
             {
                 _results = local;
-                _localOnly = true;
+                _localOnly = ours = true;
                 StateHasChanged();
             }
         }
@@ -263,25 +266,33 @@ else
         {
         }
 
-        try
+        while (pending.Count > 0)
         {
-            var found = await remote;
+            var done = await Task.WhenAny(pending);
+            pending.Remove(done);
             if (search != _searches)
                 return;
-            _results = _results is { } shown && _localOnly ? Merge(shown, found) : found;
-            _localOnly = false;
+            try
+            {
+                var found = await done;
+                _results = ours && _results is { } shown ? Merge(shown, found) : found;
+                ours = true;
+                _localOnly = false;
+            }
+            catch (HttpRequestException e)
+            {
+                _searchError = e.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable
+                    ? "MusicBrainz is busy right now, so some results may be missing. Try again in a moment."
+                    : "Searching MusicBrainz failed, so some results may be missing. Try again in a moment.";
+            }
+            if (pending.Count > 0)
+                StateHasChanged();
         }
-        catch (HttpRequestException e)
-        {
-            if (search != _searches)
-                return;
-            _searchError = e.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable
-                ? "MusicBrainz is busy right now. Try again in a moment."
-                : "Searching MusicBrainz failed. Try again in a moment.";
-        }
-        if (search == _searches)
-            _remoteBusy = false;
+        _localOnly = false;
+        _remoteBusy = false;
     }
+
+    private static readonly IReadOnlyList<string> AllKinds = ["artists", "albums", "tracks"];
 
     private static SearchResults Merge(SearchResults shown, SearchResults found) => new(
         Merge(shown.Artists, found.Artists, a => a.Id), Merge(shown.Albums, found.Albums, a => a.Id), Merge(shown.Tracks, found.Tracks, t => t.Id));
