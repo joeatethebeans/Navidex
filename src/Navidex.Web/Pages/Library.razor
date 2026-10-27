@@ -5,6 +5,7 @@
 @inject Player Player
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @inject NavigationManager Nav
+@inject ViewTransitions Transitions
 
 <PageTitle>Library · Navidex</PageTitle>
 
@@ -12,13 +13,20 @@
 <p class="muted">@Intro</p>
 
 <div class="toolbar">
-    <div class="segmented" role="tablist" aria-label="Show">
-        @foreach (var (view, label) in Views)
-        {
-            <button role="tab" aria-selected="@(_view == view ? "true" : "false")" class="@(_view == view ? "selected" : "")" @onclick="() => ShowAsync(view)">@label</button>
-        }
-    </div>
+    <Segmented T="string" Value="_view" Options="Views" OnChange="ShowAsync" Label="View" />
     <input type="search" placeholder="@FilterHint" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
+    <div class="sort">
+        <select aria-label="Sort by" value="@_sort.Key" @onchange="SortChangedAsync">
+            @foreach (var option in SortOptions)
+            {
+                <option value="@option.Key">@option.Label</option>
+            }
+        </select>
+        <button class="icon-button" title="@DirectionHint" aria-label="@DirectionHint" @onclick="() => SortAsync(_sort.Key, !_sort.Descending)">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="@(_sort.Descending ? "flip" : "")"><path d="M7 4v16M3 16l4 4 4-4" /><path d="M14 5h7M14 10h5M14 15h3" /></svg>
+            <span class="small">@DirectionLabel</span>
+        </button>
+    </div>
     @if (_view != "tracks")
     {
         <OwnershipFilter OnChange="ResetLimit" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
@@ -150,7 +158,66 @@
 }
 
 @code {
-    private static readonly (string View, string Label)[] Views = [("artists", "Artists"), ("albums", "Albums"), ("tracks", "Tracks")];
+    private static readonly IReadOnlyList<(string Value, string Label, string? Hint)> Views =
+        [("artists", "Artists", null), ("albums", "Albums", null), ("tracks", "Tracks", null)];
+
+    /// <summary>A way to sort a view. Text sorts read A to Z; number sorts start with the most when descending.</summary>
+    private sealed record SortOption(string Key, string Label, bool Numeric);
+
+    private sealed record SortChoice(string Key, bool Descending);
+
+    private static readonly Dictionary<string, SortOption[]> Sorts = new()
+    {
+        ["artists"] =
+        [
+            new("name", "Name", false), new("owned", "Albums owned", true), new("missing", "Albums missing", true),
+            new("complete", "How complete", true), new("tracks", "Tracks", true),
+        ],
+        ["albums"] =
+        [
+            new("title", "Title", false), new("artist", "Artist", false), new("year", "Year", true),
+            new("complete", "How complete", true), new("tracks", "Tracks owned", true),
+        ],
+        ["tracks"] = [new("title", "Title", false), new("artist", "Artist", false), new("album", "Album", false), new("length", "Length", true)],
+    };
+
+    private SortChoice _sort = new("name", false);
+
+    private SortOption[] SortOptions => Sorts.GetValueOrDefault(_view) ?? Sorts["artists"];
+    private SortOption CurrentSort => SortOptions.FirstOrDefault(o => o.Key == _sort.Key) ?? SortOptions[0];
+    private string DirectionLabel => CurrentSort.Numeric ? (_sort.Descending ? "Most" : "Least") : (_sort.Descending ? "Z–A" : "A–Z");
+    private string DirectionHint => $"Sorted {(CurrentSort.Numeric ? (_sort.Descending ? "most first" : "least first") : (_sort.Descending ? "Z to A" : "A to Z"))}; click to reverse";
+
+    private static string SortKey(string view) => $"librarySort.{view}";
+
+    private Task SortChangedAsync(ChangeEventArgs e) => SortAsync(e.Value?.ToString() ?? "", null);
+
+    private async Task SortAsync(string key, bool? descending)
+    {
+        var option = SortOptions.FirstOrDefault(o => o.Key == key) ?? SortOptions[0];
+        // A new number sort starts with the most, which is usually what's wanted.
+        var choice = new SortChoice(option.Key, descending ?? option.Numeric);
+        await Prefs.SetAsync(SortKey(_view), choice);
+        await Transitions.RunAsync(() =>
+        {
+            _sort = choice;
+            _limit = Page;
+            StateHasChanged();
+            return Task.CompletedTask;
+        });
+    }
+
+    private IEnumerable<T> Sorted<T>(IEnumerable<T> items, Func<T, string> name, Func<T, string, IComparable?> key)
+    {
+        var option = CurrentSort;
+        var text = StringComparer.CurrentCultureIgnoreCase;
+        IOrderedEnumerable<T> ordered = option.Numeric
+            ? (_sort.Descending ? items.OrderByDescending(i => key(i, option.Key)) : items.OrderBy(i => key(i, option.Key)))
+            : (_sort.Descending ? items.OrderByDescending(i => (string?)key(i, option.Key) ?? "", text) : items.OrderBy(i => (string?)key(i, option.Key) ?? "", text));
+        return ordered.ThenBy(name, text);
+    }
+
+    private static double Ratio(int? part, int? whole) => whole is > 0 ? (double)(part ?? 0) / whole.Value : 0;
 
     // Tiles are drawn a page at a time as the page is scrolled: drawing hundreds at once makes every change slow.
     private const int Page = 60;
@@ -181,15 +248,41 @@
         _filter.Length == 0 || texts.Any(t => t?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true);
 
     // Owned and missing split the list in two: an artist or album is one or the other.
-    private IEnumerable<LibraryArtist> VisibleArtists => Store.Artists!
-        .Where(a => Matches(a.Name))
-        .Where(a => Prefs.Ownership == OwnershipView.All || (a.MissingAlbums > 0 || a.PartialAlbums > 0) == (Prefs.Ownership == OwnershipView.Missing));
+    private IEnumerable<LibraryArtist> VisibleArtists => Sorted(Store.Artists!
+            .Where(a => Matches(a.Name))
+            .Where(a => Prefs.Ownership == OwnershipView.All || (a.MissingAlbums > 0 || a.PartialAlbums > 0) == (Prefs.Ownership == OwnershipView.Missing)),
+        a => a.SortName ?? a.Name,
+        (a, key) => key switch
+        {
+            "owned" => a.OwnedAlbums,
+            "missing" => a.MissingAlbums,
+            "complete" => Ratio(a.OwnedAlbums - a.PartialAlbums, a.OwnedAlbums + a.MissingAlbums),
+            "tracks" => a.Files,
+            _ => a.SortName ?? a.Name,
+        });
 
-    private IEnumerable<LibraryAlbum> VisibleAlbums => Store.Albums!
-        .Where(a => Matches(a.Album.Title, a.ArtistName))
-        .Where(a => Prefs.Ownership == OwnershipView.All || (a.Album.Status == AlbumStatus.Partial) == (Prefs.Ownership == OwnershipView.Missing));
+    private IEnumerable<LibraryAlbum> VisibleAlbums => Sorted(Store.Albums!
+            .Where(a => Matches(a.Album.Title, a.ArtistName))
+            .Where(a => Prefs.Ownership == OwnershipView.All || (a.Album.Status == AlbumStatus.Partial) == (Prefs.Ownership == OwnershipView.Missing)),
+        a => a.Album.Title,
+        (a, key) => key switch
+        {
+            "artist" => a.ArtistName,
+            "year" => a.Album.FirstReleaseDate ?? "",
+            "complete" => Ratio(a.Album.OwnedTracks, a.Album.TotalTracks),
+            "tracks" => a.Album.OwnedTracks ?? 0,
+            _ => a.Album.Title,
+        });
 
-    private IEnumerable<LibraryTrack> VisibleTracks => Store.Tracks!.Where(t => Matches(t.Title, t.ArtistCredit, t.AlbumTitle));
+    private IEnumerable<LibraryTrack> VisibleTracks => Sorted(Store.Tracks!.Where(t => Matches(t.Title, t.ArtistCredit, t.AlbumTitle)),
+        t => t.Title,
+        (t, key) => key switch
+        {
+            "artist" => t.ArtistCredit,
+            "album" => t.AlbumTitle,
+            "length" => t.DurationSeconds ?? 0,
+            _ => t.Title,
+        });
 
     private Task PlayFromAsync(LibraryTrack from)
     {
@@ -212,11 +305,14 @@
     protected override async Task OnParametersSetAsync()
     {
         // The address says which view; without one, the last view used.
-        var view = Views.Any(v => v.View == ViewParameter) ? ViewParameter! : await Prefs.GetAsync("libraryView", "artists");
+        var view = Views.Any(v => v.Value == ViewParameter) ? ViewParameter! : await Prefs.GetAsync("libraryView", "artists");
         if (view == _view)
             return;
         _view = view;
         _limit = Page;
+        _sort = await Prefs.GetAsync<SortChoice?>(SortKey(view), null) is { } saved && SortOptions.Any(o => o.Key == saved.Key)
+            ? saved
+            : new SortChoice(SortOptions[0].Key, false);
         // What was loaded last shows straight away, while a fresh copy loads.
         await LoadAsync();
     }

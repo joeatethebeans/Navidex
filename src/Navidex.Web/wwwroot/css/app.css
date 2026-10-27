@@ -166,12 +166,16 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 }
 
 /* Artwork, or a placeholder icon until artwork is fetched. Square, and as wide as its container. */
+/* Nothing inside takes up room, so the placeholder icon can't stretch the box: it's always as wide as it's told. */
 .cover {
-    position: relative; aspect-ratio: 1; width: 100%; border-radius: 6px; overflow: hidden;
-    display: grid; place-items: center; background: var(--bg); border: 1px solid var(--border);
+    position: relative; aspect-ratio: 1; width: 100%; min-width: 0; min-height: 0; border-radius: 6px; overflow: hidden;
+    display: block; background: var(--bg); border: 1px solid var(--border); box-sizing: border-box; flex: none;
 }
 .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.cover svg { width: 45%; height: 45%; fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .7; }
+.cover svg {
+    position: absolute; inset: 0; margin: auto; width: 45%; height: 45%;
+    fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .7;
+}
 
 /* The library: one square per artist. */
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
@@ -206,6 +210,7 @@ h2.section { margin: 1.5rem 0 .5rem; }
 
 /* Album lists start with a small cover. */
 .table .cover-col { width: 3.5rem; padding-right: 0; }
+.table td.cover-col > a { display: block; width: 2.5rem; }
 .table td.cover-col .cover { width: 2.5rem; }
 
 /* A long option, such as an edition's full description, mustn't push the page wider than the screen. */
@@ -219,10 +224,19 @@ td.actions { white-space: nowrap; }
 td.actions > * + * { margin-left: .6rem; }
 
 /* Review: the file on the left, the suggestion beside it, the actions at the end. Stacks on a phone. */
-.review-item { display: grid; grid-template-columns: 1fr 1fr 11rem; gap: 1rem; padding: .75rem 1rem; margin-bottom: .75rem; align-items: start; }
+/* The file and the suggestion share the room; the buttons take what they need, so nothing runs into them. */
+.review-item {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 1rem; padding: .75rem 1rem; margin-bottom: .75rem; align-items: start;
+}
+.review-item > div { min-width: 0; overflow-wrap: anywhere; }
+.suggestion-row { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: .6rem; align-items: start; }
+.suggestion-row > a { display: block; }
+.suggestion-row .cover { width: 3rem; }
+.suggestion-text { min-width: 0; }
+.suggestion-text .suggestion { display: flex; gap: .5rem; align-items: baseline; min-width: 0; }
 .review-item .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; margin-bottom: .15rem; }
 .review-item .path { overflow-wrap: anywhere; }
-.review-actions { display: flex; gap: .5rem; align-items: center; justify-content: flex-end; }
+.review-actions { display: flex; gap: .5rem; align-items: center; justify-content: flex-end; white-space: nowrap; }
 .suggestion { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
 .confidence { font-size: .78rem; font-weight: 700; padding: .05rem .45rem; border-radius: 999px; font-variant-numeric: tabular-nums; }
 .confidence.high { color: var(--owned); background: var(--owned-bg); }
@@ -430,12 +444,15 @@ tr.playing td:nth-child(2) { color: var(--accent); font-weight: 600; }
 td.actions > .icon-button + .icon-button, td.actions > .icon-button + .badge, td.actions > .badge + .icon-button { margin-left: .3rem; }
 .album-actions { gap: .4rem; }
 .track-list col.icons-2-col { width: 5.5rem; }
-.track-list col.icons-3-col { width: 8rem; }
+.track-list col.icons-3-col { width: 9.5rem; }
+/* Room between the last button and the card's edge. */
+.table tr > td:last-child.actions { padding-right: 1rem; }
 
 /* Artwork on its way shimmers; the placeholder icon shows only when there's none. */
 .cover.pending svg, .cover.loaded svg { display: none; }
 .cover.pending img { opacity: 0; }
-.cover.empty img { display: none; }
+/* "blank", not "empty": that's the padded "nothing here" card. */
+.cover.blank img { display: none; }
 .cover.loaded img { animation: fade-in .25s ease-out; }
 .cover.pending {
     background: linear-gradient(100deg, var(--bg) 30%, var(--border) 50%, var(--bg) 70%) 0 0 / 300% 100%;
@@ -448,19 +465,20 @@ td.actions > .icon-button + .icon-button, td.actions > .icon-button + .badge, td
     .cover.loaded img { animation: none; }
 }
 
-/* Owned, all or missing: a highlight that slides to the choice, in the colour of what it shows. */
-.segmented.ownership { position: relative; display: inline-grid; grid-template-columns: repeat(3, 1fr); }
-.segmented.ownership button { position: relative; z-index: 1; transition: color .2s; }
-.segmented.ownership button + button { border-left: none; }
-.segmented.ownership button.selected { background: none; }
-.segmented.ownership .thumb {
-    position: absolute; top: 0; bottom: 0; left: 0; width: calc(100% / 3); border-radius: 999px; background: var(--bg);
+/* Choices with a highlight that slides to the one picked; owned and missing wear their colours. */
+.segmented.slider { position: relative; display: inline-grid; grid-template-columns: repeat(var(--count), 1fr); }
+.segmented.slider button { position: relative; z-index: 1; transition: color .2s; white-space: nowrap; }
+.segmented.slider button + button { border-left: none; }
+.segmented.slider button.selected { background: none; }
+.segmented.slider .thumb {
+    position: absolute; top: 0; bottom: 0; left: 0; width: calc(100% / var(--count)); border-radius: 999px; background: var(--bg);
     transform: translateX(calc(var(--index) * 100%)); transition: transform .25s ease, background-color .25s;
 }
 .segmented.ownership.owned .thumb { background: var(--owned-bg); }
 .segmented.ownership.owned button.selected { color: var(--owned); }
 .segmented.ownership.missing .thumb { background: var(--missing-bg); }
 .segmented.ownership.missing button.selected { color: var(--missing); }
+@media (prefers-reduced-motion: reduce) { .segmented.slider .thumb { transition: none; } }
 .ownership-busy { width: 1rem; height: 1rem; color: var(--accent); opacity: 0; transition: opacity 0s; }
 .ownership-busy.on { opacity: 1; transition-delay: .12s; }
 /* The page itself doesn't take part in transitions, only the tiles, so the rest changes at once without a flicker. */
@@ -469,7 +487,6 @@ td.actions > .icon-button + .icon-button, td.actions > .icon-button + .badge, td
 ::view-transition-new(*):only-child { animation: fade-in .2s ease-out; }
 ::view-transition-old(*):only-child { animation: fade-out .15s ease-in forwards; }
 @keyframes fade-out { to { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .segmented.ownership .thumb { transition: none; } }
 
 /* A dialog over the page, for questions that need an answer before anything happens. */
 .dialog-backdrop {
@@ -504,3 +521,20 @@ button .spinner { width: .85rem; height: .85rem; vertical-align: -2px; margin-ri
 .tile-wrap:hover .tile-remove, .tile-wrap:focus-within .tile-remove { opacity: 1; }
 @media (hover: none) { .tile-remove { opacity: 1; } }
 .icon-button.remove:hover:not(:disabled) { color: var(--missing); border-color: var(--missing); }
+
+/* The library's sort: what by, and which way. */
+.sort { display: inline-flex; gap: .3rem; align-items: center; }
+.sort select { height: 2rem; }
+.sort .icon-button { padding: 0 .6rem 0 .45rem; gap: .3rem; }
+.sort svg.flip { transform: scaleY(-1); }
+
+/* Recent searches on the Search page. */
+.recent-searches { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+.chip {
+    display: inline-flex; align-items: center; gap: .15rem; padding: .2rem .25rem .2rem .7rem;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+}
+.chip a { color: var(--text); }
+.chip-remove { border: none; background: none; color: var(--muted); padding: 0 .35rem; font-size: 1rem; line-height: 1; cursor: pointer; }
+.chip-remove:hover { color: var(--missing); }
+.search-note { margin-bottom: .5rem; }

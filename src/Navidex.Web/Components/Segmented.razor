@@ -1,0 +1,25 @@
+@typeparam T
+
+@* A row of choices, one picked, with a highlight that slides to it. *@
+<div class="segmented slider @Class" role="radiogroup" aria-label="@Label" style="--count: @Options.Count; --index: @Index">
+    <span class="thumb" aria-hidden="true"></span>
+    @foreach (var (value, label, hint) in Options)
+    {
+        var selected = EqualityComparer<T>.Default.Equals(value, Value);
+        <button role="radio" aria-checked="@(selected ? "true" : "false")" class="@(selected ? "selected" : "")" title="@hint"
+                @onclick="() => OnChange.InvokeAsync(value)">@label</button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public T Value { get; set; } = default!;
+
+    /// <summary>Each choice: its value, its label and an optional tooltip.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<(T Value, string Label, string? Hint)> Options { get; set; } = [];
+
+    [Parameter] public EventCallback<T> OnChange { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    private int Index => Math.Max(0, Options.ToList().FindIndex(o => EqualityComparer<T>.Default.Equals(o.Value, Value)));
+}

@@ -31,8 +31,11 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
     private int _warming;
     private readonly ConcurrentDictionary<string, Entry> _entries = new();
 
-    private sealed class Entry
+    private static readonly TimeSpan SlowView = TimeSpan.FromSeconds(1);
+
+    private sealed class Entry(string name)
     {
+        public readonly string Name = name;
         public readonly Lock Gate = new();
         public object? Value;
         public long Generation = -1;
@@ -51,6 +54,21 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
     public Task<IReadOnlyList<LibraryTrack>> GetTracksAsync(CancellationToken ct) =>
         GetAsync("tracks", (view, c) => view.GetLibraryTracksAsync(c), ct);
 
+    /// <summary>Works out every view in the background, so the Library page has them ready from the start.</summary>
+    public async Task WarmAsync(CancellationToken ct)
+    {
+        try
+        {
+            await GetArtistsAsync(ct);
+            await GetAlbumsAsync(ct);
+            await GetTracksAsync(ct);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            // Logged by the refresh; the first page to ask tries again.
+        }
+    }
+
     /// <summary>Raised after library data is written, as views are marked stale. Handlers must return quickly.</summary>
     public event Action? Changed;
 
@@ -61,11 +79,11 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
         Interlocked.Exchange(ref _lastWrite, Environment.TickCount64);
         Changed?.Invoke();
         if (Interlocked.Exchange(ref _warming, 1) == 0)
-            _ = WarmAsync();
+            _ = WarmStaleAsync();
     }
 
     // Once writes pause, recomputes the views that have been asked for before.
-    private async Task WarmAsync()
+    private async Task WarmStaleAsync()
     {
         try
         {
@@ -99,7 +117,7 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
 
     private async Task<T> GetAsync<T>(string key, Func<LibraryView, CancellationToken, Task<T>> compute, CancellationToken ct) where T : class
     {
-        var entry = _entries.GetOrAdd(key, _ => new Entry());
+        var entry = _entries.GetOrAdd(key, k => new Entry(k));
         Task refresh;
         lock (entry.Gate)
         {
@@ -125,7 +143,10 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
             // Read before computing, so a write while it runs leaves the answer stale.
             var generation = Interlocked.Read(ref _generation);
             using var scope = scopes.CreateScope();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             var value = await compute(scope.ServiceProvider.GetRequiredService<LibraryView>(), CancellationToken.None);
+            if (watch.Elapsed > SlowView)
+                logger.LogInformation("Working out the library's {View} took {Seconds:0.0} s", entry.Name, watch.Elapsed.TotalSeconds);
             lock (entry.Gate)
             {
                 entry.Value = value;

@@ -24,8 +24,8 @@ function clear(named) {
         element.style.viewTransitionName = '';
 }
 
-export function run(target, method, arg) {
-    const apply = () => target.invokeMethodAsync(method, arg);
+export function run(target, method) {
+    const apply = () => target.invokeMethodAsync(method);
     if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches)
         return apply();
     const named = new Map();

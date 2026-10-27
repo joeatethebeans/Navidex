@@ -50,16 +50,20 @@ public sealed class MusicBrainzIndex : IIndexPlugin, IIsrcLookup
         bool Wants(SearchKind kind) => query.Kinds is null || query.Kinds.Count == 0 || query.Kinds.Contains(kind);
         var text = EscapeLucene(query.Text);
 
+        // All at once: the rate limit still spaces them out, but their answers come back together rather than one after another.
         var artists = Wants(SearchKind.Artist)
-            ? (await _query.FindArtistsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)).Results.Select(r => MapArtist(r.Item)).ToList()
-            : [];
+            ? _query.FindArtistsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)
+            : null;
         var albums = Wants(SearchKind.Album)
-            ? (await _query.FindReleaseGroupsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)).Results.Select(r => MapAlbum(r.Item, null)).ToList()
-            : [];
+            ? _query.FindReleaseGroupsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)
+            : null;
         var tracks = Wants(SearchKind.Track)
-            ? (await _query.FindRecordingsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)).Results.Select(r => MapTrack(r.Item) with { Album = BestKnownAlbum(r.Item) }).ToList()
-            : [];
-        return new IndexSearchResults(artists, albums, tracks);
+            ? _query.FindRecordingsAsync(text, query.Limit, simple: true, cancellationToken: cancellationToken)
+            : null;
+        return new IndexSearchResults(
+            artists is null ? [] : (await artists).Results.Select(r => MapArtist(r.Item)).ToList(),
+            albums is null ? [] : (await albums).Results.Select(r => MapAlbum(r.Item, null)).ToList(),
+            tracks is null ? [] : (await tracks).Results.Select(r => MapTrack(r.Item) with { Album = BestKnownAlbum(r.Item) }).ToList());
     }
 
     public Task<IndexArtist?> GetArtistAsync(string artistId, CancellationToken cancellationToken) =>

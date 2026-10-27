@@ -2,6 +2,8 @@
 @inject NavidexClient Api
 @inject NavigationManager Navigation
 @inject Player Player
+@inject Preferences Prefs
+@implements IDisposable
 
 <PageTitle>Search · Navidex</PageTitle>
 
@@ -17,35 +19,80 @@
 }
 
 <form class="toolbar" @onsubmit="SubmitAsync">
-    <input type="search" placeholder="Artist, album or track" @bind="_query" />
-    <button class="primary" type="submit" disabled="@_busy">Search</button>
+    <input type="search" placeholder="Artist, album or track" @bind="_query" @bind:event="oninput" @bind:after="TypedAsync" aria-label="Search" />
+    <button class="primary" type="submit" disabled="@(_remoteBusy || _query.Trim().Length == 0)">Search</button>
 </form>
 
-@if (_busy)
+<div class="toolbar">
+    <Segmented T="string" Value="_kind" Options="Kinds" OnChange="KindAsync" Label="Show" />
+    <Segmented T="string" Value="_owned" Options="OwnedOptions" OnChange="v => _owned = v" Label="In your library" />
+    <div class="sort">
+        <select aria-label="Sort by" value="@_sort" @onchange="e => _sort = e.Value?.ToString() ?? SortOptions[0].Key">
+            @foreach (var (key, label) in SortOptions) { <option value="@key">@label</option> }
+        </select>
+        <button class="icon-button" disabled="@(_sort == "relevance")" title="Reverse the order" aria-label="Reverse the order" @onclick="() => _descending = !_descending">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="@(_descending ? "flip" : "")"><path d="M7 4v16M3 16l4 4 4-4" /><path d="M14 5h7M14 10h5M14 15h3" /></svg>
+            <span class="small">@(_sort == "year" ? (_descending ? "Newest" : "Oldest") : (_descending ? "Z–A" : "A–Z"))</span>
+        </button>
+    </div>
+</div>
+
+@if (_results is null)
 {
-    <Loading Text="Searching…" />
-}
-else if (_searchError is not null)
-{
-    <div class="notice error">@_searchError</div>
-}
-else if (_results is not null)
-{
-    @if (_results.Artists.Count + _results.Albums.Count + _results.Tracks.Count == 0)
+    @if (_searchError is not null)
     {
-        <div class="empty card">No results.</div>
+        <div class="notice error">@_searchError</div>
     }
-    @if (_file is not null && _results.Tracks.Count > 0)
+    else if (_recent.Count > 0)
+    {
+        <div class="section-head">
+            <h2>Recent searches</h2>
+            <button class="link small muted" @onclick="ClearRecentAsync">Clear</button>
+        </div>
+        <div class="recent-searches">
+            @foreach (var recent in _recent)
+            {
+                <span class="chip">
+                    <a href="@SearchLink(recent)">@recent</a>
+                    <button class="chip-remove" title="Forget this search" aria-label="Forget @recent" @onclick="() => ForgetAsync(recent)">×</button>
+                </span>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty card">
+            Search MusicBrainz for an artist, album or track. Results show what you have and what you're missing, and anything can be fetched
+            or listened to from here. As you type, matches from the catalogue Navidex already holds show at once.
+        </div>
+    }
+}
+else
+{
+    @if (_remoteBusy)
+    {
+        <Loading Inline="true" Text="@(_localOnly ? "Showing what Navidex already knows; searching MusicBrainz…" : "Searching MusicBrainz…")" />
+    }
+    else if (_localOnly)
+    {
+        <div class="muted small search-note">From the catalogue Navidex already holds. Press Enter to search MusicBrainz.</div>
+    }
+    @if (_searchError is not null) { <div class="notice error">@_searchError</div> }
+    @if (Artists.Count + Albums.Count + Tracks.Count == 0 && !_remoteBusy)
+    {
+        <div class="empty card">No results@(_owned != "" || _kind != "" ? " with these filters" : "").</div>
+    }
+    @if (_file is not null && Tracks.Count > 0)
     {
         <h2>Tracks</h2>
         @if (_error is not null) { <div class="notice error">@_error</div> }
         @TrackList(track => @<button class="primary small" disabled="@_matching" @onclick="() => MatchAsync(track)">This one</button>)
     }
-    @if (_results.Artists.Count > 0)
+@if (Artists.Count > 0)
     {
         <h2>Artists</h2>
         <div class="tiles">
-            @foreach (var artist in _results.Artists)
+            @foreach (var artist in Artists)
             {
                 <a class="tile" href="artists/@artist.Id" title="@(artist.Disambiguation is null ? artist.Name : $"{artist.Name} ({artist.Disambiguation})")">
                     <Cover Url="@artist.ImageUrl" Artist="true" />
@@ -56,14 +103,14 @@ else if (_results is not null)
             }
         </div>
     }
-    @if (_results.Albums.Count > 0)
+    @if (Albums.Count > 0)
     {
         <h2>Albums</h2>
         <div class="card">
             <table class="table track-list">
                 <colgroup><col class="cover-col" /><col /><col class="status-col" /><col class="wide-action-col" /></colgroup>
                 <tbody>
-                    @foreach (var album in _results.Albums)
+                    @foreach (var album in Albums)
                     {
                         <tr>
                             <td class="cover-col"><a href="albums/@album.Id" tabindex="-1"><Cover Url="@album.CoverUrl" /></a></td>
@@ -98,7 +145,7 @@ else if (_results is not null)
             </table>
         </div>
     }
-    @if (_file is null && _results.Tracks.Count > 0)
+    @if (_file is null && Tracks.Count > 0)
     {
         <h2>Tracks</h2>
         @TrackList(track => @<text>
@@ -125,13 +172,56 @@ else if (_results is not null)
     /// <summary>A file from the Review page to choose the song for.</summary>
     [SupplyParameterFromQuery(Name = "file")] public Guid? FileId { get; set; }
 
+    private static readonly IReadOnlyList<(string Value, string Label, string? Hint)> Kinds =
+        [("", "All", null), ("artists", "Artists", "Only artists, which is quicker"), ("albums", "Albums", "Only albums, which is quicker"), ("tracks", "Tracks", "Only tracks, which is quicker")];
+
+    private static readonly IReadOnlyList<(string Value, string Label, string? Hint)> OwnedOptions =
+        [("", "Any", null), ("owned", "In library", "Only what you have"), ("missing", "Not in library", "Only what you don't have")];
+
+    private static readonly (string Key, string Label)[] SortOptions = [("relevance", "Best match"), ("name", "Name"), ("year", "Year")];
+
+    private const string RecentKey = "recentSearches";
+    private const int RecentCount = 12;
+
     private string _query = "";
+    private string _kind = "";
+    private string _owned = "";
+    private string _sort = "relevance";
+    private bool _descending;
     private SearchResults? _results;
+    private bool _localOnly;
+    private bool _remoteBusy;
+    private List<string> _recent = [];
     private ReviewItem? _file;
     private string? _error;
     private string? _searchError;
-    private bool _busy;
     private bool _matching;
+    private CancellationTokenSource? _typing;
+    private int _searches;
+
+    private IReadOnlyList<string>? KindList => _kind.Length == 0 ? null : [_kind];
+
+    private bool Shows(bool owned) => _owned switch { "owned" => owned, "missing" => !owned, _ => true };
+
+    private IEnumerable<T> Sort<T>(IEnumerable<T> items, Func<T, string> name, Func<T, string?> year)
+    {
+        var text = StringComparer.CurrentCultureIgnoreCase;
+        return _sort switch
+        {
+            "name" => _descending ? items.OrderByDescending(name, text) : items.OrderBy(name, text),
+            "year" => _descending ? items.OrderByDescending(i => year(i) ?? "") : items.OrderBy(i => year(i) ?? "9999"),
+            _ => items,
+        };
+    }
+
+    private List<SearchArtist> Artists => _results is null ? [] : Sort(_results.Artists.Where(a => Shows(a.InLibrary)), a => a.Name, _ => null).ToList();
+
+    private List<AlbumSummary> Albums => _results is null ? [] :
+        Sort(_results.Albums.Where(a => Shows(a.Status is AlbumStatus.Complete or AlbumStatus.Partial)), a => a.Title, a => a.FirstReleaseDate).ToList();
+
+    private List<SearchTrack> Tracks => _results is null ? [] : Sort(_results.Tracks.Where(t => Shows(t.Owned)), t => t.Title, _ => null).ToList();
+
+    protected override async Task OnInitializedAsync() => _recent = await Prefs.GetAsync<List<string>>(RecentKey, []);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -139,28 +229,133 @@ else if (_results is not null)
         _file = FileId is { } fileId ? (await Api.GetReviewAsync()).FirstOrDefault(i => i.FileId == fileId) : null;
         _results = null;
         _searchError = null;
-        if (_query.Length > 0)
+        if (_query.Trim().Length > 0)
+            await SearchAsync(_query.Trim());
+    }
+
+    // Matches from what Navidex already holds show at once. MusicBrainz's answer is added when it comes: what's shown
+    // keeps its place, with MusicBrainz's newer details, and the rest follows.
+    private async Task SearchAsync(string text)
+    {
+        var search = ++_searches;
+        _remoteBusy = true;
+        _searchError = null;
+        await RememberAsync(text);
+        var remote = Api.SearchAsync(text, KindList);
+        try
         {
-            _busy = true;
-            try
+            var local = await Api.SearchAsync(text, KindList, local: true);
+            if (search == _searches && !remote.IsCompleted)
             {
-                _results = await Api.SearchAsync(_query);
+                _results = local;
+                _localOnly = true;
+                StateHasChanged();
             }
-            catch (HttpRequestException e)
-            {
-                _searchError = e.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable
-                    ? "The catalogue is busy right now. Try again in a moment."
-                    : "Searching failed. Try again in a moment.";
-            }
-            _busy = false;
+        }
+        catch (HttpRequestException)
+        {
+        }
+
+        try
+        {
+            var found = await remote;
+            if (search != _searches)
+                return;
+            _results = _results is { } shown && _localOnly ? Merge(shown, found) : found;
+            _localOnly = false;
+        }
+        catch (HttpRequestException e)
+        {
+            if (search != _searches)
+                return;
+            _searchError = e.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable
+                ? "MusicBrainz is busy right now. Try again in a moment."
+                : "Searching MusicBrainz failed. Try again in a moment.";
+        }
+        if (search == _searches)
+            _remoteBusy = false;
+    }
+
+    private static SearchResults Merge(SearchResults shown, SearchResults found) => new(
+        Merge(shown.Artists, found.Artists, a => a.Id), Merge(shown.Albums, found.Albums, a => a.Id), Merge(shown.Tracks, found.Tracks, t => t.Id));
+
+    private static List<T> Merge<T>(IReadOnlyList<T> shown, IReadOnlyList<T> found, Func<T, Guid> id)
+    {
+        var newer = found.ToDictionary(id);
+        return [.. shown.Select(s => newer.GetValueOrDefault(id(s), s)), .. found.Where(f => shown.All(s => id(s) != id(f)))];
+    }
+
+    // As you type, what Navidex already holds; Enter asks MusicBrainz.
+    private async Task TypedAsync()
+    {
+        _typing?.Cancel();
+        var text = _query.Trim();
+        if (text.Length < 2)
+            return;
+        var typing = _typing = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(250, typing.Token);
+            var search = ++_searches;
+            var local = await Api.SearchAsync(text, KindList, local: true, typing.Token);
+            if (search != _searches)
+                return;
+            _results = local;
+            _localOnly = true;
+            _remoteBusy = false;
+            _searchError = null;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (HttpRequestException)
+        {
         }
     }
 
+    private async Task KindAsync(string kind)
+    {
+        _kind = kind;
+        if (_results is not null && _query.Trim().Length > 0)
+            await SearchAsync(_query.Trim());
+    }
+
+    private async Task RememberAsync(string text)
+    {
+        _recent = [text, .. _recent.Where(r => !string.Equals(r, text, StringComparison.OrdinalIgnoreCase))];
+        if (_recent.Count > RecentCount)
+            _recent = _recent[..RecentCount];
+        await Prefs.SetAsync(RecentKey, _recent);
+    }
+
+    private async Task ForgetAsync(string text)
+    {
+        _recent = _recent.Where(r => r != text).ToList();
+        await Prefs.SetAsync(RecentKey, _recent);
+    }
+
+    private async Task ClearRecentAsync()
+    {
+        _recent = [];
+        await Prefs.SetAsync(RecentKey, _recent);
+    }
+
+    private string SearchLink(string text) => $"search?q={Uri.EscapeDataString(text)}{(_file is null ? "" : $"&file={_file.FileId}")}";
+
     private Task SubmitAsync()
     {
-        Navigation.NavigateTo($"search?q={Uri.EscapeDataString(_query)}{(_file is null ? "" : $"&file={_file.FileId}")}");
+        _typing?.Cancel();
+        var text = _query.Trim();
+        if (text.Length == 0)
+            return Task.CompletedTask;
+        // The same search again (a press of Enter after typing) doesn't change the address, so run it here.
+        if (text == (Query ?? "").Trim())
+            return SearchAsync(text);
+        Navigation.NavigateTo(SearchLink(text));
         return Task.CompletedTask;
     }
+
+    public void Dispose() => _typing?.Cancel();
 
     /// <summary>Tracks as the library lists them, with their album's cover, and what can be done with each.</summary>
     private RenderFragment TrackList(RenderFragment<SearchTrack> actions) => __builder =>
@@ -169,7 +364,7 @@ else if (_results is not null)
             <table class="table track-list">
                 <colgroup><col class="cover-col" /><col /><col class="length-col hide-narrow" /><col class="wide-action-col" /></colgroup>
                 <tbody>
-                    @foreach (var track in _results!.Tracks)
+                    @foreach (var track in Tracks)
                     {
                         <tr>
                             <td class="cover-col">

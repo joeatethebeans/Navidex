@@ -1,26 +1,50 @@
+@page "/downloads"
 @implements IDisposable
 @inject NavidexClient Api
 @inject Player Player
 @inject ServerEvents Events
+@inject Preferences Prefs
+
+<PageTitle>Downloads · Navidex</PageTitle>
 
 @*
-    Tracks fetched to listen to: the Downloads section of the Activity page. Now shows those still to play or add; all time
-    adds those discarded, expired or added to the library. Hidden while there are none.
+    Tracks fetched to listen to. Now shows those still to play or add; all time adds those discarded, expired or added
+    to the library.
 *@
-@if (_items is { Count: > 0 })
-{
-    <div class="section-head" id="downloads">
-        <h2>Downloads</h2>
-    </div>
-    <p class="muted small" style="margin: .25rem 0 0;">
-        Tracks fetched to listen to without adding them to your library. Each is kept for @Format.Minutes(_expiry) after you last
-        play it, unless you add it.
-    </p>
-    var playable = _items.Where(i => i.State is not (ListenNowState.Failed or ListenNowState.Expired)).ToList();
-    <div class="toolbar">
+<h1>Downloads</h1>
+<p class="muted">
+    Tracks fetched to listen to without adding them to your library. Each is kept for @Format.Minutes(_expiry) after you last
+    play it, unless you add it.
+</p>
+
+<div class="toolbar">
+    <Segmented T="bool" Value="_all" Options="Tabs" OnChange="ShowAsync" Label="Show" />
+    @if (_items is { Count: > 0 })
+    {
+        var playable = Playable;
         <button class="primary" disabled="@(playable.Count == 0)" @onclick="() => PlayAsync(playable, 0)">Play all</button>
-        @if (_error is not null) { <span class="error small" title="@_error">@_error</span> }
+    }
+    @if (_error is not null) { <span class="error small" title="@_error">@_error</span> }
+</div>
+
+@if (_items is null)
+{
+    <Loading />
+}
+else if (_items.Count == 0)
+{
+    <div class="empty card">
+        @if (_all) { <span>Nothing fetched to listen to yet. Use the listen buttons on album and search pages.</span> }
+        else
+        {
+            <span>Nothing to play or add right now. </span>
+            <button class="link" @onclick="() => ShowAsync(true)">Show all time</button>
+        }
     </div>
+}
+else
+{
+    var playable = Playable;
     <div class="card">
         @foreach (var item in _items)
         {
@@ -78,11 +102,16 @@
 }
 
 @code {
-    /// <summary>Include those discarded, expired or added to the library.</summary>
-    [Parameter] public bool All { get; set; }
+    private static readonly IReadOnlyList<(bool Value, string Label, string? Hint)> Tabs =
+        [(false, "Now", "Still to play, fetch or add"), (true, "All time", "Including those deleted or added to the library")];
 
+    private const string AllKey = "downloadsAll";
+
+    // Include those discarded, expired or added to the library.
+    private bool _all;
     private IReadOnlyList<ListenNowInfo>? _items;
-    private bool? _loadedAll;
+
+    private List<ListenNowInfo> Playable => _items!.Where(i => i.State is not (ListenNowState.Failed or ListenNowState.Expired)).ToList();
     private int _expiry = 60;
     private string? _error;
 
@@ -90,20 +119,24 @@
     {
         Events.Received += OnEvent;
         Player.Changed += Redraw;
+        _all = await Prefs.GetAsync(AllKey, false);
         _expiry = (await Api.GetFetchSettingsAsync()).ListenNowExpiryMinutes;
+        await LoadAsync();
     }
 
-    protected override async Task OnParametersSetAsync()
+    private async Task ShowAsync(bool all)
     {
-        if (_loadedAll != All)
-            await LoadAsync();
+        _all = all;
+        await Prefs.SetAsync(AllKey, all);
+        await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
-        var all = All;
-        _items = await Api.ListListeningAsync(all);
-        _loadedAll = all;
+        var all = _all;
+        var items = await Api.ListListeningAsync(all);
+        if (all == _all)
+            _items = items;
     }
 
     private void OnEvent(string type)

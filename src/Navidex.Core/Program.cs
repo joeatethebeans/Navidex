@@ -56,6 +56,7 @@ builder.Services.AddScoped<LibraryScanner>();
 builder.Services.AddScoped<LibraryMatcher>();
 builder.Services.AddScoped<LibraryView>();
 builder.Services.AddScoped<LibraryRemover>();
+builder.Services.AddScoped<CatalogueSearch>();
 
 // Background work
 builder.Services.AddSingleton<TaskSignal>();
@@ -100,8 +101,8 @@ using (var scope = app.Services.CreateScope())
     await app.Services.GetRequiredService<StreamSigner>().InitialiseAsync(db);
 }
 
-// Work out the library page in the background, so the first visit after starting is quick too.
-_ = app.Services.GetRequiredService<LibraryCache>().GetArtistsAsync(CancellationToken.None);
+// Work out the library's views in the background, so the first visit after starting is quick too.
+_ = app.Services.GetRequiredService<LibraryCache>().WarmAsync(CancellationToken.None);
 
 // A catalogue source that's busy or down is the client's cue to try again later, not a server error.
 app.Use(async (context, next) =>

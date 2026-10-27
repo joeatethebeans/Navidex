@@ -14,6 +14,9 @@ namespace Navidex.Core.Api;
 
 public static class LibraryEndpoints
 {
+    /// <summary>How long a request for a picture waits for it to be fetched before answering 503.</summary>
+    private static readonly TimeSpan ArtworkPatience = TimeSpan.FromSeconds(1.5);
+
     public static RouteGroupBuilder MapLibraryEndpoints(this RouteGroupBuilder api)
     {
         var library = api.MapGroup("/library").WithTags("Library");
@@ -131,7 +134,18 @@ public static class LibraryEndpoints
         api.MapGet("/artwork/{kind}/{id:guid}", async (string kind, Guid id, ArtworkCache artwork, HttpContext http, CancellationToken ct) =>
             {
                 EntityKind? of = kind switch { "artist" => EntityKind.Artist, "album" => EntityKind.Album, "edition" => EntityKind.Edition, _ => null };
-                if (of is null || await artwork.GetAsync(of.Value, id, ct) is not { } found)
+                if (of is null)
+                    return Results.NotFound();
+                // A picture not fetched yet can take a while, as artwork sources are rate-limited. Browsers make only a
+                // few requests at once to a server, so a page of pictures still on their way would hold up everything
+                // else: answer 503 instead, and the search goes on, so asking again in a moment finds it.
+                var finding = artwork.GetAsync(of.Value, id, ct);
+                if (await Task.WhenAny(finding, Task.Delay(ArtworkPatience, ct)) != finding)
+                {
+                    http.Response.Headers.RetryAfter = "2";
+                    return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+                }
+                if (await finding is not { } found)
                     return Results.NotFound();
                 // Revalidated every time, so a change of artwork plugins shows at once; unchanged pictures are a 304.
                 http.Response.Headers.CacheControl = "no-cache";
@@ -139,8 +153,9 @@ public static class LibraryEndpoints
                     entityTag: new Microsoft.Net.Http.Headers.EntityTagHeaderValue($"\"{found.UpdatedAt.Ticks:x}\""));
             })
             .WithTags("Library").WithName("GetArtwork")
-            .WithSummary("The picture of an artist, album or edition (kind is artist, album or edition), from the artwork plugins. 404 when there's none.")
-            .Produces(StatusCodes.Status200OK, contentType: "image/jpeg").Produces(StatusCodes.Status404NotFound);
+            .WithSummary("The picture of an artist, album or edition (kind is artist, album or edition), from the artwork plugins. 404 when there's none; "
+                         + "503 with Retry-After while it's still being fetched.")
+            .Produces(StatusCodes.Status200OK, contentType: "image/jpeg").Produces(StatusCodes.Status404NotFound).Produces(StatusCodes.Status503ServiceUnavailable);
 
         api.MapGet("/tasks", async (NavidexDbContext db, bool? active, int? limit, CancellationToken ct) =>
             {
@@ -195,36 +210,16 @@ public static class LibraryEndpoints
     {
         var catalogue = api.MapGroup("").WithTags("Catalogue");
 
-        catalogue.MapGet("/catalogue/search", async (string q, CatalogueService service, LibraryView view, NavidexDbContext db, CancellationToken ct) =>
+        catalogue.MapGet("/catalogue/search", async (string q, string? kinds, bool? local, CatalogueSearch search, CancellationToken ct) =>
             {
-                if (string.IsNullOrWhiteSpace(q))
-                    return Results.Ok(new SearchResults([], [], []));
-                var plugin = await service.PluginAsync(ct);
-                var results = await plugin.SearchAsync(new IndexSearchQuery(q, null, 10), ct);
-
-                var artists = new List<SearchArtist>();
-                foreach (var hit in results.Artists)
-                {
-                    var artist = await service.ImportArtistAsync(hit, ct);
-                    artists.Add(new SearchArtist(artist.Id, artist.Name, artist.Disambiguation, artist.InLibrary, [hit.Id], LibraryView.ArtistImageUrl(artist.Id)));
-                }
-                var albumIds = new List<Guid>();
-                foreach (var hit in results.Albums)
-                    albumIds.Add((await service.ImportAlbumAsync(hit, null, ct)).Id);
-                var tracks = new List<(Track Track, Album? Album)>();
-                foreach (var hit in results.Tracks)
-                    tracks.Add((await service.ImportTrackAsync(hit, ct), hit.Album is { } from ? await service.ImportAlbumUnlessKnownAsync(from, ct) : null));
-                await db.SaveChangesAsync(ct);
-
-                var trackIds = tracks.Select(t => t.Track.Id).ToList();
-                var owned = await db.LibraryFiles.Where(f => f.TrackId != null && trackIds.Contains(f.TrackId.Value)).Select(f => f.TrackId!.Value).ToListAsync(ct);
-                var summaries = (await view.GetAlbumSummariesAsync([.. albumIds.Union(tracks.Select(t => t.Album?.Id).OfType<Guid>())], ct)).ToDictionary(a => a.Id);
-                return Results.Ok(new SearchResults(artists, [.. albumIds.Where(summaries.ContainsKey).Select(id => summaries[id])],
-                    tracks.Select((t, i) => new SearchTrack(t.Track.Id, t.Track.Title, t.Track.ArtistCredit, t.Track.Duration?.TotalSeconds, owned.Contains(t.Track.Id),
-                        [results.Tracks[i].Id], t.Track.ArtistId, t.Album?.Id, t.Album?.Title,
-                        t.Album is { } album ? summaries.GetValueOrDefault(album.Id)?.CoverUrl ?? LibraryView.CoverUrl(album.Id, null) : null)).ToList()));
+                var wanted = kinds?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(k => Enum.TryParse<SearchKind>(k.TrimEnd('s'), ignoreCase: true, out var kind) ? kind : (SearchKind?)null)
+                    .OfType<SearchKind>().ToHashSet();
+                return Results.Ok(await search.SearchAsync(q, wanted, local == true, ct));
             })
-            .WithName("SearchCatalogue").WithSummary("Search artists, albums and tracks through the index plugin, with owned status.")
+            .WithName("SearchCatalogue")
+            .WithSummary("Search artists, albums and tracks through the index plugin, with owned status. kinds limits it to some of artists, albums "
+                         + "and tracks, which is quicker; local=true searches only what Navidex already holds, which answers at once.")
             .Produces<SearchResults>();
 
         catalogue.MapGet("/artists/{id:guid}", async (Guid id, LibraryView view, NavidexDbContext db, CatalogueService service, TaskQueue queue, CancellationToken ct) =>

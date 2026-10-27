@@ -15,5 +15,6 @@ builder.Services.AddScoped<ServerEvents>();
 builder.Services.AddScoped<RequestTracker>();
 builder.Services.AddScoped<Player>();
 builder.Services.AddScoped<LibraryStore>();
+builder.Services.AddScoped<ViewTransitions>();
 
 await builder.Build().RunAsync();

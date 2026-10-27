@@ -25,6 +25,12 @@ public class PluginHttpOptions
 
 public static class PluginHttp
 {
+    /// <summary>
+    /// Set for requests someone is waiting on, such as a search: they take the next free slot under a plugin's rate
+    /// limit ahead of background work like catalogue updates.
+    /// </summary>
+    public static readonly AsyncLocal<bool> Interactive = new();
+
     public static readonly ProductInfoHeaderValue[] UserAgent =
     [
         new("Navidex", typeof(PluginHttp).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0"),
@@ -44,25 +50,45 @@ public static class PluginHttp
         return client;
     }
 
-    /// <summary>Spaces requests at least <c>interval</c> apart, across every caller of the client.</summary>
+    /// <summary>
+    /// Spaces requests at least <c>interval</c> apart, across every caller of the client. While an interactive request
+    /// waits, background ones hold back, so it goes next.
+    /// </summary>
     private sealed class RateLimitHandler(TimeSpan interval) : DelegatingHandler
     {
-        private readonly SemaphoreSlim _gate = new(1, 1);
+        private static readonly TimeSpan Recheck = TimeSpan.FromMilliseconds(50);
+
+        private readonly Lock _lock = new();
         private DateTime _next = DateTime.MinValue;
+        private int _interactiveWaiting;
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            await _gate.WaitAsync(cancellationToken);
+            var interactive = Interactive.Value;
+            if (interactive)
+                Interlocked.Increment(ref _interactiveWaiting);
             try
             {
-                var wait = _next - DateTime.UtcNow;
-                if (wait > TimeSpan.Zero)
+                while (true)
+                {
+                    TimeSpan wait;
+                    lock (_lock)
+                    {
+                        var now = DateTime.UtcNow;
+                        if (_next <= now && (interactive || Volatile.Read(ref _interactiveWaiting) == 0))
+                        {
+                            _next = now + interval;
+                            break;
+                        }
+                        wait = _next > now ? _next - now : Recheck;
+                    }
                     await Task.Delay(wait, cancellationToken);
-                _next = DateTime.UtcNow + interval;
+                }
             }
             finally
             {
-                _gate.Release();
+                if (interactive)
+                    Interlocked.Decrement(ref _interactiveWaiting);
             }
             return await base.SendAsync(request, cancellationToken);
         }

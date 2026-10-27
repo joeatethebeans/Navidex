@@ -1,8 +1,8 @@
 @page "/listen"
 @inject NavigationManager Navigation
 
-@* Listen now moved into Activity, as Downloads; old links go there. *@
+@* Listen now became Downloads; old links go there. *@
 
 @code {
-    protected override void OnInitialized() => Navigation.NavigateTo("activity#downloads", replace: true);
+    protected override void OnInitialized() => Navigation.NavigateTo("downloads", replace: true);
 }

@@ -318,7 +318,8 @@ public sealed class LibraryView(NavidexDbContext db, SettingsService settingsSer
             if (f.SuggestedTrackId is { } trackId && tracks.TryGetValue(trackId, out var track))
             {
                 var edition = f.SuggestedEditionId is { } e ? editions.GetValueOrDefault(e) : null;
-                suggestion = new SuggestedTrack(track.Id, track.Title, track.ArtistCredit, track.Duration?.TotalSeconds, edition?.Id, edition?.AlbumId, edition?.Album.Title);
+                suggestion = new SuggestedTrack(track.Id, track.Title, track.ArtistCredit, track.Duration?.TotalSeconds, edition?.Id, edition?.AlbumId, edition?.Album.Title,
+                    edition is null ? null : CoverUrl(edition.AlbumId, edition.Id), track.ArtistId);
             }
             return new ReviewItem(f.Id, f.Path, f.ReviewReason, f.MatchConfidence, tags.Title, tags.Artist ?? tags.AlbumArtist, tags.Album,
                 f.Duration?.TotalSeconds, suggestion, f.ExcludedAt is not null);

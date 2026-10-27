@@ -2,7 +2,7 @@
     Artwork for an artist or album. It shimmers while the picture is fetched, and shows a placeholder icon only if
     there's no artwork or it doesn't load. Fills its container's width.
 *@
-<div @key="Url" class="cover @(Artist ? "artist" : "album") @(Url is null ? "empty" : "pending") @Class" aria-hidden="true">
+<div @key="Url" class="cover @(Artist ? "artist" : "album") @(Url is null ? "blank" : "pending") @Class" aria-hidden="true">
     @if (Artist)
     {
         <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg>
@@ -15,11 +15,12 @@
     {
         @*
             The classes are set by the browser as the picture arrives; Blazor leaves them alone until the URL changes. A
-            picture that fails is hidden, not removed: Blazor still counts it, and removing it breaks later updates.
+            picture still being fetched is asked for again (cover.js). One that fails is hidden, not removed: Blazor still
+            counts it, and removing it breaks later updates.
         *@
         <img src="@Url" alt="" loading="lazy"
              onload="this.parentElement.classList.replace('pending', 'loaded')"
-             onerror="this.parentElement.classList.replace('pending', 'empty')" />
+             onerror="navidexCoverFailed(this)" />
     }
 </div>
 

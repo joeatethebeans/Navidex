@@ -1,21 +1,11 @@
-@implements IAsyncDisposable
-@using Microsoft.JSInterop
 @inject Preferences Prefs
-@inject IJSRuntime Js
+@inject ViewTransitions Transitions
 
 @*
     Owned, all or missing, for the library and artist pages. The highlight slides between them, and the page changes as a
     view transition, so the tiles that stay move into place rather than the page jumping.
 *@
-<div class="segmented ownership @Prefs.Ownership.ToString().ToLowerInvariant()" role="radiogroup" aria-label="Show"
-     style="--index: @((int)Prefs.Ownership)">
-    <span class="thumb" aria-hidden="true"></span>
-    @foreach (var (view, label, hint) in Options)
-    {
-        <button role="radio" aria-checked="@(Prefs.Ownership == view ? "true" : "false")" class="@(Prefs.Ownership == view ? "selected" : "")"
-                title="@hint" @onclick="() => ChooseAsync(view)">@label</button>
-    }
-</div>
+<Segmented T="OwnershipView" Value="Prefs.Ownership" Options="Options" OnChange="ChooseAsync" Class="@($"ownership {Prefs.Ownership.ToString().ToLowerInvariant()}")" Label="Show" />
 @* Shown only if the change takes more than a moment. *@
 <span class="spinner ownership-busy @(_busy ? "on" : "")" role="status" aria-label="@(_busy ? "Updating" : null)"></span>
 
@@ -26,26 +16,12 @@
     [Parameter] public string OwnedHint { get; set; } = "Only what you have all of";
     [Parameter] public string MissingHint { get; set; } = "Only what has something missing";
 
-    private (OwnershipView, string, string)[] Options =>
+    private IReadOnlyList<(OwnershipView, string, string?)> Options =>
         [(OwnershipView.Owned, "Owned", OwnedHint), (OwnershipView.All, "All", "Everything"), (OwnershipView.Missing, "Missing", MissingHint)];
 
-    private DotNetObjectReference<OwnershipFilter>? _self;
     private bool _busy;
-    private IJSObjectReference? _module;
 
-    // Loaded up front: fetching it on the first click would hold that click's change back.
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender)
-            return;
-        try
-        {
-            _module ??= await Js.InvokeAsync<IJSObjectReference>("import", "./js/transition.js");
-        }
-        catch (JSException)
-        {
-        }
-    }
+    protected override Task OnAfterRenderAsync(bool firstRender) => firstRender ? Transitions.PreloadAsync() : Task.CompletedTask;
 
     private async Task ChooseAsync(OwnershipView view)
     {
@@ -57,35 +33,16 @@
         await Task.Delay(1);
         try
         {
-            _self ??= DotNetObjectReference.Create(this);
-            _module ??= await Js.InvokeAsync<IJSObjectReference>("import", "./js/transition.js");
-            await _module.InvokeVoidAsync("run", _self, nameof(ApplyAsync), view);
-        }
-        catch (JSException)
-        {
-            await ApplyAsync(view);
+            await Transitions.RunAsync(async () =>
+            {
+                await Prefs.SetOwnershipAsync(view);
+                StateHasChanged();
+                await OnChange.InvokeAsync();
+            });
         }
         finally
         {
             _busy = false;
-        }
-    }
-
-    [JSInvokable]
-    public async Task ApplyAsync(OwnershipView view)
-    {
-        await Prefs.SetOwnershipAsync(view);
-        StateHasChanged();
-        await OnChange.InvokeAsync();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        _self?.Dispose();
-        if (_module is not null)
-        {
-            try { await _module.DisposeAsync(); }
-            catch (JSDisconnectedException) { }
         }
     }
 }

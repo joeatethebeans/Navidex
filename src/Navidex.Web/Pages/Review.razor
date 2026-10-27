@@ -74,17 +74,23 @@ else
                 <div class="label">Suggestion</div>
                 @if (item.Suggestion is { } s)
                 {
-                    <div class="suggestion">
-                        <span>@s.Title</span>
-                        @if (item.Confidence is { } confidence)
-                        {
-                            <span class="confidence @ConfidenceClass(confidence)" title="How sure the match is">@confidence.ToString("P0")</span>
-                        }
-                    </div>
-                    <div class="muted small">
-                        @s.ArtistCredit
-                        @if (s.AlbumId is { } albumId) { <span> · <a href="albums/@albumId">@s.AlbumTitle</a></span> }
-                        @if (s.DurationSeconds is not null) { <span> · @Format.Duration(s.DurationSeconds)</span> }
+                    <div class="suggestion-row">
+                        @if (s.AlbumId is { } coverAlbum) { <a href="albums/@coverAlbum" tabindex="-1"><Cover Url="@s.CoverUrl" /></a> }
+                        else { <Cover Url="@s.CoverUrl" /> }
+                        <div class="suggestion-text">
+                            <div class="suggestion">
+                                <span class="ellipsis">@s.Title</span>
+                                @if (item.Confidence is { } confidence)
+                                {
+                                    <span class="confidence @ConfidenceClass(confidence)" title="How sure the match is">@confidence.ToString("P0")</span>
+                                }
+                            </div>
+                            <div class="muted small">
+                                @if (s.ArtistId is { } artistId) { <a href="artists/@artistId">@s.ArtistCredit</a> } else { @s.ArtistCredit }
+                                @if (s.AlbumId is { } albumId) { <span> · <a href="albums/@albumId">@s.AlbumTitle</a></span> }
+                                @if (s.DurationSeconds is not null) { <span> · @Format.Duration(s.DurationSeconds)</span> }
+                            </div>
+                        </div>
                     </div>
                 }
                 else

@@ -74,9 +74,12 @@ public sealed class NavidexClient(HttpClient http)
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<SearchResults> SearchAsync(string query, CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<SearchResults>($"{Api}/catalogue/search?q={Uri.EscapeDataString(query)}", NavidexJson.Options, ct)
-        ?? new SearchResults([], [], []);
+    /// <param name="kinds">Some of <c>artists</c>, <c>albums</c> and <c>tracks</c>; all of them when empty.</param>
+    /// <param name="local">Only what Navidex already holds, which answers at once.</param>
+    public async Task<SearchResults> SearchAsync(string query, IReadOnlyCollection<string>? kinds = null, bool local = false, CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<SearchResults>(
+            $"{Api}/catalogue/search?q={Uri.EscapeDataString(query)}{(kinds is { Count: > 0 } ? $"&kinds={string.Join(',', kinds)}" : "")}{(local ? "&local=true" : "")}",
+            NavidexJson.Options, ct) ?? new SearchResults([], [], []);
 
     public async Task<LibrarySettings> GetLibrarySettingsAsync(CancellationToken ct = default) =>
         await http.GetFromJsonAsync<LibrarySettings>($"{Api}/settings/library", NavidexJson.Options, ct) ?? new LibrarySettings();

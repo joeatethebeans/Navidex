@@ -229,7 +229,9 @@ public sealed record ExcludeFile(bool Excluded);
 /// <summary>Body of <c>POST /library/files/{id}/match</c>. Without an edition, the suggestion's or the likeliest one is used.</summary>
 public sealed record MatchFile(Guid TrackId, Guid? EditionId = null);
 
-public sealed record SuggestedTrack(Guid TrackId, string Title, string ArtistCredit, double? DurationSeconds, Guid? EditionId, Guid? AlbumId, string? AlbumTitle);
+/// <param name="CoverUrl">The suggested edition's cover, served by the core.</param>
+public sealed record SuggestedTrack(Guid TrackId, string Title, string ArtistCredit, double? DurationSeconds, Guid? EditionId, Guid? AlbumId, string? AlbumTitle,
+    string? CoverUrl = null, Guid? ArtistId = null);
 
 public sealed record SearchResults(
     IReadOnlyList<SearchArtist> Artists,

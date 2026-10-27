@@ -1,0 +1,103 @@
+using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
+using Navidex.Contracts.Catalogue;
+using Navidex.Core.Data;
+using Navidex.Core.Library;
+using Xunit.Abstractions;
+
+namespace Navidex.Core.Tests;
+
+/// <summary>
+/// How long the library views take on a library about the size of a real one. Not run by default: set BENCHMARK=1.
+/// </summary>
+public sealed class LibraryViewBenchmark(ITestOutputHelper output) : IDisposable
+{
+    private readonly string _dataPath = Path.Combine(Path.GetTempPath(), "navidex-tests", Guid.NewGuid().ToString("N"));
+
+    public void Dispose()
+    {
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        if (Directory.Exists(_dataPath))
+            Directory.Delete(_dataPath, recursive: true);
+    }
+
+    [Fact]
+    public async Task Library_views_on_a_big_library()
+    {
+        if (Environment.GetEnvironmentVariable("BENCHMARK") != "1")
+            return;
+        await using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b.UseSetting("Navidex:DataPath", _dataPath));
+        _ = factory.Server;
+        using (var scope = factory.Services.CreateScope())
+            await SeedAsync(scope.ServiceProvider.GetRequiredService<NavidexDbContext>(), artists: 300, albums: 30, editions: 3, tracks: 10, files: 3500);
+
+        foreach (var round in new[] { "cold", "warm" })
+        {
+            using var scope = factory.Services.CreateScope();
+            var view = scope.ServiceProvider.GetRequiredService<LibraryView>();
+            var watch = Stopwatch.StartNew();
+            var a = await view.GetLibraryArtistsAsync(default);
+            output.WriteLine($"{round} artists: {watch.ElapsedMilliseconds} ms ({a.Count})");
+            watch.Restart();
+            var b = await view.GetLibraryAlbumsAsync(default);
+            output.WriteLine($"{round} albums: {watch.ElapsedMilliseconds} ms ({b.Count})");
+            watch.Restart();
+            var c = await view.GetLibraryTracksAsync(default);
+            output.WriteLine($"{round} tracks: {watch.ElapsedMilliseconds} ms ({c.Count})");
+        }
+    }
+
+    private static async Task SeedAsync(NavidexDbContext db, int artists, int albums, int editions, int tracks, int files)
+    {
+        db.ChangeTracker.AutoDetectChangesEnabled = false;
+        var random = new Random(1);
+        var allEditions = new List<(Guid Edition, Guid[] Tracks, Guid Artist)>();
+        for (var ar = 0; ar < artists; ar++)
+        {
+            var artist = new Artist { Name = $"Artist {ar}", InLibrary = true };
+            db.Artists.Add(artist);
+            for (var al = 0; al < albums; al++)
+            {
+                var album = new Album { ArtistId = artist.Id, Title = $"Album {ar}-{al}", ArtistCredit = artist.Name, FirstReleaseDate = $"{1970 + al}", EditionsRefreshedAt = DateTime.UtcNow };
+                db.Albums.Add(album);
+                var trackIds = new Guid[tracks];
+                for (var t = 0; t < tracks; t++)
+                {
+                    var track = new Track { ArtistId = artist.Id, Title = $"Song {ar}-{al}-{t}", ArtistCredit = artist.Name, Duration = TimeSpan.FromMinutes(3) };
+                    trackIds[t] = track.Id;
+                    db.Tracks.Add(track);
+                    db.Crosswalk.Add(new ProviderIdMapping { EntityKind = EntityKind.Track, EntityId = track.Id, Provider = Providers.Isrc, Value = $"ISRC{ar:000}{al:00}{t:00}" });
+                }
+                for (var e = 0; e < editions; e++)
+                {
+                    var edition = new Edition { AlbumId = album.Id, Title = album.Title, Status = "Official", TrackCount = tracks };
+                    db.Editions.Add(edition);
+                    for (var t = 0; t < tracks; t++)
+                        db.EditionTracks.Add(new EditionTrack { EditionId = edition.Id, Disc = 1, Position = t + 1, Number = $"{t + 1}", Title = $"Song {t}", TrackId = trackIds[t] });
+                    allEditions.Add((edition.Id, trackIds, artist.Id));
+                }
+            }
+            if (ar % 20 == 19)
+            {
+                await db.SaveChangesAsync();
+                db.ChangeTracker.Clear();
+            }
+        }
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+
+        for (var f = 0; f < files; f++)
+        {
+            var (edition, trackIds, artist) = allEditions[random.Next(allEditions.Count)];
+            db.LibraryFiles.Add(new LibraryFile
+            {
+                Path = $"music/{f}.flac", TrackId = trackIds[random.Next(trackIds.Length)], EditionId = edition, ArtistId = artist,
+                MatchedAt = DateTime.UtcNow, MatchMethod = MatchMethod.MusicBrainzTags, Format = "flac",
+            });
+        }
+        await db.SaveChangesAsync();
+    }
+}

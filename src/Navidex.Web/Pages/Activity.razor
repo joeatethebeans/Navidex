@@ -7,13 +7,10 @@
 <PageTitle>Activity · Navidex</PageTitle>
 
 <h1>Activity</h1>
-<p class="muted">What Navidex is doing and has done: fetching, scanning and updating the catalogue, and the tracks you've fetched to listen to. Open a request to see each attempt, its log, and the other candidates a plugin offered.</p>
+<p class="muted">What Navidex is doing and has done: fetching, scanning and updating the catalogue. Tracks fetched to listen to are under <a href="downloads">Downloads</a>. Open a request to see each attempt, its log, and the other candidates a plugin offered.</p>
 
 <div class="toolbar">
-    <div class="segmented" role="tablist" aria-label="Show">
-        <button role="tab" aria-selected="@(_activeOnly ? "true" : "false")" class="@(_activeOnly ? "selected" : "")" @onclick="() => _activeOnly = true">Now</button>
-        <button role="tab" aria-selected="@(_activeOnly ? "false" : "true")" class="@(_activeOnly ? "" : "selected")" @onclick="() => _activeOnly = false">All time</button>
-    </div>
+    <Segmented T="bool" Value="_activeOnly" Options="Tabs" OnChange="v => _activeOnly = v" Label="Show" />
     <input type="search" placeholder="Filter by title" @bind="_filter" @bind:event="oninput" />
 </div>
 
@@ -99,8 +96,6 @@ else
     </div>
 }
 
-<Downloads All="!_activeOnly" />
-
 @code {
     [SupplyParameterFromQuery(Name = "open")] public Guid? OpenId { get; set; }
 
@@ -108,6 +103,8 @@ else
 
     // The newest scan opens while it runs; a click overrides that.
     private bool? _openScan;
+    private static readonly IReadOnlyList<(bool Value, string Label, string? Hint)> Tabs = [(true, "Now", null), (false, "All time", null)];
+
     private bool _activeOnly = true;
     private string _filter = "";
     private IReadOnlyList<TaskInfo> _tasks = [];
