@@ -122,7 +122,7 @@ public sealed class LibraryMatcher(
             logger.LogWarning("{Files} left to match on the next scan", Plural(deferred, "file", "files"));
         db.ChangeTracker.Clear();
 
-        await UpdateLibraryArtistsAsync(ct);
+        await UpdateLibraryArtistsAsync(db, ct);
         return new Result(matched, review, deferred);
     }
 
@@ -497,7 +497,8 @@ public sealed class LibraryMatcher(
         file.ReviewReason = reason;
     }
 
-    private async Task UpdateLibraryArtistsAsync(CancellationToken ct)
+    /// <summary>Marks the artists credited on a file as in the library, and the rest as not.</summary>
+    public static async Task UpdateLibraryArtistsAsync(NavidexDbContext db, CancellationToken ct)
     {
         var credited = await db.LibraryFiles.Where(f => f.ArtistId != null).Select(f => f.ArtistId!.Value).Distinct().ToListAsync(ct);
         await db.Artists.Where(a => a.InLibrary && !credited.Contains(a.Id)).ExecuteUpdateAsync(s => s.SetProperty(a => a.InLibrary, false), ct);

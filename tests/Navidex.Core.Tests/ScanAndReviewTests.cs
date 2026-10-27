@@ -61,6 +61,77 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
         Assert.Contains(await Api.GetReviewAsync(), i => i.FileId == item.FileId);
     }
 
+    [TestLibraryFact]
+    public async Task Removing_a_file_deletes_it_and_its_emptied_folder()
+    {
+        var path = await CopyAsync("Removal Test/Copy", withArtwork: true);
+        var file = await FileAsync(path);
+
+        var preview = await Api.GetRemovalAsync(LibraryItemKind.File, file);
+        Assert.Equal(1, preview.Files);
+        Assert.True(preview.Bytes > 0);
+        Assert.Equal(["Removal Test/Copy"], preview.Folders);
+        Assert.True(preview.CanDelete);
+
+        var result = await Api.RemoveFromLibraryAsync(new RemoveFromLibrary(LibraryItemKind.File, file, DeleteFiles: true));
+        Assert.Equal(1, result.Removed);
+        Assert.Empty(result.Failed);
+        // The folder held only artwork after that, so it went too, and so did its parent.
+        Assert.False(Directory.Exists(Path.Combine(fixture.Music, "Removal Test")));
+        Assert.Equal(0, (await Api.GetRemovalAsync(LibraryItemKind.File, file)).Files);
+    }
+
+    [TestLibraryFact]
+    public async Task Removing_a_file_but_keeping_it_excludes_it()
+    {
+        var path = await CopyAsync("Removal Keep/Copy", withArtwork: false);
+        var file = await FileAsync(path);
+
+        var result = await Api.RemoveFromLibraryAsync(new RemoveFromLibrary(LibraryItemKind.File, file, DeleteFiles: false));
+        Assert.Equal(1, result.Removed);
+        Assert.True(File.Exists(Path.Combine(fixture.Music, path)));
+        Assert.Contains(await Api.GetReviewAsync(excluded: true), i => i.FileId == file);
+
+        // Tidy up: without the file, the next scan forgets it.
+        Directory.Delete(Path.Combine(fixture.Music, "Removal Keep"), recursive: true);
+        await ScanAsync();
+    }
+
+    [TestLibraryFact]
+    public async Task Removing_an_album_or_artist_covers_all_its_files()
+    {
+        var album = await fixture.AlbumAsync("Portishead", "Dummy");
+        var albumFiles = Directory.GetFiles(fixture.Music, "*.*", SearchOption.AllDirectories).Count(f => f.Contains("Dummy") && !f.EndsWith(".jpg"));
+        Assert.Equal(albumFiles, (await Api.GetRemovalAsync(LibraryItemKind.Album, album.Id)).Files);
+        Assert.True((await Api.GetRemovalAsync(LibraryItemKind.Artist, album.ArtistId)).Files > albumFiles);
+    }
+
+    // Copies one of Portishead's Dummy files into a new folder and scans it in; returns its path.
+    private async Task<string> CopyAsync(string folder, bool withArtwork)
+    {
+        var source = Directory.GetFiles(Path.Combine(fixture.Music, "Portishead"), "*.*", SearchOption.AllDirectories).First(f => f.Contains("Dummy") && !f.EndsWith(".jpg"));
+        var target = Path.Combine(fixture.Music, folder);
+        Directory.CreateDirectory(target);
+        File.Copy(source, Path.Combine(target, Path.GetFileName(source)));
+        if (withArtwork)
+            await File.WriteAllBytesAsync(Path.Combine(target, "cover.jpg"), [1, 2, 3]);
+        await ScanAsync();
+        return $"{folder}/{Path.GetFileName(source)}";
+    }
+
+    private async Task<Guid> FileAsync(string path)
+    {
+        for (var i = 0; i < 50; i++)
+        {
+            if ((await Api.GetLibraryTracksAsync()).FirstOrDefault(t => t.Path == path) is { } track)
+                return track.FileId;
+            if ((await Api.GetReviewAsync()).FirstOrDefault(r => r.Path == path) is { } review)
+                return review.FileId;
+            await Task.Delay(100);
+        }
+        throw new InvalidOperationException($"{path} isn't in the library.");
+    }
+
     private async Task ScanAsync()
     {
         var task = await Api.ScanLibraryAsync();

@@ -57,6 +57,19 @@ public static class LibraryEndpoints
             .WithSummary("The files the running or last scan read or matched, in the order it first saw them: each file's name while it's read, "
                          + "then the song it matched or why it needs review. Pass since (the last response's latest) to get only what changed.");
 
+        library.MapGet("/removal", (LibraryItemKind kind, Guid id, LibraryRemover remover, CancellationToken ct) => remover.PreviewAsync(kind, id, ct))
+            .WithName("GetRemoval").WithSummary("What removing an artist, album or file from the library would affect: how many files, their size and folders.");
+
+        library.MapPost("/remove", async (RemoveFromLibrary body, LibraryRemover remover, CancellationToken ct) =>
+            {
+                var result = await remover.RemoveAsync(body, ct);
+                return result.Removed == 0 && result.Failed.Count == 0 ? Results.NotFound() : Results.Ok(result);
+            })
+            .WithName("RemoveFromLibrary")
+            .WithSummary("Remove an artist, album or file from the library: delete its files from the music folder and tell the media server, "
+                         + "or keep them and exclude them from matching. Files that couldn't be deleted are listed and stay in the library.")
+            .Produces<RemovalResult>().Produces(StatusCodes.Status404NotFound);
+
         library.MapGet("/review", (LibraryView view, bool? excluded, CancellationToken ct) => view.GetReviewAsync(excluded == true, ct))
             .WithName("GetReview").WithSummary("Files that couldn't be matched confidently, with the best suggestion. With excluded=true, the files excluded from matching.");
 

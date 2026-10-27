@@ -12,7 +12,7 @@
 <div class="toolbar">
     <div class="segmented" role="tablist" aria-label="Show">
         <button role="tab" aria-selected="@(_activeOnly ? "true" : "false")" class="@(_activeOnly ? "selected" : "")" @onclick="() => _activeOnly = true">Now</button>
-        <button role="tab" aria-selected="@(_activeOnly ? "false" : "true")" class="@(_activeOnly ? "" : "selected")" @onclick="() => _activeOnly = false">Everything</button>
+        <button role="tab" aria-selected="@(_activeOnly ? "false" : "true")" class="@(_activeOnly ? "" : "selected")" @onclick="() => _activeOnly = false">All time</button>
     </div>
     <input type="search" placeholder="Filter by title" @bind="_filter" @bind:event="oninput" />
 </div>
@@ -28,7 +28,7 @@ else if (!Visible.Any())
         else if (_activeOnly)
         {
             <span>Nothing's happening right now. </span>
-            @if (Tracker.Requests.Count > 0 || _tasks.Count > 0) { <button class="link" @onclick="() => _activeOnly = false">Show everything</button> }
+            @if (Tracker.Requests.Count > 0 || _tasks.Count > 0) { <button class="link" @onclick="() => _activeOnly = false">Show all time</button> }
         }
         else { <span>Nothing yet. Scan the library, or use the Get buttons on artist, album and search pages.</span> }
     </div>
@@ -99,7 +99,7 @@ else
     </div>
 }
 
-<Downloads />
+<Downloads All="!_activeOnly" />
 
 @code {
     [SupplyParameterFromQuery(Name = "open")] public Guid? OpenId { get; set; }

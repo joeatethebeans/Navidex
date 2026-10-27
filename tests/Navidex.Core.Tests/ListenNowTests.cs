@@ -85,6 +85,8 @@ public sealed class ListenNowTests(RequestFixture fixture, ITestOutputHelper out
         Assert.Equal(ListenNowState.Expired, (await Api.GetListeningAsync(second.Id))!.State);
         Assert.Equal(HttpStatusCode.NotFound, (await http.GetAsync(second.StreamUrl)).StatusCode);
         Assert.DoesNotContain(await Api.ListListeningAsync(), i => i.Id == second.Id);
+        // It's still in the list of every download.
+        Assert.Contains(await Api.ListListeningAsync(all: true), i => i.Id == second.Id && i.State == ListenNowState.Expired);
     }
 
     [TestLibraryFact]

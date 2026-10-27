@@ -1,6 +1,6 @@
 @page "/"
 @implements IDisposable
-@inject NavidexClient Api
+@inject LibraryStore Store
 @inject Preferences Prefs
 @inject Player Player
 @using Microsoft.AspNetCore.Components.Web.Virtualization
@@ -18,15 +18,15 @@
             <button role="tab" aria-selected="@(_view == view ? "true" : "false")" class="@(_view == view ? "selected" : "")" @onclick="() => ShowAsync(view)">@label</button>
         }
     </div>
-    <input type="search" placeholder="@FilterHint" @bind="_filter" @bind:event="oninput" />
+    <input type="search" placeholder="@FilterHint" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
     @if (_view != "tracks")
     {
-        <OwnershipFilter OnChange="StateHasChanged" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
+        <OwnershipFilter OnChange="ResetLimit" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
                          MissingHint="@(_view == "albums" ? "Only albums with tracks missing" : "Only artists with something missing")" />
     }
-    @if (_view == "tracks" && _tracks is { Count: > 0 })
+    @if (_view == "tracks" && Store.Tracks is { Count: > 0 } tracks)
     {
-        <span class="muted small">@VisibleTracks.Count() of @_tracks.Count tracks</span>
+        <span class="muted small">@VisibleTracks.Count() of @tracks.Count tracks</span>
     }
 </div>
 
@@ -35,46 +35,57 @@
     <div class="notice error">Couldn't load the library: @_error <button class="link" @onclick="LoadAsync">Try again</button></div>
 }
 
+@if (_removing is { } removing)
+{
+    <RemoveDialog Kind="removing.Kind" Id="removing.Id" Name="@removing.Name" OnClose="Removed" />
+}
+
 @switch (_view)
 {
     case "albums":
-        @if (_albums is null) { <Loading /> }
-        else if (_albums.Count == 0) { <div class="empty card">No albums yet. Scan the library to read your music folder.</div> }
+        @if (Store.Albums is null) { <Loading /> }
+        else if (Store.Albums.Count == 0) { <div class="empty card">No albums yet. Scan the library to read your music folder.</div> }
         else
         {
-            @if (!VisibleAlbums.Any()) { <div class="empty card">@(Prefs.Ownership switch { OwnershipView.Missing => "No partly owned albums", OwnershipView.Owned => "No complete albums", _ => "No albums" }) @(_filter.Length > 0 ? "match that filter." : "right now.")</div> }
+            var albums = VisibleAlbums.ToList();
+            @if (albums.Count == 0) { <div class="empty card">@(Prefs.Ownership switch { OwnershipView.Missing => "No partly owned albums", OwnershipView.Owned => "No complete albums", _ => "No albums" }) @(_filter.Length > 0 ? "match that filter." : "right now.")</div> }
             <div class="tiles">
-                @foreach (var (item, i) in VisibleAlbums.Select((a, i) => (a, i)))
+                @foreach (var item in albums.Take(_limit))
                 {
                     var album = item.Album;
-                    <a class="tile" href="albums/@album.Id" title="@album.Title · @item.ArtistName" style="@TransitionName(album.Id, i)">
-                        <Cover Url="@album.CoverUrl" />
-                        <div class="tile-name">@album.Title</div>
-                        <div class="muted small tile-sub">@item.ArtistName@(Format.Year(album.FirstReleaseDate) is { Length: > 0 } year ? $" · {year}" : "")</div>
-                        @if (album.TotalTracks is { } total and > 0)
-                        {
-                            <div class="meter" title="@album.OwnedTracks of @total tracks"><span style="width:@(100 * (album.OwnedTracks ?? 0) / total)%"></span></div>
-                            <div class="muted small">@(album.OwnedTracks == total ? $"All {total} tracks" : $"{album.OwnedTracks} of {total} tracks")</div>
-                        }
-                    </a>
+                    <div class="tile-wrap" @key="album.Id" data-vt="@album.Id.ToString("N")">
+                        <a class="tile" href="albums/@album.Id" title="@album.Title · @item.ArtistName">
+                            <Cover Url="@album.CoverUrl" />
+                            <div class="tile-name">@album.Title</div>
+                            <div class="muted small tile-sub">@item.ArtistName@(Format.Year(album.FirstReleaseDate) is { Length: > 0 } year ? $" · {year}" : "")</div>
+                            @if (album.TotalTracks is { } total and > 0)
+                            {
+                                <div class="meter" title="@album.OwnedTracks of @total tracks"><span style="width:@(100 * (album.OwnedTracks ?? 0) / total)%"></span></div>
+                                <div class="muted small">@(album.OwnedTracks == total ? $"All {total} tracks" : $"{album.OwnedTracks} of {total} tracks")</div>
+                            }
+                        </a>
+                        <IconButton Icon="remove" Class="remove tile-remove" Title="Remove from your library…"
+                                    OnClick="() => RemoveAlbum(item)" />
+                    </div>
                 }
             </div>
+            @if (albums.Count > _limit) { <MoreOnScroll OnMore="More" /> }
         }
         break;
 
     case "tracks":
-        @if (_tracks is null) { <Loading /> }
-        else if (_tracks.Count == 0) { <div class="empty card">No tracks yet. Scan the library to read your music folder.</div> }
+        @if (Store.Tracks is null) { <Loading /> }
+        else if (Store.Tracks.Count == 0) { <div class="empty card">No tracks yet. Scan the library to read your music folder.</div> }
         else if (!VisibleTracks.Any()) { <div class="empty card">No tracks match that filter.</div> }
         else
         {
             <div class="card">
                 <table class="table track-list">
                     @* Fixed widths: the first row is the scroller's spacer, which has no cells to size the columns by. *@
-                    <colgroup><col class="cover-col" /><col /><col class="format-col hide-narrow" /><col class="length-col" /><col class="icons-2-col" /></colgroup>
+                    <colgroup><col class="cover-col" /><col /><col class="format-col hide-narrow" /><col class="length-col" /><col class="icons-3-col" /></colgroup>
                     <tbody>
                         <Virtualize Items="VisibleTracks.ToList()" Context="track" ItemSize="57" SpacerElement="tr" OverscanCount="10">
-                            <tr>
+                            <tr @key="track.FileId">
                                 <td class="cover-col">
                                     @if (track.AlbumId is { } albumId) { <a href="albums/@albumId" tabindex="-1"><Cover Url="@track.CoverUrl" /></a> }
                                     else { <Cover Url="@track.CoverUrl" /> }
@@ -91,6 +102,8 @@
                                 <td class="num actions">
                                     <IconButton Icon="play" Title="Play the tracks listed from here" OnClick="() => PlayFromAsync(track)" />
                                     <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track)])" />
+                                    <IconButton Icon="remove" Class="remove" Title="Remove from your library…"
+                                                OnClick="() => RemoveTrack(track)" />
                                 </td>
                             </tr>
                         </Virtualize>
@@ -101,11 +114,12 @@
         break;
 
     default:
-        @if (_artists is null) { <Loading /> }
-        else if (_artists.Count == 0) { <div class="empty card">No artists yet. Scan the library to read your music folder.</div> }
+        @if (Store.Artists is null) { <Loading /> }
+        else if (Store.Artists.Count == 0) { <div class="empty card">No artists yet. Scan the library to read your music folder.</div> }
         else
         {
-            @if (!VisibleArtists.Any()) { <div class="empty card">@(Prefs.Ownership switch { OwnershipView.Missing => "Nothing missing", OwnershipView.Owned => "No artist you have everything of", _ => "No artists" }) @(_filter.Length > 0 ? "matches that filter." : "right now.")</div> }
+            var artists = VisibleArtists.ToList();
+            @if (artists.Count == 0) { <div class="empty card">@(Prefs.Ownership switch { OwnershipView.Missing => "Nothing missing", OwnershipView.Owned => "No artist you have everything of", _ => "No artists" }) @(_filter.Length > 0 ? "matches that filter." : "right now.")</div> }
             <div class="legend small muted">
                 <span><i class="complete"></i>Owned</span>
                 <span><i class="partial"></i>Partly owned</span>
@@ -113,19 +127,24 @@
                 <span><i class="missing"></i>Missing</span>
             </div>
             <div class="tiles">
-                @foreach (var (artist, i) in VisibleArtists.Select((a, i) => (a, i)))
+                @foreach (var artist in artists.Take(_limit))
                 {
                     var total = artist.OwnedAlbums + artist.MissingAlbums;
-                    <a class="tile" href="artists/@artist.Id" title="@Title(artist)" style="@TransitionName(artist.Id, i)">
-                        <Cover Url="@artist.ImageUrl" Artist="true" />
-                        <div class="tile-name">@artist.Name</div>
-                        <OwnershipMeter Complete="artist.OwnedAlbums - artist.PartialAlbums" Partial="artist.PartialAlbums" Covered="artist.CoveredAlbums" Missing="artist.MissingAlbums" />
-                        <div class="muted small">
-                            @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")@(artist.CoveredAlbums > 0 ? $" · {artist.CoveredAlbums} covered" : "")
-                        </div>
-                    </a>
+                    <div class="tile-wrap" @key="artist.Id" data-vt="@artist.Id.ToString("N")">
+                        <a class="tile" href="artists/@artist.Id" title="@Title(artist)">
+                            <Cover Url="@artist.ImageUrl" Artist="true" />
+                            <div class="tile-name">@artist.Name</div>
+                            <OwnershipMeter Complete="artist.OwnedAlbums - artist.PartialAlbums" Partial="artist.PartialAlbums" Covered="artist.CoveredAlbums" Missing="artist.MissingAlbums" />
+                            <div class="muted small">
+                                @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")@(artist.CoveredAlbums > 0 ? $" · {artist.CoveredAlbums} covered" : "")
+                            </div>
+                        </a>
+                        <IconButton Icon="remove" Class="remove tile-remove" Title="Remove from your library…"
+                                    OnClick="() => Remove(LibraryItemKind.Artist, artist.Id, artist.Name)" />
+                    </div>
                 }
             </div>
+            @if (artists.Count > _limit) { <MoreOnScroll OnMore="More" /> }
         }
         break;
 }
@@ -133,14 +152,16 @@
 @code {
     private static readonly (string View, string Label)[] Views = [("artists", "Artists"), ("albums", "Albums"), ("tracks", "Tracks")];
 
+    // Tiles are drawn a page at a time as the page is scrolled: drawing hundreds at once makes every change slow.
+    private const int Page = 60;
+
     [SupplyParameterFromQuery(Name = "view")] public string? ViewParameter { get; set; }
 
-    private string _view = "artists";
-    private IReadOnlyList<LibraryArtist>? _artists;
-    private IReadOnlyList<LibraryAlbum>? _albums;
-    private IReadOnlyList<LibraryTrack>? _tracks;
+    private string _view = "";
     private string _filter = "";
     private string? _error;
+    private int _limit = Page;
+    private (LibraryItemKind Kind, Guid Id, string Name)? _removing;
 
     private string Intro => _view switch
     {
@@ -160,17 +181,15 @@
         _filter.Length == 0 || texts.Any(t => t?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true);
 
     // Owned and missing split the list in two: an artist or album is one or the other.
-    private IEnumerable<LibraryArtist> VisibleArtists => _artists!
+    private IEnumerable<LibraryArtist> VisibleArtists => Store.Artists!
         .Where(a => Matches(a.Name))
         .Where(a => Prefs.Ownership == OwnershipView.All || (a.MissingAlbums > 0 || a.PartialAlbums > 0) == (Prefs.Ownership == OwnershipView.Missing));
 
-    private IEnumerable<LibraryAlbum> VisibleAlbums => _albums!
+    private IEnumerable<LibraryAlbum> VisibleAlbums => Store.Albums!
         .Where(a => Matches(a.Album.Title, a.ArtistName))
         .Where(a => Prefs.Ownership == OwnershipView.All || (a.Album.Status == AlbumStatus.Partial) == (Prefs.Ownership == OwnershipView.Missing));
 
-    // Tiles near the top are named for view transitions, so they slide to their new places when the filter changes.
-    // Only those: the browser takes a picture of every named one, and the rest are off screen anyway.
-    private static string? TransitionName(Guid id, int index) => index < 120 ? $"view-transition-name: t{id:N}" : null;
+    private IEnumerable<LibraryTrack> VisibleTracks => Store.Tracks!.Where(t => Matches(t.Title, t.ArtistCredit, t.AlbumTitle));
 
     private Task PlayFromAsync(LibraryTrack from)
     {
@@ -178,9 +197,11 @@
         return Player.PlayAsync(tracks.Select(PlayerEntry.Owned).ToList(), tracks.IndexOf(from));
     }
 
-    private IEnumerable<LibraryTrack> VisibleTracks => _tracks!.Where(t => Matches(t.Title, t.ArtistCredit, t.AlbumTitle));
-
     private static string Title(LibraryArtist a) => a.Disambiguation is null ? a.Name : $"{a.Name} ({a.Disambiguation})";
+
+    private void ResetLimit() => _limit = Page;
+
+    private void More() => _limit += Page * 2;
 
     protected override async Task OnInitializedAsync()
     {
@@ -192,14 +213,13 @@
     {
         // The address says which view; without one, the last view used.
         var view = Views.Any(v => v.View == ViewParameter) ? ViewParameter! : await Prefs.GetAsync("libraryView", "artists");
-        if (view != _view || Current is null)
-        {
-            _view = Views.Any(v => v.View == view) ? view : "artists";
-            await LoadAsync();
-        }
+        if (view == _view)
+            return;
+        _view = view;
+        _limit = Page;
+        // What was loaded last shows straight away, while a fresh copy loads.
+        await LoadAsync();
     }
-
-    private object? Current => _view switch { "albums" => _albums, "tracks" => _tracks, _ => _artists };
 
     private async Task ShowAsync(string view)
     {
@@ -214,9 +234,9 @@
         {
             switch (_view)
             {
-                case "albums": _albums = await Api.GetLibraryAlbumsAsync(); break;
-                case "tracks": _tracks = await Api.GetLibraryTracksAsync(); break;
-                default: _artists = await Api.GetLibraryArtistsAsync(); break;
+                case "albums": await Store.LoadAlbumsAsync(); break;
+                case "tracks": await Store.LoadTracksAsync(); break;
+                default: await Store.LoadArtistsAsync(); break;
             }
         }
         catch (HttpRequestException e)
@@ -230,6 +250,18 @@
         await LoadAsync();
         StateHasChanged();
     });
+
+    private void Remove(LibraryItemKind kind, Guid id, string name) => _removing = (kind, id, name);
+    private void RemoveAlbum(LibraryAlbum item) => Remove(LibraryItemKind.Album, item.Album.Id, $"{item.Album.Title} by {item.ArtistName}");
+    private void RemoveTrack(LibraryTrack track) => Remove(LibraryItemKind.File, track.FileId, $"{track.Title} by {track.ArtistCredit}");
+
+    // The server works out the library again in the background, so drop what went straight away rather than wait for it.
+    private void Removed(bool removed)
+    {
+        if (removed && _removing is { } item)
+            Store.Forget(item.Kind, item.Id);
+        _removing = null;
+    }
 
     public void Dispose() => ScanStatus.LibraryChanged -= Reload;
 }

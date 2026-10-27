@@ -1,5 +1,5 @@
 @* A square button with an icon, for the actions beside albums and tracks. The title says what it does. *@
-<button class="icon-button @(Primary ? "primary" : "") @(Large ? "large" : "") @(_done ? "done" : "")" title="@Title" aria-label="@Title"
+<button class="icon-button @Class @(Primary ? "primary" : "") @(Large ? "large" : "") @(_done ? "done" : "")" title="@Title" aria-label="@Title"
         disabled="@(Disabled || _busy)" @onclick="ClickAsync">
     @if (_busy)
     {
@@ -31,6 +31,15 @@
                 case "retry":
                     <path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" />
                     break;
+                case "add":
+                    <path d="M3 8h18v12H3zM5 8l2-4h10l2 4M12 11v6M9 14h6" />
+                    break;
+                case "discard":
+                    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+                    break;
+                case "remove":
+                    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+                    break;
                 case "done":
                     <path d="M5 12.5l4.5 4.5L19 7.5" />
                     break;
@@ -41,12 +50,13 @@
 </button>
 
 @code {
-    /// <summary>play, listen, get, queue, ignore, unignore or retry.</summary>
+    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard or remove.</summary>
     [Parameter, EditorRequired] public string Icon { get; set; } = "";
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public EventCallback OnClick { get; set; }
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public bool Primary { get; set; }
+    [Parameter] public string? Class { get; set; }
 
     /// <summary>Bigger, for the head of an album page.</summary>
     [Parameter] public bool Large { get; set; }

@@ -102,6 +102,16 @@ public static class Format
     }
 
     /// <summary>A number of minutes as people say it: "45 minutes", "1 hour", "2 days".</summary>
+    public static string Size(long bytes) => bytes switch
+    {
+        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.#} GB",
+        >= 1L << 20 => $"{bytes / (double)(1L << 20):0} MB",
+        >= 1L << 10 => $"{bytes / (double)(1L << 10):0} KB",
+        _ => $"{bytes} bytes",
+    };
+
+    public static string Count(int n, string one, string many) => $"{n:N0} {(n == 1 ? one : many)}";
+
     public static string Minutes(int minutes) =>
         minutes % 1440 == 0 ? Plural(minutes / 1440, "day")
         : minutes % 60 == 0 ? Plural(minutes / 60, "hour")

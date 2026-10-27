@@ -263,11 +263,13 @@ public sealed class ListenNowService(
         var stored => stored,
     };
 
-    /// <summary>The live tracks, newest first: everything not expired, and what was added in the last day.</summary>
-    public async Task<IReadOnlyList<ListenNowInfo>> ListAsync(CancellationToken ct)
+    /// <summary>
+    /// The tracks fetched to listen to, newest first: those still to play, fetch or add, or with <paramref name="all"/>
+    /// the latest 200 of every kind, including those discarded, expired or added to the library.
+    /// </summary>
+    public async Task<IReadOnlyList<ListenNowInfo>> ListAsync(bool all, CancellationToken ct)
     {
-        var since = DateTime.UtcNow - TimeSpan.FromDays(1);
-        var items = await db.ListenNowItems.Where(i => i.State != ListenNowState.Expired && (i.State != ListenNowState.InLibrary || i.CreatedAt > since))
+        var items = await db.ListenNowItems.Where(i => all || !Gone.Contains(i.State))
             .OrderByDescending(i => i.CreatedAt).Take(200).ToListAsync(ct);
         return await ToInfoAsync(items, ct);
     }

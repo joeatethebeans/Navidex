@@ -55,6 +55,7 @@ builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<LibraryScanner>();
 builder.Services.AddScoped<LibraryMatcher>();
 builder.Services.AddScoped<LibraryView>();
+builder.Services.AddScoped<LibraryRemover>();
 
 // Background work
 builder.Services.AddSingleton<TaskSignal>();

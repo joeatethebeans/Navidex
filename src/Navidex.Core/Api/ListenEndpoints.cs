@@ -31,8 +31,10 @@ public static class ListenEndpoints
                          + "A track already on its way or playable is returned as it is. Refused (409) for tracks you have.")
             .Produces<IReadOnlyList<ListenNowInfo>>(StatusCodes.Status202Accepted).Produces(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
-        listen.MapGet("", (ListenNowService service, CancellationToken ct) => service.ListAsync(ct))
-            .WithName("ListListening").WithSummary("Listen-now tracks that haven't expired, and those added in the last day, newest first.");
+        listen.MapGet("", (ListenNowService service, bool? all, CancellationToken ct) => service.ListAsync(all == true, ct))
+            .WithName("ListListening")
+            .WithSummary("Listen-now tracks still to play, fetch or add, newest first. With all=true, the latest 200 of every kind, "
+                         + "including those discarded, expired or added to the library.");
 
         listen.MapGet("/{id:guid}", async (Guid id, NavidexDbContext db, ListenNowService service, CancellationToken ct) =>
                 await db.ListenNowItems.FindAsync([id], ct) is { } item ? Results.Ok((await service.ToInfoAsync([item], ct))[0]) : Results.NotFound())

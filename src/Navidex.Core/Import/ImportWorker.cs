@@ -43,10 +43,23 @@ public sealed record ImportResult(IReadOnlyList<ImportedFile> Files);
 /// <param name="Tags">The tags beets wrote, by beets field name.</param>
 public sealed record ImportedFile(string Source, string Path, double? DurationSeconds, string? Format, IReadOnlyDictionary<string, string> Tags);
 
+/// <summary>Body of <c>POST /v1/delete</c>.</summary>
+/// <param name="Paths">Files to delete, relative to the library root.</param>
+public sealed record DeleteRequest(IReadOnlyList<string> Paths);
+
+/// <param name="Deleted">The paths deleted, including any already gone.</param>
+/// <param name="Failed">Those that couldn't be, with why.</param>
+public sealed record DeleteResult(IReadOnlyList<string> Deleted, IReadOnlyList<DeleteFailure> Failed);
+
+public sealed record DeleteFailure(string Path, string Error);
+
 /// <summary>Imports staged files into the library.</summary>
 public interface IImportWorker
 {
     Task<ImportResult> ImportAsync(ImportRequest request, CancellationToken ct);
+
+    /// <summary>Deletes files from the library, and any folder left with nothing but artwork and the like.</summary>
+    Task<DeleteResult> DeleteAsync(DeleteRequest request, CancellationToken ct);
 
     Task<HealthReport> CheckHealthAsync(CancellationToken ct);
 }
@@ -78,6 +91,14 @@ public sealed class HttpImportWorker(HttpClient http) : IImportWorker
         if (!response.IsSuccessStatusCode)
             throw new ImportException(await ErrorAsync(response, ct));
         return (await response.Content.ReadFromJsonAsync<ImportResult>(RetrievalJson.Options, ct))!;
+    }
+
+    public async Task<DeleteResult> DeleteAsync(DeleteRequest request, CancellationToken ct)
+    {
+        using var response = await http.PostAsJsonAsync("v1/delete", request, RetrievalJson.Options, ct);
+        if (!response.IsSuccessStatusCode)
+            throw new ImportException(await ErrorAsync(response, ct));
+        return (await response.Content.ReadFromJsonAsync<DeleteResult>(RetrievalJson.Options, ct))!;
     }
 
     public async Task<HealthReport> CheckHealthAsync(CancellationToken ct)

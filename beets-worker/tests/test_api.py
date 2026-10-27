@@ -70,3 +70,30 @@ def test_a_file_is_tagged_and_filed_against_the_pinned_release(client, roots):
     assert imported["tags"]["mb_albumid"] == RELEASE["musicBrainzId"]
     assert (library / imported["path"]).exists()
     assert not (staging / "job" / "glory.flac").exists()
+
+
+def test_deleting_removes_the_files_and_folders_left_with_only_artwork(client, roots):
+    library = roots[1]
+    album = library / "Portishead" / "Dummy"
+    album.mkdir(parents=True)
+    for name in ("01 Mysterons.flac", "02 Sour Times.flac", "cover.jpg"):
+        (album / name).write_bytes(b"x")
+    (library / "Portishead" / "Third").mkdir()
+    (library / "Portishead" / "Third" / "01 Silence.flac").write_bytes(b"x")
+
+    response = client.post("/v1/delete", json={"paths": ["Portishead/Dummy/01 Mysterons.flac"]})
+    assert response.json() == {"deleted": ["Portishead/Dummy/01 Mysterons.flac"], "failed": []}
+    assert (album / "02 Sour Times.flac").exists()
+
+    # The last song goes, and the folder with it; the artist's folder stays for the other album.
+    client.post("/v1/delete", json={"paths": ["Portishead/Dummy/02 Sour Times.flac"]})
+    assert not album.exists()
+    assert (library / "Portishead" / "Third").exists()
+
+
+def test_deleting_outside_the_library_is_refused(client, roots):
+    (roots[0] / "keep.flac").write_bytes(b"x")
+    response = client.post("/v1/delete", json={"paths": ["../staging/keep.flac", "gone.flac"]})
+    assert response.json()["deleted"] == ["gone.flac"]
+    assert "inside the library" in response.json()["failed"][0]["error"]
+    assert (roots[0] / "keep.flac").exists()

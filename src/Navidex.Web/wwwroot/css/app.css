@@ -359,7 +359,7 @@ tr.playing td:nth-child(2) { color: var(--accent); font-weight: 600; }
 /* Listen now: one row per track, with how long it's kept. */
 .listen-item { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .6rem 1rem; }
 .listen-item + .listen-item { border-top: 1px solid var(--border); }
-.listen-actions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.listen-actions { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 @media (max-width: 640px) {
     .listen-item { grid-template-columns: 2.5rem minmax(0, 1fr); }
     .listen-actions { grid-column: 1 / -1; justify-content: flex-start; }
@@ -430,6 +430,7 @@ tr.playing td:nth-child(2) { color: var(--accent); font-weight: 600; }
 td.actions > .icon-button + .icon-button, td.actions > .icon-button + .badge, td.actions > .badge + .icon-button { margin-left: .3rem; }
 .album-actions { gap: .4rem; }
 .track-list col.icons-2-col { width: 5.5rem; }
+.track-list col.icons-3-col { width: 8rem; }
 
 /* Artwork on its way shimmers; the placeholder icon shows only when there's none. */
 .cover.pending svg, .cover.loaded svg { display: none; }
@@ -460,5 +461,46 @@ td.actions > .icon-button + .icon-button, td.actions > .icon-button + .badge, td
 .segmented.ownership.owned button.selected { color: var(--owned); }
 .segmented.ownership.missing .thumb { background: var(--missing-bg); }
 .segmented.ownership.missing button.selected { color: var(--missing); }
-::view-transition-group(*) { animation-duration: .3s; }
+.ownership-busy { width: 1rem; height: 1rem; color: var(--accent); opacity: 0; transition: opacity 0s; }
+.ownership-busy.on { opacity: 1; transition-delay: .12s; }
+/* The page itself doesn't take part in transitions, only the tiles, so the rest changes at once without a flicker. */
+:root { view-transition-name: none; }
+::view-transition-group(*) { animation-duration: .28s; animation-timing-function: ease; }
+::view-transition-new(*):only-child { animation: fade-in .2s ease-out; }
+::view-transition-old(*):only-child { animation: fade-out .15s ease-in forwards; }
+@keyframes fade-out { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .segmented.ownership .thumb { transition: none; } }
+
+/* A dialog over the page, for questions that need an answer before anything happens. */
+.dialog-backdrop {
+    position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem;
+    background: rgb(0 0 0 / .55); animation: fade-in .15s ease-out;
+}
+.dialog {
+    width: min(34rem, 100%); max-height: calc(100vh - 2rem); overflow: auto; padding: 1.25rem 1.4rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 12px 40px rgb(0 0 0 / .35);
+}
+.dialog:focus { outline: none; }
+.dialog h2 { margin: 0 0 .75rem; font-size: 1.15rem; }
+.dialog p { margin: .5rem 0; }
+.dialog-list { margin: .25rem 0 .75rem; padding-left: 1.2rem; }
+.dialog-list code { overflow-wrap: anywhere; }
+.dialog-choice {
+    display: flex; gap: .6rem; align-items: flex-start; padding: .6rem .75rem; margin: .4rem 0;
+    border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+}
+.dialog-choice:has(input:checked) { border-color: var(--accent); }
+.dialog-choice.disabled { opacity: .6; cursor: default; }
+.dialog-choice input { margin-top: .2rem; }
+.dialog-choice > span { display: flex; flex-direction: column; gap: .2rem; }
+.dialog-buttons { justify-content: flex-end; margin-top: 1rem; margin-bottom: 0; }
+button.danger { background: var(--missing); border-color: var(--missing); color: #fff; }
+button.danger:hover:not(:disabled) { filter: brightness(1.1); }
+button .spinner { width: .85rem; height: .85rem; vertical-align: -2px; margin-right: .3rem; }
+
+/* A remove button in the corner of a library tile, shown on hover or focus. */
+.tile-wrap { position: relative; display: grid; min-width: 0; }
+.tile-remove { position: absolute; top: .4rem; right: .4rem; opacity: 0; transition: opacity .15s; }
+.tile-wrap:hover .tile-remove, .tile-wrap:focus-within .tile-remove { opacity: 1; }
+@media (hover: none) { .tile-remove { opacity: 1; } }
+.icon-button.remove:hover:not(:disabled) { color: var(--missing); border-color: var(--missing); }

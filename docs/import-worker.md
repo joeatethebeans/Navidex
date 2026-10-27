@@ -75,6 +75,24 @@ example MusicBrainz didn't return the release, or a file didn't match its record
 request. Navidex shows the message on the Activity page and marks the request failed, without trying other
 plugins, because another copy of the song would fail the same way.
 
+## `POST /v1/delete`
+
+Deletes files from the library, for removing an artist, album or track from the Library page.
+
+```json
+{ "paths": ["Portishead/Dummy/01 Mysterons.opus", "Portishead/Dummy/02 Sour Times.opus"] }
+```
+
+Each path is relative to the library. After the files go, so does any folder left holding nothing but artwork,
+playlists, rip logs or notes (`.jpg`, `.png`, `.cue`, `.log`, `.m3u`, `.nfo`, `.txt` and the like), then its parent
+the same way, up to the library itself. A path outside the library is refused.
+
+Response `200`, listing a file that was already gone as deleted:
+
+```json
+{ "deleted": ["Portishead/Dummy/01 Mysterons.opus"], "failed": [{ "path": "Portishead/Dummy/02 Sour Times.opus", "error": "Permission denied" }] }
+```
+
 ## `GET /v1/health`
 
 `{ "status": "healthy" | "unhealthy", "message": "..." }`. Unhealthy when the staging or library volume isn't

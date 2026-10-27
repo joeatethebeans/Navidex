@@ -16,6 +16,8 @@
                 title="@hint" @onclick="() => ChooseAsync(view)">@label</button>
     }
 </div>
+@* Shown only if the change takes more than a moment. *@
+<span class="spinner ownership-busy @(_busy ? "on" : "")" role="status" aria-label="@(_busy ? "Updating" : null)"></span>
 
 @code {
     /// <summary>Called once the choice is saved, to show it.</summary>
@@ -28,6 +30,7 @@
         [(OwnershipView.Owned, "Owned", OwnedHint), (OwnershipView.All, "All", "Everything"), (OwnershipView.Missing, "Missing", MissingHint)];
 
     private DotNetObjectReference<OwnershipFilter>? _self;
+    private bool _busy;
     private IJSObjectReference? _module;
 
     // Loaded up front: fetching it on the first click would hold that click's change back.
@@ -48,6 +51,10 @@
     {
         if (view == Prefs.Ownership)
             return;
+        _busy = true;
+        StateHasChanged();
+        // Let the browser draw the spinner before the page is redrawn.
+        await Task.Delay(1);
         try
         {
             _self ??= DotNetObjectReference.Create(this);
@@ -57,6 +64,10 @@
         catch (JSException)
         {
             await ApplyAsync(view);
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

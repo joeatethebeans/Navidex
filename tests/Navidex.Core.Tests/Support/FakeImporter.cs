@@ -35,5 +35,22 @@ public sealed class FakeImporter(string stagingRoot, string libraryRoot) : IImpo
 
     public Task<HealthReport> CheckHealthAsync(CancellationToken ct) => Task.FromResult(HealthReport.Healthy());
 
+    // As the worker does: the files, then any folder left with only artwork in it.
+    public Task<DeleteResult> DeleteAsync(DeleteRequest request, CancellationToken ct)
+    {
+        foreach (var path in request.Paths)
+        {
+            var full = Path.Combine(libraryRoot, path);
+            File.Delete(full);
+            for (var folder = Path.GetDirectoryName(full)!; folder != libraryRoot && Directory.Exists(folder); folder = Path.GetDirectoryName(folder)!)
+            {
+                if (Directory.EnumerateDirectories(folder).Any() || Directory.EnumerateFiles(folder).Any(f => !f.EndsWith(".jpg")))
+                    break;
+                Directory.Delete(folder, recursive: true);
+            }
+        }
+        return Task.FromResult(new DeleteResult(request.Paths, []));
+    }
+
     private static string Safe(string name) => string.Concat(name.Split(Path.GetInvalidFileNameChars()));
 }

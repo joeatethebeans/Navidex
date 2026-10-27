@@ -411,7 +411,7 @@ public sealed class Player : IAsyncDisposable
         IReadOnlyList<ListenNowInfo> items;
         try
         {
-            items = await _api.ListListeningAsync();
+            items = await _api.ListListeningAsync(all: true);
         }
         catch (HttpRequestException)
         {

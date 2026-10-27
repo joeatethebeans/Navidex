@@ -3,7 +3,10 @@
 @inject Player Player
 @inject ServerEvents Events
 
-@* Tracks fetched to listen to: the Downloads section of the Activity page. Hidden while there are none. *@
+@*
+    Tracks fetched to listen to: the Downloads section of the Activity page. Now shows those still to play or add; all time
+    adds those discarded, expired or added to the library. Hidden while there are none.
+*@
 @if (_items is { Count: > 0 })
 {
     <div class="section-head" id="downloads">
@@ -48,20 +51,25 @@
                 <div class="listen-actions">
                     @if (item.State is ListenNowState.Playable or ListenNowState.Importing or ListenNowState.InLibrary || item.Pending)
                     {
-                        <button class="link" @onclick="() => PlayAsync(playable, playable.IndexOf(item))">@(Player.IsNow(item.TrackId) ? "Playing" : "Play")</button>
+                        <IconButton Icon="play" Title="@(Player.IsNow(item.TrackId) ? "Playing" : "Play")" Primary="@Player.IsNow(item.TrackId)"
+                                    OnClick="() => PlayAsync(playable, playable.IndexOf(item))" />
+                        <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Listening(item)])" />
                     }
                     @if (item.State == ListenNowState.Playable)
                     {
-                        <button class="link" disabled="@ScanStatus.Reading" title="@(ScanStatus.Reading ? "Wait until the scan has read your files" : "File it in your library without fetching it again")"
-                                @onclick="() => AddAsync(item)">Add to library</button>
+                        <IconButton Icon="add" Disabled="@ScanStatus.Reading"
+                                    Title="@(ScanStatus.Reading ? "Wait until the scan has read your files" : "Add to your library, without fetching it again")"
+                                    OnClick="() => AddAsync(item)" />
                     }
                     @if (item.State == ListenNowState.Failed)
                     {
-                        <a href="activity?open=@item.RequestId">Details</a>
+                        <a class="icon-button" href="activity?open=@item.RequestId" title="Details" aria-label="Details">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></svg>
+                        </a>
                     }
                     @if (item.State is not (ListenNowState.Importing or ListenNowState.InLibrary or ListenNowState.Expired))
                     {
-                        <button class="link small muted" @onclick="() => DiscardAsync(item)">@(item.Pending ? "Cancel" : "Discard")</button>
+                        <IconButton Icon="discard" Title="@(item.Pending ? "Stop fetching it" : "Delete it now")" OnClick="() => DiscardAsync(item)" />
                     }
                 </div>
             </div>
@@ -70,7 +78,11 @@
 }
 
 @code {
+    /// <summary>Include those discarded, expired or added to the library.</summary>
+    [Parameter] public bool All { get; set; }
+
     private IReadOnlyList<ListenNowInfo>? _items;
+    private bool? _loadedAll;
     private int _expiry = 60;
     private string? _error;
 
@@ -79,10 +91,20 @@
         Events.Received += OnEvent;
         Player.Changed += Redraw;
         _expiry = (await Api.GetFetchSettingsAsync()).ListenNowExpiryMinutes;
-        await LoadAsync();
     }
 
-    private async Task LoadAsync() => _items = await Api.ListListeningAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedAll != All)
+            await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var all = All;
+        _items = await Api.ListListeningAsync(all);
+        _loadedAll = all;
+    }
 
     private void OnEvent(string type)
     {

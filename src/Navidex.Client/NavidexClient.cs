@@ -121,8 +121,19 @@ public sealed class NavidexClient(HttpClient http)
         return (await response.Content.ReadFromJsonAsync<List<ListenNowInfo>>(NavidexJson.Options, ct))!;
     }
 
-    public async Task<IReadOnlyList<ListenNowInfo>> ListListeningAsync(CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<List<ListenNowInfo>>($"{Api}/listen", NavidexJson.Options, ct) ?? [];
+    public async Task<RemovalPreview> GetRemovalAsync(LibraryItemKind kind, Guid id, CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<RemovalPreview>($"{Api}/library/removal?kind={kind}&id={id}", NavidexJson.Options, ct))!;
+
+    public async Task<RemovalResult> RemoveFromLibraryAsync(RemoveFromLibrary body, CancellationToken ct = default)
+    {
+        var response = await http.PostAsJsonAsync($"{Api}/library/remove", body, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<RemovalResult>(NavidexJson.Options, ct))!;
+    }
+
+    /// <param name="all">Include those discarded, expired or added to the library.</param>
+    public async Task<IReadOnlyList<ListenNowInfo>> ListListeningAsync(bool all = false, CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<ListenNowInfo>>($"{Api}/listen{(all ? "?all=true" : "")}", NavidexJson.Options, ct) ?? [];
 
     public Task<ListenNowInfo?> GetListeningAsync(Guid id, CancellationToken ct = default) => GetOrNullAsync<ListenNowInfo>($"{Api}/listen/{id}", ct);
 

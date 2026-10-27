@@ -343,3 +343,36 @@ public sealed record ScanFile(
 /// <param name="Latest">The newest change's sequence number, to pass as <c>since</c> next time.</param>
 /// <param name="Files">In list order.</param>
 public sealed record ScanFeedPage(Guid Scan, long Latest, IReadOnlyList<ScanFile> Files);
+
+/// <summary>What to remove from the library.</summary>
+public enum LibraryItemKind
+{
+    /// <summary>One file: a row of the library's track list.</summary>
+    File,
+
+    /// <summary>Every file of an album, whichever edition.</summary>
+    Album,
+
+    /// <summary>Every file credited to an artist or filed under one of their albums.</summary>
+    Artist,
+}
+
+/// <summary>What removing something from the library would affect, from <c>GET /library/removal</c>.</summary>
+/// <param name="Files">How many files.</param>
+/// <param name="Bytes">Their total size.</param>
+/// <param name="Folders">The folders they're in, relative to the music folder; up to 20.</param>
+/// <param name="CanDelete">Whether the files can be deleted: the import worker, which writes the music folder, is working.</param>
+/// <param name="CantDeleteReason">Why not, when they can't.</param>
+public sealed record RemovalPreview(int Files, long Bytes, IReadOnlyList<string> Folders, bool CanDelete, string? CantDeleteReason = null);
+
+/// <summary>Removes an artist, album or file from the library, for <c>POST /library/remove</c>.</summary>
+/// <param name="DeleteFiles">
+/// Delete the files from the music folder, and any folder left with nothing but artwork and the like. Otherwise the
+/// files stay where they are, excluded from matching, so Navidex no longer counts them; they can be included again
+/// from the Review page.
+/// </param>
+public sealed record RemoveFromLibrary(LibraryItemKind Kind, Guid Id, bool DeleteFiles);
+
+/// <param name="Removed">Files deleted, or excluded when keeping them.</param>
+/// <param name="Failed">Files that couldn't be deleted, with why; they stay in the library.</param>
+public sealed record RemovalResult(int Removed, IReadOnlyList<string> Failed);

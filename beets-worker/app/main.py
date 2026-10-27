@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
 from .importer import Importer, ImportFailed, Release, StagedFile
+from .removal import delete
 
 STAGING = os.environ.get("STAGING_ROOT") or "/staging"
 LIBRARY = os.environ.get("LIBRARY_ROOT") or "/music"
@@ -48,6 +49,10 @@ class ImportRequest(Model):
     destination_directory: str | None = None
     path_template: str = "$albumartist/$album%aunique{}/$track $title"
     music_brainz_server: str | None = None
+
+
+class DeleteRequest(Model):
+    paths: list[str]
 
 
 app = FastAPI(title="Navidex beets worker", version="0.1.0")
@@ -90,3 +95,9 @@ async def run_import(body: ImportRequest) -> dict[str, Any]:
     except ImportFailed as e:
         raise HTTPException(422, {"error": str(e), "code": "import-failed"})
     return {"files": [{k: v for k, v in f.items() if v is not None} for f in imported]}
+
+
+@app.post("/v1/delete")
+async def run_delete(body: DeleteRequest) -> dict[str, Any]:
+    deleted, failed = await run_in_threadpool(delete, LIBRARY, body.paths)
+    return {"deleted": deleted, "failed": failed}

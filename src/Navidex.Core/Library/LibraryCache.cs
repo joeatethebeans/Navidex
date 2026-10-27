@@ -11,7 +11,8 @@ namespace Navidex.Core.Library;
 /// watches for as a database interceptor so no write path can forget to say so.
 /// </summary>
 /// <remarks>
-/// A stale view is recomputed when next asked for, one computation at a time. The caller waits a moment for it and
+/// A stale view is recomputed when next asked for, one computation at a time, and in the background once writes pause
+/// for a moment, so it's usually fresh by the time a page asks. The caller waits a moment for a computation and
 /// otherwise gets the last answer, so pages load at once even during a scan and catch up on their next refresh.
 /// </remarks>
 public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCache> logger) : DbCommandInterceptor
@@ -20,9 +21,14 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
         ["\"Artists\"", "\"Albums\"", "\"Editions\"", "\"Tracks\"", "\"EditionTracks\"", "\"Crosswalk\"", "\"LibraryFiles\"", "\"Settings\""];
 
     /// <summary>How long a caller waits for a fresher answer before taking the last one.</summary>
-    public static readonly TimeSpan Patience = TimeSpan.FromSeconds(2);
+    public static readonly TimeSpan Patience = TimeSpan.FromMilliseconds(500);
+
+    /// <summary>How long writes must pause before stale views are recomputed without being asked for.</summary>
+    public static readonly TimeSpan Quiet = TimeSpan.FromSeconds(1);
 
     private long _generation;
+    private long _lastWrite;
+    private int _warming;
     private readonly ConcurrentDictionary<string, Entry> _entries = new();
 
     private sealed class Entry
@@ -31,6 +37,9 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
         public object? Value;
         public long Generation = -1;
         public Task? Refresh;
+
+        /// <summary>Starts a computation; set by the first caller, so the view can be warmed later.</summary>
+        public Func<Entry, Task>? Start;
     }
 
     public Task<IReadOnlyList<LibraryArtist>> GetArtistsAsync(CancellationToken ct) =>
@@ -49,7 +58,43 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
     public void Invalidate()
     {
         Interlocked.Increment(ref _generation);
+        Interlocked.Exchange(ref _lastWrite, Environment.TickCount64);
         Changed?.Invoke();
+        if (Interlocked.Exchange(ref _warming, 1) == 0)
+            _ = WarmAsync();
+    }
+
+    // Once writes pause, recomputes the views that have been asked for before.
+    private async Task WarmAsync()
+    {
+        try
+        {
+            long wait;
+            while ((wait = (long)Quiet.TotalMilliseconds - (Environment.TickCount64 - Interlocked.Read(ref _lastWrite))) > 0)
+                await Task.Delay(TimeSpan.FromMilliseconds(wait));
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _warming, 0);
+        }
+        foreach (var entry in _entries.Values)
+        {
+            Task? refresh;
+            lock (entry.Gate)
+            {
+                if (entry.Start is null || entry.Generation == Interlocked.Read(ref _generation))
+                    continue;
+                refresh = entry.Refresh ??= entry.Start(entry);
+            }
+            try
+            {
+                await refresh;
+            }
+            catch (Exception)
+            {
+                // Logged by the refresh; the next caller tries again.
+            }
+        }
     }
 
     private async Task<T> GetAsync<T>(string key, Func<LibraryView, CancellationToken, Task<T>> compute, CancellationToken ct) where T : class
@@ -58,9 +103,10 @@ public sealed class LibraryCache(IServiceScopeFactory scopes, ILogger<LibraryCac
         Task refresh;
         lock (entry.Gate)
         {
+            entry.Start ??= e => RefreshAsync(e, compute);
             if (entry.Value is T current && entry.Generation == Interlocked.Read(ref _generation))
                 return current;
-            refresh = entry.Refresh ??= RefreshAsync(entry, compute);
+            refresh = entry.Refresh ??= entry.Start(entry);
         }
 
         if (entry.Value is null)

@@ -66,12 +66,20 @@ deleted; **Add to library** files the same file through beets without fetching i
 | Call | What |
 | --- | --- |
 | `POST /api/v1/listen` `{kind, id, editionId?}` | Fetch a track, or an album's missing tracks in order. Returns one item per track. |
+| `GET /api/v1/listen?all=true` | Every listen-now track still to play, fetch or add; with `all`, also those discarded, expired or added |
 | `GET /api/v1/listen/{id}` | Its state (`requested`, `fetching`, `playable`, `importing`, `inLibrary`, `failed`, `expired`), and a signed `streamUrl` with its `mediaType` while playable |
 | `POST /api/v1/listen/{id}/add`, `DELETE /api/v1/listen/{id}` | Add it to the library, or discard it now |
 | `GET /api/v1/tracks/{id}/play` | A signed stream URL for a track you have |
 | `GET /api/v1/events` | Server-sent events naming what changed (`requests`, `listen`, `library`, `tasks`), so apps reload instead of polling |
 
 Stream URLs need no credentials, support range requests for seeking, and stop working after 12 hours.
+
+### Removing music
+
+The Library page can remove an artist, album or track (`POST /api/v1/library/remove`, with
+`GET /api/v1/library/removal` to see what it covers first). Either the beets worker deletes the files, with any
+folder left holding only artwork, and the media server is told; or the files stay and are excluded from matching,
+so Navidex stops counting them until they're included again on the Review page.
 
 The database lives in `Navidex:DataPath` (`data/` by default) and is migrated on startup. Override any path with
 environment variables such as `Navidex__LibraryPath=/music`.
