@@ -48,7 +48,7 @@ public sealed class LibraryViewBenchmark(ITestOutputHelper output) : IDisposable
             var c = await view.GetLibraryTracksAsync(default);
             output.WriteLine($"{round} tracks: {watch.ElapsedMilliseconds} ms ({c.Count})");
             watch.Restart();
-            var found = await scope.ServiceProvider.GetRequiredService<Catalogue.CatalogueSearch>().SearchAsync("Artist 1", null, local: true, default);
+            var found = await scope.ServiceProvider.GetRequiredService<Catalogue.CatalogueSearch>().SearchAsync("Song 12-3", null, local: true, default);
             output.WriteLine($"{round} local search: {watch.ElapsedMilliseconds} ms ({found.Artists.Count} artists, {found.Albums.Count} albums, {found.Tracks.Count} tracks)");
         }
     }

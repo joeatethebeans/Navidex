@@ -67,9 +67,14 @@ public sealed class CatalogueSearch(NavidexDbContext db, CatalogueService servic
             var found = await db.Tracks.Where(t => EF.Functions.Like(t.Title, pattern, @"\"))
                 .OrderByDescending(t => db.LibraryFiles.Any(f => f.TrackId == t.Id)).ThenBy(t => t.Title.Length).ThenBy(t => t.Title)
                 .Take(Limit)
-                .Select(t => new { Track = t, Album = db.EditionTracks.Where(et => et.TrackId == t.Id).Select(et => et.Edition.Album).FirstOrDefault() })
                 .ToListAsync(ct);
-            tracks.AddRange(found.Select(f => (f.Track, (Album?)f.Album)));
+            // The albums are looked up for these few on their own: asked inside the query above, SQLite works out every
+            // track's first album before picking ten, which on a full catalogue takes many seconds.
+            var foundIds = found.Select(t => t.Id).ToList();
+            var albums = (await db.EditionTracks.Where(et => foundIds.Contains(et.TrackId))
+                    .Select(et => new { et.TrackId, et.Edition.Album }).ToListAsync(ct))
+                .DistinctBy(et => et.TrackId).ToDictionary(et => et.TrackId, et => et.Album);
+            tracks.AddRange(found.Select(t => (t, albums.GetValueOrDefault(t.Id))));
         }
         return await ResultsAsync(artists, albumIds, tracks, ct);
     }

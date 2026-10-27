@@ -1,5 +1,5 @@
 @* A square button with an icon, for the actions beside albums and tracks. The title says what it does. *@
-<button class="icon-button @Class @(Primary ? "primary" : "") @(Large ? "large" : "") @(_done ? "done" : "")" title="@Title" aria-label="@Title"
+<button class="icon-button @Class @(Primary ? "primary" : "") @(Large ? "large" : "") @(On ? "on" : "") @(_done ? "done" : "")" title="@Title" aria-label="@Title"
         disabled="@(Disabled || _busy)" @onclick="ClickAsync">
     @if (_busy)
     {
@@ -40,6 +40,30 @@
                 case "remove":
                     <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
                     break;
+                case "cancel":
+                    <path d="M6 6l12 12M18 6L6 18" />
+                    break;
+                case "up":
+                    <path d="M12 19V5M6 11l6-6 6 6" />
+                    break;
+                case "down":
+                    <path d="M12 5v14M6 13l6 6 6-6" />
+                    break;
+                case "test":
+                    <path d="M3 12h4l3-7 4 14 3-7h4" />
+                    break;
+                case "settings":
+                    <path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" />
+                    break;
+                case "power":
+                    <path d="M12 3v8M7.1 6.1a8 8 0 1 0 9.8 0" />
+                    break;
+                case "approve":
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                    break;
+                case "search":
+                    <circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" />
+                    break;
                 case "done":
                     <path d="M5 12.5l4.5 4.5L19 7.5" />
                     break;
@@ -50,13 +74,16 @@
 </button>
 
 @code {
-    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard or remove.</summary>
+    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard, remove, cancel, up, down, test, settings, power, approve or search.</summary>
     [Parameter, EditorRequired] public string Icon { get; set; } = "";
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public EventCallback OnClick { get; set; }
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public bool Primary { get; set; }
     [Parameter] public string? Class { get; set; }
+
+    /// <summary>Lit, for a button that switches something on and off.</summary>
+    [Parameter] public bool On { get; set; }
 
     /// <summary>Bigger, for the head of an album page.</summary>
     [Parameter] public bool Large { get; set; }

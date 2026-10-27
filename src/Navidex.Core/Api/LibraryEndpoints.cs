@@ -90,15 +90,7 @@ public static class LibraryEndpoints
                 if (await db.LibraryFiles.FindAsync([id], ct) is not { } file)
                     return Results.NotFound();
                 if (body.Excluded)
-                {
-                    file.ExcludedAt ??= DateTime.UtcNow;
-                    file.TrackId = file.EditionId = file.SuggestedTrackId = file.SuggestedEditionId = null;
-                    file.ArtistId = null;
-                    file.MatchMethod = MatchMethod.Unmatched;
-                    file.MatchConfidence = null;
-                    file.ReviewReason = null;
-                    file.MatchedAt ??= DateTime.UtcNow;
-                }
+                    Exclude(file);
                 else if (file.ExcludedAt is not null)
                 {
                     // Matched again by the next scan.
@@ -125,20 +117,42 @@ public static class LibraryEndpoints
                 if (editionId is { } edition && !await db.EditionTracks.AnyAsync(et => et.EditionId == edition && et.TrackId == track.Id, ct))
                     return Results.ValidationProblem(new Dictionary<string, string[]> { ["editionId"] = ["That track isn't on that edition."] });
 
-                file.TrackId = track.Id;
-                file.EditionId = editionId;
-                file.ArtistId = track.ArtistId;
-                file.MatchMethod = MatchMethod.Manual;
-                file.MatchConfidence = 1;
-                file.ReviewReason = null;
-                file.SuggestedTrackId = null;
-                file.SuggestedEditionId = null;
-                file.MatchedAt = DateTime.UtcNow;
+                Match(file, track, editionId);
                 await db.SaveChangesAsync(ct);
                 return Results.NoContent();
             })
             .WithName("MatchFile").WithSummary("Say which song a file is: accepting a review suggestion, or one picked by searching. It counts as owned at once.")
             .Produces(StatusCodes.Status204NoContent).ProducesValidationProblem();
+
+        library.MapPost("/review/approve", async (ReviewFiles body, NavidexDbContext db, RequestPlanner planner, CancellationToken ct) =>
+            {
+                var ids = body.FileIds.Distinct().ToList();
+                var files = await db.LibraryFiles.Where(f => ids.Contains(f.Id) && f.SuggestedTrackId != null && f.ExcludedAt == null).ToListAsync(ct);
+                var trackIds = files.Select(f => f.SuggestedTrackId!.Value).Distinct().ToList();
+                var tracks = await db.Tracks.Where(t => trackIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, ct);
+                var count = 0;
+                foreach (var file in files)
+                {
+                    if (!tracks.TryGetValue(file.SuggestedTrackId!.Value, out var track))
+                        continue;
+                    Match(file, track, file.SuggestedEditionId ?? await planner.ChooseEditionForTrackAsync(track.Id, ct));
+                    count++;
+                }
+                await db.SaveChangesAsync(ct);
+                return new ReviewDone(count);
+            })
+            .WithName("ApproveFiles").WithSummary("Accept the suggestion for each of these files that has one, as approving each would.");
+
+        library.MapPost("/review/exclude", async (ReviewFiles body, NavidexDbContext db, CancellationToken ct) =>
+            {
+                var ids = body.FileIds.Distinct().ToList();
+                var files = await db.LibraryFiles.Where(f => ids.Contains(f.Id)).ToListAsync(ct);
+                foreach (var file in files)
+                    Exclude(file);
+                await db.SaveChangesAsync(ct);
+                return new ReviewDone(files.Count);
+            })
+            .WithName("ExcludeFiles").WithSummary("Exclude each of these files from matching, as excluding each would.");
 
         api.MapGet("/artwork/{kind}/{id:guid}", async (string kind, Guid id, ArtworkCache artwork, HttpContext http, CancellationToken ct) =>
             {
@@ -298,4 +312,30 @@ public static class LibraryEndpoints
         await db.Tracks.Where(t => t.Id == id).ExecuteUpdateAsync(s => s.SetProperty(t => t.Ignored, ignored), ct) == 0
             ? Results.NotFound()
             : Results.NoContent();
+
+    /// <summary>Never matched again, until it's included: music no catalogue knows.</summary>
+    private static void Exclude(LibraryFile file)
+    {
+        file.ExcludedAt ??= DateTime.UtcNow;
+        file.TrackId = file.EditionId = file.SuggestedTrackId = file.SuggestedEditionId = null;
+        file.ArtistId = null;
+        file.MatchMethod = MatchMethod.Unmatched;
+        file.MatchConfidence = null;
+        file.ReviewReason = null;
+        file.MatchedAt ??= DateTime.UtcNow;
+    }
+
+    /// <summary>Settled by hand: this file is this track, so it counts as owned.</summary>
+    private static void Match(LibraryFile file, Track track, Guid? editionId)
+    {
+        file.TrackId = track.Id;
+        file.EditionId = editionId;
+        file.ArtistId = track.ArtistId;
+        file.MatchMethod = MatchMethod.Manual;
+        file.MatchConfidence = 1;
+        file.ReviewReason = null;
+        file.SuggestedTrackId = null;
+        file.SuggestedEditionId = null;
+        file.MatchedAt = DateTime.UtcNow;
+    }
 }

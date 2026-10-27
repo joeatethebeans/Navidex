@@ -226,6 +226,12 @@ public sealed record ReviewItem(
 /// <summary>Body of <c>PUT /library/files/{id}/excluded</c>.</summary>
 public sealed record ExcludeFile(bool Excluded);
 
+/// <summary>Body of <c>POST /library/review/approve</c> and <c>/library/review/exclude</c>: the files to act on.</summary>
+public sealed record ReviewFiles(IReadOnlyList<Guid> FileIds);
+
+/// <summary>How many of the files a bulk review action changed.</summary>
+public sealed record ReviewDone(int Count);
+
 /// <summary>Body of <c>POST /library/files/{id}/match</c>. Without an edition, the suggestion's or the likeliest one is used.</summary>
 public sealed record MatchFile(Guid TrackId, Guid? EditionId = null);
 

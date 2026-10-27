@@ -45,19 +45,22 @@ else
                     <div class="request-head">
                         @if (canOpen)
                         {
-                            <button class="section-toggle" aria-expanded="@(taskOpen ? "true" : "false")" @onclick="() => _openScan = !taskOpen">
+                            <button class="request-toggle" aria-expanded="@(taskOpen ? "true" : "false")" @onclick="() => _openScan = !taskOpen">
                                 <span class="chevron @(taskOpen ? "open" : "")" aria-hidden="true"></span>
-                                <span class="request-title task-title">@task.Title</span>
+                                <span class="request-title">@task.Title</span>
                             </button>
                         }
                         else
                         {
-                            <span class="request-title task-title">@task.Title</span>
+                            <span class="request-toggle">
+                                <span aria-hidden="true"></span>
+                                <span class="request-title">@task.Title</span>
+                            </span>
                         }
-                        <span class="muted small hide-narrow">@(task.Kind == "library-scan" ? "scan" : "catalogue")</span>
-                        <span class="badge @Format.TaskBadge(task.State)">@Format.TaskLabel(task.State)</span>
-                        <span class="spacer"></span>
-                        <span class="muted small hide-narrow" title="@task.UpdatedAt.ToLocalTime()">@Format.Ago(task.UpdatedAt)</span>
+                        <span class="muted small request-kind hide-narrow">@(isScan ? "Scan" : "Catalogue")</span>
+                        <span class="request-state"><span class="badge @Format.TaskBadge(task.State)">@Format.TaskLabel(task.State)</span></span>
+                        <span class="muted small request-time hide-narrow" title="@task.UpdatedAt.ToLocalTime()">@Format.Ago(task.UpdatedAt)</span>
+                        <span class="request-actions"></span>
                     </div>
                     @if (task.Error is not null) { <div class="small request-detail error">@task.Error</div> }
                     else if (task.Progress is not null) { <div class="muted small request-detail">@task.Progress</div> }
@@ -72,15 +75,14 @@ else
             var open = _open.ContainsKey(request.Id);
             <div class="request">
                 <div class="request-head">
-                    <button class="section-toggle" aria-expanded="@(open ? "true" : "false")" @onclick="() => ToggleAsync(request.Id)">
+                    <button class="request-toggle" aria-expanded="@(open ? "true" : "false")" @onclick="() => ToggleAsync(request.Id)">
                         <span class="chevron @(open ? "open" : "")" aria-hidden="true"></span>
                         <span class="request-title">@request.Title</span>
                     </button>
-                    <span class="muted small hide-narrow">@(request.ListenNow ? "listen now" : request.Kind.ToString())</span>
-                    <span class="badge @Format.RequestBadge(request.State)">@Format.RequestLabel(request)</span>
-                    <span class="spacer"></span>
-                    <span class="muted small hide-narrow" title="@request.UpdatedAt.ToLocalTime()">@Format.Ago(request.UpdatedAt)</span>
-                    <Actions Request="request" OnChanged="ChangedAsync" />
+                    <span class="muted small request-kind hide-narrow">@(request.ListenNow ? "Listen now" : request.Kind.ToString())</span>
+                    <span class="request-state"><span class="badge @Format.RequestBadge(request.State)">@Format.RequestLabel(request)</span></span>
+                    <span class="muted small request-time hide-narrow" title="@request.UpdatedAt.ToLocalTime()">@Format.Ago(request.UpdatedAt)</span>
+                    <span class="request-actions"><Actions Request="request" OnChanged="ChangedAsync" /></span>
                 </div>
                 @if (request.Detail is not null) { <div class="muted small request-detail">@request.Detail</div> }
                 @if (request.Parts is { Total: > 0 } parts)

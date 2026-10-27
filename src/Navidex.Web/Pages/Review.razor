@@ -6,7 +6,10 @@
 <PageTitle>Review · Navidex</PageTitle>
 
 <h1>Review</h1>
-<p class="muted">Things Navidex couldn't settle on its own.</p>
+<p class="muted">
+    Files that couldn't be matched confidently. They don't count as owned until they're matched. <strong>Exclude</strong> music
+    no catalogue knows, such as your own recordings: it's never matched again, and stays in your music folder.
+</p>
 
 @if (Stuck.Any())
 {
@@ -34,11 +37,11 @@
     </div>
 }
 
-<h2>Files</h2>
-<p class="muted small">
-    Files that couldn't be matched confidently. They don't count as owned until they're matched. <strong>Exclude</strong> music
-    no catalogue knows, such as your own recordings: it's never matched again, and stays in your music folder.
-</p>
+@* Requests show here only when one is stuck, and then the files need a heading of their own. *@
+@if (Stuck.Any())
+{
+    <h2>Files</h2>
+}
 
 @if (_items is null)
 {
@@ -50,13 +53,46 @@ else if (_items.Count == 0)
 }
 else
 {
+    var approvable = Visible.Count(i => i.Suggestion is not null);
+    var some = _filter.Length > 0;
     <div class="toolbar">
         <input type="search" placeholder="Filter, for example a title, artist or folder" @bind="_filter" @bind:event="oninput" />
-        @if (_filter.Length > 0 && Visible.Any())
-        {
-            <button disabled="@_busy" title="Exclude every file the filter shows, for example a whole folder" @onclick="ExcludeShownAsync">Exclude these @Visible.Count()</button>
-        }
+        <span class="spacer"></span>
+        <button class="primary" disabled="@(_busy || approvable == 0)" title="@(some ? "Accept the suggestion for every file the filter shows" : "Accept the suggestion for every file that has one")"
+                @onclick="@(() => _confirm = "approve")">@(some ? "Approve these" : "Approve all")</button>
+        <button disabled="@(_busy || !Visible.Any())" title="@(some ? "Exclude every file the filter shows, for example a whole folder" : "Exclude every file waiting for review")"
+                @onclick="@(() => _confirm = "exclude")">@(some ? "Exclude these" : "Exclude all")</button>
     </div>
+    @if (_confirm == "approve")
+    {
+        var unsure = Visible.Count(i => i.Suggestion is not null && i.Confidence < 0.6);
+        var without = Visible.Count() - approvable;
+        <Dialog Title="@($"Approve {Format.Count(approvable, "file", "files")}?")" OnClose="() => _confirm = null" Alert="true">
+            <p>Each is matched to the song suggested for it, and counts as owned.</p>
+            @if (without > 0)
+            {
+                <p class="muted">@Format.Count(without, "file has", "files have") no suggestion, so @(without == 1 ? "it stays" : "they stay") here.</p>
+            }
+            @if (unsure > 0)
+            {
+                <p class="plugin-message">@Format.Count(unsure, "suggestion is", "suggestions are") less than 60% sure. Filter to check them first if you'd rather.</p>
+            }
+            <div class="toolbar dialog-buttons">
+                <button @onclick="() => _confirm = null">Cancel</button>
+                <button class="primary" disabled="@_busy" @onclick="ApproveShownAsync">@if (_busy) { <span class="spinner"></span> }Approve</button>
+            </div>
+        </Dialog>
+    }
+    else if (_confirm == "exclude")
+    {
+        <Dialog Title="@($"Exclude {Format.Count(Visible.Count(), "file", "files")}?")" OnClose="() => _confirm = null" Alert="true">
+            <p>They stay in your music folder but are never matched, so they don't count as owned. You can include any of them again from the excluded files below.</p>
+            <div class="toolbar dialog-buttons">
+                <button @onclick="() => _confirm = null">Cancel</button>
+                <button class="danger" disabled="@_busy" @onclick="ExcludeShownAsync">@if (_busy) { <span class="spinner"></span> }Exclude</button>
+            </div>
+        </Dialog>
+    }
     @if (!Visible.Any())
     {
         <div class="empty card">No files match that filter.</div>
@@ -148,6 +184,9 @@ else
     private string _filter = "";
     private bool _busy;
 
+    // The bulk action waiting to be confirmed: approve or exclude.
+    private string? _confirm;
+
     private IEnumerable<ReviewItem> Visible => _items!.Where(i => _filter.Length == 0
         || new[] { i.Path, i.Title, i.Artist, i.Album, i.Suggestion?.Title, i.Suggestion?.AlbumTitle }
             .Any(text => text?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true));
@@ -180,14 +219,25 @@ else
         _busy = false;
     }
 
-    private async Task ExcludeShownAsync()
+    private Task ExcludeShownAsync() => BulkAsync(() => Api.ExcludeFilesAsync(Visible.Select(i => i.FileId).ToList()));
+
+    private Task ApproveShownAsync() => BulkAsync(() => Api.ApproveFilesAsync(Visible.Where(i => i.Suggestion is not null).Select(i => i.FileId).ToList()));
+
+    private async Task BulkAsync(Func<Task> action)
     {
         _busy = true;
-        foreach (var item in Visible.ToList())
-            await Api.SetFileExcludedAsync(item.FileId, true);
-        _filter = "";
-        await LoadAsync();
-        _busy = false;
+        try
+        {
+            await action();
+            _filter = "";
+            await LoadAsync();
+            ScanStatus.RaiseLibraryChanged();
+        }
+        finally
+        {
+            _busy = false;
+            _confirm = null;
+        }
     }
 
     private void Refresh() => InvokeAsync(StateHasChanged);

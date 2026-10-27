@@ -62,6 +62,38 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
     }
 
     [TestLibraryFact]
+    public async Task Files_can_be_approved_and_excluded_together()
+    {
+        var review = await Api.GetReviewAsync();
+        var suggested = review.First(i => i.Suggestion is not null);
+        var others = review.Where(i => i.FileId != suggested.FileId).Take(2).Select(i => i.FileId).ToList();
+        var before = (await Api.GetLibraryStatusAsync())!;
+
+        // Only files with a suggestion are approved; the rest stay for review.
+        var unsuggested = review.FirstOrDefault(i => i.Suggestion is null);
+        var approved = await Api.ApproveFilesAsync([suggested.FileId, .. unsuggested is null ? [] : new[] { unsuggested.FileId }]);
+        Assert.Equal(1, approved.Count);
+        var after = await Api.GetReviewAsync();
+        Assert.DoesNotContain(after, i => i.FileId == suggested.FileId);
+        if (unsuggested is not null)
+            Assert.Contains(after, i => i.FileId == unsuggested.FileId);
+        Assert.Equal(before.Matched + 1, (await Api.GetLibraryStatusAsync())!.Matched);
+
+        var excluded = await Api.ExcludeFilesAsync(others);
+        Assert.Equal(others.Count, excluded.Count);
+        var nowExcluded = await Api.GetReviewAsync(excluded: true);
+        Assert.All(others, id => Assert.Contains(nowExcluded, i => i.FileId == id));
+
+        // Put them all back for the other tests: excluded and included again, the next scan reviews them as before.
+        await Api.SetFileExcludedAsync(suggested.FileId, true);
+        foreach (var id in others.Append(suggested.FileId))
+            await Api.SetFileExcludedAsync(id, false);
+        await ScanAsync();
+        var restored = await Api.GetReviewAsync();
+        Assert.All(others.Append(suggested.FileId), id => Assert.Contains(restored, i => i.FileId == id));
+    }
+
+    [TestLibraryFact]
     public async Task Removing_a_file_deletes_it_and_its_emptied_folder()
     {
         var path = await CopyAsync("Removal Test/Copy", withArtwork: true);

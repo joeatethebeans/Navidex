@@ -178,6 +178,22 @@ public sealed class NavidexClient(HttpClient http)
         return (await response.Content.ReadFromJsonAsync<RequestInfo>(NavidexJson.Options, ct))!;
     }
 
+    /// <summary>Accepts the suggestion for each of these files that has one.</summary>
+    public async Task<ReviewDone> ApproveFilesAsync(IReadOnlyList<Guid> fileIds, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/library/review/approve", new ReviewFiles(fileIds), NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<ReviewDone>(NavidexJson.Options, ct))!;
+    }
+
+    /// <summary>Excludes these files from matching.</summary>
+    public async Task<ReviewDone> ExcludeFilesAsync(IReadOnlyList<Guid> fileIds, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/library/review/exclude", new ReviewFiles(fileIds), NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<ReviewDone>(NavidexJson.Options, ct))!;
+    }
+
     public async Task MatchFileAsync(Guid fileId, MatchFile match, CancellationToken ct = default)
     {
         using var response = await http.PostAsJsonAsync($"{Api}/library/files/{fileId}/match", match, NavidexJson.Options, ct);

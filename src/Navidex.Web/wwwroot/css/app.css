@@ -226,7 +226,7 @@ td.actions > * + * { margin-left: .6rem; }
 /* Review: the file on the left, the suggestion beside it, the actions at the end. Stacks on a phone. */
 /* The file and the suggestion share the room; the buttons take what they need, so nothing runs into them. */
 .review-item {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 1rem; padding: .75rem 1rem; margin-bottom: .75rem; align-items: start;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 14rem; gap: 1rem; padding: .75rem 1rem; margin-bottom: .75rem; align-items: start;
 }
 .review-item > div { min-width: 0; overflow-wrap: anywhere; }
 .suggestion-row { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: .6rem; align-items: start; }
@@ -252,12 +252,29 @@ a.button:hover { text-decoration: none; border-color: var(--accent); }
 /* Activity: one row per request, opening to its parts and attempts. */
 .request { padding: .6rem 1rem; }
 .request + .request { border-top: 1px solid var(--border); }
-.request-head { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
-.request-title { overflow-wrap: anywhere; text-align: left; }
-.request-detail { margin-left: 1rem; overflow-wrap: anywhere; }
-.request-meter { margin: .4rem 0 0 1rem; max-width: 320px; }
-.request-body { margin: .6rem 0 0 1rem; }
+/* Every row has the same columns, whatever it is, so titles, kinds, states and times line up down the list. */
+.request-head {
+    display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem 7.5rem 5.5rem 4.25rem; gap: .75rem; align-items: center; min-height: 1.9rem;
+}
+.request-toggle {
+    font: inherit; font-weight: 600; border: none; background: none; padding: 0; color: var(--text); text-align: left;
+    display: grid; grid-template-columns: .9rem minmax(0, 1fr); gap: .5rem; align-items: center; min-width: 0;
+}
+button.request-toggle { cursor: pointer; }
+.request-title { overflow-wrap: anywhere; }
+.request-state { min-width: 0; }
+.request-time { text-align: right; white-space: nowrap; }
+.request-actions { display: flex; justify-content: flex-end; gap: .3rem; }
+.request-detail { margin: .15rem 0 0 1.4rem; overflow-wrap: anywhere; }
+.request-meter { margin: .4rem 0 0 1.4rem; max-width: 320px; }
+.request-body { margin: .6rem 0 0 1.4rem; }
 .request-body .table td { padding-left: 0; }
+.icon-button.small { min-width: 1.9rem; height: 1.9rem; }
+.icon-button.small svg { width: .9rem; height: .9rem; }
+@media (max-width: 640px) {
+    .request { padding: .6rem .75rem; }
+    .request-head { grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; }
+}
 .section-toggle.small { font-weight: 500; font-size: .9rem; text-align: left; }
 .job { padding: .5rem 0; border-top: 1px dashed var(--border); }
 .job details > summary { margin: .3rem 0; }
@@ -271,17 +288,37 @@ h3 { font-size: 1rem; margin: 1.25rem 0 .25rem; }
 .field input[type=text], .field input[type=password], .field select { width: 100%; max-width: 32rem; }
 input[type=password] { font: inherit; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
 code { font-size: .85em; background: var(--bg); padding: .05rem .3rem; border-radius: 4px; border: 1px solid var(--border); overflow-wrap: anywhere; }
-.plugin { padding: .65rem 1rem; }
-.plugin + .plugin, .plugin + .plugin-add { border-top: 1px solid var(--border); }
-.plugin.dim .plugin-name { opacity: .6; }
-.plugin-head { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
-.plugin-name { min-width: 0; overflow-wrap: anywhere; }
-.plugin-head .actions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
-.plugin-message { color: var(--partial); margin-top: .3rem; overflow-wrap: anywhere; }
-.plugin-form { margin-top: .5rem; padding: .5rem .75rem; background: var(--bg); border-radius: 6px; }
-.plugin-add { display: flex; gap: .5rem; padding: .65rem 1rem; flex-wrap: wrap; }
-.plugin-add input { flex: 1; min-width: 12rem; }
-.card > .plugin-add:first-child { border-top: none; }
+.plugin-message { color: var(--partial); overflow-wrap: anywhere; }
+
+/* Plugins: a panel per kind, each plugin a card of the same shape, with its actions along the bottom. */
+.plugin-sections { display: flex; flex-direction: column; gap: 1.25rem; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.panel-head { display: flex; align-items: flex-start; gap: 1rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--border); }
+.panel-title { flex: 1; min-width: 0; }
+.panel-title h2 { margin: 0; font-size: 1.05rem; }
+.panel-title p { margin: .25rem 0 0; }
+.panel-empty { padding: 1rem 1.1rem; }
+.plugin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .75rem; padding: .9rem 1.1rem 1.1rem; }
+.plugin-card {
+    display: grid; grid-template-rows: auto auto 1fr auto; gap: .3rem; min-width: 0; height: 9.5rem; box-sizing: border-box;
+    padding: .7rem .8rem .6rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+}
+.plugin-top { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.plugin-top strong { min-width: 0; }
+.plugin-top .badge { flex: none; }
+.plugin-order {
+    flex: none; display: inline-grid; place-items: center; width: 1.35rem; height: 1.35rem; border-radius: 50%;
+    font-size: .75rem; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+}
+.plugin-about, .plugin-card .plugin-message { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.plugin-card .plugin-message { align-self: start; }
+.plugin-actions { display: flex; align-items: center; gap: .3rem; }
+.plugin-card.off .plugin-top strong, .plugin-card.off .plugin-about { opacity: .55; }
+@media (max-width: 640px) {
+    .panel-head { padding: .75rem .9rem; }
+    .plugin-grid { grid-template-columns: minmax(0, 1fr); padding: .75rem .9rem .9rem; }
+    .plugin-card { height: auto; min-height: 8rem; }
+}
 
 /* The library's views: artists, albums and tracks. */
 .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface); }
@@ -300,7 +337,7 @@ code { font-size: .85em; background: var(--bg); padding: .05rem .3rem; border-ra
 .track-list col.wide-action-col { width: 11rem; }
 @media (max-width: 640px) { .track-list col.hide-narrow { width: 0; } .track-list col.status-col { width: 6.5rem; } .track-list col.wide-action-col { width: 8.5rem; } }
 
-/* Connections: a heading with its Add button, and the plugins Navidex knows to offer. */
+/* A heading with a button beside it. */
 .section-head { display: flex; align-items: center; gap: .75rem; margin-top: 1.5rem; }
 .section-head h2, .section-head h3 { margin: 0; }
 .section-head.sub { margin-top: 1rem; }
@@ -312,8 +349,9 @@ h2.section-title { margin: 1.5rem 0 0; }
 }
 .template:hover:not(:disabled) { border-color: var(--accent); }
 .template:disabled { cursor: default; opacity: .7; }
-.add-form { padding: .75rem 1rem; margin-bottom: .75rem; display: flex; flex-direction: column; gap: .5rem; }
-.request-title.task-title { font-weight: 600; }
+.dialog.wide { width: min(44rem, 100%); }
+.dialog .templates { margin: 0; }
+.template { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
 
 /* The player: fixed along the bottom, with the queue opening above it. The spacer keeps it off the page's end. */
 .player-space { height: 5.5rem; }
@@ -528,6 +566,9 @@ button .spinner { width: .85rem; height: .85rem; vertical-align: -2px; margin-ri
 .toolbar input[type=search], .toolbar select, .toolbar .icon-button, .toolbar > button, .toolbar .segmented { height: var(--control); box-sizing: border-box; }
 .toolbar .icon-button { min-width: var(--control); }
 .toolbar .segmented button { padding-top: 0; padding-bottom: 0; }
+.toolbar .toggle { height: var(--control); box-sizing: border-box; display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; }
+.toolbar.one-line select { min-width: 0; max-width: 11rem; }
+svg.flip { transform: scaleY(-1); }
 .icon-button.on { border-color: var(--accent); color: var(--accent); }
 
 /* Sorting: a button that opens the ways to sort, and one that reverses the order. */

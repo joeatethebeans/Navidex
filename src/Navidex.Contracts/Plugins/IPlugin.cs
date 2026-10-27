@@ -63,7 +63,7 @@ public enum HealthStatus
 
 /// <summary>Result of a health check.</summary>
 /// <param name="Status">Overall state.</param>
-/// <param name="Message">Human-readable detail, shown next to the plugin on the Connections page.</param>
+/// <param name="Message">Human-readable detail, shown next to the plugin on the Plugins page.</param>
 public sealed record HealthReport(HealthStatus Status, string? Message = null)
 {
     /// <summary>A healthy report with no message.</summary>

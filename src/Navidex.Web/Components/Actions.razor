@@ -3,12 +3,12 @@
 @* Cancel for a request that's running, Retry for one that stopped short. *@
 @if (Request.Active)
 {
-    <button class="link small" disabled="@_busy" @onclick="CancelAsync">Cancel</button>
+    <IconButton Icon="cancel" Class="small" Title="Cancel" Disabled="_busy" OnClick="CancelAsync" />
 }
 else if (Request.State is RequestState.NeedsReview or RequestState.Failed or RequestState.Cancelled
          || Request.Parts is { } p && p.NeedsReview + p.Failed + p.Cancelled > 0)
 {
-    <button class="link small" disabled="@_busy" @onclick="RetryAsync">Retry</button>
+    <IconButton Icon="retry" Class="small" Title="Retry" Disabled="_busy" OnClick="RetryAsync" />
 }
 
 @code {

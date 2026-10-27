@@ -73,7 +73,7 @@ Each type is versioned on its own as `major.minor`:
 - A **minor** bump only adds optional members (new optional fields, capabilities or interfaces). A core supporting
   `1.3` loads plugins built for `1.0` up to `1.3`.
 - A **major** bump is breaking. The core refuses plugins whose major version differs from its own, or whose minor
-  version is newer than its own, and shows why in Settings → Connections.
+  version is newer than its own, and shows why in Settings → Plugins.
 - `GET /api/v1/version` reports the versions the running core supports.
 
 ## Lifecycle

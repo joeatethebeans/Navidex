@@ -1,10 +1,18 @@
 @page "/log"
 @page "/connections"
+@page "/settings/connections"
 @inject NavigationManager Navigation
 
-@* The log and connections were pages of their own before they moved into Settings; old links and bookmarks still work. *@
+@*
+    The log and the plugins were pages of their own before they moved into Settings, and the plugins were called
+    connections; old links and bookmarks still work.
+*@
 
 @code {
     protected override void OnInitialized() =>
-        Navigation.NavigateTo($"settings/{Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0]}", replace: true);
+        Navigation.NavigateTo(Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0] switch
+        {
+            "log" => "settings/log",
+            _ => "settings/plugins",
+        }, replace: true);
 }
