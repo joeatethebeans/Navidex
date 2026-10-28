@@ -42,7 +42,7 @@ public sealed class ListenNowService(
     /// is returned as it is rather than fetched again.
     /// </summary>
     /// <exception cref="ListenNowException">You have the track, or nothing of the album is missing.</exception>
-    public async Task<IReadOnlyList<ListenNowItem>?> StartAsync(StartListen start, CancellationToken ct)
+    public async Task<IReadOnlyList<ListenNowItem>?> StartAsync(StartListen start, string requester, CancellationToken ct)
     {
         switch (start.Kind)
         {
@@ -53,7 +53,7 @@ public sealed class ListenNowService(
                     throw new ListenNowException("You already have this track, so play it from your library.");
                 var edition = start.EditionId ?? await planner.ChooseEditionForTrackAsync(track.Id, ct)
                     ?? throw new ListenNowException("This track isn't on any edition in the catalogue, so there's nothing to fetch it as.");
-                return [await StartTrackAsync(track, edition, ct)];
+                return [await StartTrackAsync(track, edition, requester, ct)];
 
             case RequestKind.Album:
                 if (await db.Albums.FindAsync([start.Id], ct) is not { } album)
@@ -69,7 +69,7 @@ public sealed class ListenNowService(
                     throw new ListenNowException("You have every track of this album, so play it from your library.");
                 var items = new List<ListenNowItem>();
                 foreach (var listing in missing)
-                    items.Add(await StartTrackAsync((await db.Tracks.FindAsync([listing.TrackId], ct))!, editionId, ct));
+                    items.Add(await StartTrackAsync((await db.Tracks.FindAsync([listing.TrackId], ct))!, editionId, requester, ct));
                 return items;
 
             default:
@@ -77,7 +77,7 @@ public sealed class ListenNowService(
         }
     }
 
-    private async Task<ListenNowItem> StartTrackAsync(Track track, Guid editionId, CancellationToken ct)
+    private async Task<ListenNowItem> StartTrackAsync(Track track, Guid editionId, string requester, CancellationToken ct)
     {
         var live = await db.ListenNowItems.Include(i => i.Request)
             .Where(i => i.TrackId == track.Id && !Gone.Contains(i.State)).OrderByDescending(i => i.CreatedAt).FirstOrDefaultAsync(ct);
@@ -96,7 +96,7 @@ public sealed class ListenNowService(
             TargetId = track.Id,
             EditionId = editionId,
             Title = $"{track.Title} · {track.ArtistCredit}",
-            Requester = "admin",
+            Requester = requester,
             Mode = RequestMode.ListenNow,
         };
         var item = new ListenNowItem { Request = request, TrackId = track.Id, EditionId = editionId, State = ListenNowState.Requested };

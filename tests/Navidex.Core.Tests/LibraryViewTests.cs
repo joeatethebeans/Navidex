@@ -26,7 +26,7 @@ public sealed class LibraryViewTests : IDisposable
                 http.PrimaryHandler = () => _coverArt;
                 http.RateLimit = false;
             })));
-        _api = new NavidexClient(_factory.CreateClient());
+        _api = new NavidexClient(_factory.CreateSignedInClient());
     }
 
     public void Dispose()
@@ -79,7 +79,7 @@ public sealed class LibraryViewTests : IDisposable
     public async Task Artwork_is_found_through_the_plugins_once_and_forgotten_when_they_change()
     {
         await ScanAsync();
-        var http = _factory.CreateClient();
+        var http = _factory.CreateSignedInClient();
         var dummy = (await _api.GetLibraryAlbumsAsync()).Single(a => a.Album.Title == "Dummy");
 
         // Covers of what you have are fetched during the scan, before anyone looks.

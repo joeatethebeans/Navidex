@@ -1,4 +1,5 @@
 using Navidex.Client;
+using Navidex.Core.Access;
 using Navidex.Core.Data;
 using Navidex.Core.Library;
 using Navidex.Core.Requests;
@@ -11,11 +12,11 @@ public static class RequestEndpoints
     {
         var requests = api.MapGroup("/requests").WithTags("Requests");
 
-        requests.MapPost("", async (CreateRequest body, RequestService service, CancellationToken ct) =>
+        requests.MapPost("", async (CreateRequest body, HttpContext http, RequestService service, CancellationToken ct) =>
             {
                 try
                 {
-                    var (request, created) = await service.CreateAsync(body, "admin", ct);
+                    var (request, created) = await service.CreateAsync(body, Caller.Of(http).Requester, ct);
                     if (request is null)
                         return Results.NotFound();
                     var info = await service.GetAsync(request.Id, ct);
@@ -30,7 +31,7 @@ public static class RequestEndpoints
                     return Results.Problem(e.Message, statusCode: StatusCodes.Status409Conflict, title: "The library is being scanned");
                 }
             })
-            .WithName("CreateRequest")
+            .RequireScope(Scopes.Request).WithName("CreateRequest")
             .WithSummary("Fetch an artist, album or track into the library. Asking for something already queued returns that request (200) instead of a new one (202). Refused (409) while a scan is reading the library.")
             .Produces<RequestInfo>(StatusCodes.Status202Accepted).Produces<RequestInfo>().Produces(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
 
@@ -50,7 +51,7 @@ public static class RequestEndpoints
                 await service.CancelAsync(request, ct);
                 return Results.NoContent();
             })
-            .WithName("CancelRequest").WithSummary("Cancel a request and its unfinished parts. Files already in the library stay.");
+            .RequireScope(Scopes.Request).WithName("CancelRequest").WithSummary("Cancel a request and its unfinished parts. Files already in the library stay.");
 
         requests.MapPost("/{id:guid}/retry", async (Guid id, NavidexDbContext db, RequestService service, CancellationToken ct) =>
             {
@@ -58,7 +59,7 @@ public static class RequestEndpoints
                     return Results.NotFound();
                 return await service.RetryAsync(request, ct) ? Results.Ok(await service.GetAsync(id, ct)) : Results.Conflict();
             })
-            .WithName("RetryRequest").WithSummary("Queue a failed or reviewed request again, with the parts of it that aren't in the library.")
+            .RequireScope(Scopes.Request).WithName("RetryRequest").WithSummary("Queue a failed or reviewed request again, with the parts of it that aren't in the library.")
             .Produces<RequestInfo>().Produces(StatusCodes.Status409Conflict);
 
         requests.MapPost("/{id:guid}/choose", async (Guid id, ChooseCandidate body, NavidexDbContext db, RequestService service, CancellationToken ct) =>
@@ -67,10 +68,10 @@ public static class RequestEndpoints
                     return Results.NotFound();
                 return await service.ChooseAsync(request, body.JobId, body.CandidateId, ct) ? Results.Ok(await service.GetAsync(id, ct)) : Results.Conflict();
             })
-            .WithName("ChooseCandidate").WithSummary("Fetch one of the candidates an earlier search found, instead of searching again. For finished track or whole-album requests.")
+            .RequireScope(Scopes.Request).WithName("ChooseCandidate").WithSummary("Fetch one of the candidates an earlier search found, instead of searching again. For finished track or whole-album requests.")
             .Produces<RequestInfo>().Produces(StatusCodes.Status409Conflict);
 
-        var settings = api.MapGroup("/settings").WithTags("Settings");
+        var settings = api.MapGroup("/settings").WithTags("Settings").RequireScope(Scopes.Admin);
         settings.MapGet("/fetch", (SettingsService s, CancellationToken ct) => s.GetFetchAsync(ct)).WithName("GetFetchSettings");
         settings.MapPut("/fetch", async (FetchSettings value, SettingsService s, CancellationToken ct) =>
             {

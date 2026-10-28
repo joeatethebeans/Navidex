@@ -24,7 +24,7 @@ public sealed class IgnoreTests : IDisposable
                 http.PrimaryHandler = () => new ReplayHandler(TestLibrary.MusicBrainzFixtures);
                 http.RateLimit = false;
             })));
-        _api = new NavidexClient(_factory.CreateClient());
+        _api = new NavidexClient(_factory.CreateSignedInClient());
     }
 
     public void Dispose()

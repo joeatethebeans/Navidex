@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Navidex.Client;
+using Navidex.Core.Access;
 using Navidex.Core.Data;
 using Navidex.Core.Events;
 using Navidex.Core.Library;
@@ -14,11 +15,11 @@ public static class ListenEndpoints
     {
         var listen = api.MapGroup("/listen").WithTags("Listen now");
 
-        listen.MapPost("", async (StartListen body, ListenNowService service, CancellationToken ct) =>
+        listen.MapPost("", async (StartListen body, HttpContext http, ListenNowService service, CancellationToken ct) =>
             {
                 try
                 {
-                    var items = await service.StartAsync(body, ct);
+                    var items = await service.StartAsync(body, Caller.Of(http).Requester, ct);
                     return items is null ? Results.NotFound() : Results.Accepted(null, await service.ToInfoAsync(items, ct));
                 }
                 catch (ListenNowException e)
@@ -26,6 +27,7 @@ public static class ListenEndpoints
                     return Results.Problem(e.Message, statusCode: StatusCodes.Status409Conflict, title: "Nothing to listen to");
                 }
             })
+            .RequireScope(Scopes.Listen)
             .WithName("StartListening")
             .WithSummary("Fetch a track to listen to without adding it to the library, or an album's missing tracks in order. "
                          + "A track already on its way or playable is returned as it is. Refused (409) for tracks you have.")
@@ -51,6 +53,7 @@ public static class ListenEndpoints
                 await service.TouchAsync(item, ct);
                 return Results.File(file, MediaTypes.Bare(MediaTypes.For(file, item.Codec)), enableRangeProcessing: true);
             })
+            .AllowAnyone()
             .WithName("StreamListening")
             .WithSummary("The file, with range requests for seeking. Needs the signature from its stream URL. Each play keeps it for the expiry setting from then.")
             .Produces(StatusCodes.Status200OK).Produces(StatusCodes.Status206PartialContent).Produces(StatusCodes.Status403Forbidden).Produces(StatusCodes.Status404NotFound);
@@ -73,7 +76,7 @@ public static class ListenEndpoints
                     return Results.Problem(e.Message, statusCode: StatusCodes.Status409Conflict, title: "Can't add it");
                 }
             })
-            .WithName("AddListening")
+            .RequireScope(Scopes.Listen).WithName("AddListening")
             .WithSummary("Add a playable track to the library: it's filed by beets and announced to the media server, without fetching it again. "
                          + "Follow it until it's in the library, then use its media server track ID.")
             .Produces<ListenNowInfo>(StatusCodes.Status202Accepted).Produces(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
@@ -92,7 +95,7 @@ public static class ListenEndpoints
                     return Results.Problem(e.Message, statusCode: StatusCodes.Status409Conflict, title: "Can't discard it");
                 }
             })
-            .WithName("DiscardListening").WithSummary("Stop fetching a track, or delete its file now instead of when it expires.");
+            .RequireScope(Scopes.Listen).WithName("DiscardListening").WithSummary("Stop fetching a track, or delete its file now instead of when it expires.");
 
         // ---- Tracks you have ----
 
@@ -114,7 +117,7 @@ public static class ListenEndpoints
                     codec, MediaTypes.For(file.Path, codec), signer.Sign(LibraryStreamPath(file.Id))));
             })
             .WithTags("Library")
-            .WithName("PlayTrack").WithSummary("How to play a track you have: a signed stream URL for its file in your music folder. 404 if you don't have it.")
+            .RequireScope(Scopes.Listen).WithName("PlayTrack").WithSummary("How to play a track you have: a signed stream URL for its file in your music folder. 404 if you don't have it.")
             .Produces<PlayInfo>().Produces(StatusCodes.Status404NotFound);
 
         api.MapGet("/library/files/{id:guid}/stream", async (Guid id, long? exp, string? sig, NavidexDbContext db, StreamSigner signer,
@@ -131,6 +134,7 @@ public static class ListenEndpoints
                 return Results.File(file, MediaTypes.Bare(MediaTypes.For(file)), enableRangeProcessing: true);
             })
             .WithTags("Library")
+            .AllowAnyone()
             .WithName("StreamLibraryFile").WithSummary("A file from your music folder, with range requests for seeking. Needs the signature from its stream URL.")
             .Produces(StatusCodes.Status200OK).Produces(StatusCodes.Status206PartialContent).Produces(StatusCodes.Status403Forbidden).Produces(StatusCodes.Status404NotFound);
 
@@ -154,8 +158,9 @@ public static class ListenEndpoints
                         try
                         {
                             await subscription.Reader.WaitToReadAsync(beat.Token);
-                            while (subscription.Reader.TryRead(out var @event))
-                                await http.Response.WriteAsync($"event: {@event.Type}\ndata: {JsonSerializer.Serialize(@event, NavidexJson.Options)}\n\n", ct);
+                            while (subscription.Reader.TryRead(out var message))
+                                await http.Response.WriteAsync(
+                                    (message.Id is null ? "" : $"id: {message.Id}\n") + $"event: {message.Type}\ndata: {message.Data}\n\n", ct);
                         }
                         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
                         {
@@ -172,7 +177,8 @@ public static class ListenEndpoints
             })
             .WithTags("System")
             .WithName("Events")
-            .WithSummary("Server-sent events saying what changed: requests, listen (listen-now tracks), library or tasks. Reload what you show when one arrives.")
+            .WithSummary("Server-sent events. Unnamed kinds say what changed (requests, listen, library, tasks), so you reload what you show; "
+                         + "named events such as request.completed and listen.ready carry what happened, as webhooks do.")
             .Produces(StatusCodes.Status200OK, contentType: "text/event-stream");
 
         return api;

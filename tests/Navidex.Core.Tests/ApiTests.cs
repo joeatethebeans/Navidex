@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Navidex.Core.Api;
+using Navidex.Core.Tests.Support;
 
 namespace Navidex.Core.Tests;
 
@@ -25,7 +26,7 @@ public sealed class NavidexFactory : WebApplicationFactory<Program>
 
 public class ApiTests(NavidexFactory factory) : IClassFixture<NavidexFactory>
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly HttpClient _client = factory.CreateSignedInClient();
 
     [Fact]
     public async Task Health_reports_healthy_with_a_migrated_database()

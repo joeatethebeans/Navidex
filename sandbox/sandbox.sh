@@ -8,7 +8,7 @@
 #   sandbox/sandbox.sh down     stop and remove the containers and their data
 #   sandbox/sandbox.sh reset    down, and throw away the library copy and the inbox
 #
-# Works with podman or docker. Navidrome credentials are generated on first run into sandbox/.env.
+# Works with podman or docker. Navidrome's and Navidex's credentials are generated on first run into sandbox/.env.
 
 set -euo pipefail
 
@@ -19,6 +19,8 @@ TESTLIB="$ROOT/tools/testlib/out/music"
 MUSIC="$SANDBOX/music"
 INBOX="$SANDBOX/inbox"
 ENV_FILE="$SANDBOX/.env"
+# Navidex's session, for the calls this script makes.
+COOKIES="$SANDBOX/.cookies"
 
 NAVIDROME_IMAGE="docker.io/deluan/navidrome:0.64.2"
 NETWORK="navidex-sandbox"
@@ -52,6 +54,9 @@ SHARED=(--network "$NETWORK" --security-opt label=level:s0:c100,c200)
 if [[ ! -f "$ENV_FILE" ]]; then
   printf 'NAVIDROME_USER=admin\nNAVIDROME_PASSWORD=%s\n' "$(head -c 18 /dev/urandom | base64 | tr -d '/+=')" > "$ENV_FILE"
 fi
+if ! grep -q '^NAVIDEX_PASSWORD=' "$ENV_FILE"; then
+  printf 'NAVIDEX_USER=admin\nNAVIDEX_PASSWORD=%s\n' "$(head -c 18 /dev/urandom | base64 | tr -d '/+=')" >> "$ENV_FILE"
+fi
 # shellcheck source=/dev/null
 source "$ENV_FILE"
 
@@ -71,7 +76,13 @@ subsonic() {
 
 navidex() {
   local method="$1" path="$2"; shift 2
-  curl -sf -X "$method" "$navidex_url$path" -H 'Content-Type: application/json' "$@"
+  curl -sf -X "$method" "$navidex_url$path" -H 'Content-Type: application/json' -b "$COOKIES" -c "$COOKIES" "$@"
+}
+
+# Signs in to Navidex, making the admin login first if it's a new stack.
+sign_in() {
+  local login="{\"username\":\"$NAVIDEX_USER\",\"password\":\"$NAVIDEX_PASSWORD\"}"
+  navidex POST /auth/setup -o /dev/null -d "$login" 2>/dev/null || navidex POST /auth/login -o /dev/null -d "$login"
 }
 
 wait_for() {
@@ -132,7 +143,8 @@ status() {
   echo "Navidrome: $navidrome_url (user $NAVIDROME_USER, password in sandbox/.env)"
   echo "  tracks indexed: $(sed -n 's/.*"count":\([0-9]*\).*/\1/p' <<<"$scan")"
   echo "  artists: $(subsonic getArtists | grep -o '"albumCount"' | wc -l)"
-  echo "Navidex:   http://localhost:$NAVIDEX_PORT -> $(curl -sf "$navidex_url/health" || echo 'not running')"
+  echo "Navidex:   http://localhost:$NAVIDEX_PORT (user $NAVIDEX_USER, password in sandbox/.env) -> $(curl -sf "$navidex_url/health" || echo 'not running')"
+  sign_in 2>/dev/null || true
   navidex GET /plugins 2>/dev/null | python3 -I -c '
 import json, sys
 for p in json.load(sys.stdin):
@@ -186,6 +198,8 @@ up() {
   curl -sf -o /dev/null -X POST "$navidrome_url/auth/createAdmin" -H 'Content-Type: application/json' \
     -d "{\"username\":\"$NAVIDROME_USER\",\"password\":\"$NAVIDROME_PASSWORD\"}" || true
   wait_for Navidex "$navidex_url/health"
+  rm -f "$COOKIES"
+  sign_in
   configure
 
   subsonic startScan >/dev/null
@@ -204,6 +218,7 @@ case "${1:-}" in
     "$ENGINE" network rm "$NETWORK" >/dev/null 2>&1 || true
     if [[ "$1" == reset ]]; then
       # Files the containers wrote may belong to a mapped user; let the engine remove them if needed.
+      rm -f "$COOKIES"
       rm -rf "$MUSIC" "$INBOX" 2>/dev/null || "$ENGINE" unshare rm -rf "$MUSIC" "$INBOX"
     fi
     echo "Sandbox removed." ;;

@@ -33,7 +33,7 @@ public sealed class LibraryGateTests : IDisposable
                 http.PrimaryHandler = () => new ReplayHandler(TestLibrary.MusicBrainzFixtures);
                 http.RateLimit = ReplayHandler.Recording;
             })));
-        _api = new NavidexClient(_factory.CreateClient());
+        _api = new NavidexClient(_factory.CreateSignedInClient());
     }
 
     public void Dispose()

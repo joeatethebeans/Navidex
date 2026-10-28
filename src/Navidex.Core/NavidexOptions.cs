@@ -19,4 +19,10 @@ public class NavidexOptions
 
     /// <summary>Where in-process plugin assemblies (index plugins and connectors) are loaded from.</summary>
     public string PluginsPath { get; set; } = "plugins";
+
+    /// <summary>
+    /// Forgets the admin login when the core starts, so the next visit sets a new one: for a forgotten password. API
+    /// keys and everything else are kept. Turn it off again afterwards.
+    /// </summary>
+    public bool ResetLogin { get; set; }
 }

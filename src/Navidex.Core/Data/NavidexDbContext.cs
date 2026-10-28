@@ -26,6 +26,9 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
     public DbSet<ArtworkRecord> Artwork => Set<ArtworkRecord>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<Webhook> Webhooks => Set<Webhook>();
+    public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -123,6 +126,18 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
         modelBuilder.Entity<BackgroundTask>(e =>
         {
             e.HasIndex(t => new { t.Status, t.CreatedAt });
+        });
+
+        modelBuilder.Entity<ApiKey>(e =>
+        {
+            e.HasIndex(k => k.Hash).IsUnique();
+        });
+
+        modelBuilder.Entity<WebhookDelivery>(e =>
+        {
+            e.HasOne(d => d.Webhook).WithMany().OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(d => new { d.Status, d.NextAttemptAt });
+            e.HasIndex(d => new { d.WebhookId, d.CreatedAt });
         });
 
         // Store enums as their names so the database stays readable and reordering members is safe.

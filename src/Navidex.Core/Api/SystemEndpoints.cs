@@ -1,6 +1,7 @@
 using System.Reflection;
 using Navidex.Contracts.Plugins;
 using Navidex.Client;
+using Navidex.Core.Access;
 using Navidex.Core.Data;
 using Navidex.Core.Diagnostics;
 using Navidex.Core.Library;
@@ -22,6 +23,7 @@ public static class SystemEndpoints
                 });
                 return database ? Results.Ok(response) : Results.Json(response, statusCode: StatusCodes.Status503ServiceUnavailable);
             })
+            .AllowAnyone()
             .WithName("GetHealth")
             .WithSummary("Service health, for monitoring.")
             .Produces<HealthResponse>()
@@ -36,15 +38,17 @@ public static class SystemEndpoints
                     ["retrieval"] = ContractVersions.Retrieval.ToString(),
                     ["connector"] = ContractVersions.Connector.ToString(),
                 }))
+            .AllowAnyone()
             .WithName("GetVersion")
             .WithSummary("Service version and the plugin contract versions it supports.");
 
         group.MapGet("/log", (ActivityLog log, long after = 0, int limit = 1000) =>
                 new LogPage(log.After(after, Math.Clamp(limit, 1, ActivityLog.PageLimit)), log.Latest))
+            .RequireScope(Scopes.Admin)
             .WithName("GetLog")
             .WithSummary("Recent activity, as far back as the log settings keep in memory: scans, matches, requests, warnings and errors.");
 
-        var settings = api.MapGroup("/settings").WithTags("Settings");
+        var settings = api.MapGroup("/settings").WithTags("Settings").RequireScope(Scopes.Admin);
         settings.MapGet("/log", (SettingsService s, CancellationToken ct) => s.GetLogAsync(ct)).WithName("GetLogSettings");
         settings.MapPut("/log", async (LogSettings value, SettingsService s, IEnumerable<IHostedService> services, CancellationToken ct) =>
             {

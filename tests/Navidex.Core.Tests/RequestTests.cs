@@ -52,7 +52,7 @@ public sealed class RequestFixture : IAsyncLifetime
                 services.RemoveAll<IImportWorker>();
                 services.AddSingleton<IImportWorker>(Importer);
             }));
-        Api = new NavidexClient(Factory.CreateClient());
+        Api = new NavidexClient(Factory.CreateSignedInClient());
 
         var task = await Api.ScanLibraryAsync();
         while (task.State is TaskState.Queued or TaskState.Running)

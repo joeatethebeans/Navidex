@@ -64,6 +64,18 @@
                 case "search":
                     <circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" />
                     break;
+                case "copy":
+                    <rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
+                    break;
+                case "key":
+                    <circle cx="8" cy="15" r="4" /><path d="M11 12l9-9M16 7l3 3M14 9l2 2" />
+                    break;
+                case "show":
+                    <path d="M2.5 12c1-2 4.5-6 9.5-6s8.5 4 9.5 6c-1 2-4.5 6-9.5 6s-8.5-4-9.5-6z" /><circle cx="12" cy="12" r="3" />
+                    break;
+                case "history":
+                    <path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4M12 8v4l3 2" />
+                    break;
                 case "done":
                     <path d="M5 12.5l4.5 4.5L19 7.5" />
                     break;
@@ -74,7 +86,7 @@
 </button>
 
 @code {
-    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard, remove, cancel, up, down, test, settings, power, approve or search.</summary>
+    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard, remove, cancel, up, down, test, settings, power, approve, search, copy, key, show or history.</summary>
     [Parameter, EditorRequired] public string Icon { get; set; } = "";
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public EventCallback OnClick { get; set; }

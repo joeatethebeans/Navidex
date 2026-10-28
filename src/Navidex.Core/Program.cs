@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Navidex.Client;
 using Navidex.Contracts.Plugins.Index;
 using Navidex.Core;
+using Navidex.Core.Access;
 using Navidex.Core.Api;
 using Navidex.Core.Artwork;
 using Navidex.Core.Catalogue;
@@ -34,6 +36,13 @@ var activity = new ActivityLog();
 builder.Services.AddSingleton(activity);
 builder.Logging.AddProvider(new ActivityLogProvider(activity));
 builder.Services.AddHostedService<LogArchive>();
+
+// Who may call the API: the admin's session, apps' keys, and the local network if that's let in. The keys that sign
+// sessions are kept with the data, so a restart doesn't sign everyone out.
+builder.Services.AddNavidexAccess();
+builder.Services.AddDataProtection()
+    .SetApplicationName("Navidex")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(options.DataPath, "keys")));
 
 builder.Services.ConfigureHttpJsonOptions(json => NavidexJson.Configure(json.SerializerOptions));
 
@@ -81,12 +90,13 @@ builder.Services.AddScoped<ListenNowService>();
 builder.Services.AddHostedService<ListenNowSweeper>();
 builder.Services.AddHostedService<RequestWorker>();
 
-builder.Services.AddOpenApi("v1", openApi => openApi.AddDocumentTransformer((document, _, _) =>
-{
-    document.Info.Title = "Navidex API";
-    document.Info.Description = "Find what's missing from a music library, fetch it through plugins, and listen now.";
-    return Task.CompletedTask;
-}));
+// Events: announced on the event stream and sent to webhooks
+builder.Services.AddHttpClient(WebhookSender.HttpClientName, http => http.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddSingleton<WebhookSender>();
+builder.Services.AddHostedService(services => services.GetRequiredService<WebhookSender>());
+builder.Services.AddHostedService<EventAnnouncer>();
+
+builder.Services.AddNavidexOpenApi();
 
 var app = builder.Build();
 
@@ -99,6 +109,13 @@ using (var scope = app.Services.CreateScope())
     await IndexPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
     await ArtworkPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
     await app.Services.GetRequiredService<StreamSigner>().InitialiseAsync(db);
+}
+
+// The way back in when the password is lost: start once with Navidex__ResetLogin=true, then set a new one.
+if (options.ResetLogin)
+{
+    await app.Services.GetRequiredService<AccessService>().SaveLoginAsync(null, CancellationToken.None);
+    app.Logger.LogWarning("The admin login was removed, as ResetLogin is set. Open the web app to set a new one, then unset ResetLogin");
 }
 
 // Work out the library's views in the background, so the first visit after starting is quick too.
@@ -120,8 +137,12 @@ app.Use(async (context, next) =>
     }
 });
 
+app.UseAuthentication();
+app.UseApiAccess();
+
 // The spec is part of the public contract, so it's served in every environment.
 app.MapOpenApi();
+app.MapNavidexApiReference();
 
 var api = app.MapGroup("/api/v1");
 api.MapSystemEndpoints();
@@ -130,6 +151,8 @@ api.MapCatalogueEndpoints();
 api.MapRequestEndpoints();
 api.MapListenEndpoints();
 api.MapPluginEndpoints();
+api.MapAccessEndpoints();
+api.MapWebhookEndpoints();
 
 // The web app: Blazor WebAssembly, served from the same origin and talking only to the public API.
 app.MapStaticAssets();

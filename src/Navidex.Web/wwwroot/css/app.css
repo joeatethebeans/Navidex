@@ -292,6 +292,8 @@ button.request-toggle { cursor: pointer; }
 h3 { font-size: 1rem; margin: 1.25rem 0 .25rem; }
 .field { margin: .6rem 0; }
 .field-label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: .2rem; }
+label.field { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+.field > span.muted.small { display: block; margin-top: .2rem; }
 .field input[type=text], .field input[type=password], .field select { width: 100%; max-width: 32rem; }
 input[type=password] { font: inherit; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
 code { font-size: .85em; background: var(--bg); padding: .05rem .3rem; border-radius: 4px; border: 1px solid var(--border); overflow-wrap: anywhere; }
@@ -659,3 +661,26 @@ svg.flip { transform: scaleY(-1); }
     .settings-nav { flex-direction: row; position: static; overflow-x: auto; }
     .settings-nav a.active { box-shadow: inset 0 -2px 0 var(--accent); }
 }
+
+/* Signing in, and the first run's setup */
+.auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem 1rem; box-sizing: border-box; }
+.auth-card {
+    width: min(24rem, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; display: flex; flex-direction: column; gap: .25rem; box-sizing: border-box;
+}
+.auth-card .brand { color: var(--accent); margin-bottom: .5rem; }
+.auth-card h1 { margin-bottom: .25rem; }
+.auth-card .field input { max-width: none; box-sizing: border-box; }
+.auth-card > button.primary { margin-top: .75rem; justify-content: center; }
+.auth-card code { overflow-wrap: anywhere; }
+.auth-check { display: flex; gap: .6rem; align-items: flex-start; margin: .6rem 0; cursor: pointer; }
+.auth-check input { margin-top: .25rem; }
+.auth-check > span { display: flex; flex-direction: column; gap: .2rem; }
+
+/* Security and webhooks */
+.panel-body { padding: .4rem 1.1rem 1rem; }
+.panel-body h3 { font-size: .95rem; margin: 1.2rem 0 .25rem; }
+.scope-list { display: flex; flex-wrap: wrap; gap: .3rem; }
+.secret-box { display: flex; align-items: center; gap: .5rem; padding: .5rem .5rem .5rem .75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+.secret-box code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: .85rem; }
+.table-scroll { overflow-x: auto; }

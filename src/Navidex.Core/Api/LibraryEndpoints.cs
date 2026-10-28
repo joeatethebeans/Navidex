@@ -5,6 +5,7 @@ using Navidex.Contracts.Catalogue;
 using Navidex.Contracts.Plugins.Index;
 using Navidex.Core.Artwork;
 using Navidex.Core.Catalogue;
+using Navidex.Core.Access;
 using Navidex.Core.Data;
 using Navidex.Core.Library;
 using Navidex.Core.Requests;
@@ -70,7 +71,7 @@ public static class LibraryEndpoints
                          + "then the song it matched or why it needs review. Pass since (the last response's latest) to get only what changed.");
 
         library.MapGet("/removal", (LibraryItemKind kind, Guid id, LibraryRemover remover, CancellationToken ct) => remover.PreviewAsync(kind, id, ct))
-            .WithName("GetRemoval").WithSummary("What removing an artist, album or file from the library would affect: how many files, their size and folders.");
+            .RequireScope(Scopes.Admin).WithName("GetRemoval").WithSummary("What removing an artist, album or file from the library would affect: how many files, their size and folders.");
 
         library.MapPost("/remove", async (RemoveFromLibrary body, LibraryRemover remover, CancellationToken ct) =>
             {
@@ -83,7 +84,7 @@ public static class LibraryEndpoints
             .Produces<RemovalResult>().Produces(StatusCodes.Status404NotFound);
 
         library.MapGet("/review", (LibraryView view, bool? excluded, CancellationToken ct) => view.GetReviewAsync(excluded == true, ct))
-            .WithName("GetReview").WithSummary("Files that couldn't be matched confidently, with the best suggestion. With excluded=true, the files excluded from matching.");
+            .RequireScope(Scopes.Admin).WithName("GetReview").WithSummary("Files that couldn't be matched confidently, with the best suggestion. With excluded=true, the files excluded from matching.");
 
         library.MapPut("/files/{id:guid}/excluded", async (Guid id, ExcludeFile body, NavidexDbContext db, CancellationToken ct) =>
             {
@@ -175,9 +176,9 @@ public static class LibraryEndpoints
                 return Results.File(found.Path, found.ContentType, lastModified: found.UpdatedAt,
                     entityTag: new Microsoft.Net.Http.Headers.EntityTagHeaderValue($"\"{found.UpdatedAt.Ticks:x}\""));
             })
-            .WithTags("Library").WithName("GetArtwork")
+            .WithTags("Library").AllowAnyone().WithName("GetArtwork")
             .WithSummary("The picture of an artist, album or edition (kind is artist, album or edition), from the artwork plugins. 404 when there's none; "
-                         + "503 with Retry-After while it's still being fetched.")
+                         + "503 with Retry-After while it's still being fetched. Open to anyone, so image elements can show it.")
             .Produces(StatusCodes.Status200OK, contentType: "image/jpeg").Produces(StatusCodes.Status404NotFound).Produces(StatusCodes.Status503ServiceUnavailable);
 
         api.MapPost("/artwork/status", async (string[] urls, ArtworkCache artwork) =>
@@ -191,7 +192,7 @@ public static class LibraryEndpoints
                     : !found.IsCompleted ? "pending"
                     : found.IsCompletedSuccessfully && found.Result is not null ? "ready" : "none");
             })
-            .WithTags("Library").WithName("GetArtworkStatus")
+            .WithTags("Library").RequireScope(Scopes.Read).WithName("GetArtworkStatus")
             .WithSummary("For pictures that answered 503, which are ready now, which there are none of, and which are still pending, by URL. "
                          + "One request for a page of them, rather than one each.");
 
@@ -227,7 +228,7 @@ public static class LibraryEndpoints
             .WithTags("Library").WithName("GetTask").WithSummary("Status of a background task.")
             .Produces<TaskInfo>().Produces(StatusCodes.Status404NotFound);
 
-        var settings = api.MapGroup("/settings").WithTags("Settings");
+        var settings = api.MapGroup("/settings").WithTags("Settings").RequireScope(Scopes.Admin);
         settings.MapGet("/library", (SettingsService s, CancellationToken ct) => s.GetLibraryAsync(ct))
             .WithName("GetLibrarySettings");
         settings.MapPut("/library", async (LibrarySettings value, SettingsService s, CancellationToken ct) =>
@@ -292,13 +293,13 @@ public static class LibraryEndpoints
             .Produces<AlbumDetail>().Produces(StatusCodes.Status404NotFound);
 
         catalogue.MapPut("/albums/{id:guid}/ignore", (Guid id, NavidexDbContext db, CancellationToken ct) => SetIgnored(db, id, true, ct))
-            .WithName("IgnoreAlbum").WithSummary("Never list this album as missing.");
+            .RequireScope(Scopes.Request).WithName("IgnoreAlbum").WithSummary("Never list this album as missing.");
         catalogue.MapDelete("/albums/{id:guid}/ignore", (Guid id, NavidexDbContext db, CancellationToken ct) => SetIgnored(db, id, false, ct))
-            .WithName("UnignoreAlbum");
+            .RequireScope(Scopes.Request).WithName("UnignoreAlbum");
         catalogue.MapPut("/tracks/{id:guid}/ignore", (Guid id, NavidexDbContext db, CancellationToken ct) => SetTrackIgnored(db, id, true, ct))
-            .WithName("IgnoreTrack").WithSummary("Stop counting this song, on every album it's on, as missing.");
+            .RequireScope(Scopes.Request).WithName("IgnoreTrack").WithSummary("Stop counting this song, on every album it's on, as missing.");
         catalogue.MapDelete("/tracks/{id:guid}/ignore", (Guid id, NavidexDbContext db, CancellationToken ct) => SetTrackIgnored(db, id, false, ct))
-            .WithName("UnignoreTrack");
+            .RequireScope(Scopes.Request).WithName("UnignoreTrack");
 
         return api;
     }

@@ -42,7 +42,7 @@ public sealed class BusySourceTests : IDisposable
                 http.UnavailablePause = TimeSpan.FromMilliseconds(1);
                 http.LongUnavailablePause = TimeSpan.FromMilliseconds(1);
             })));
-        _http = _factory.CreateClient();
+        _http = _factory.CreateSignedInClient();
         _api = new NavidexClient(_http);
     }
 

@@ -53,7 +53,7 @@ public sealed class ListenNowTests(RequestFixture fixture, ITestOutputHelper out
         var first = playable[0];
         Assert.Equal("audio/wav", first.MediaType);
         Assert.NotNull(first.ExpiresAt);
-        var http = fixture.Factory.CreateClient();
+        var http = fixture.Factory.CreateSignedInClient();
         using (var response = await http.GetAsync(first.StreamUrl))
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -98,7 +98,7 @@ public sealed class ListenNowTests(RequestFixture fixture, ITestOutputHelper out
 
         var play = (await Api.GetPlayInfoAsync(owned.TrackId))!;
         Assert.Equal(owned.FileId, play.FileId);
-        using var response = await fixture.Factory.CreateClient().GetAsync(play.StreamUrl);
+        using var response = await fixture.Factory.CreateSignedInClient().GetAsync(play.StreamUrl);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(new FileInfo(Path.Combine(fixture.Music, owned.Path)).Length, (await response.Content.ReadAsByteArrayAsync()).Length);
     }
@@ -129,7 +129,7 @@ public sealed class ListenNowTests(RequestFixture fixture, ITestOutputHelper out
         var album = await MissingAlbumAsync(2);
         var track = (await Api.GetAlbumAsync(album.Id))!.Tracks.First(t => t.Status == TrackStatus.Missing);
 
-        using var events = await fixture.Factory.CreateClient().GetAsync("api/v1/events", HttpCompletionOption.ResponseHeadersRead);
+        using var events = await fixture.Factory.CreateSignedInClient().GetAsync("api/v1/events", HttpCompletionOption.ResponseHeadersRead);
         Assert.Equal("text/event-stream", events.Content.Headers.ContentType?.MediaType);
         using var reader = new StreamReader(await events.Content.ReadAsStreamAsync());
         Assert.Equal(": connected", await reader.ReadLineAsync());

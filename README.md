@@ -42,9 +42,12 @@ With Docker:
 MUSIC_PATH=/path/to/your/music PUID=$(id -u) PGID=$(id -g) docker compose up --build
 ```
 
-Then open `http://localhost:8787` and press **Scan library**. To fetch, add your media server and retrieval plugins
+Then open `http://localhost:8787`, choose a username and password, and press **Scan library**. To fetch, add your media server and retrieval plugins
 under **Settings → Plugins**: Navidrome, YouTube (yt-dlp) and the inbox folder are offered under **Add**. The beets
-worker is the only container that writes the music folder, so run it as the user who owns it (`PUID` and `PGID`). The OpenAPI document is at `/openapi/v1.json`.
+worker is the only container that writes the music folder, so run it as the user who owns it (`PUID` and `PGID`).
+
+Navidex asks for the password unless **Settings → Security** lets your local network in without it; calls through a
+reverse proxy always need it. If it's lost, start Navidex once with `Navidex__ResetLogin=true` and set a new one.
 
 The first scan of a big library takes a while. Matching is quick, but filling in the catalogue (every album's
 editions, to tell official albums from bootlegs and to see what's covered by tracks on other albums) costs about one
@@ -56,6 +59,14 @@ From source (.NET 10 SDK):
 ```bash
 dotnet run --project src/Navidex.Core
 ```
+
+### For other apps
+
+Apps call the API at `/api/v1` with a key from **Settings → Security**, sent in the `X-Api-Key` header, and each key
+has only the scopes it needs (`read`, `request`, `listen`, `admin`). Navidex tells them what happens through
+`GET /api/v1/events` and through signed webhooks set under **Settings → Webhooks**. The
+[client guide](docs/client-guide.md) explains it all; the interactive reference is at `/api/docs`, and the OpenAPI
+document at `/openapi/v1.json`.
 
 ### Listen now and events
 
@@ -70,7 +81,7 @@ deleted; **Add to library** files the same file through beets without fetching i
 | `GET /api/v1/listen/{id}` | Its state (`requested`, `fetching`, `playable`, `importing`, `inLibrary`, `failed`, `expired`), and a signed `streamUrl` with its `mediaType` while playable |
 | `POST /api/v1/listen/{id}/add`, `DELETE /api/v1/listen/{id}` | Add it to the library, or discard it now |
 | `GET /api/v1/tracks/{id}/play` | A signed stream URL for a track you have |
-| `GET /api/v1/events` | Server-sent events naming what changed (`requests`, `listen`, `library`, `tasks`), so apps reload instead of polling |
+| `GET /api/v1/events` | Server-sent events naming what changed (`requests`, `listen`, `library`, `tasks`), so apps reload instead of polling, and what happened (`request.completed`, `listen.ready`, ...) |
 
 Stream URLs need no credentials, support range requests for seeking, and stop working after 12 hours.
 

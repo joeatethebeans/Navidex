@@ -259,6 +259,102 @@ public sealed class NavidexClient(HttpClient http)
         await EnsureAsync(response, ct);
     }
 
+    // ---- Access ----
+
+    public async Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<AuthStatus>($"{Api}/auth/status", NavidexJson.Options, ct))!;
+
+    /// <summary>Makes the admin login, the first time, and signs in with it.</summary>
+    public async Task SetUpLoginAsync(SetUpLogin login, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/auth/setup", login, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+    }
+
+    public async Task SignInAsync(SignIn signIn, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/auth/login", signIn, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+    }
+
+    public async Task SignOutAsync(CancellationToken ct = default)
+    {
+        using var response = await http.PostAsync($"{Api}/auth/logout", null, ct);
+        await EnsureAsync(response, ct);
+    }
+
+    public async Task UpdateLoginAsync(UpdateLogin update, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/auth/account", update, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+    }
+
+    public async Task SaveAccessSettingsAsync(AccessSettings settings, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/auth/settings", settings, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+    }
+
+    public async Task<IReadOnlyList<ApiKeyInfo>> ListApiKeysAsync(CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<ApiKeyInfo>>($"{Api}/keys", NavidexJson.Options, ct) ?? [];
+
+    /// <summary>Makes a key. Its <see cref="CreatedApiKey.Key"/> can't be had again, so show or keep it now.</summary>
+    public async Task<CreatedApiKey> CreateApiKeyAsync(CreateApiKey key, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/keys", key, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<CreatedApiKey>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task RevokeApiKeyAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await http.DeleteAsync($"{Api}/keys/{id}", ct);
+        await EnsureAsync(response, ct);
+    }
+
+    // ---- Webhooks ----
+
+    public async Task<IReadOnlyList<WebhookInfo>> ListWebhooksAsync(CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<WebhookInfo>>($"{Api}/webhooks", NavidexJson.Options, ct) ?? [];
+
+    public async Task<WebhookInfo> CreateWebhookAsync(SaveWebhook webhook, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/webhooks", webhook, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<WebhookInfo>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task<WebhookInfo> UpdateWebhookAsync(Guid id, SaveWebhook webhook, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/webhooks/{id}", webhook, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<WebhookInfo>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task<WebhookInfo> RotateWebhookSecretAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsync($"{Api}/webhooks/{id}/secret", null, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<WebhookInfo>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task RemoveWebhookAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await http.DeleteAsync($"{Api}/webhooks/{id}", ct);
+        await EnsureAsync(response, ct);
+    }
+
+    /// <summary>Sends a ping now and says how it went.</summary>
+    public async Task<WebhookDeliveryInfo> TestWebhookAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsync($"{Api}/webhooks/{id}/test", null, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<WebhookDeliveryInfo>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task<IReadOnlyList<WebhookDeliveryInfo>> ListWebhookDeliveriesAsync(Guid id, int limit = 50, CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<WebhookDeliveryInfo>>($"{Api}/webhooks/{id}/deliveries?limit={limit}", NavidexJson.Options, ct) ?? [];
+
     /// <summary>Throws <see cref="NavidexApiException"/> with the server's own explanation for anything but success.</summary>
     private static async Task EnsureAsync(HttpResponseMessage response, CancellationToken ct)
     {

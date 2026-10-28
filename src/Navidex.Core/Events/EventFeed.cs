@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Data.Common;
+using System.Text.Json;
 using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Navidex.Client;
@@ -12,7 +13,10 @@ namespace Navidex.Core.Events;
 /// what kind of thing changed, and clients reload what they show. Like <see cref="LibraryCache"/>, it watches database
 /// writes as an interceptor, so no write path can forget to announce itself.
 /// </summary>
-/// <remarks>Each kind is sent at most once per <see cref="Coalesce"/>, however many writes there were.</remarks>
+/// <remarks>
+/// Each kind is sent at most once per <see cref="Coalesce"/>, however many writes there were. Alongside these, the
+/// <see cref="EventAnnouncer"/> publishes named events such as <c>request.completed</c>, with data.
+/// </remarks>
 public sealed class EventFeed : DbCommandInterceptor
 {
     public const string Requests = "requests";
@@ -32,7 +36,7 @@ public sealed class EventFeed : DbCommandInterceptor
         ("\"BackgroundTasks\"", [Tasks]),
     ];
 
-    private readonly ConcurrentDictionary<Channel<ServerEvent>, byte> _subscribers = new();
+    private readonly ConcurrentDictionary<Channel<Message>, byte> _subscribers = new();
     private readonly ConcurrentDictionary<string, byte> _pending = new();
 
     public EventFeed(LibraryCache library)
@@ -43,7 +47,7 @@ public sealed class EventFeed : DbCommandInterceptor
     /// <summary>Events from now on, until the subscription is disposed. A slow reader loses the oldest.</summary>
     public Subscription Subscribe()
     {
-        var channel = Channel.CreateBounded<ServerEvent>(new BoundedChannelOptions(64) { FullMode = BoundedChannelFullMode.DropOldest });
+        var channel = Channel.CreateBounded<Message>(new BoundedChannelOptions(64) { FullMode = BoundedChannelFullMode.DropOldest });
         _subscribers[channel] = 0;
         return new Subscription(channel.Reader, () =>
         {
@@ -60,15 +64,30 @@ public sealed class EventFeed : DbCommandInterceptor
         _ = Task.Delay(Coalesce).ContinueWith(_ =>
         {
             _pending.TryRemove(kind, out byte _);
-            var @event = new ServerEvent(kind, DateTime.UtcNow);
-            foreach (var subscriber in _subscribers.Keys)
-                subscriber.Writer.TryWrite(@event);
+            Send(new Message(kind, JsonSerializer.Serialize(new ServerEvent(kind, DateTime.UtcNow), NavidexJson.Options)));
+            Raised?.Invoke(kind);
         }, TaskScheduler.Default);
     }
 
-    public sealed class Subscription(ChannelReader<ServerEvent> reader, Action dispose) : IDisposable
+    /// <summary>A kind of change was announced to subscribers.</summary>
+    public event Action<string>? Raised;
+
+    /// <summary>Sends a named event, with its data, to everyone listening.</summary>
+    public void Publish(NavidexEvent @event) =>
+        Send(new Message(@event.Type, JsonSerializer.Serialize(@event, NavidexJson.Options), @event.Id.ToString()));
+
+    private void Send(Message message)
     {
-        public ChannelReader<ServerEvent> Reader { get; } = reader;
+        foreach (var subscriber in _subscribers.Keys)
+            subscriber.Writer.TryWrite(message);
+    }
+
+    /// <summary>One server-sent event: its name, its data as JSON, and an ID for named events.</summary>
+    public readonly record struct Message(string Type, string Data, string? Id = null);
+
+    public sealed class Subscription(ChannelReader<Message> reader, Action dispose) : IDisposable
+    {
+        public ChannelReader<Message> Reader { get; } = reader;
 
         public void Dispose() => dispose();
     }

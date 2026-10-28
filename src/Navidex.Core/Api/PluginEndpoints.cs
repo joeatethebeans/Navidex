@@ -5,6 +5,7 @@ using Navidex.Client;
 using Navidex.Contracts.Plugins;
 using Navidex.Contracts.Plugins.Retrieval;
 using Navidex.Core.Artwork;
+using Navidex.Core.Access;
 using Navidex.Core.Data;
 using Navidex.Core.Plugins;
 
@@ -19,12 +20,12 @@ public static class PluginEndpoints
         plugins.MapGet("", async (NavidexDbContext db, PluginCatalog catalog, CancellationToken ct) =>
                 (await db.PluginInstances.OrderBy(p => p.Type).ThenBy(p => p.Priority).ThenBy(p => p.CreatedAt).ToListAsync(ct))
                 .Select(p => ToInfo(p, catalog)).ToList())
-            .WithName("ListPlugins").WithSummary("Configured plugins by type, in the order they're used. Secrets are left out.");
+            .RequireScope(Scopes.Admin).WithName("ListPlugins").WithSummary("Configured plugins by type, in the order they're used. Secrets are left out.");
 
         plugins.MapGet("/available", (PluginCatalog catalog) => catalog.All
                 .Where(p => p.Manifest.Type != PluginType.Retrieval)
                 .Select(p => new AvailablePlugin(p.Manifest, p.Source, p.Rejection)).ToList())
-            .WithName("ListAvailablePlugins")
+            .RequireScope(Scopes.Admin).WithName("ListAvailablePlugins")
             .WithSummary("Index, artwork and media-server plugins loaded into the core. Retrieval plugins run in their own containers and are added by URL.");
 
         plugins.MapPost("", async (AddPlugin body, NavidexDbContext db, PluginCatalog catalog, RetrievalPlugins retrieval, ArtworkCache artwork, CancellationToken ct) =>

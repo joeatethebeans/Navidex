@@ -133,6 +133,12 @@ public class Request
 
     public RequestStatus Status { get; set; }
 
+    /// <summary>
+    /// The last status announced to webhooks and the event stream. When it differs from <see cref="Status"/>, the
+    /// change hasn't been announced yet; null for requests from before announcements, which are never announced.
+    /// </summary>
+    public RequestStatus? AnnouncedStatus { get; set; } = RequestStatus.Queued;
+
     /// <summary>For artist and album requests, the request that fanned out to this one.</summary>
     public Guid? ParentRequestId { get; set; }
 
@@ -321,4 +327,7 @@ public class BackgroundTask
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? StartedAt { get; set; }
     public DateTime? FinishedAt { get; set; }
+
+    /// <summary>Whether its finishing has been announced to webhooks and the event stream.</summary>
+    public bool Announced { get; set; }
 }

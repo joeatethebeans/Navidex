@@ -193,7 +193,7 @@ public sealed class RequestService(NavidexDbContext db, RequestSignal signal, Re
         return infos;
     }
 
-    private async Task<RequestInfo> ToInfoAsync(Request r, CancellationToken ct)
+    public async Task<RequestInfo> ToInfoAsync(Request r, CancellationToken ct)
     {
         var parts = r.TargetKind == EntityKind.Track ? null : await PartsAsync(r.Id, ct);
         return new RequestInfo(r.Id, ToKind(r.TargetKind), r.TargetId, r.EditionId, r.Title, (RequestState)(int)r.Status, r.Detail,
