@@ -58,9 +58,9 @@ else
                             </span>
                         }
                         <span class="muted small request-kind hide-narrow">@(isScan ? "Scan" : "Catalogue")</span>
-                        <span class="request-state"><span class="badge @Format.TaskBadge(task.State)">@Format.TaskLabel(task.State)</span></span>
+                        <span class="request-state"><span class="badge @Format.TaskBadge(task)">@Format.TaskLabel(task)</span></span>
                         <span class="muted small request-time hide-narrow" title="@task.UpdatedAt.ToLocalTime()">@Format.Ago(task.UpdatedAt)</span>
-                        <span class="request-actions"></span>
+                        <span class="request-actions"><TaskActions Item="task" Queue="TaskQueue" OnChanged="TasksChangedAsync" /></span>
                     </div>
                     @if (task.Error is not null) { <div class="small request-detail error">@task.Error</div> }
                     else if (task.Progress is not null) { <div class="muted small request-detail">@task.Progress</div> }
@@ -80,11 +80,11 @@ else
                         <span class="request-title">@request.Title</span>
                     </button>
                     <span class="muted small request-kind hide-narrow">@(request.ListenNow ? "Listen now" : request.Kind.ToString())</span>
-                    <span class="request-state"><span class="badge @Format.RequestBadge(request.State)">@Format.RequestLabel(request)</span></span>
+                    <span class="request-state"><span class="badge @Format.RequestBadge(request)">@Format.RequestLabel(request)</span></span>
                     <span class="muted small request-time hide-narrow" title="@request.UpdatedAt.ToLocalTime()">@Format.Ago(request.UpdatedAt)</span>
-                    <span class="request-actions"><Actions Request="request" OnChanged="ChangedAsync" /></span>
+                    <span class="request-actions"><Actions Request="request" Queue="@(request.ListenNow ? null : RequestQueue)" OnChanged="ChangedAsync" /></span>
                 </div>
-                @if (request.Detail is not null) { <div class="muted small request-detail">@request.Detail</div> }
+                @if (request.Detail is not null && !(request.Paused && request.Detail == "Paused")) { <div class="muted small request-detail">@request.Detail</div> }
                 @if (request.Parts is { Total: > 0 } parts)
                 {
                     <div class="meter request-meter" title="@parts.InLibrary of @parts.Total in the library"><span style="width: @(100 * parts.InLibrary / parts.Total)%"></span></div>
@@ -117,18 +117,46 @@ else
     {
         public bool Active => Request?.Active ?? Task!.Active;
         public string Title => Request?.Title ?? Task!.Title ?? Task.Kind;
+
+        /// <summary>Working on it now, rather than waiting its turn or paused.</summary>
+        public bool Running => Request is { } r ? r.State != RequestState.Queued && !r.Paused : Task!.State == TaskState.Running;
+
+        public double QueueOrder => Request?.QueueOrder ?? Task!.QueueOrder;
     }
+
+    /// <summary>Requests waiting or running, in queue order, to move them up and down.</summary>
+    private IReadOnlyList<RequestInfo> RequestQueue =>
+        Tracker.Requests.Where(r => r.Active && !r.ListenNow).OrderBy(r => r.QueueOrder).ThenBy(r => r.CreatedAt).ToList();
+
+    /// <summary>Tasks waiting their turn, in the order they'll run.</summary>
+    private IReadOnlyList<TaskInfo> TaskQueue =>
+        _tasks.Where(t => t.State == TaskState.Queued).OrderBy(t => t.QueueOrder).ThenBy(t => t.CreatedAt).ToList();
 
     // Open requests, with their parts and jobs once loaded.
     private readonly Dictionary<Guid, RequestInfo?> _open = [];
 
-    // Active first, then the most recently changed.
+    // What's running, then tasks and requests waiting, each in queue order, then the rest, most recently changed first.
     // Listen-now requests are under Downloads, unless a link opened one.
-    private IEnumerable<Item> Visible => Tracker.Requests.Where(r => !r.ListenNow || _open.ContainsKey(r.Id)).Select(r => new Item(r.UpdatedAt, Request: r))
-        .Concat(_tasks.Select(t => new Item(t.UpdatedAt, Task: t)))
-        .Where(i => !_activeOnly || i.Active)
-        .Where(i => _filter.Length == 0 || i.Title.Contains(_filter, StringComparison.OrdinalIgnoreCase))
-        .OrderByDescending(i => i.Active).ThenByDescending(i => i.UpdatedAt);
+    private IEnumerable<Item> Visible
+    {
+        get
+        {
+            var items = Tracker.Requests.Where(r => !r.ListenNow || _open.ContainsKey(r.Id)).Select(r => new Item(r.UpdatedAt, Request: r))
+                .Concat(_tasks.Select(t => new Item(t.UpdatedAt, Task: t)))
+                .Where(i => !_activeOnly || i.Active)
+                .Where(i => _filter.Length == 0 || i.Title.Contains(_filter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var active = items.Where(i => i.Active)
+                .OrderByDescending(i => i.Running).ThenBy(i => i.Request is not null).ThenBy(i => i.QueueOrder).ThenBy(i => i.UpdatedAt);
+            return active.Concat(items.Where(i => !i.Active).OrderByDescending(i => i.UpdatedAt));
+        }
+    }
+
+    private async Task TasksChangedAsync()
+    {
+        await LoadTasksAsync();
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync()
     {

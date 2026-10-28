@@ -80,9 +80,9 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
             if (known.TryGetValue(path, out var existing) && existing.Size == info.Length && existing.ModifiedAt == modified)
                 continue;
 
-            if (existing?.ExcludedAt is not null)
+            if (existing?.HiddenAt is not null)
             {
-                // Excluded files are kept as they are: nothing will match them.
+                // Hidden files are kept as they are: they're not in the library.
                 existing.Size = info.Length;
                 existing.ModifiedAt = modified;
                 continue;
@@ -113,10 +113,14 @@ public sealed class LibraryScanner(NavidexDbContext db, IOptions<NavidexOptions>
             existing.Duration = read.Value.Duration;
             existing.TagsJson = read.Value.Tags.ToJson();
             existing.ScannedAt = DateTime.UtcNow;
-            // Changed files are matched again from scratch.
-            existing.MatchedAt = null;
-            existing.TrackId = existing.EditionId = existing.SuggestedTrackId = existing.SuggestedEditionId = null;
-            existing.MatchMethod = MatchMethod.Unmatched;
+            // Changed files are matched again from scratch. Excluded ones keep their new tags, which the library shows,
+            // but nothing matches them.
+            if (existing.ExcludedAt is null)
+            {
+                existing.MatchedAt = null;
+                existing.TrackId = existing.EditionId = existing.SuggestedTrackId = existing.SuggestedEditionId = null;
+                existing.MatchMethod = MatchMethod.Unmatched;
+            }
 
             if ((added + changed) % 200 == 0)
                 await db.SaveChangesAsync(ct);

@@ -16,6 +16,9 @@ public sealed class PlayerEntry
     public string? CoverUrl { get; init; }
     public double? DurationSeconds { get; set; }
 
+    /// <summary>A file of your own that no catalogue knows: it's played as the file, and its album is a local one.</summary>
+    public Guid? FileId { get; init; }
+
     /// <summary>The listen-now track, for a track you don't have.</summary>
     public Guid? ListenId { get; init; }
 
@@ -45,7 +48,17 @@ public sealed class PlayerEntry
     {
         TrackId = track.TrackId, Title = track.Title, ArtistCredit = track.ArtistCredit, ArtistId = track.ArtistId,
         AlbumId = track.AlbumId, AlbumTitle = track.AlbumTitle, CoverUrl = track.CoverUrl, DurationSeconds = track.DurationSeconds,
+        FileId = track.Local ? track.FileId : null,
     };
+
+    public static PlayerEntry Owned(LocalTrack track, LocalAlbumDetail album) => new()
+    {
+        TrackId = track.FileId, FileId = track.FileId, Title = track.Title, ArtistCredit = track.Artist, ArtistId = album.ArtistLocal ? null : album.ArtistId,
+        AlbumId = album.Id, AlbumTitle = album.Title, CoverUrl = album.CoverUrl, DurationSeconds = track.DurationSeconds,
+    };
+
+    /// <summary>Where its album's page is.</summary>
+    public string? AlbumHref => AlbumId is { } album ? $"{(FileId is null ? "albums" : "local/albums")}/{album}" : null;
 
     public static PlayerEntry Listening(ListenNowInfo item) => new()
     {
@@ -127,6 +140,8 @@ public sealed class Player : IAsyncDisposable
     {
         if (await _api.GetAlbumAsync(albumId) is { } album)
             await QueueAlbumAsync(album);
+        else if (await _api.GetLocalAlbumAsync(albumId) is { } own)
+            await AddAsync(own.Tracks.Select(t => PlayerEntry.Owned(t, own)).ToList());
     }
 
     /// <summary>The album's tracks in order: tracks you have, and the missing ones fetched to listen to.</summary>
@@ -161,11 +176,13 @@ public sealed class Player : IAsyncDisposable
         return (entries, start);
     }
 
-    /// <summary>Plays an album from a list, loading its tracks first.</summary>
+    /// <summary>Plays an album from a list, loading its tracks first. Albums of your own files are found too.</summary>
     public async Task PlayAlbumAsync(Guid albumId)
     {
         if (await _api.GetAlbumAsync(albumId) is { } album)
             await PlayAlbumAsync(album);
+        else if (await _api.GetLocalAlbumAsync(albumId) is { } own)
+            await PlayAsync(own.Tracks.Select(t => PlayerEntry.Owned(t, own)).ToList());
     }
 
     /// <summary>Fetches a track you don't have to listen to, and plays it now or after the queue.</summary>
@@ -354,7 +371,7 @@ public sealed class Player : IAsyncDisposable
                     return (null, null);
                 // Added since: play it from the library.
             }
-            if (await _api.GetPlayInfoAsync(entry.TrackId, entry.EditionId) is { } play)
+            if (await (entry.FileId is { } file ? _api.GetFilePlayInfoAsync(file) : _api.GetPlayInfoAsync(entry.TrackId, entry.EditionId)) is { } play)
             {
                 entry.DurationSeconds ??= play.DurationSeconds;
                 return (play.StreamUrl, play.MediaType);

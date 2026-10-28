@@ -140,5 +140,7 @@ public sealed class RequestPlanner(NavidexDbContext db, CatalogueService catalog
         Mode = parent.Mode,
         Requester = parent.Requester,
         ParentRequestId = parent.Id,
+        QueueOrder = parent.QueueOrder,
+        Paused = parent.Paused,
     };
 }

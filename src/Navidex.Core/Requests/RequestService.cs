@@ -68,6 +68,66 @@ public sealed class RequestService(NavidexDbContext db, RequestSignal signal, Re
         return true;
     }
 
+    /// <summary>Statuses of a request that's being worked on: searching through to telling the media server.</summary>
+    public static readonly RequestStatus[] InFlight =
+        [RequestStatus.Searching, RequestStatus.Fetching, RequestStatus.Verifying, RequestStatus.Importing, RequestStatus.Notifying];
+
+    /// <summary>
+    /// Holds a request and its unfinished parts back until resumed. Parts already fetching stop, and fetch again from
+    /// the start when resumed. False if it's already finished.
+    /// </summary>
+    public async Task<bool> PauseAsync(Request request, CancellationToken ct)
+    {
+        if (Finished.Contains(request.Status))
+            return false;
+        var ids = await SubtreeAsync(request.Id, ct);
+        await db.Requests.Where(r => ids.Contains(r.Id) && !Finished.Contains(r.Status))
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Paused, true).SetProperty(r => r.UpdatedAt, DateTime.UtcNow), ct);
+        // Stopped mid-fetch: back in the queue, to start that fetch again when resumed.
+        await db.Requests.Where(r => ids.Contains(r.Id) && (InFlight.Contains(r.Status) || r.Status == RequestStatus.Queued))
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, RequestStatus.Queued).SetProperty(r => r.Detail, "Paused"), ct);
+        await db.Jobs.Where(j => ids.Contains(j.RequestId) && (j.Status == JobStatus.Running || j.Status == JobStatus.Queued))
+            .ExecuteUpdateAsync(s => s.SetProperty(j => j.Status, JobStatus.Cancelled).SetProperty(j => j.FinishedAt, DateTime.UtcNow)
+                .SetProperty(j => j.Log, j => j.Log + "Paused\n"), ct);
+        foreach (var id in ids)
+            cancellations.Cancel(id);
+        // The bulk updates skip the change tracker; forget what it holds so what's read next is current.
+        db.ChangeTracker.Clear();
+        return true;
+    }
+
+    /// <summary>Lets a paused request and its parts go again, in their place in the queue.</summary>
+    public async Task<bool> ResumeAsync(Request request, CancellationToken ct)
+    {
+        var ids = await SubtreeAsync(request.Id, ct);
+        var resumed = await db.Requests.Where(r => ids.Contains(r.Id) && r.Paused)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Paused, false).SetProperty(r => r.UpdatedAt, DateTime.UtcNow)
+                .SetProperty(r => r.Detail, r => r.Detail == "Paused" ? null : r.Detail), ct);
+        signal.Wake();
+        db.ChangeTracker.Clear();
+        return resumed > 0;
+    }
+
+    /// <summary>
+    /// Moves a request, with its parts, to just before another in the queue, or to the end when there's none. Only
+    /// requests asked for directly are ordered; listen-now and library requests each have their own queue.
+    /// </summary>
+    public async Task<bool> MoveAsync(Request request, Guid? before, CancellationToken ct)
+    {
+        if (Finished.Contains(request.Status) || request.ParentRequestId is not null)
+            return false;
+        var queue = await db.Requests.Where(r => r.ParentRequestId == null && r.Mode == request.Mode && r.Id != request.Id && !Finished.Contains(r.Status))
+            .OrderBy(r => r.QueueOrder).ThenBy(r => r.CreatedAt).Select(r => new { r.Id, r.QueueOrder }).ToListAsync(ct);
+        var index = before is { } id ? queue.FindIndex(r => r.Id == id) : queue.Count;
+        if (index < 0)
+            return false;
+        var order = QueueOrders.Between(index > 0 ? queue[index - 1].QueueOrder : null, index < queue.Count ? queue[index].QueueOrder : null);
+        var ids = await SubtreeAsync(request.Id, ct);
+        await db.Requests.Where(r => ids.Contains(r.Id)).ExecuteUpdateAsync(s => s.SetProperty(r => r.QueueOrder, order), ct);
+        signal.Wake();
+        return true;
+    }
+
     /// <summary>Queues a finished request again, and any parts of it that didn't make it into the library.</summary>
     public async Task<bool> RetryAsync(Request request, CancellationToken ct)
     {
@@ -197,7 +257,8 @@ public sealed class RequestService(NavidexDbContext db, RequestSignal signal, Re
     {
         var parts = r.TargetKind == EntityKind.Track ? null : await PartsAsync(r.Id, ct);
         return new RequestInfo(r.Id, ToKind(r.TargetKind), r.TargetId, r.EditionId, r.Title, (RequestState)(int)r.Status, r.Detail,
-            r.ParentRequestId, r.CreatedAt, r.UpdatedAt, parts is { Total: > 0 } ? parts : null, ListenNow: r.Mode == RequestMode.ListenNow);
+            r.ParentRequestId, r.CreatedAt, r.UpdatedAt, parts is { Total: > 0 } ? parts : null, ListenNow: r.Mode == RequestMode.ListenNow,
+            Paused: r.Paused, QueueOrder: r.QueueOrder);
     }
 
     public static RequestKind ToKind(EntityKind kind) => kind switch

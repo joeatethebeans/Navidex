@@ -1,5 +1,31 @@
 namespace Navidex.Core.Data;
 
+/// <summary>Someone who signs in to Navidex. The first, made at setup, is the admin, who may do everything.</summary>
+public class User
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public required string Username { get; set; }
+
+    /// <summary>The username in lower case, so two users can't differ only by case.</summary>
+    public required string NormalizedUsername { get; set; }
+
+    /// <summary>PBKDF2 with SHA-256: <c>pbkdf2-sha256$iterations$salt$hash</c>. Empty for the admin after a login reset.</summary>
+    public string PasswordHash { get; set; } = "";
+
+    /// <summary>What they may do, comma-separated. The admin may do everything whatever this says.</summary>
+    public string Permissions { get; set; } = "";
+
+    /// <summary>The admin: made at setup, never removed, and changed only by themself.</summary>
+    public bool IsAdmin { get; set; }
+
+    /// <summary>Changes with the password, which signs out their other sessions.</summary>
+    public string Stamp { get; set; } = "";
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? LastSignInAt { get; set; }
+}
+
 /// <summary>
 /// A key an app uses to call the API. Only a hash of the key is kept: it's shown once, when it's made, and can't be
 /// recovered, only revoked and replaced.
@@ -17,8 +43,13 @@ public class ApiKey
     /// <summary>SHA-256 of the whole key, in hex. Keys are long and random, so a plain hash is enough.</summary>
     public required string Hash { get; set; }
 
-    /// <summary>What it may do: read, request, listen and admin, comma-separated.</summary>
+    /// <summary>What it may do, comma-separated: any of its owner's permissions, or admin for all of them.</summary>
     public required string Scopes { get; set; }
+
+    /// <summary>Who made it. It can never do more than they may, and goes when they do.</summary>
+    public Guid? UserId { get; set; }
+
+    public User? User { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

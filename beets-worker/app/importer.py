@@ -21,6 +21,8 @@ from beets.library import Item, Library
 from beets.util import displayable_path
 from mediafile import MediaFile
 
+from .formatter import FormatFile, format_files
+
 # Beets fields returned to Navidex after an import.
 TAG_FIELDS = ["title", "artist", "album", "albumartist", "track", "tracktotal", "disc", "disctotal", "year",
               "original_year", "date", "label", "catalognum", "isrc", "country", "media", "albumtype", "mb_trackid",
@@ -156,6 +158,25 @@ class Importer:
                     album.remove(delete=False, with_items=True)
                 for item in self._lib.items():
                     item.remove(delete=False)
+
+    def format(self, files: list[FormatFile], artwork: dict[str, bytes], template: str | None) -> list[dict[str, Any]]:
+        """Rewrites files in the library: see formatter.py. With a template, moves each one to where beets would file
+        it now, going by its new tags."""
+        with self._lock:
+            destination = None
+            if template is not None:
+                config["paths"] = {"default": template, "comp": template, "singleton": template}
+                self._lib.__dict__.pop("path_formats", None)
+
+                def destination(full: Path) -> Path:
+                    item = Item.from_path(os.fsencode(full))
+                    item.add(self._lib)
+                    try:
+                        return Path(displayable_path(item.destination(relative_to_libdir=True)))
+                    finally:
+                        item.remove(delete=False)
+
+            return format_files(self.library, files, artwork, destination)
 
     def _file(self, session: PinnedSession, source: Path, destination: str | None,
               by_name: dict[str, StagedFile]) -> list[dict[str, Any]]:

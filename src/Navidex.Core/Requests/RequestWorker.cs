@@ -9,7 +9,7 @@ using Navidex.Core.Plugins;
 namespace Navidex.Core.Requests;
 
 /// <summary>
-/// Works through queued requests, oldest first, a few at a time (Settings: parallel fetches). Planning splits artist
+/// Works through queued requests in queue order (oldest first unless moved), skipping paused ones, a few at a time (Settings: parallel fetches). Planning splits artist
 /// and album requests into parts, which join the queue; everything else goes through the pipeline. Requests a restart
 /// interrupted start again from the top. Nothing starts while a scan is reading the library, except listen-now
 /// requests, which don't touch it. Listen-now requests have slots of their own, so someone waiting to hear a track
@@ -18,9 +18,6 @@ namespace Navidex.Core.Requests;
 public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal signal, RequestCancellations cancellations, ILogger<RequestWorker> logger)
     : BackgroundService
 {
-    private static readonly RequestStatus[] InFlight =
-        [RequestStatus.Searching, RequestStatus.Fetching, RequestStatus.Verifying, RequestStatus.Importing, RequestStatus.Notifying];
-
     private readonly ConcurrentDictionary<Guid, Task> _running = new();
     private readonly ConcurrentDictionary<Guid, bool> _listening = new();
 
@@ -42,12 +39,12 @@ public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal sig
                 var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
                 var busy = _running.Keys.ToList();
                 var listening = _listening.Count;
-                next.AddRange((await db.Requests.Where(r => r.Status == RequestStatus.Queued && r.Mode == RequestMode.ListenNow && !busy.Contains(r.Id))
-                    .OrderBy(r => r.CreatedAt).Select(r => r.Id).Take(Math.Max(0, parallel - listening)).ToListAsync(stoppingToken)).Select(id => (id, true)));
+                next.AddRange((await db.Requests.Where(r => r.Status == RequestStatus.Queued && r.Mode == RequestMode.ListenNow && !r.Paused && !busy.Contains(r.Id))
+                    .OrderBy(r => r.QueueOrder).ThenBy(r => r.CreatedAt).Select(r => r.Id).Take(Math.Max(0, parallel - listening)).ToListAsync(stoppingToken)).Select(id => (id, true)));
                 // While a scan reads the library, other requests wait: the scan may find they're already there.
                 if (!await scope.ServiceProvider.GetRequiredService<LibraryReading>().IsBusyAsync(db, stoppingToken))
-                    next.AddRange((await db.Requests.Where(r => r.Status == RequestStatus.Queued && r.Mode == RequestMode.Permanent && !busy.Contains(r.Id))
-                        .OrderBy(r => r.CreatedAt).Select(r => r.Id).Take(Math.Max(0, parallel - (_running.Count - listening))).ToListAsync(stoppingToken)).Select(id => (id, false)));
+                    next.AddRange((await db.Requests.Where(r => r.Status == RequestStatus.Queued && r.Mode == RequestMode.Permanent && !r.Paused && !busy.Contains(r.Id))
+                        .OrderBy(r => r.QueueOrder).ThenBy(r => r.CreatedAt).Select(r => r.Id).Take(Math.Max(0, parallel - (_running.Count - listening))).ToListAsync(stoppingToken)).Select(id => (id, false)));
             }
 
             foreach (var (id, listening) in next)
@@ -105,7 +102,9 @@ public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal sig
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
-            // Cancelled by the user (already marked), or shutting down (picked up again on start).
+            // Cancelled or paused by the user (already marked), or shutting down (picked up again on start).
+            if (!stopping.IsCancellationRequested)
+                await RequeueIfPausedAsync(id);
         }
         catch (IndexUnavailableException e)
         {
@@ -121,6 +120,15 @@ public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal sig
             cancellations.Unregister(id);
             signal.Wake();
         }
+    }
+
+    // A step that was saving as the pause came in may have left the request mid-fetch: put it back in the queue.
+    private async Task RequeueIfPausedAsync(Guid id)
+    {
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
+        await db.Requests.Where(r => r.Id == id && r.Paused && RequestService.InFlight.Contains(r.Status))
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, RequestStatus.Queued).SetProperty(r => r.Detail, "Paused"));
     }
 
     private async Task FailAsync(Guid id, string reason, bool queueAgain)
@@ -150,7 +158,7 @@ public sealed class RequestWorker(IServiceScopeFactory scopes, RequestSignal sig
         var jobs = await db.Jobs.Where(j => j.Status == JobStatus.Running || j.Status == JobStatus.Queued)
             .ExecuteUpdateAsync(s => s.SetProperty(j => j.Status, JobStatus.Failed).SetProperty(j => j.FinishedAt, DateTime.UtcNow)
                 .SetProperty(j => j.Log, j => j.Log + "Interrupted by a restart\n"), ct);
-        var requests = await db.Requests.Where(r => InFlight.Contains(r.Status))
+        var requests = await db.Requests.Where(r => RequestService.InFlight.Contains(r.Status))
             .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, RequestStatus.Queued).SetProperty(r => r.Detail, "Starting again after a restart"), ct);
         if (requests > 0)
             logger.LogInformation("Picking up {Count} requests a restart interrupted ({Jobs} fetches start again)", requests, jobs);

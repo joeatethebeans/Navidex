@@ -2,14 +2,21 @@
 @implements IDisposable
 @inject NavidexClient Api
 @inject RequestTracker Tracker
+@inject AuthState Auth
 
 <PageTitle>Review · Navidex</PageTitle>
 
 <h1>Review</h1>
 <p class="muted">
     Files that couldn't be matched confidently. They don't count as owned until they're matched. <strong>Exclude</strong> music
-    no catalogue knows, such as your own recordings: it's never matched again, and stays in your music folder.
+    no catalogue knows, such as your own recordings: it's never matched, and the library shows it as its tags say.
+    <strong>Defer</strong> takes a file off this list; each scan tries it again and matches it only when it's confident.
+    <strong>Hide</strong> takes it out of the library altogether. Every file stays in your music folder.
 </p>
+@if (!Auth.May(UserPermissions.Review))
+{
+    <div class="empty card">You can't review files: that needs the Review and match permission, which the admin can give you.</div>
+}
 
 @if (Stuck.Any())
 {
@@ -25,10 +32,10 @@
                             <div>@request.Title</div>
                             <div class="muted small">@request.Detail</div>
                         </td>
-                        <td class="num"><span class="badge @Format.RequestBadge(request.State)">@Format.RequestLabel(request)</span></td>
+                        <td class="num"><span class="badge @Format.RequestBadge(request)">@Format.RequestLabel(request)</span></td>
                         <td class="num actions">
                             <a class="small" href="activity?open=@request.Id">Details</a>
-                            <button class="link small" @onclick="() => RetryAsync(request)">Retry</button>
+                            @if (Auth.May(UserPermissions.Request)) { <button class="link small" @onclick="() => RetryAsync(request)">Retry</button> }
                         </td>
                     </tr>
                 }
@@ -43,7 +50,10 @@
     <h2>Files</h2>
 }
 
-@if (_items is null)
+@if (!Auth.May(UserPermissions.Review))
+{
+}
+else if (_items is null)
 {
     <Loading />
 }
@@ -60,8 +70,11 @@ else
         <span class="spacer"></span>
         <button class="primary" disabled="@(_busy || approvable == 0)" title="@(some ? "Accept the suggestion for every file the filter shows" : "Accept the suggestion for every file that has one")"
                 @onclick="@(() => _confirm = "approve")">@(some ? "Approve these" : "Approve all")</button>
-        <button disabled="@(_busy || !Visible.Any())" title="@(some ? "Exclude every file the filter shows, for example a whole folder" : "Exclude every file waiting for review")"
-                @onclick="@(() => _confirm = "exclude")">@(some ? "Exclude these" : "Exclude all")</button>
+        @foreach (var (aside, verb) in Asides)
+        {
+            <button disabled="@(_busy || !Visible.Any())" title="@($"{verb} every file {(some ? "the filter shows" : "waiting for review")}")"
+                    @onclick="() => _confirm = aside.ToString()">@verb @(some ? "these" : "all")</button>
+        }
     </div>
     @if (_confirm == "approve")
     {
@@ -83,13 +96,14 @@ else
             </div>
         </Dialog>
     }
-    else if (_confirm == "exclude")
+    else if (_confirm is not null && Enum.TryParse<SetAside>(_confirm, out var bulk))
     {
-        <Dialog Title="@($"Exclude {Format.Count(Visible.Count(), "file", "files")}?")" OnClose="() => _confirm = null" Alert="true">
-            <p>They stay in your music folder but are never matched, so they don't count as owned. You can include any of them again from the excluded files below.</p>
+        var verb = Asides.First(a => a.As == bulk).Verb;
+        <Dialog Title="@($"{verb} {Format.Count(Visible.Count(), "file", "files")}?")" OnClose="() => _confirm = null" Alert="true">
+            <p>@AsideHint(bulk) You can put any of them back from the lists below.</p>
             <div class="toolbar dialog-buttons">
                 <button @onclick="() => _confirm = null">Cancel</button>
-                <button class="danger" disabled="@_busy" @onclick="ExcludeShownAsync">@if (_busy) { <span class="spinner"></span> }Exclude</button>
+                <button class="danger" disabled="@_busy" @onclick="() => SetShownAsideAsync(bulk)">@if (_busy) { <span class="spinner"></span> }@verb</button>
             </div>
         </Dialog>
     }
@@ -115,7 +129,7 @@ else
                         else { <Cover Url="@s.CoverUrl" /> }
                         <div class="suggestion-text">
                             <div class="suggestion">
-                                <span class="ellipsis">@s.Title</span>
+                                <span class="suggestion-title" title="@s.Title">@s.Title</span>
                                 @if (item.Confidence is { } confidence)
                                 {
                                     <span class="confidence @ConfidenceClass(confidence)" title="How sure the match is">@confidence.ToString("P0")</span>
@@ -140,26 +154,33 @@ else
                     <button class="primary" disabled="@_busy" @onclick="() => ApproveAsync(item, suggestion)">Approve</button>
                 }
                 <a class="button" href="@SearchLink(item)">Search</a>
-                <button disabled="@_busy" title="Never match this file: no catalogue knows it" @onclick="() => SetExcludedAsync(item, true)">Exclude</button>
+                @foreach (var (aside, verb) in Asides)
+                {
+                    <button disabled="@_busy" title="@AsideHint(aside)" @onclick="() => SetAsideAsync(item, aside)">@verb</button>
+                }
             </div>
         </div>
     }
 }
 
-@if (_excluded is { Count: > 0 })
+@foreach (var (list, title, hint) in Lists)
 {
+    if (_lists.GetValueOrDefault(list) is not { Count: > 0 } files)
+        continue;
+    var open = _open.Contains(list);
     <h2 class="section">
-        <button class="section-toggle" aria-expanded="@(_showExcluded ? "true" : "false")" @onclick="() => _showExcluded = !_showExcluded">
-            <span class="chevron @(_showExcluded ? "open" : "")" aria-hidden="true"></span>
-            Excluded files <span class="muted small">(@_excluded.Count)</span>
+        <button class="section-toggle" aria-expanded="@(open ? "true" : "false")" @onclick="() => { if (!_open.Remove(list)) _open.Add(list); }">
+            <span class="chevron @(open ? "open" : "")" aria-hidden="true"></span>
+            @title <span class="muted small">(@files.Count)</span>
         </button>
     </h2>
-    @if (_showExcluded)
+    @if (open)
     {
+        <p class="muted small">@hint</p>
         <div class="card">
             <table class="table">
                 <tbody>
-                    @foreach (var item in _excluded)
+                    @foreach (var item in files)
                     {
                         <tr>
                             <td>
@@ -167,7 +188,8 @@ else
                                 <div class="muted small path">@item.Path</div>
                             </td>
                             <td class="num actions">
-                                <button class="link small" disabled="@_busy" title="Match it again at the next scan" @onclick="() => SetExcludedAsync(item, false)">Include</button>
+                                <a class="small" href="@SearchLink(item)">Search</a>
+                                <button class="link small" disabled="@_busy" title="Back to the review list, matched again at the next scan" @onclick="() => SetAsideAsync(item, SetAside.None)">Put back</button>
                             </td>
                         </tr>
                     }
@@ -179,8 +201,25 @@ else
 
 @code {
     private IReadOnlyList<ReviewItem>? _items;
-    private IReadOnlyList<ReviewItem>? _excluded;
-    private bool _showExcluded;
+    private Dictionary<ReviewList, IReadOnlyList<ReviewItem>> _lists = [];
+    private readonly HashSet<ReviewList> _open = [];
+
+    private static readonly (SetAside As, string Verb)[] Asides = [(SetAside.Excluded, "Exclude"), (SetAside.Deferred, "Defer"), (SetAside.Hidden, "Hide")];
+
+    private static readonly (ReviewList List, string Title, string Hint)[] Lists =
+    [
+        (ReviewList.Incomplete, "Incomplete metadata", "Excluded files without a title or artist, so the library can't show them. Fix their tags, or search for what they are."),
+        (ReviewList.Excluded, "Excluded files", "Never matched; the library shows them as their tags say."),
+        (ReviewList.Deferred, "Deferred files", "Each scan tries these again, and matches one only when it's confident."),
+        (ReviewList.Hidden, "Hidden files", "Out of the library altogether, though they stay in your music folder."),
+    ];
+
+    private static string AsideHint(SetAside aside) => aside switch
+    {
+        SetAside.Excluded => "Never match it: no catalogue knows it. The library shows it as its tags say.",
+        SetAside.Deferred => "Take it off this list. Each scan tries again, matching it only when it's confident.",
+        _ => "Take it out of the library altogether. It stays in your music folder.",
+    };
     private string _filter = "";
     private bool _busy;
 
@@ -205,21 +244,31 @@ else
 
     private async Task LoadAsync()
     {
+        if (!Auth.May(UserPermissions.Review))
+        {
+            _items = [];
+            _lists = Lists.ToDictionary(l => l.List, _ => (IReadOnlyList<ReviewItem>)[]);
+            return;
+        }
         var items = Api.GetReviewAsync();
-        var excluded = Api.GetReviewAsync(excluded: true);
+        var lists = Lists.Select(l => (l.List, Task: Api.GetReviewAsync(l.List))).ToList();
         _items = await items;
-        _excluded = await excluded;
+        var loaded = new Dictionary<ReviewList, IReadOnlyList<ReviewItem>>();
+        foreach (var (list, task) in lists)
+            loaded[list] = await task;
+        _lists = loaded;
     }
 
-    private async Task SetExcludedAsync(ReviewItem item, bool excluded)
+    private async Task SetAsideAsync(ReviewItem item, SetAside aside)
     {
         _busy = true;
-        await Api.SetFileExcludedAsync(item.FileId, excluded);
+        await Api.SetFileAsideAsync(item.FileId, aside);
         await LoadAsync();
         _busy = false;
+        ScanStatus.RaiseLibraryChanged();
     }
 
-    private Task ExcludeShownAsync() => BulkAsync(() => Api.ExcludeFilesAsync(Visible.Select(i => i.FileId).ToList()));
+    private Task SetShownAsideAsync(SetAside aside) => BulkAsync(() => Api.SetFilesAsideAsync(Visible.Select(i => i.FileId).ToList(), aside));
 
     private Task ApproveShownAsync() => BulkAsync(() => Api.ApproveFilesAsync(Visible.Where(i => i.Suggestion is not null).Select(i => i.FileId).ToList()));
 

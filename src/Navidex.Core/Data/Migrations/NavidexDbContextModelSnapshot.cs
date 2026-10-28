@@ -94,10 +94,15 @@ namespace Navidex.Core.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Hash")
                         .IsUnique();
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("ApiKeys");
                 });
@@ -184,11 +189,17 @@ namespace Navidex.Core.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Paused")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("PayloadJson")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Progress")
                         .HasColumnType("TEXT");
+
+                    b.Property<double>("QueueOrder")
+                        .HasColumnType("REAL");
 
                     b.Property<DateTime?>("StartedAt")
                         .HasColumnType("TEXT");
@@ -342,6 +353,9 @@ namespace Navidex.Core.Data.Migrations
                     b.Property<Guid?>("ArtistId")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("DeferredAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<TimeSpan?>("Duration")
                         .HasColumnType("TEXT");
 
@@ -352,6 +366,12 @@ namespace Navidex.Core.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Format")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("FormattedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("HiddenAt")
                         .HasColumnType("TEXT");
 
                     b.Property<double?>("MatchConfidence")
@@ -589,6 +609,12 @@ namespace Navidex.Core.Data.Migrations
                     b.Property<Guid?>("ParentRequestId")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Paused")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("QueueOrder")
+                        .HasColumnType("REAL");
+
                     b.Property<string>("Requester")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -666,6 +692,49 @@ namespace Navidex.Core.Data.Migrations
                     b.HasIndex("Title");
 
                     b.ToTable("Tracks");
+                });
+
+            modelBuilder.Entity("Navidex.Core.Data.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastSignInAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedUsername")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Permissions")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Stamp")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedUsername")
+                        .IsUnique();
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Navidex.Core.Data.Webhook", b =>
@@ -758,6 +827,16 @@ namespace Navidex.Core.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Artist");
+                });
+
+            modelBuilder.Entity("Navidex.Core.Data.ApiKey", b =>
+                {
+                    b.HasOne("Navidex.Core.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Navidex.Core.Data.Edition", b =>

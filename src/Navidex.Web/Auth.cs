@@ -4,8 +4,8 @@ using Navidex.Client;
 namespace Navidex.Web;
 
 /// <summary>
-/// Whether this browser may use the app: signed in, or let in from the local network. The app shows the setup or
-/// sign-in page until it is, and goes back to it when a call is refused, for example after the password changed.
+/// Whether this browser may use the app, and what its user may do. The app shows the setup or sign-in page until it's
+/// signed in, and goes back to it when a call is refused, for example after the password changed.
 /// </summary>
 public sealed class AuthState
 {
@@ -13,6 +13,9 @@ public sealed class AuthState
 
     /// <summary>The status changed, or a call was refused for want of signing in.</summary>
     public event Action? Changed;
+
+    /// <summary>Whether whoever's signed in may do this: one of <see cref="UserPermissions"/>.</summary>
+    public bool May(string permission) => Status?.May(permission) == true;
 
     public void Set(AuthStatus status)
     {

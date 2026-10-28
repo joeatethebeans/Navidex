@@ -1,3 +1,4 @@
+import base64
 import os
 import shutil
 import subprocess
@@ -5,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from mediafile import MediaFile
 
 from app import main
 from app.importer import Importer
@@ -97,3 +99,68 @@ def test_deleting_outside_the_library_is_refused(client, roots):
     assert response.json()["deleted"] == ["gone.flac"]
     assert "inside the library" in response.json()["failed"][0]["error"]
     assert (roots[0] / "keep.flac").exists()
+
+
+def silent_flac(path: Path, **tags: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    metadata = [arg for name, value in tags.items() for arg in ("-metadata", f"{name}={value}")]
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "anullsrc=r=8000:cl=mono", "-t", "1", *metadata,
+                    str(path)], check=True)
+
+
+# The smallest PNG there is: one transparent pixel.
+PIXEL = base64.b64encode(bytes.fromhex(
+    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+    "1f15c4890000000d49444154789c6300010000050001"
+    "0d0a2db40000000049454e44ae426082")).decode()
+
+
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
+def test_formatting_tags_a_file_embeds_the_cover_and_files_it_by_the_template(client, roots):
+    library = roots[1]
+    old = library / "incoming" / "glory box.flac"
+    silent_flac(old, title="glory box", artist="portishead")
+    (old.parent / "cover.jpg").write_bytes(b"jpeg")
+
+    body = {"files": [{"path": "incoming/glory box.flac", "artwork": "dummy",
+                       "tags": {"title": "Glory Box", "artist": "Portishead", "album": "Dummy",
+                                "albumartist": "Portishead", "track": "11", "tracktotal": "11", "date": "1994-08-22",
+                                "mb_trackid": GLORY_BOX["recordingId"]}}],
+            "artwork": {"dummy": {"data": PIXEL}},
+            "pathTemplate": "$albumartist/$album/$track $title"}
+    response = client.post("/v1/format", json=body)
+    assert response.status_code == 200, response.json()
+    result = response.json()["files"][0]
+    assert result["newPath"] == "Portishead/Dummy/11 Glory Box.flac"
+
+    media = MediaFile(library / result["newPath"])
+    assert (media.title, media.album, media.track, media.year, media.month, media.day) == ("Glory Box", "Dummy", 11, 1994, 8, 22)
+    assert media.mb_trackid == GLORY_BOX["recordingId"]
+    assert len(media.images) == 1
+    # The old folder held only the song and its cover: the cover goes with the song, and the folder goes.
+    assert (library / "Portishead" / "Dummy" / "cover.jpg").read_bytes() == b"jpeg"
+    assert not (library / "incoming").exists()
+
+
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
+def test_formatting_without_a_template_leaves_files_where_they_are(client, roots):
+    library = roots[1]
+    silent_flac(library / "a" / "song.flac", title="old", isrc="GBAAA9400001")
+    response = client.post("/v1/format", json={"files": [{"path": "a/song.flac", "tags": {"title": "New", "isrc": ""},
+                                                           "removeArtwork": True}]})
+    assert response.json()["files"][0]["newPath"] == "a/song.flac"
+    media = MediaFile(library / "a" / "song.flac")
+    assert media.title == "New"
+    assert not media.isrc
+
+
+def test_formatting_refuses_files_outside_the_library_and_unknown_tags(client, roots):
+    library = roots[1]
+    (library / "song.flac").write_bytes(b"x")
+    body = {"files": [{"path": "../staging/x.flac"}, {"path": "song.flac", "tags": {"comment": "hi"}},
+                      {"path": "gone.flac"}]}
+    results = client.post("/v1/format", json=body).json()["files"]
+    assert "inside the library" in results[0]["error"]
+    assert "doesn't write the tag comment" in results[1]["error"]
+    assert "isn't in the music folder" in results[2]["error"]
+    assert (library / "song.flac").read_bytes() == b"x"

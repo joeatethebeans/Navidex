@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Navidex.Client;
 using Navidex.Core.Catalogue;
 using Navidex.Core.Data;
 using Navidex.Core.Plugins;
@@ -25,6 +26,18 @@ public sealed class LibraryScanTask(
 
     public string Kind => TaskKind;
 
+    /// <summary>The task's payload: null for a plain scan, so asking twice queues one.</summary>
+    public static string? Payload(Rematch rematch) => rematch == Rematch.None ? null : JsonSerializer.Serialize(rematch, NavidexJson.Options);
+
+    public static Rematch RematchOf(string? payload) => payload is null ? Rematch.None : JsonSerializer.Deserialize<Rematch>(payload, NavidexJson.Options);
+
+    public static string Title(string? payload) => RematchOf(payload) switch
+    {
+        Rematch.Unmatched => "Library scan · matching unmatched files again",
+        Rematch.All => "Library scan · matching everything again",
+        _ => "Library scan",
+    };
+
     public async Task RunAsync(BackgroundTask task, IProgress<string> progress, CancellationToken ct)
     {
         LibraryScanner.Result scan;
@@ -34,7 +47,9 @@ public sealed class LibraryScanTask(
             progress.Report("Reading files");
             feed.Clear();
             scan = await scanner.ScanAsync(progress, ct);
-            progress.Report($"Found {scan.Files} files ({scan.Added} new, {scan.Changed} changed, {scan.Removed} removed); matching");
+            var again = await RematchAsync(RematchOf(task.PayloadJson), task.CreatedAt, ct);
+            progress.Report($"Found {scan.Files} files ({scan.Added} new, {scan.Changed} changed, {scan.Removed} removed"
+                            + (again > 0 ? $", {again} to match again" : "") + "); matching");
             match = await matcher.MatchPendingAsync(progress, ct);
         }
 
@@ -45,14 +60,41 @@ public sealed class LibraryScanTask(
             notes.Add(Count(scan.SkippedFolders, "folder", "folders") + " couldn't be read");
         if (scan.Unreadable > 0)
             notes.Add(Count(scan.Unreadable, "file", "files") + " couldn't be read");
-        if (match.Deferred > 0)
-            notes.Add(Count(match.Deferred, "file", "files") + " left to match next scan (the catalogue source was busy)");
+        if (match.Waiting > 0)
+            notes.Add(Count(match.Waiting, "file", "files") + " left to match next scan (the catalogue source was busy)");
+        if (match.StillDeferred > 0)
+            notes.Add(Count(match.StillDeferred, "deferred file", "deferred files") + " still not a confident match");
         if (failures > 0)
             notes.Add(Count(failures, "catalogue update", "catalogue updates") + " failed and will be retried next scan");
         progress.Report($"{scan.Files} files: {match.Matched} newly matched, {match.Review} to review" + string.Concat(notes.Select(n => "; " + n)));
     }
 
     private static string Count(int n, string one, string many) => LibraryMatcher.Plural(n, one, many);
+
+    /// <summary>
+    /// Puts files back to be matched: deferred ones on every scan, and those the scan was asked to match again. Only
+    /// files last matched before the scan was asked for, so a scan picked up again after a pause doesn't redo any.
+    /// Files you matched, excluded or hid yourself are left alone.
+    /// </summary>
+    private async Task<int> RematchAsync(Rematch rematch, DateTime since, CancellationToken ct)
+    {
+        var files = db.LibraryFiles.Where(f => f.MatchedAt != null && f.MatchedAt < since && f.ExcludedAt == null && f.HiddenAt == null);
+        var again = await files.Where(f => f.DeferredAt != null && f.TrackId == null)
+            .ExecuteUpdateAsync(u => u.SetProperty(f => f.MatchedAt, (DateTime?)null), ct);
+        if (rematch == Rematch.Unmatched)
+            again += await files.Where(f => f.TrackId == null)
+                .ExecuteUpdateAsync(u => u.SetProperty(f => f.MatchedAt, (DateTime?)null), ct);
+        else if (rematch == Rematch.All)
+            again += await files.Where(f => f.MatchMethod != MatchMethod.Manual)
+                .ExecuteUpdateAsync(u => u
+                    .SetProperty(f => f.MatchedAt, (DateTime?)null)
+                    .SetProperty(f => f.TrackId, (Guid?)null)
+                    .SetProperty(f => f.EditionId, (Guid?)null)
+                    .SetProperty(f => f.SuggestedTrackId, (Guid?)null)
+                    .SetProperty(f => f.SuggestedEditionId, (Guid?)null)
+                    .SetProperty(f => f.MatchMethod, MatchMethod.Unmatched), ct);
+        return again;
+    }
 }
 
 /// <summary>Fills in one artist's catalogue after their page is opened, so non-library artists get full statuses.</summary>

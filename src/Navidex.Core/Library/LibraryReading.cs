@@ -25,10 +25,10 @@ public sealed class LibraryReading(RequestSignal signal)
         return new Done(this);
     }
 
-    /// <summary>Reading now, or a scan is queued to start.</summary>
+    /// <summary>Reading now, or a scan is queued to start. A paused scan doesn't hold requests back.</summary>
     public async Task<bool> IsBusyAsync(NavidexDbContext db, CancellationToken ct) =>
         Volatile.Read(ref _active) > 0
-        || await db.BackgroundTasks.AnyAsync(t => t.Kind == LibraryScanTask.TaskKind && t.Status == BackgroundTaskStatus.Queued, ct);
+        || await db.BackgroundTasks.AnyAsync(t => t.Kind == LibraryScanTask.TaskKind && t.Status == BackgroundTaskStatus.Queued && !t.Paused, ct);
 
     private sealed class Done(LibraryReading reading) : IDisposable
     {

@@ -52,5 +52,33 @@ public sealed class FakeImporter(string stagingRoot, string libraryRoot) : IImpo
         return Task.FromResult(new DeleteResult(request.Paths, []));
     }
 
+    public ConcurrentQueue<FormatRequest> Formats { get; } = new();
+
+    // Tags aren't written; moving goes to Artist/Album/title, as the tags say.
+    public Task<FormatResult> FormatAsync(FormatRequest request, CancellationToken ct)
+    {
+        Formats.Enqueue(request);
+        var results = new List<FormattedFile>();
+        foreach (var file in request.Files)
+        {
+            var full = Path.Combine(libraryRoot, file.Path);
+            if (!File.Exists(full))
+            {
+                results.Add(new FormattedFile(file.Path, null, null, "It isn't in the music folder any more."));
+                continue;
+            }
+            var path = file.Path;
+            if (request.PathTemplate is not null && file.Tags.TryGetValue("albumartist", out var artist) && file.Tags.TryGetValue("album", out var album)
+                && file.Tags.TryGetValue("title", out var title))
+            {
+                path = $"{Safe(artist)}/{Safe(album)}/{Safe(title)}{Path.GetExtension(file.Path)}";
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(libraryRoot, path))!);
+                File.Move(full, Path.Combine(libraryRoot, path), overwrite: true);
+            }
+            results.Add(new FormattedFile(file.Path, path, new FileInfo(Path.Combine(libraryRoot, path)).Length, null));
+        }
+        return Task.FromResult(new FormatResult(results));
+    }
+
     private static string Safe(string name) => string.Concat(name.Split(Path.GetInvalidFileNameChars()));
 }

@@ -43,6 +43,25 @@ public sealed class ArtworkCache(IServiceScopeFactory scopes, IOptions<NavidexOp
         return await _finding.GetOrAdd((kind, id), FindOnceAsync).WaitAsync(ct);
     }
 
+    /// <summary>
+    /// A picture of the subject from one artwork plugin, straight from it rather than the cache, for writing into files.
+    /// Null when the plugin has none; failures throw.
+    /// </summary>
+    public async Task<ArtworkImage?> FetchFromAsync(Guid pluginInstanceId, EntityKind kind, Guid id, CancellationToken ct)
+    {
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
+        if (await QueryAsync(db, kind, id) is not { } query)
+            return null;
+        var plugins = await scope.ServiceProvider.GetRequiredService<ArtworkPlugins>().ForAsync(query.Subject, ct);
+        if (plugins.FirstOrDefault(p => p.Instance.Id == pluginInstanceId) is not { Plugin: { } plugin })
+            return null;
+        foreach (var candidate in await plugin.FindAsync(query, ct))
+            if (await plugin.DownloadAsync(candidate, ct) is { Data.Length: > 0 } image)
+                return image;
+        return null;
+    }
+
     private async Task<CachedArtwork?> FindOnceAsync((EntityKind Kind, Guid Id) key)
     {
         try

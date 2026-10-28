@@ -36,8 +36,8 @@ else
                 var playLabel = _album.Tracks.Any(t => t.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere) ? "Play" : "Listen now";
                 var playHint = missing ? $"{playLabel}: in order, fetching the tracks you don't have to listen to, without adding them to your library" : "Play the album";
                 RenderFragment play = @<text>
-                    <IconButton Icon="play" Primary="true" Large="true" Label="@playLabel" Title="@playHint" OnClick="() => Player.PlayAlbumAsync(_album!)" />
-                    <IconButton Icon="queue" Large="true" Confirm="true" Title="@(missing ? "Add to the queue, fetching the tracks you don't have to listen to" : "Add to the queue")"
+                    <IconButton Icon="play" Requires="@UserPermissions.Listen" Primary="true" Large="true" Label="@playLabel" Title="@playHint" OnClick="() => Player.PlayAlbumAsync(_album!)" />
+                    <IconButton Icon="queue" Requires="@UserPermissions.Listen" Large="true" Confirm="true" Title="@(missing ? "Add to the queue, fetching the tracks you don't have to listen to" : "Add to the queue")"
                                 OnClick="() => Player.QueueAlbumAsync(_album!)" />
                 </text>;
                 <div class="row album-actions" style="margin-top: .5rem;">
@@ -52,6 +52,11 @@ else
                     else
                     {
                         @play
+                    }
+                    @if (album.Status is not AlbumStatus.Missing)
+                    {
+                        <IconButton Icon="format" Requires="@UserPermissions.Format" Large="true" Label="Format" Title="Rewrite this album's files: their tags, cover and where they live"
+                                    OnClick="() => _formatting = true" />
                     }
                 </div>
             }
@@ -97,7 +102,7 @@ else
                         <tr class="@(track.Status == TrackStatus.Ignored ? "dim" : "") @(Player.IsNow(track.TrackId) ? "playing" : "")">
                             <td class="num muted nowrap">@(MultiDisc ? $"{track.Disc}-" : "")@track.Number</td>
                             <td>
-                                @track.Title
+                                <a href="tracks/@track.TrackId" class="plain">@track.Title</a>
                                 @if (track.ArtistCredit != album.ArtistCredit) { <span class="muted small"> · @track.ArtistCredit</span> }
                                 @if (track.FilePath is not null) { <div class="muted small">@track.FilePath</div> }
                             </td>
@@ -106,24 +111,24 @@ else
                             <td class="num actions">
                                 @if (track.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere)
                                 {
-                                    <IconButton Icon="play" Title="Play the tracks you have from here" OnClick="() => PlayOwnedFromAsync(track)" />
-                                    <IconButton Icon="queue" Title="Add to the queue" Confirm="true"
+                                    <IconButton Icon="play" Requires="@UserPermissions.Listen" Title="Play the tracks you have from here" OnClick="() => PlayOwnedFromAsync(track)" />
+                                    <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true"
                                                 OnClick="() => Player.AddAsync([PlayerEntry.Owned(track, album, _album.ShownEditionId)])" />
                                 }
                                 else if (track.Status == TrackStatus.Missing && Tracker.Find(RequestKind.Album, album.Id) is not { Active: true })
                                 {
                                     <FetchButton Kind="RequestKind.Track" Id="track.TrackId" EditionId="_album.ShownEditionId" Hint="Get it into your library">
-                                        <IconButton Icon="listen" Title="Listen: fetch it to play now, without adding it to your library"
+                                        <IconButton Icon="listen" Requires="@UserPermissions.Listen" Title="Listen: fetch it to play now, without adding it to your library"
                                                     OnClick="() => Player.ListenAsync(track.TrackId, _album.ShownEditionId)" />
-                                        <IconButton Icon="queue" Title="Add to the queue, fetching it to listen to" Confirm="true"
+                                        <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue, fetching it to listen to" Confirm="true"
                                                     OnClick="() => Player.ListenAsync(track.TrackId, _album.ShownEditionId, next: true)" />
-                                        <IconButton Icon="ignore" Title="Ignore: stop counting this song as missing, on every album it's on"
+                                        <IconButton Icon="ignore" Requires="@UserPermissions.Request" Title="Ignore: stop counting this song as missing, on every album it's on"
                                                     OnClick="() => ToggleTrackIgnoredAsync(track)" />
                                     </FetchButton>
                                 }
                                 @if (track.Status == TrackStatus.Ignored || track.Ignored)
                                 {
-                                    <IconButton Icon="unignore" Title="Unignore: count this song again" OnClick="() => ToggleTrackIgnoredAsync(track)" />
+                                    <IconButton Icon="unignore" Requires="@UserPermissions.Request" Title="Unignore: count this song again" OnClick="() => ToggleTrackIgnoredAsync(track)" />
                                 }
                             </td>
                         </tr>
@@ -134,11 +139,17 @@ else
     }
 }
 
+@if (_formatting && _album is not null)
+{
+    <FormatDialog Scope="new FormatScope(FormatScopeKind.Album, _album.Album.Id)" Name="@_album.Album.Title" OnClose="() => _formatting = false" />
+}
+
 @code {
     [Parameter] public Guid Id { get; set; }
 
     private AlbumDetail? _album;
     private bool _notFound;
+    private bool _formatting;
 
     private bool MultiDisc => _album!.Tracks.Select(t => t.Disc).Distinct().Count() > 1;
 

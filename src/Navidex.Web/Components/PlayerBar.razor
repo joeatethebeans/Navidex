@@ -43,7 +43,7 @@
                     else
                     {
                         <div class="ellipsis player-title">
-                            @if (now.AlbumId is { } album) { <a href="albums/@album">@now.Title</a> } else { @now.Title }
+                            @if (now.AlbumHref is { } album) { <a href="@album">@now.Title</a> } else { @now.Title }
                         </div>
                         <div class="muted small ellipsis">
                             @if (now.ArtistId is { } artist) { <a class="muted" href="artists/@artist">@now.ArtistCredit</a> } else { @now.ArtistCredit }

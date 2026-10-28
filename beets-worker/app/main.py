@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import os
 from typing import Any
 
@@ -13,6 +15,7 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+from .formatter import FormatFile
 from .importer import Importer, ImportFailed, Release, StagedFile
 from .removal import delete
 
@@ -49,6 +52,23 @@ class ImportRequest(Model):
     destination_directory: str | None = None
     path_template: str = "$albumartist/$album%aunique{}/$track $title"
     music_brainz_server: str | None = None
+
+
+class FormatFileModel(Model):
+    path: str
+    tags: dict[str, str] = {}
+    artwork: str | None = None
+    remove_artwork: bool = False
+
+
+class FormatArtwork(Model):
+    data: str
+
+
+class FormatRequest(Model):
+    files: list[FormatFileModel]
+    artwork: dict[str, FormatArtwork] = {}
+    path_template: str | None = None
 
 
 class DeleteRequest(Model):
@@ -95,6 +115,17 @@ async def run_import(body: ImportRequest) -> dict[str, Any]:
     except ImportFailed as e:
         raise HTTPException(422, {"error": str(e), "code": "import-failed"})
     return {"files": [{k: v for k, v in f.items() if v is not None} for f in imported]}
+
+
+@app.post("/v1/format")
+async def run_format(body: FormatRequest) -> dict[str, Any]:
+    try:
+        artwork = {key: base64.b64decode(image.data, validate=True) for key, image in body.artwork.items()}
+    except binascii.Error:
+        raise HTTPException(400, {"error": "Artwork must be base64.", "code": "invalid-request"})
+    files = [FormatFile(f.path, f.tags, f.artwork, f.remove_artwork) for f in body.files]
+    results = await run_in_threadpool(get_importer().format, files, artwork, body.path_template)
+    return {"files": results}
 
 
 @app.post("/v1/delete")

@@ -463,6 +463,8 @@ public sealed class RequestPipeline(
                 Mode = request.Mode,
                 Requester = request.Requester,
                 ParentRequestId = request.Id,
+                QueueOrder = request.QueueOrder,
+                Paused = request.Paused,
             });
         await db.SaveChangesAsync(ct);
         logger.LogInformation("[{Request}] {Why}", request.Title, why);

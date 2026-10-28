@@ -1,0 +1,55 @@
+@implements IDisposable
+@inject NavidexClient Api
+@inject AuthState Auth
+
+@* The account button at the top right: who's signed in, their account, and signing out. *@
+@if (Auth.Status is { Username: { } name } status)
+{
+    <div class="account-menu">
+        <button class="account-button" title="@($"Signed in as {name}")" aria-label="@($"Account: {name}")" aria-haspopup="menu"
+                aria-expanded="@(_open ? "true" : "false")" @onclick="() => _open = !_open">
+            <span class="avatar" aria-hidden="true">@Initial(name)</span>
+        </button>
+        @if (_open)
+        {
+            <div class="menu-backdrop" @onclick="() => _open = false"></div>
+            <div class="menu right" role="menu">
+                <div class="menu-note">
+                    <strong class="ellipsis">@name</strong>
+                    <span class="muted small">@(status.IsAdmin ? "Admin" : "Signed in")</span>
+                </div>
+                <hr />
+                <a role="menuitem" href="account" @onclick="() => _open = false">Your account</a>
+                @if (status.May(UserPermissions.Users))
+                {
+                    <a role="menuitem" href="settings/users" @onclick="() => _open = false">Users</a>
+                }
+                @if (status.May(UserPermissions.Keys))
+                {
+                    <a role="menuitem" href="settings/api" @onclick="() => _open = false">API keys</a>
+                }
+                <hr />
+                <button type="button" role="menuitem" @onclick="SignOutAsync">Sign out</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool _open;
+
+    protected override void OnInitialized() => Auth.Changed += Redraw;
+
+    private void Redraw() => InvokeAsync(StateHasChanged);
+
+    private static string Initial(string name) => name.Trim() is { Length: > 0 } trimmed ? char.ToUpperInvariant(trimmed[0]).ToString() : "?";
+
+    private async Task SignOutAsync()
+    {
+        _open = false;
+        await Api.SignOutAsync();
+        Auth.Set(await Api.GetAuthStatusAsync());
+    }
+
+    public void Dispose() => Auth.Changed -= Redraw;
+}

@@ -44,11 +44,11 @@ public static class SystemEndpoints
 
         group.MapGet("/log", (ActivityLog log, long after = 0, int limit = 1000) =>
                 new LogPage(log.After(after, Math.Clamp(limit, 1, ActivityLog.PageLimit)), log.Latest))
-            .RequireScope(Scopes.Admin)
+            .RequireScope(Scopes.Settings)
             .WithName("GetLog")
             .WithSummary("Recent activity, as far back as the log settings keep in memory: scans, matches, requests, warnings and errors.");
 
-        var settings = api.MapGroup("/settings").WithTags("Settings").RequireScope(Scopes.Admin);
+        var settings = api.MapGroup("/settings").WithTags("Settings").RequireScope(Scopes.Settings);
         settings.MapGet("/log", (SettingsService s, CancellationToken ct) => s.GetLogAsync(ct)).WithName("GetLogSettings");
         settings.MapPut("/log", async (LogSettings value, SettingsService s, IEnumerable<IHostedService> services, CancellationToken ct) =>
             {

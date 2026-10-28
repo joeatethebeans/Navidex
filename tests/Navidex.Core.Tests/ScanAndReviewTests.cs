@@ -45,7 +45,7 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
 
         await Api.SetFileExcludedAsync(item.FileId, true);
         Assert.DoesNotContain(await Api.GetReviewAsync(), i => i.FileId == item.FileId);
-        Assert.Contains(await Api.GetReviewAsync(excluded: true), i => i.FileId == item.FileId && i.Excluded);
+        Assert.Contains(await ExcludedAsync(), i => i.FileId == item.FileId && i.Excluded && i.SetAside == SetAside.Excluded);
         var excluded = (await Api.GetLibraryStatusAsync())!;
         Assert.Equal(before.Review - 1, excluded.Review);
         Assert.Equal(before.Excluded + 1, excluded.Excluded);
@@ -81,7 +81,7 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
 
         var excluded = await Api.ExcludeFilesAsync(others);
         Assert.Equal(others.Count, excluded.Count);
-        var nowExcluded = await Api.GetReviewAsync(excluded: true);
+        var nowExcluded = await ExcludedAsync();
         Assert.All(others, id => Assert.Contains(nowExcluded, i => i.FileId == id));
 
         // Put them all back for the other tests: excluded and included again, the next scan reviews them as before.
@@ -92,6 +92,117 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
         var restored = await Api.GetReviewAsync();
         Assert.All(others.Append(suggested.FileId), id => Assert.Contains(restored, i => i.FileId == id));
     }
+
+    [TestLibraryFact]
+    public async Task A_deferred_file_leaves_review_and_stays_deferred_while_its_not_a_confident_match()
+    {
+        var item = (await Api.GetReviewAsync()).First();
+        var before = (await Api.GetLibraryStatusAsync())!;
+
+        await Api.SetFileAsideAsync(item.FileId, SetAside.Deferred);
+        Assert.DoesNotContain(await Api.GetReviewAsync(), i => i.FileId == item.FileId);
+        Assert.Contains(await Api.GetReviewAsync(ReviewList.Deferred), i => i.FileId == item.FileId && i.SetAside == SetAside.Deferred);
+        var deferred = (await Api.GetLibraryStatusAsync())!;
+        Assert.Equal(before.Review - 1, deferred.Review);
+        Assert.Equal(before.Deferred + 1, deferred.Deferred);
+
+        // The scan tries it again, but it's no more confident than before, so it stays deferred, off the review list.
+        var scan = await ScanAsync();
+        Assert.Contains("still not a confident match", scan.Progress);
+        Assert.Contains(await Api.GetReviewAsync(ReviewList.Deferred), i => i.FileId == item.FileId);
+        Assert.DoesNotContain(await Api.GetReviewAsync(), i => i.FileId == item.FileId);
+
+        await Api.SetFileAsideAsync(item.FileId, SetAside.None);
+        await ScanAsync();
+        Assert.Contains(await Api.GetReviewAsync(), i => i.FileId == item.FileId);
+        Assert.Equal(before.Deferred, (await Api.GetLibraryStatusAsync())!.Deferred);
+    }
+
+    [TestLibraryFact]
+    public async Task A_hidden_file_is_out_of_the_library_until_its_put_back()
+    {
+        var item = (await Api.GetReviewAsync()).First();
+        var before = (await Api.GetLibraryStatusAsync())!;
+
+        await Api.SetFilesAsideAsync([item.FileId], SetAside.Hidden);
+        var hidden = (await Api.GetLibraryStatusAsync())!;
+        Assert.Equal(before.Files - 1, hidden.Files);
+        Assert.Equal(before.Hidden + 1, hidden.Hidden);
+        Assert.Equal(before.Review - 1, hidden.Review);
+        Assert.Contains(await Api.GetReviewAsync(ReviewList.Hidden), i => i.FileId == item.FileId && i.SetAside == SetAside.Hidden);
+
+        // Even changed, a scan leaves it alone.
+        File.SetLastWriteTimeUtc(Path.Combine(fixture.Music, item.Path), DateTime.UtcNow);
+        await ScanAsync();
+        Assert.DoesNotContain(await Api.GetReviewAsync(), i => i.FileId == item.FileId);
+
+        await Api.SetFilesAsideAsync([item.FileId], SetAside.None);
+        await ScanAsync();
+        Assert.Contains(await Api.GetReviewAsync(), i => i.FileId == item.FileId);
+        Assert.Equal(before.Files, (await Api.GetLibraryStatusAsync())!.Files);
+    }
+
+    [TestLibraryFact]
+    public async Task A_scan_can_match_unmatched_files_again()
+    {
+        var review = (await Api.GetReviewAsync()).Count;
+        var scan = await ScanAsync(Rematch.Unmatched);
+        Assert.Equal("Library scan · matching unmatched files again", scan.Title);
+        Assert.Equal(review, (await Api.GetLibraryStatusAsync())!.Review);
+        // Every file under review was matched again, and the feed says so.
+        var feed = (await Api.GetScanFilesAsync()).Files;
+        Assert.Equal(review, feed.Count(f => f.State == ScanFileState.Review));
+    }
+
+    [TestLibraryFact]
+    public async Task An_excluded_file_is_in_the_library_as_its_tags_say_with_its_own_cover()
+    {
+        var path = await CopyAsync("Own Music/Copy", withArtwork: true);
+        var file = await FileAsync(path);
+        await Api.SetFileAsideAsync(file, SetAside.Excluded);
+
+        // Its tags name Portishead, an artist the library has, so the album is theirs; its ID comes from the names.
+        var album = await EventuallyAsync(async () => (await Api.GetLibraryAlbumsAsync()).FirstOrDefault(a => a.Album.Local)?.Album);
+        Assert.Equal("Dummy", album.Title);
+        Assert.Equal("Portishead", album.ArtistCredit);
+        Assert.Equal(AlbumStatus.Complete, album.Status);
+        var detail = (await Api.GetLocalAlbumAsync(album.Id))!;
+        Assert.False(detail.ArtistLocal);
+        Assert.Equal(path, Assert.Single(detail.Tracks).Path);
+        Assert.Contains((await Api.GetArtistAsync(detail.ArtistId))!.Albums, a => a.Local && a.Id == album.Id);
+        var track = await EventuallyAsync(async () => (await Api.GetLibraryTracksAsync()).FirstOrDefault(t => t.Local));
+        Assert.Equal(file, track.FileId);
+        Assert.Equal(album.Id, track.AlbumId);
+
+        // The cover is the picture beside it; it plays as the file.
+        using var http = fixture.Factory.CreateClient();
+        var cover = await http.GetAsync(album.CoverUrl);
+        Assert.Equal(System.Net.HttpStatusCode.OK, cover.StatusCode);
+        Assert.Equal(new byte[] { 1, 2, 3 }, await cover.Content.ReadAsByteArrayAsync());
+        var play = (await Api.GetFilePlayInfoAsync(file))!;
+        Assert.Equal(file, play.TrackId);
+        Assert.Contains($"library/files/{file}/stream", play.StreamUrl);
+
+        // Tidy up: without the file, the next scan forgets it, and the album goes.
+        Directory.Delete(Path.Combine(fixture.Music, "Own Music"), recursive: true);
+        await ScanAsync();
+        Assert.Null(await Api.GetLocalAlbumAsync(album.Id));
+    }
+
+    private static async Task<T> EventuallyAsync<T>(Func<Task<T?>> find) where T : class
+    {
+        for (var i = 0; i < 50; i++)
+        {
+            if (await find() is { } found)
+                return found;
+            await Task.Delay(100);
+        }
+        throw new InvalidOperationException("It never showed up.");
+    }
+
+    // Excluded files with a title and artist, and those without, which are listed apart.
+    private async Task<List<ReviewItem>> ExcludedAsync() =>
+        [.. await Api.GetReviewAsync(ReviewList.Excluded), .. await Api.GetReviewAsync(ReviewList.Incomplete)];
 
     [TestLibraryFact]
     public async Task Removing_a_file_deletes_it_and_its_emptied_folder()
@@ -114,7 +225,7 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
     }
 
     [TestLibraryFact]
-    public async Task Removing_a_file_but_keeping_it_excludes_it()
+    public async Task Removing_a_file_but_keeping_it_hides_it()
     {
         var path = await CopyAsync("Removal Keep/Copy", withArtwork: false);
         var file = await FileAsync(path);
@@ -122,7 +233,7 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
         var result = await Api.RemoveFromLibraryAsync(new RemoveFromLibrary(LibraryItemKind.File, file, DeleteFiles: false));
         Assert.Equal(1, result.Removed);
         Assert.True(File.Exists(Path.Combine(fixture.Music, path)));
-        Assert.Contains(await Api.GetReviewAsync(excluded: true), i => i.FileId == file);
+        Assert.Contains(await Api.GetReviewAsync(ReviewList.Hidden), i => i.FileId == file);
 
         // Tidy up: without the file, the next scan forgets it.
         Directory.Delete(Path.Combine(fixture.Music, "Removal Keep"), recursive: true);
@@ -164,14 +275,15 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
         throw new InvalidOperationException($"{path} isn't in the library.");
     }
 
-    private async Task ScanAsync()
+    private async Task<TaskInfo> ScanAsync(Rematch rematch = Rematch.None)
     {
-        var task = await Api.ScanLibraryAsync();
+        var task = await Api.ScanLibraryAsync(rematch);
         while (task.Active)
         {
             await Task.Delay(100);
             task = (await Api.GetTaskAsync(task.Id))!;
         }
         Assert.Equal(TaskState.Succeeded, task.State);
+        return task;
     }
 }

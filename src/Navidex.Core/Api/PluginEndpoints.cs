@@ -15,17 +15,17 @@ public static class PluginEndpoints
 {
     public static RouteGroupBuilder MapPluginEndpoints(this RouteGroupBuilder api)
     {
-        var plugins = api.MapGroup("/plugins").WithTags("Plugins");
+        var plugins = api.MapGroup("/plugins").WithTags("Plugins").RequireScope(Scopes.Settings);
 
         plugins.MapGet("", async (NavidexDbContext db, PluginCatalog catalog, CancellationToken ct) =>
                 (await db.PluginInstances.OrderBy(p => p.Type).ThenBy(p => p.Priority).ThenBy(p => p.CreatedAt).ToListAsync(ct))
                 .Select(p => ToInfo(p, catalog)).ToList())
-            .RequireScope(Scopes.Admin).WithName("ListPlugins").WithSummary("Configured plugins by type, in the order they're used. Secrets are left out.");
+            .WithName("ListPlugins").WithSummary("Configured plugins by type, in the order they're used. Secrets are left out.");
 
         plugins.MapGet("/available", (PluginCatalog catalog) => catalog.All
                 .Where(p => p.Manifest.Type != PluginType.Retrieval)
                 .Select(p => new AvailablePlugin(p.Manifest, p.Source, p.Rejection)).ToList())
-            .RequireScope(Scopes.Admin).WithName("ListAvailablePlugins")
+            .WithName("ListAvailablePlugins")
             .WithSummary("Index, artwork and media-server plugins loaded into the core. Retrieval plugins run in their own containers and are added by URL.");
 
         plugins.MapPost("", async (AddPlugin body, NavidexDbContext db, PluginCatalog catalog, RetrievalPlugins retrieval, ArtworkCache artwork, CancellationToken ct) =>

@@ -17,9 +17,9 @@
             @foreach (var album in Albums)
             {
                 <tr class="@(album.Ignored ? "dim" : "")">
-                    <td class="cover-col"><a href="albums/@album.Id" tabindex="-1"><Cover Url="@album.CoverUrl" /></a></td>
+                    <td class="cover-col"><a href="@Format.AlbumHref(album)" tabindex="-1"><Cover Url="@album.CoverUrl" /></a></td>
                     <td>
-                        <a href="albums/@album.Id">@album.Title</a>
+                        <a href="@Format.AlbumHref(album)">@album.Title</a>
                         @if (ShowSecondary && album.SecondaryTypes.Count > 0)
                         {
                             <span class="muted small"> · @Format.Secondary(album.SecondaryTypes)</span>
@@ -32,14 +32,14 @@
                         @{
                             var missing = album.Status == AlbumStatus.Missing;
                             RenderFragment play = @<text>
-                                <IconButton Icon="@(missing ? "listen" : "play")" Title="@(missing ? "Listen: fetch it to play now, without adding it to your library" : album.Status == AlbumStatus.Partial ? "Play, fetching the tracks you don't have to listen to" : "Play")"
+                                <IconButton Icon="@(missing ? "listen" : "play")" Requires="@UserPermissions.Listen" Title="@(missing ? "Listen: fetch it to play now, without adding it to your library" : album.Status == AlbumStatus.Partial ? "Play, fetching the tracks you don't have to listen to" : "Play")"
                                             OnClick="() => Player.PlayAlbumAsync(album.Id)" />
-                                <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.QueueAlbumAsync(album.Id)" />
+                                <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true" OnClick="() => Player.QueueAlbumAsync(album.Id)" />
                             </text>;
                         }
                         @if (album.Ignored)
                         {
-                            <IconButton Icon="unignore" Title="Unignore: count this album again" OnClick="() => OnIgnore.InvokeAsync(album)" />
+                            <IconButton Icon="unignore" Requires="@UserPermissions.Request" Title="Unignore: count this album again" OnClick="() => OnIgnore.InvokeAsync(album)" />
                         }
                         else if (album.Status is AlbumStatus.Partial or AlbumStatus.Missing)
                         {
@@ -47,7 +47,7 @@
                                 @play
                                 @if (missing)
                                 {
-                                    <IconButton Icon="ignore" Title="Ignore: stop counting this album as missing" OnClick="() => OnIgnore.InvokeAsync(album)" />
+                                    <IconButton Icon="ignore" Requires="@UserPermissions.Request" Title="Ignore: stop counting this album as missing" OnClick="() => OnIgnore.InvokeAsync(album)" />
                                 }
                             </FetchButton>
                         }

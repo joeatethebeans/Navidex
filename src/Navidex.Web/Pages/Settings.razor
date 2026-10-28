@@ -61,6 +61,19 @@ else
         <div class="muted small">A busy album goes to the back of the queue, so MusicBrainz gets time to recover before it's tried again.</div>
     </div>
 
+    <h2>Showing your music</h2>
+    <div class="card" style="padding: .75rem 1rem;">
+        <label>
+            <input type="checkbox" checked="@_settings.PreferFileMetadata" @onchange="e => _settings = _settings with { PreferFileMetadata = (bool)e.Value! }" />
+            Prefer your files' own tags and covers
+        </label>
+        <div class="muted small">
+            Song titles, artists and albums show as your files' tags have them, and covers come from the files (an embedded picture, or
+            one like folder.jpg beside them), wherever a file has them; the catalogue fills in the rest. Matching and what counts as missing
+            still go by the catalogue. Files you exclude from matching always show as their own tags say.
+        </div>
+    </div>
+
     <h2>Fetching</h2>
     <div class="card" style="padding: .75rem 1rem;">
         <div class="field">

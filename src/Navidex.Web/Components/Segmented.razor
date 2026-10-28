@@ -7,7 +7,7 @@
     {
         var selected = EqualityComparer<T>.Default.Equals(value, Value);
         <button role="radio" aria-checked="@(selected ? "true" : "false")" class="@(selected ? "selected" : "")" title="@hint"
-                @onclick="() => OnChange.InvokeAsync(value)">@label</button>
+                @onclick="() => OnChange.InvokeAsync(value)"><span class="segment-label" data-label="@label">@label</span></button>
     }
 </div>
 

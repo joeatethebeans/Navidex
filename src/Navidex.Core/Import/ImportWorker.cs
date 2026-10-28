@@ -53,6 +53,27 @@ public sealed record DeleteResult(IReadOnlyList<string> Deleted, IReadOnlyList<D
 
 public sealed record DeleteFailure(string Path, string Error);
 
+/// <summary>Body of <c>POST /v1/format</c>.</summary>
+/// <param name="Artwork">Images the files name, by key, so a cover shared by an album is sent once.</param>
+/// <param name="PathTemplate">Move each file to where this beets path format puts it, by its new tags; null to leave it.</param>
+public sealed record FormatRequest(IReadOnlyList<FormatFile> Files, IReadOnlyDictionary<string, FormatArtwork> Artwork, string? PathTemplate);
+
+/// <param name="Path">Relative to the library root.</param>
+/// <param name="Tags">Tags to write, by beets field name; the rest stay as they are. An empty value clears one.</param>
+/// <param name="Artwork">The key of the image to embed as the front cover; null to leave the embedded art.</param>
+/// <param name="RemoveArtwork">Take the embedded art out.</param>
+public sealed record FormatFile(string Path, IReadOnlyDictionary<string, string> Tags, string? Artwork, bool RemoveArtwork);
+
+/// <param name="Data">The image, base64.</param>
+public sealed record FormatArtwork(string Data);
+
+public sealed record FormatResult(IReadOnlyList<FormattedFile> Files);
+
+/// <param name="Path">The file's path, as sent.</param>
+/// <param name="NewPath">Where it is now; null when it couldn't be formatted.</param>
+/// <param name="Error">Why it couldn't be.</param>
+public sealed record FormattedFile(string Path, string? NewPath, long? Size, string? Error);
+
 /// <summary>Imports staged files into the library.</summary>
 public interface IImportWorker
 {
@@ -60,6 +81,9 @@ public interface IImportWorker
 
     /// <summary>Deletes files from the library, and any folder left with nothing but artwork and the like.</summary>
     Task<DeleteResult> DeleteAsync(DeleteRequest request, CancellationToken ct);
+
+    /// <summary>Rewrites files in the library: their tags, embedded cover and place.</summary>
+    Task<FormatResult> FormatAsync(FormatRequest request, CancellationToken ct);
 
     Task<HealthReport> CheckHealthAsync(CancellationToken ct);
 }
@@ -99,6 +123,14 @@ public sealed class HttpImportWorker(HttpClient http) : IImportWorker
         if (!response.IsSuccessStatusCode)
             throw new ImportException(await ErrorAsync(response, ct));
         return (await response.Content.ReadFromJsonAsync<DeleteResult>(RetrievalJson.Options, ct))!;
+    }
+
+    public async Task<FormatResult> FormatAsync(FormatRequest request, CancellationToken ct)
+    {
+        using var response = await http.PostAsJsonAsync("v1/format", request, RetrievalJson.Options, ct);
+        if (!response.IsSuccessStatusCode)
+            throw new ImportException(await ErrorAsync(response, ct));
+        return (await response.Content.ReadFromJsonAsync<FormatResult>(RetrievalJson.Options, ct))!;
     }
 
     public async Task<HealthReport> CheckHealthAsync(CancellationToken ct)

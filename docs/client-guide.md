@@ -23,8 +23,9 @@ guide covers what the reference can't: how the pieces fit together.
 
 ## Getting a key
 
-Apps authenticate with an API key. The person running Navidex makes one under **Settings → Security → API keys**,
-choosing what it may do, and gives it to your app. Send it on every call in the `X-Api-Key` header:
+Apps authenticate with an API key. Someone with the API keys permission makes one under **Settings → API**,
+choosing what it may do, and gives it to your app. A key belongs to whoever made it and can never do more than they
+may: if their permissions shrink, or they're removed, so does the key. Send it on every call in the `X-Api-Key` header:
 
 ```bash
 curl -H "X-Api-Key: ndx_..." http://navidex.local:8787/api/v1/library
@@ -38,22 +39,31 @@ old. A revoked key is refused at once. Ask for one key per app, so each can be r
 are credited to the key's name on the Navidex Activity page and in events.
 
 The web app itself signs in with a username and password and a session cookie (`/auth/*`). Apps don't use those.
+Everyone signs in, even on the local network.
 
 A few calls need no key at all: `GET /health`, `GET /version`, `GET /auth/status`, artwork (`GET /artwork/...`),
 signed stream URLs, and this reference.
 
 ## Scopes
 
-Each key has one or more scopes:
+Each key has one or more scopes, the same permissions users are given:
 
 | Scope | Allows |
 | --- | --- |
 | `read` | Reading the library, the catalogue, requests, listen-now tracks and tasks, and following `GET /events` |
 | `request` | Making, cancelling, retrying and choosing for requests; ignoring and un-ignoring albums and tracks |
-| `listen` | Starting, adding and discarding listen-now tracks, and `GET /tracks/{id}/play` |
-| `admin` | Everything, including settings, plugins, review, removing music, keys and webhooks |
+| `listen` | Starting, adding and discarding listen-now tracks, and playing tracks and files |
+| `review` | The review lists: approving, matching, excluding, deferring and hiding files |
+| `format` | Planning and running formatting, which rewrites files' tags and covers and moves them |
+| `remove` | Removing music from the library |
+| `scan` | Scanning the library, and pausing, cancelling and moving tasks |
+| `settings` | Reading and changing settings and plugins, and reading the log |
+| `keys` | Making and revoking API keys, and managing webhooks |
+| `users` | Adding, changing and removing users |
+| `admin` | Everything its owner may do |
 
-Unless the reference says otherwise, a `GET` needs `read` and anything that changes something needs `admin`. Each
+Unless the reference says otherwise, a `GET` needs `read` and anything that changes something needs `admin`, which only
+the admin's keys have in full. Each
 operation in the reference ends with the scope it needs. Most apps want `read` plus `request` or `listen`, or both.
 
 Calling something your key can't do gives `403`, with the scope it needed:

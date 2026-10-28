@@ -92,6 +92,12 @@ public sealed record LibrarySettings
     /// <summary>Hide albums with no official release, such as bootleg-only albums.</summary>
     public bool HideUnofficial { get; init; } = true;
 
+    /// <summary>
+    /// Show the music you have as its files' own tags and covers say, rather than as the catalogue names it, wherever a
+    /// file has them. Matching and what counts as missing still go by the catalogue.
+    /// </summary>
+    public bool PreferFileMetadata { get; init; }
+
     /// <summary>Whether owning a recording on any album counts for every album it appears on.</summary>
     [JsonIgnore]
     public bool CountsOwnedAnywhere => DuplicateTracks != DuplicateTracks.KeepBoth;
@@ -103,6 +109,7 @@ public sealed record LibrarySettings
 /// <param name="CoveredAlbums">Albums whose tracks are all in the library on other albums.</param>
 /// <param name="ImageUrl">A picture of the artist from the artwork plugins, served by the core; a 404 when there's none.</param>
 /// <param name="PartialAlbums">Owned albums with tracks missing; included in <paramref name="OwnedAlbums"/>.</param>
+/// <param name="Local">An artist only your own files name, no catalogue; see <c>GET /library/local/artists/{id}</c>.</param>
 public sealed record LibraryArtist(
     Guid Id,
     string Name,
@@ -114,7 +121,8 @@ public sealed record LibraryArtist(
     int CoveredAlbums,
     int Files,
     string? ImageUrl = null,
-    int PartialAlbums = 0);
+    int PartialAlbums = 0,
+    bool Local = false);
 
 public sealed record ArtistDetail(
     Guid Id,
@@ -133,6 +141,7 @@ public sealed record ArtistDetail(
 /// <param name="TotalTracks">Tracks on that edition, less ignored ones you don't have; null until the album's editions have been fetched.</param>
 /// <param name="Ignored">The album is ignored, or every track you don't have on it is.</param>
 /// <param name="CoverUrl">The cover from the artwork plugins, served by the core: the owned edition's, or the album's. A 404 when there's none.</param>
+/// <param name="Local">Music of your own that no catalogue knows, as its files' tags say; see <c>GET /library/local/albums/{id}</c>.</param>
 public sealed record AlbumSummary(
     Guid Id,
     Guid ArtistId,
@@ -147,7 +156,8 @@ public sealed record AlbumSummary(
     int? OwnedTracks,
     int? TotalTracks,
     IReadOnlyList<ProviderId> Ids,
-    string? CoverUrl = null);
+    string? CoverUrl = null,
+    bool Local = false);
 
 /// <param name="OwnedEditionId">The edition the library has, if any.</param>
 /// <param name="ShownEditionId">The edition whose tracks are listed: the owned one, the requested one, or the best fit.</param>
@@ -191,7 +201,7 @@ public sealed record MissingAlbum(string ArtistName, AlbumSummary Album);
 /// <summary>An album you have some or all of.</summary>
 public sealed record LibraryAlbum(string ArtistName, AlbumSummary Album);
 
-/// <summary>A song you have: one matched file.</summary>
+/// <summary>A song you have: one matched file, or one of your own (<paramref name="Local"/>), whose track ID is its file's.</summary>
 /// <param name="AlbumId">The album the file is filed under, when it's matched to one.</param>
 /// <param name="Number">Its track number on that album, such as <c>4</c> or <c>A2</c>.</param>
 /// <param name="Path">The file, relative to the music folder.</param>
@@ -208,7 +218,8 @@ public sealed record LibraryTrack(
     double? DurationSeconds,
     string Path,
     string? Format,
-    string? CoverUrl);
+    string? CoverUrl,
+    bool Local = false);
 
 /// <summary>A file that couldn't be matched confidently.</summary>
 public sealed record ReviewItem(
@@ -221,10 +232,65 @@ public sealed record ReviewItem(
     string? Album,
     double? DurationSeconds,
     SuggestedTrack? Suggestion,
-    bool Excluded = false);
+    bool Excluded = false,
+    SetAside SetAside = SetAside.None);
 
 /// <summary>Body of <c>PUT /library/files/{id}/excluded</c>.</summary>
 public sealed record ExcludeFile(bool Excluded);
+
+/// <summary>What's been decided about a file that couldn't be matched, instead of matching it.</summary>
+public enum SetAside
+{
+    /// <summary>Nothing: it's matched, or on the review list.</summary>
+    None,
+
+    /// <summary>Never matched, but kept in the library as its own tags say.</summary>
+    Excluded,
+
+    /// <summary>Off the review list; each scan tries it again, matching it only when it beats the threshold.</summary>
+    Deferred,
+
+    /// <summary>Out of the library altogether, though it stays in the music folder.</summary>
+    Hidden,
+}
+
+/// <summary>The lists on the Review page.</summary>
+public enum ReviewList
+{
+    /// <summary>Files waiting for a decision.</summary>
+    Review,
+
+    /// <summary>Excluded files with a title and artist, which the library shows as they are.</summary>
+    Excluded,
+
+    /// <summary>Excluded files missing a title or artist, which the library can't show.</summary>
+    Incomplete,
+
+    Deferred,
+    Hidden,
+}
+
+/// <summary>Body of <c>PUT /library/files/{id}/set-aside</c>.</summary>
+public sealed record SetFileAside(SetAside As);
+
+/// <summary>Body of <c>POST /library/review/set-aside</c>.</summary>
+public sealed record SetFilesAside(IReadOnlyList<Guid> FileIds, SetAside As);
+
+/// <summary>Which files a scan matches again, as well as new and changed ones.</summary>
+public enum Rematch
+{
+    /// <summary>Only new and changed files.</summary>
+    None,
+
+    /// <summary>Files on the review list and deferred ones too.</summary>
+    Unmatched,
+
+    /// <summary>Every file, except ones you matched, excluded or hid yourself.</summary>
+    All,
+}
+
+/// <summary>Body of <c>POST /library/scan</c>; it can be left out.</summary>
+public sealed record ScanLibrary(Rematch Rematch = Rematch.None);
 
 /// <summary>Body of <c>POST /library/review/approve</c> and <c>/library/review/exclude</c>: the files to act on.</summary>
 public sealed record ReviewFiles(IReadOnlyList<Guid> FileIds);
@@ -258,11 +324,14 @@ public enum TaskState
     Running,
     Succeeded,
     Failed,
+    Cancelled,
 }
 
 /// <param name="Title">What it's working on, such as "Library scan"; filled in by <c>GET /tasks</c>.</param>
+/// <param name="Paused">Held back: it won't start until resumed. A paused scan picks up where it stopped.</param>
+/// <param name="QueueOrder">Its place among queued tasks: lower runs first.</param>
 public sealed record TaskInfo(Guid Id, string Kind, TaskState State, string? Progress, string? Error, DateTime CreatedAt, DateTime? StartedAt, DateTime? FinishedAt,
-    string? Title = null)
+    string? Title = null, bool Paused = false, double QueueOrder = 0)
 {
     public bool Active => State is TaskState.Queued or TaskState.Running;
 
@@ -272,9 +341,12 @@ public sealed record TaskInfo(Guid Id, string Kind, TaskState State, string? Pro
 
 /// <param name="LastScan">The most recent finished scan, successful or not: its progress says what it found, its error why it failed.</param>
 /// <param name="Reading">A scan is reading and matching files, or about to: new requests are refused and queued ones wait until it's done.</param>
+/// <param name="Files">Files in the library: every file in the music folder except hidden ones.</param>
 /// <param name="Excluded">Files excluded from matching; they're counted in <paramref name="Files"/> but not under review.</param>
+/// <param name="Deferred">Files put off, which each scan tries again; counted in <paramref name="Files"/> but not under review.</param>
+/// <param name="Hidden">Files hidden from the library, not counted in <paramref name="Files"/>.</param>
 public sealed record LibraryStatus(int Files, int Matched, int Review, int Pending, DateTime? LastScanAt, TaskInfo? CurrentTask, TaskInfo? LastScan = null,
-    bool Reading = false, int Excluded = 0);
+    bool Reading = false, int Excluded = 0, int Deferred = 0, int Hidden = 0);
 
 public enum LogEntryLevel
 {
@@ -376,11 +448,70 @@ public sealed record RemovalPreview(int Files, long Bytes, IReadOnlyList<string>
 /// <summary>Removes an artist, album or file from the library, for <c>POST /library/remove</c>.</summary>
 /// <param name="DeleteFiles">
 /// Delete the files from the music folder, and any folder left with nothing but artwork and the like. Otherwise the
-/// files stay where they are, excluded from matching, so Navidex no longer counts them; they can be included again
-/// from the Review page.
+/// files stay where they are, hidden, so Navidex no longer counts them; they can be shown again from the Review
+/// page.
 /// </param>
 public sealed record RemoveFromLibrary(LibraryItemKind Kind, Guid Id, bool DeleteFiles);
 
-/// <param name="Removed">Files deleted, or excluded when keeping them.</param>
+/// <param name="Removed">Files deleted, or hidden when keeping them.</param>
 /// <param name="Failed">Files that couldn't be deleted, with why; they stay in the library.</param>
 public sealed record RemovalResult(int Removed, IReadOnlyList<string> Failed);
+
+/// <summary>A song's page: the recording, the albums it's on, and its files in the library.</summary>
+/// <param name="CoverUrl">The cover of the album its file is on, or of the first album it's on.</param>
+public sealed record TrackDetail(
+    Guid Id,
+    string Title,
+    string ArtistCredit,
+    Guid ArtistId,
+    string ArtistName,
+    double? DurationSeconds,
+    bool Ignored,
+    IReadOnlyList<ProviderId> Ids,
+    string? CoverUrl,
+    IReadOnlyList<TrackAppearance> Appearances,
+    IReadOnlyList<TrackFile> Files);
+
+/// <summary>An edition the song is on, and where on it.</summary>
+/// <param name="Title">The song's title on this edition, which can differ from the recording's.</param>
+/// <param name="InLibrary">A file of the song is filed under this edition.</param>
+public sealed record TrackAppearance(
+    Guid AlbumId,
+    string AlbumTitle,
+    AlbumType AlbumType,
+    Guid EditionId,
+    string EditionTitle,
+    string? ReleaseDate,
+    string? Country,
+    int Disc,
+    string Number,
+    string Title,
+    bool InLibrary);
+
+/// <summary>A file of the song in the library, and the tags it has.</summary>
+/// <param name="Path">Relative to the music folder.</param>
+/// <param name="FormattedAt">When a format last rewrote it.</param>
+public sealed record TrackFile(
+    Guid Id,
+    string Path,
+    string? Format,
+    double? DurationSeconds,
+    long Size,
+    Guid? AlbumId,
+    Guid? EditionId,
+    IReadOnlyList<FileTag> Tags,
+    DateTime? FormattedAt);
+
+/// <summary>A tag as read from a file, with a name to show.</summary>
+public sealed record FileTag(string Name, string Value);
+
+/// <summary>An artist only your own files name: excluded files, shown as their tags say.</summary>
+public sealed record LocalArtistDetail(Guid Id, string Name, IReadOnlyList<AlbumSummary> Albums, string? ImageUrl);
+
+/// <summary>An album of your own files, as their tags say.</summary>
+/// <param name="ArtistId">The artist: a catalogue artist with the same name if the library has one, else the local artist.</param>
+/// <param name="ArtistLocal">Whether <paramref name="ArtistId"/> is a local artist rather than a catalogue one.</param>
+public sealed record LocalAlbumDetail(Guid Id, string Title, Guid ArtistId, string ArtistName, bool ArtistLocal, string? Date, string? CoverUrl,
+    IReadOnlyList<LocalTrack> Tracks);
+
+public sealed record LocalTrack(Guid FileId, int? Disc, int? Number, string Title, string Artist, double? DurationSeconds, string Path, string? Format);

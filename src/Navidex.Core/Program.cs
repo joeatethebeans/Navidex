@@ -37,7 +37,7 @@ builder.Services.AddSingleton(activity);
 builder.Logging.AddProvider(new ActivityLogProvider(activity));
 builder.Services.AddHostedService<LogArchive>();
 
-// Who may call the API: the admin's session, apps' keys, and the local network if that's let in. The keys that sign
+// Who may call the API: users' sessions and apps' keys. The keys that sign
 // sessions are kept with the data, so a restart doesn't sign everyone out.
 builder.Services.AddNavidexAccess();
 builder.Services.AddDataProtection()
@@ -64,14 +64,18 @@ builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<LibraryScanner>();
 builder.Services.AddScoped<LibraryMatcher>();
 builder.Services.AddScoped<LibraryView>();
+builder.Services.AddScoped<LocalMusic>();
 builder.Services.AddScoped<LibraryRemover>();
+builder.Services.AddScoped<LibraryFormatter>();
 builder.Services.AddScoped<CatalogueSearch>();
 
 // Background work
 builder.Services.AddSingleton<TaskSignal>();
+builder.Services.AddSingleton<TaskCancellations>();
 builder.Services.AddScoped<TaskQueue>();
 builder.Services.AddScoped<ITaskHandler, LibraryScanTask>();
 builder.Services.AddScoped<ITaskHandler, ArtistRefreshTask>();
+builder.Services.AddScoped<ITaskHandler, FormatTask>();
 builder.Services.AddHostedService<TaskWorker>();
 
 // Requests: fetch, verify, import with beets, tell the media server
@@ -111,11 +115,12 @@ using (var scope = app.Services.CreateScope())
     await app.Services.GetRequiredService<StreamSigner>().InitialiseAsync(db);
 }
 
-// The way back in when the password is lost: start once with Navidex__ResetLogin=true, then set a new one.
+// The way back in when the admin's password is lost: start once with Navidex__ResetLogin=true, then set a new one.
+// Other users, and everyone's keys, are kept.
 if (options.ResetLogin)
 {
-    await app.Services.GetRequiredService<AccessService>().SaveLoginAsync(null, CancellationToken.None);
-    app.Logger.LogWarning("The admin login was removed, as ResetLogin is set. Open the web app to set a new one, then unset ResetLogin");
+    await app.Services.GetRequiredService<AccessService>().ResetAdminAsync(CancellationToken.None);
+    app.Logger.LogWarning("The admin's password was cleared, as ResetLogin is set. Open the web app to set a new one, then unset ResetLogin");
 }
 
 // Work out the library's views in the background, so the first visit after starting is quick too.

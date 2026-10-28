@@ -41,6 +41,7 @@ public static class Format
     /// <summary>A request's state in a word or two, with progress for requests made of parts.</summary>
     public static string RequestLabel(RequestInfo r) => r.State switch
     {
+        _ when r.Paused && r.Active => "Paused",
         Client.RequestState.Queued => "Queued",
         Client.RequestState.InProgress when r.Parts is { } p => $"Fetching {p.InLibrary} of {p.Total}",
         Client.RequestState.InProgress => "In progress",
@@ -55,6 +56,9 @@ public static class Format
         _ => "Cancelled",
     };
 
+    /// <summary>The badge colour for a request, grey while paused.</summary>
+    public static string RequestBadge(RequestInfo r) => r.Paused && r.Active ? "neutral" : RequestBadge(r.State);
+
     /// <summary>The badge colour for a request state.</summary>
     public static string RequestBadge(Client.RequestState state) => state switch
     {
@@ -67,18 +71,22 @@ public static class Format
         _ => "active",
     };
 
-    public static string TaskLabel(TaskState state) => state switch
+    public static string TaskLabel(TaskInfo task) => task.State switch
     {
+        TaskState.Queued when task.Paused => "Paused",
         TaskState.Queued => "Waiting",
         TaskState.Running => "Running",
         TaskState.Succeeded => "Done",
+        TaskState.Cancelled => "Cancelled",
         _ => "Failed",
     };
 
-    public static string TaskBadge(TaskState state) => state switch
+    public static string TaskBadge(TaskInfo task) => task.State switch
     {
+        TaskState.Queued when task.Paused => "neutral",
         TaskState.Succeeded => "owned",
         TaskState.Failed => "missing",
+        TaskState.Cancelled => "neutral",
         TaskState.Queued => "active waiting",
         _ => "active",
     };
@@ -111,6 +119,11 @@ public static class Format
         >= 1L << 10 => $"{bytes / (double)(1L << 10):0} KB",
         _ => $"{bytes} bytes",
     };
+
+    /// <summary>Where an album's page is: the catalogue's, or for music of your own, its local page.</summary>
+    public static string AlbumHref(AlbumSummary album) => $"{(album.Local ? "local/albums" : "albums")}/{album.Id}";
+
+    public static string? AlbumHref(LibraryTrack track) => track.AlbumId is { } album ? $"{(track.Local ? "local/albums" : "albums")}/{album}" : null;
 
     public static string Count(int n, string one, string many) => $"{n:N0} {(n == 1 ? one : many)}";
 

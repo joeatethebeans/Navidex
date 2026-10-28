@@ -1,15 +1,46 @@
 @inherits LayoutComponentBase
 @layout MainLayout
+@inject AuthState Auth
+@inject NavigationManager Nav
 
-@* Settings, the log and plugins, as sections listed down the left; across the top on narrow screens. *@
+@* Settings, the log, plugins, users and API access, as sections listed down the left (across the top on narrow screens), each shown to those who may use it. *@
 <h1>Settings</h1>
 <div class="settings-page">
     <nav class="settings-nav" aria-label="Settings sections">
-        <NavLink href="settings" Match="NavLinkMatch.All">General</NavLink>
-        <NavLink href="settings/log">Log</NavLink>
-        <NavLink href="settings/plugins">Plugins</NavLink>
-        <NavLink href="settings/security">Security</NavLink>
-        <NavLink href="settings/webhooks">Webhooks</NavLink>
+        @if (Auth.May(UserPermissions.Settings))
+        {
+            <NavLink href="settings" Match="NavLinkMatch.All">General</NavLink>
+            <NavLink href="settings/log">Log</NavLink>
+            <NavLink href="settings/plugins">Plugins</NavLink>
+        }
+        @if (Auth.May(UserPermissions.Users))
+        {
+            <NavLink href="settings/users">Users</NavLink>
+        }
+        @if (Auth.May(UserPermissions.Keys))
+        {
+            <NavLink href="settings/api">API</NavLink>
+            <NavLink href="settings/webhooks">Webhooks</NavLink>
+        }
     </nav>
-    <div class="settings-body">@Body</div>
+    <div class="settings-body">
+        @if (Auth.May(Needed))
+        {
+            @Body
+        }
+        else
+        {
+            <div class="empty card">You can't open this. The admin can give you what's needed under Settings → Users.</div>
+        }
+    </div>
 </div>
+
+@code {
+    // What the open tab needs: users and keys have tabs of their own, and the rest are settings.
+    private string Needed => Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0].TrimEnd('/') switch
+    {
+        "settings/users" or "settings/security" => UserPermissions.Users,
+        "settings/api" or "settings/webhooks" => UserPermissions.Keys,
+        _ => UserPermissions.Settings,
+    };
+}

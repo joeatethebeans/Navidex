@@ -120,6 +120,26 @@ public static class ListenEndpoints
             .RequireScope(Scopes.Listen).WithName("PlayTrack").WithSummary("How to play a track you have: a signed stream URL for its file in your music folder. 404 if you don't have it.")
             .Produces<PlayInfo>().Produces(StatusCodes.Status404NotFound);
 
+        api.MapGet("/library/files/{id:guid}/play", async (Guid id, NavidexDbContext db, StreamSigner signer, CancellationToken ct) =>
+            {
+                var file = await db.LibraryFiles.Include(f => f.Track).Include(f => f.Edition).ThenInclude(e => e!.Album)
+                    .FirstOrDefaultAsync(f => f.Id == id && f.HiddenAt == null, ct);
+                if (file is null)
+                    return Results.NotFound();
+                var tags = FileTags.Parse(file.TagsJson);
+                var codec = MediaTypes.CodecFor(file.Path);
+                var album = file.Edition?.Album;
+                return Results.Ok(new PlayInfo(file.TrackId ?? file.Id, file.Id, file.Track?.Title ?? tags.Title ?? Path.GetFileNameWithoutExtension(file.Path),
+                    file.Track?.ArtistCredit ?? tags.Artist ?? tags.AlbumArtist ?? "", file.Track?.ArtistId, album?.Id, album?.Title ?? tags.Album,
+                    album is not null ? LibraryView.CoverUrl(album.Id, file.EditionId) : LocalMusic.CoverUrl(file.Id),
+                    (file.Duration ?? file.Track?.Duration)?.TotalSeconds, codec, MediaTypes.For(file.Path, codec), signer.Sign(LibraryStreamPath(file.Id))));
+            })
+            .WithTags("Library")
+            .RequireScope(Scopes.Listen).WithName("PlayFile")
+            .WithSummary("How to play one file from your music folder, matched or not, such as your own music: a signed stream URL. "
+                         + "Its track ID is the file's own when it isn't matched.")
+            .Produces<PlayInfo>().Produces(StatusCodes.Status404NotFound);
+
         api.MapGet("/library/files/{id:guid}/stream", async (Guid id, long? exp, string? sig, NavidexDbContext db, StreamSigner signer,
                 Microsoft.Extensions.Options.IOptions<NavidexOptions> options, CancellationToken ct) =>
             {

@@ -16,7 +16,7 @@ using Navidex.Core.Tests.Support;
 
 namespace Navidex.Core.Tests;
 
-/// <summary>Signing in, the local network, API keys and their scopes, and webhooks.</summary>
+/// <summary>Signing in, users and their permissions, API keys and their scopes, and webhooks.</summary>
 public sealed class AccessTests : IDisposable
 {
     /// <summary>Stands in for the caller's address, which the test server doesn't have.</summary>
@@ -157,44 +157,145 @@ public sealed class AccessTests : IDisposable
     }
 
     [Fact]
-    public async Task The_local_network_is_let_in_only_when_allowed_and_not_through_a_proxy()
+    public async Task Everyone_signs_in_even_on_the_local_network()
     {
-        var admin = new NavidexClient(_factory.CreateSignedInClient());
-
-        async Task<HttpStatusCode> FromAsync(string address, bool proxied = false)
+        _factory.CreateSignedInClient();
+        foreach (var address in new[] { "192.168.1.20", "10.0.0.4", "::1" })
         {
             using var http = _factory.CreateClient();
             using var request = new HttpRequestMessage(HttpMethod.Get, "api/v1/library");
             request.Headers.Add(RemoteHeader, address);
-            if (proxied)
-                request.Headers.Add("X-Forwarded-For", "203.0.113.9");
-            return (await http.SendAsync(request)).StatusCode;
+            Assert.Equal(HttpStatusCode.Unauthorized, (await http.SendAsync(request)).StatusCode);
         }
-
-        Assert.Equal(HttpStatusCode.Unauthorized, await FromAsync("192.168.1.20"));
-
-        await admin.SaveAccessSettingsAsync(new AccessSettings(SkipOnLocalNetwork: true));
-        Assert.Equal(HttpStatusCode.OK, await FromAsync("192.168.1.20"));
-        Assert.Equal(HttpStatusCode.OK, await FromAsync("10.0.0.4"));
-        Assert.Equal(HttpStatusCode.OK, await FromAsync("::1"));
-        Assert.Equal(HttpStatusCode.Unauthorized, await FromAsync("192.168.1.20", proxied: true));
-        Assert.Equal(HttpStatusCode.Unauthorized, await FromAsync("8.8.8.8"));
     }
 
-    [Theory]
-    [InlineData("127.0.0.1", true)]
-    [InlineData("10.1.2.3", true)]
-    [InlineData("172.16.0.1", true)]
-    [InlineData("172.31.255.1", true)]
-    [InlineData("172.32.0.1", false)]
-    [InlineData("192.168.0.200", true)]
-    [InlineData("169.254.1.1", true)]
-    [InlineData("::ffff:192.168.0.5", true)]
-    [InlineData("fd12:3456::1", true)]
-    [InlineData("fe80::1", true)]
-    [InlineData("2001:db8::1", false)]
-    [InlineData("8.8.8.8", false)]
-    public void Local_addresses(string address, bool local) => Assert.Equal(local, AccessService.IsLocal(IPAddress.Parse(address)));
+    [Fact]
+    public async Task Remember_me_keeps_the_session_after_the_browser_closes()
+    {
+        _factory.CreateSignedInClient();
+        async Task<string> CookieAsync(bool remember)
+        {
+            using var http = _factory.CreateClient();
+            var response = await http.PostAsJsonAsync("api/v1/auth/login", new SignIn(SignedIn.Username, SignedIn.Password, remember));
+            response.EnsureSuccessStatusCode();
+            return Assert.Single(response.Headers.GetValues("Set-Cookie"), c => c.StartsWith(AccessMiddleware.SessionCookie));
+        }
+
+        Assert.Contains("expires=", await CookieAsync(remember: true));
+        Assert.DoesNotContain("expires=", await CookieAsync(remember: false));
+    }
+
+    [Fact]
+    public async Task A_user_may_do_only_what_they_were_given()
+    {
+        var admin = new NavidexClient(_factory.CreateSignedInClient());
+        var listener = await admin.CreateUserAsync(new CreateUser("Listener", "listening password", [Scopes.Read, Scopes.Listen]));
+        Assert.False(listener.IsAdmin);
+
+        var http = await SignInAsync("listener", "listening password");
+        var status = await http.GetFromJsonAsync<AuthStatus>("api/v1/auth/status", NavidexJson.Options);
+        Assert.Equal("Listener", status!.Username);
+        Assert.Equal(listener.Id, status.UserId);
+        Assert.True(status.May(UserPermissions.Listen));
+        Assert.False(status.May(UserPermissions.Request));
+
+        Assert.Equal(HttpStatusCode.OK, (await http.GetAsync("api/v1/library")).StatusCode);
+        var refused = await http.PostAsJsonAsync("api/v1/requests", new CreateRequest(RequestKind.Track, Guid.NewGuid()), NavidexJson.Options);
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+        Assert.Equal("request", (await Problem(refused)).GetProperty("scope").GetString());
+        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("api/v1/settings/fetch")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("api/v1/users")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await http.PostAsync("api/v1/library/scan", null)).StatusCode);
+
+        // Given more, they may do more at once, without signing in again.
+        await admin.UpdateUserAsync(listener.Id, new UpdateUser(Permissions: [Scopes.Read, Scopes.Listen, Scopes.Settings]));
+        Assert.Equal(HttpStatusCode.OK, (await http.GetAsync("api/v1/settings/fetch")).StatusCode);
+
+        // Removed, they're signed out.
+        await admin.RemoveUserAsync(listener.Id);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("api/v1/library")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Nobody_gives_what_they_dont_have_and_only_the_admin_changes_the_admin()
+    {
+        var admin = new NavidexClient(_factory.CreateSignedInClient());
+        var adminId = (await admin.ListUsersAsync()).Single(u => u.IsAdmin).Id;
+        var managerInfo = await admin.CreateUserAsync(new CreateUser("manager", "managing password", [Scopes.Read, Scopes.Users]));
+        var manager = new NavidexClient(await SignInAsync("manager", "managing password"));
+
+        var guest = await manager.CreateUserAsync(new CreateUser("guest", "a guest password", [Scopes.Read]));
+        var beyond = await Assert.ThrowsAsync<NavidexApiException>(() => manager.CreateUserAsync(new CreateUser("dj", "a dj password", [Scopes.Read, Scopes.Request])));
+        Assert.Equal(HttpStatusCode.Forbidden, beyond.Status);
+        beyond = await Assert.ThrowsAsync<NavidexApiException>(() => manager.UpdateUserAsync(guest.Id, new UpdateUser(Permissions: [Scopes.Settings])));
+        Assert.Equal(HttpStatusCode.Forbidden, beyond.Status);
+
+        var notAdmin = await Assert.ThrowsAsync<NavidexApiException>(() => manager.UpdateUserAsync(adminId, new UpdateUser(Password: "taken over now")));
+        Assert.Equal(HttpStatusCode.Forbidden, notAdmin.Status);
+        var conflict = await Assert.ThrowsAsync<NavidexApiException>(() => manager.RemoveUserAsync(adminId));
+        Assert.Equal(HttpStatusCode.Conflict, conflict.Status);
+        conflict = await Assert.ThrowsAsync<NavidexApiException>(() => manager.RemoveUserAsync(managerInfo.Id));
+        Assert.Equal(HttpStatusCode.Conflict, conflict.Status);
+
+        var taken = await Assert.ThrowsAsync<NavidexApiException>(() => manager.CreateUserAsync(new CreateUser("GUEST", "another password", [Scopes.Read])));
+        Assert.Equal(HttpStatusCode.BadRequest, taken.Status);
+        await manager.RemoveUserAsync(guest.Id);
+        Assert.Equal(["admin", "manager"], (await admin.ListUsersAsync()).Select(u => u.Username).Order());
+    }
+
+    [Fact]
+    public async Task Keys_can_do_no_more_than_their_owner()
+    {
+        var admin = new NavidexClient(_factory.CreateSignedInClient());
+        var owner = await admin.CreateUserAsync(new CreateUser("maker", "making password", [Scopes.Read, Scopes.Keys]));
+        var maker = new NavidexClient(await SignInAsync("maker", "making password"));
+
+        var beyond = await Assert.ThrowsAsync<NavidexApiException>(() => maker.CreateApiKeyAsync(new CreateApiKey("Requester", [Scopes.Request])));
+        Assert.Equal(HttpStatusCode.Forbidden, beyond.Status);
+        // Admin on a key is everything its owner may.
+        var everything = await maker.CreateApiKeyAsync(new CreateApiKey("Everything", [Scopes.Admin]));
+        Assert.Equal("maker", everything.Info.Owner);
+
+        var app = _factory.CreateClient();
+        app.DefaultRequestHeaders.Add(AccessService.KeyHeader, everything.Key);
+        Assert.Equal(HttpStatusCode.OK, (await app.GetAsync("api/v1/library")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await app.PostAsJsonAsync("api/v1/requests", new CreateRequest(RequestKind.Track, Guid.NewGuid()), NavidexJson.Options)).StatusCode);
+
+        // The owner given more, the key may do more; the admin sees every key, others only their own.
+        await admin.UpdateUserAsync(owner.Id, new UpdateUser(Permissions: [Scopes.Read, Scopes.Keys, Scopes.Request]));
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await app.PostAsJsonAsync("api/v1/requests", new CreateRequest(RequestKind.Track, Guid.NewGuid()), NavidexJson.Options)).StatusCode);
+        await admin.CreateApiKeyAsync(new CreateApiKey("Admin's own", [Scopes.Read]));
+        Assert.Equal(["Everything"], (await maker.ListApiKeysAsync()).Select(k => k.Name));
+        Assert.Equal(2, (await admin.ListApiKeysAsync()).Count);
+
+        // Their keys go with them.
+        await admin.RemoveUserAsync(owner.Id);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await app.GetAsync("api/v1/library")).StatusCode);
+    }
+
+    [Fact]
+    public async Task The_login_from_before_users_becomes_the_admin()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
+            db.Settings.Add(new Setting
+            {
+                Key = AccessService.LoginKey,
+                ValueJson = JsonSerializer.Serialize(new AdminLogin { Username = "joe", PasswordHash = AccessService.HashPassword("an old password"), Stamp = "old" },
+                    NavidexJson.Options),
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var http = await SignInAsync("joe", "an old password");
+        var status = await http.GetFromJsonAsync<AuthStatus>("api/v1/auth/status", NavidexJson.Options);
+        Assert.True(status!.IsAdmin);
+        Assert.True(status.SetUp);
+        Assert.Equal(HttpStatusCode.OK, (await http.GetAsync("api/v1/users")).StatusCode);
+    }
 
     [Fact]
     public async Task Webhooks_get_signed_events_they_asked_for()
@@ -287,6 +388,13 @@ public sealed class AccessTests : IDisposable
         Assert.Contains("\"X-Api-Key\"", spec);
         Assert.Contains("Needs the `request` scope.", spec);
         Assert.Contains("Open to anyone: no key needed.", spec);
+    }
+
+    private async Task<HttpClient> SignInAsync(string username, string password)
+    {
+        var http = _factory.CreateClient();
+        (await http.PostAsJsonAsync("api/v1/auth/login", new SignIn(username, password))).EnsureSuccessStatusCode();
+        return http;
     }
 
     private static async Task<bool> Delay()

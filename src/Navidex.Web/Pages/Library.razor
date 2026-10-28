@@ -69,7 +69,7 @@
                 {
                     var album = item.Album;
                     <div class="tile-wrap" @key="album.Id" data-vt="@album.Id.ToString("N")">
-                        <a class="tile" href="albums/@album.Id" title="@album.Title · @item.ArtistName">
+                        <a class="tile" href="@Format.AlbumHref(album)" title="@album.Title · @item.ArtistName">
                             <Cover Url="@album.CoverUrl" />
                             <div class="tile-name">@album.Title</div>
                             <div class="muted small tile-sub">@item.ArtistName@(Format.Year(album.FirstReleaseDate) is { Length: > 0 } year ? $" · {year}" : "")</div>
@@ -79,8 +79,11 @@
                                 <div class="muted small">@(album.OwnedTracks == total ? $"All {total} tracks" : $"{album.OwnedTracks} of {total} tracks")</div>
                             }
                         </a>
-                        <IconButton Icon="remove" Class="remove tile-remove" Title="Remove from your library…"
-                                    OnClick="() => RemoveAlbum(item)" />
+                        @if (!album.Local)
+                        {
+                            <IconButton Icon="remove" Requires="@UserPermissions.Remove" Class="remove tile-remove" Title="Remove from your library…"
+                                        OnClick="() => RemoveAlbum(item)" />
+                        }
                     </div>
                 }
             </div>
@@ -104,22 +107,22 @@
                         {
                             <tr @key="track.FileId">
                                 <td class="cover-col">
-                                    @if (track.AlbumId is { } albumId) { <a href="albums/@albumId" tabindex="-1"><Cover Url="@track.CoverUrl" /></a> }
+                                    @if (Format.AlbumHref(track) is { } albumHref) { <a href="@albumHref" tabindex="-1"><Cover Url="@track.CoverUrl" /></a> }
                                     else { <Cover Url="@track.CoverUrl" /> }
                                 </td>
                                 <td class="track-main">
-                                    <div class="ellipsis">@track.Title</div>
+                                    <div class="ellipsis"><a href="@(track.Local ? Format.AlbumHref(track) : $"tracks/{track.TrackId}")" class="plain">@track.Title</a></div>
                                     <div class="muted small ellipsis">
                                         @if (track.ArtistId is { } artistId) { <a href="artists/@artistId">@track.ArtistCredit</a> } else { @track.ArtistCredit }
-                                        @if (track.AlbumId is { } id) { <span> · <a href="albums/@id">@track.AlbumTitle</a></span> }
+                                        @if (Format.AlbumHref(track) is { } href) { <span> · <a href="@href">@track.AlbumTitle</a></span> }
                                     </div>
                                 </td>
                                 <td class="num muted small hide-narrow">@track.Format</td>
                                 <td class="num muted">@Format.Duration(track.DurationSeconds)</td>
                                 <td class="num actions">
-                                    <IconButton Icon="play" Title="Play the tracks listed from here" OnClick="() => PlayFromAsync(track)" />
-                                    <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track)])" />
-                                    <IconButton Icon="remove" Class="remove" Title="Remove from your library…"
+                                    <IconButton Icon="play" Requires="@UserPermissions.Listen" Title="Play the tracks listed from here" OnClick="() => PlayFromAsync(track)" />
+                                    <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track)])" />
+                                    <IconButton Icon="remove" Requires="@UserPermissions.Remove" Class="remove" Title="Remove from your library…"
                                                 OnClick="() => RemoveTrack(track)" />
                                 </td>
                             </tr>
@@ -149,7 +152,7 @@
                 {
                     var total = artist.OwnedAlbums + artist.MissingAlbums;
                     <div class="tile-wrap" @key="artist.Id" data-vt="@artist.Id.ToString("N")">
-                        <a class="tile" href="artists/@artist.Id" title="@Title(artist)">
+                        <a class="tile" href="@(artist.Local ? "local/artists" : "artists")/@artist.Id" title="@Title(artist)">
                             <Cover Url="@artist.ImageUrl" Artist="true" />
                             <div class="tile-name">@artist.Name</div>
                             <OwnershipMeter Complete="artist.OwnedAlbums - artist.PartialAlbums" Partial="artist.PartialAlbums" Covered="artist.CoveredAlbums" Missing="artist.MissingAlbums" />
@@ -157,8 +160,11 @@
                                 @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")@(artist.CoveredAlbums > 0 ? $" · {artist.CoveredAlbums} covered" : "")
                             </div>
                         </a>
-                        <IconButton Icon="remove" Class="remove tile-remove" Title="Remove from your library…"
-                                    OnClick="() => Remove(LibraryItemKind.Artist, artist.Id, artist.Name)" />
+                        @if (!artist.Local)
+                        {
+                            <IconButton Icon="remove" Requires="@UserPermissions.Remove" Class="remove tile-remove" Title="Remove from your library…"
+                                        OnClick="() => Remove(LibraryItemKind.Artist, artist.Id, artist.Name)" />
+                        }
                     </div>
                 }
             </div>

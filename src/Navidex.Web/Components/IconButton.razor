@@ -1,4 +1,8 @@
+@inject AuthState Auth
+
 @* A square button with an icon, for the actions beside albums and tracks. The title says what it does. *@
+@if (Requires is null || Auth.May(Requires))
+{
 <button class="icon-button @Class @(Primary ? "primary" : "") @(Large ? "large" : "") @(On ? "on" : "") @(_done ? "done" : "")" title="@Title" aria-label="@Title"
         disabled="@(Disabled || _busy)" @onclick="ClickAsync">
     @if (_busy)
@@ -64,6 +68,12 @@
                 case "search":
                     <circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" />
                     break;
+                case "pause":
+                    <path class="fill" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />
+                    break;
+                case "top":
+                    <path d="M5 4h14M12 20V9M6 14l6-6 6 6" />
+                    break;
                 case "copy":
                     <rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
                     break;
@@ -76,6 +86,9 @@
                 case "history":
                     <path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4M12 8v4l3 2" />
                     break;
+                case "format":
+                    <path d="M3.5 12.5V4h8.5l9 9-8.5 8.5z" /><circle cx="8" cy="8.5" r="1.4" />
+                    break;
                 case "done":
                     <path d="M5 12.5l4.5 4.5L19 7.5" />
                     break;
@@ -84,9 +97,10 @@
     }
     @if (Label is not null) { <span>@Label</span> }
 </button>
+}
 
 @code {
-    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard, remove, cancel, up, down, test, settings, power, approve, search, copy, key, show or history.</summary>
+    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard, remove, cancel, up, down, test, settings, power, approve, search, copy, key, show, history, pause, top or format.</summary>
     [Parameter, EditorRequired] public string Icon { get; set; } = "";
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public EventCallback OnClick { get; set; }
@@ -105,6 +119,9 @@
 
     /// <summary>Shows a tick for a moment afterwards, for actions with nothing else to show, such as adding to the queue.</summary>
     [Parameter] public bool Confirm { get; set; }
+
+    /// <summary>The permission it needs: without it, the button isn't shown. See <see cref="UserPermissions"/>.</summary>
+    [Parameter] public string? Requires { get; set; }
 
     private bool _busy;
     private bool _done;

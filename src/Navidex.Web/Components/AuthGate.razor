@@ -2,7 +2,7 @@
 @inject NavidexClient Api
 @inject AuthState Auth
 
-@* The app, once this browser may use it; until then, setting up the admin login or signing in. *@
+@* The app, once this browser is signed in; until then, making the admin account or signing in. *@
 @if (Auth.Status is not { } status)
 {
     @if (_error is not null)
@@ -30,8 +30,11 @@ else
             }
             else
             {
-                <h1>Welcome</h1>
-                <p class="muted small">Choose a username and password for Navidex. You'll sign in with them, and they keep others on your network out.</p>
+                <h1>Make the admin account</h1>
+                <p class="muted small">
+                    The admin may do everything in Navidex, including adding other people under Settings → Users with only what they need.
+                    Everyone signs in, even at home.
+                </p>
             }
 
             <label class="field">
@@ -49,11 +52,14 @@ else
                     <span class="field-label">Password again</span>
                     <input type="password" autocomplete="new-password" @bind="_confirm" @bind:event="oninput" required />
                 </label>
+            }
+            else
+            {
                 <label class="auth-check">
-                    <input type="checkbox" @bind="_skipLocal" />
+                    <input type="checkbox" @bind="_remember" />
                     <span>
-                        Don't ask on my local network
-                        <span class="muted small">Anyone on your home network can use Navidex without signing in. Calls from further away, or through a reverse proxy, still need the password.</span>
+                        Remember me
+                        <span class="muted small">Stay signed in on this browser for 30 days from your last visit. Leave it off on a shared computer.</span>
                     </span>
                 </label>
             }
@@ -62,12 +68,15 @@ else
 
             <button class="primary" type="submit" disabled="@(_busy || !Ready(status))">
                 @if (_busy) { <span class="spinner"></span> }
-                @(status.SetUp ? "Sign in" : "Set up and sign in")
+                @(status.SetUp ? "Sign in" : "Make the admin account")
             </button>
 
             @if (status.SetUp)
             {
-                <p class="muted small">Forgotten the password? Start Navidex once with <code>Navidex__ResetLogin=true</code> to set a new one.</p>
+                <p class="muted small">
+                    Forgotten your password? The admin can set a new one under Settings → Users. If you're the admin, start Navidex once with
+                    <code>Navidex__ResetLogin=true</code> to choose a new one.
+                </p>
             }
         </form>
     </div>
@@ -79,7 +88,7 @@ else
     private string _username = "";
     private string _password = "";
     private string _confirm = "";
-    private bool _skipLocal;
+    private bool _remember;
     private bool _busy;
     private string? _error;
 
@@ -87,6 +96,8 @@ else
     {
         Auth.Changed += OnChanged;
         await LoadAsync();
+        if (Auth.Status is { SetUp: false })
+            _username = "admin";
     }
 
     private async Task LoadAsync()
@@ -126,9 +137,9 @@ else
         try
         {
             if (status.SetUp)
-                await Api.SignInAsync(new SignIn(_username, _password));
+                await Api.SignInAsync(new SignIn(_username, _password, _remember));
             else
-                await Api.SetUpLoginAsync(new SetUpLogin(_username, _password, _skipLocal));
+                await Api.SetUpLoginAsync(new SetUpLogin(_username, _password));
             Auth.Set(await Api.GetAuthStatusAsync());
         }
         catch (NavidexApiException e)

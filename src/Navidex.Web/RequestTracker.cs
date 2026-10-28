@@ -25,13 +25,16 @@ public sealed class RequestTracker : IDisposable
 
     private void OnEvent(string type)
     {
-        if (type is "requests" or "connected" && _loading is not null)
+        if (type is "requests" or "connected" && _used)
             _ = RefreshAsync();
     }
 
     private IReadOnlyList<RequestInfo> _requests = [];
     private Timer? _timer;
     private Task? _loading;
+
+    // Kept current once anything has asked for the list, whether through EnsureLoadedAsync or RefreshAsync.
+    private bool _used;
 
     /// <summary>Raised whenever the list is refreshed.</summary>
     public event Action? Changed;
@@ -59,6 +62,7 @@ public sealed class RequestTracker : IDisposable
 
     public async Task RefreshAsync()
     {
+        _used = true;
         IReadOnlyList<RequestInfo> latest;
         try
         {

@@ -1,0 +1,226 @@
+@page "/settings/users"
+@page "/settings/security"
+@layout SettingsLayout
+@inject NavidexClient Api
+@inject AuthState Auth
+
+<PageTitle>Users · Navidex</PageTitle>
+
+@*
+    Everyone who signs in, and what each may do. The admin, made at setup, may do everything and only they can change
+    their account. Nobody can give a permission they don't have.
+*@
+@if (!Auth.May(UserPermissions.Users))
+{
+    <div class="empty card">
+        You can't manage users. To change your own username or password, open <a href="account">your account</a>.
+    </div>
+}
+else if (_users is null)
+{
+    <Loading />
+}
+else
+{
+    <section class="panel" aria-label="Users">
+        <header class="panel-head">
+            <div class="panel-title">
+                <h2>Users</h2>
+                <p class="muted small">
+                    Everyone signs in, even at home. Give each person only what they need: someone who just listens needs Browse and Listen.
+                    Their API keys can do no more than they may.
+                </p>
+            </div>
+            <button class="primary small" @onclick="StartNew">Add user</button>
+        </header>
+        <div class="plugin-grid">
+            @foreach (var user in _users)
+            {
+                var you = user.Id == Auth.Status?.UserId;
+                <div class="plugin-card">
+                    <div class="plugin-top">
+                        <strong class="ellipsis" title="@user.Username">@user.Username</strong>
+                        @if (user.IsAdmin) { <span class="badge owned">Admin</span> }
+                        @if (you) { <span class="badge neutral">You</span> }
+                    </div>
+                    <div class="scope-list">
+                        @if (user.IsAdmin)
+                        {
+                            <span class="badge neutral" title="The admin may do everything">Everything</span>
+                        }
+                        else if (user.Permissions.Count == 0)
+                        {
+                            <span class="muted small">Can't do anything yet</span>
+                        }
+                        else
+                        {
+                            @foreach (var permission in UserPermissions.All.Where(p => user.Permissions.Contains(p.Id)))
+                            {
+                                <span class="badge neutral" title="@permission.Hint">@permission.Name</span>
+                            }
+                        }
+                    </div>
+                    <div class="muted small">
+                        @(user.LastSignInAt is { } signedIn ? $"Signed in {Format.Ago(signedIn)}" : "Never signed in")
+                        @if (user.Keys > 0) { <span> · @Format.Count(user.Keys, "API key", "API keys")</span> }
+                    </div>
+                    <div class="plugin-actions">
+                        <span class="spacer"></span>
+                        @if (!user.IsAdmin || Auth.Status?.IsAdmin == true)
+                        {
+                            <button class="small" @onclick="() => StartEdit(user)">Edit</button>
+                        }
+                        @if (!user.IsAdmin && !you)
+                        {
+                            <IconButton Icon="remove" Class="remove" Title="Remove" OnClick="() => _removing = user" />
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@if (_editing is not null)
+{
+    var admin = _editing.IsAdmin;
+    <Dialog Title="@(_editing.Id == Guid.Empty ? "Add user" : $"Edit {_editing.Username}")" OnClose="() => _editing = null">
+        <label class="field">
+            <span class="field-label">Username</span>
+            <input type="text" autocomplete="off" @bind="_username" @bind:event="oninput" />
+        </label>
+        <label class="field">
+            <span class="field-label">@(_editing.Id == Guid.Empty ? "Password" : "New password")</span>
+            <input type="password" autocomplete="new-password" placeholder="@(_editing.Id == Guid.Empty ? "" : "Leave empty to keep it")"
+                   @bind="_password" @bind:event="oninput" />
+            <span class="muted small">
+                At least 8 characters.@(_editing.Id == Guid.Empty ? " Tell them it, and they can change it under their account." : " A new one signs them out everywhere.")
+            </span>
+        </label>
+        @if (admin)
+        {
+            <p class="muted small">The admin may do everything; that can't change.</p>
+        }
+        else
+        {
+            <div class="field-label">What they can do</div>
+            @foreach (var permission in UserPermissions.All)
+            {
+                var allowed = Auth.May(permission.Id);
+                <label class="dialog-choice @(allowed ? "" : "dim")" title="@(allowed ? "" : "You can only give permissions you have yourself")">
+                    <input type="checkbox" disabled="@(!allowed)" checked="@_permissions.Contains(permission.Id)" @onchange="e => Toggle(permission.Id, (bool)e.Value!)" />
+                    <span><strong>@permission.Name</strong><span class="muted small">@permission.Hint</span></span>
+                </label>
+            }
+        }
+        @if (_error is not null) { <p class="error small">@_error</p> }
+        <div class="toolbar dialog-buttons">
+            <button @onclick="() => _editing = null">Cancel</button>
+            <button class="primary" disabled="@(_busy || string.IsNullOrWhiteSpace(_username) || _editing.Id == Guid.Empty && _password.Length == 0)" @onclick="SaveAsync">
+                @if (_busy) { <span class="spinner"></span> }
+                @(_editing.Id == Guid.Empty ? "Add" : "Save")
+            </button>
+        </div>
+    </Dialog>
+}
+
+@if (_removing is { } removing)
+{
+    <Dialog Title="@($"Remove {removing.Username}?")" OnClose="() => _removing = null" Alert="true">
+        <p>
+            They're signed out and can't sign in again@(removing.Keys > 0 ? $", and their {Format.Count(removing.Keys, "API key is", "API keys are")} revoked" : "").
+            What they asked for stays.
+        </p>
+        @if (_error is not null) { <p class="error small">@_error</p> }
+        <div class="toolbar dialog-buttons">
+            <button @onclick="() => _removing = null">Cancel</button>
+            <button class="danger" disabled="@_busy" @onclick="() => RemoveAsync(removing)">Remove</button>
+        </div>
+    </Dialog>
+}
+
+@code {
+    private IReadOnlyList<UserInfo>? _users;
+    private UserInfo? _editing;
+    private UserInfo? _removing;
+    private string _username = "";
+    private string _password = "";
+    private HashSet<string> _permissions = [];
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Auth.May(UserPermissions.Users))
+            _users = await Api.ListUsersAsync();
+    }
+
+    private void StartNew() => Start(new UserInfo(Guid.Empty, "", false, [UserPermissions.Read, UserPermissions.Listen], DateTime.UtcNow, null));
+
+    private void StartEdit(UserInfo user) => Start(user);
+
+    private void Start(UserInfo user)
+    {
+        _editing = user;
+        _username = user.Username;
+        _password = "";
+        _permissions = user.Permissions.ToHashSet();
+        _error = null;
+    }
+
+    private void Toggle(string permission, bool on)
+    {
+        if (on)
+            _permissions.Add(permission);
+        else
+            _permissions.Remove(permission);
+    }
+
+    private async Task SaveAsync()
+    {
+        var editing = _editing!;
+        var permissions = UserPermissions.All.Select(p => p.Id).Where(_permissions.Contains).ToList();
+        _busy = true;
+        _error = null;
+        try
+        {
+            if (editing.Id == Guid.Empty)
+                await Api.CreateUserAsync(new CreateUser(_username, _password, permissions));
+            else
+                await Api.UpdateUserAsync(editing.Id, new UpdateUser(_username, _password.Length > 0 ? _password : null, editing.IsAdmin ? null : permissions));
+            _editing = null;
+            _users = await Api.ListUsersAsync();
+            // Your own name may have changed.
+            if (editing.Id == Auth.Status?.UserId)
+                Auth.Set(await Api.GetAuthStatusAsync());
+        }
+        catch (NavidexApiException e)
+        {
+            _error = e.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RemoveAsync(UserInfo user)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.RemoveUserAsync(user.Id);
+            _removing = null;
+            _users = await Api.ListUsersAsync();
+        }
+        catch (NavidexApiException e)
+        {
+            _error = e.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

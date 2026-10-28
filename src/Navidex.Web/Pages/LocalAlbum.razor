@@ -1,0 +1,116 @@
+@page "/local/albums/{Id:guid}"
+@implements IDisposable
+@inject NavidexClient Api
+@inject Player Player
+
+<PageTitle>@(_album?.Title ?? "Album") · Navidex</PageTitle>
+
+@*
+    An album of your own files that no catalogue knows, as their tags say: files excluded from matching. Each can still be
+    matched by searching, if a catalogue turns out to know it after all.
+*@
+@if (_notFound)
+{
+    <div class="empty card">That album isn't in your library. Its files may have been matched, changed or put back for review.</div>
+}
+else if (_album is null)
+{
+    <Loading />
+}
+else
+{
+    var album = _album;
+    <div class="page-head">
+        <Cover Url="@album.CoverUrl" />
+        <div>
+            <h1>@album.Title</h1>
+            <div class="row muted small">
+                <a href="@(album.ArtistLocal ? "local/artists" : "artists")/@album.ArtistId">@album.ArtistName</a>
+                @if (Format.Year(album.Date) is { Length: > 0 } year) { <span>@year</span> }
+                <span>@Format.Count(album.Tracks.Count, "song", "songs")</span>
+                <span class="badge neutral" title="No catalogue knows it: it's shown as its files' tags say">Your own files</span>
+            </div>
+            <div class="row album-actions" style="margin-top: .5rem;">
+                <IconButton Icon="play" Requires="@UserPermissions.Listen" Primary="true" Large="true" Label="Play" Title="Play the album" OnClick="() => PlayFromAsync(0)" />
+                <IconButton Icon="queue" Requires="@UserPermissions.Listen" Large="true" Confirm="true" Title="Add to the queue" OnClick="() => Player.AddAsync(Entries())" />
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="num">#</th>
+                    <th>Title</th>
+                    <th class="num hide-narrow">Length</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < album.Tracks.Count; i++)
+                {
+                    var index = i;
+                    var track = album.Tracks[i];
+                    <tr class="@(Player.IsNow(track.FileId) ? "playing" : "")">
+                        <td class="num muted nowrap">@(MultiDisc && track.Disc is { } disc ? $"{disc}-" : "")@track.Number</td>
+                        <td>
+                            @track.Title
+                            @if (track.Artist != album.ArtistName) { <span class="muted small"> · @track.Artist</span> }
+                            <div class="muted small">@track.Path</div>
+                        </td>
+                        <td class="num hide-narrow muted">@Format.Duration(track.DurationSeconds)</td>
+                        <td class="num actions">
+                            <IconButton Icon="play" Requires="@UserPermissions.Listen" Title="Play from here" OnClick="() => PlayFromAsync(index)" />
+                            <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track, album)])" />
+                            <a class="small" href="@($"search?q={Uri.EscapeDataString($"{track.Artist} {track.Title}")}&file={track.FileId}")"
+                               title="Look for it in the catalogue after all, and match it">Match</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private LocalAlbumDetail? _album;
+    private bool _notFound;
+
+    private bool MultiDisc => _album!.Tracks.Select(t => t.Disc ?? 1).Distinct().Count() > 1;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        ScanStatus.LibraryChanged += Reload;
+        Player.Changed -= Redraw;
+        Player.Changed += Redraw;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _album = await Api.GetLocalAlbumAsync(Id);
+        _notFound = _album is null;
+    }
+
+    private void Reload() => InvokeAsync(async () =>
+    {
+        await LoadAsync();
+        StateHasChanged();
+    });
+
+    private void Redraw() => InvokeAsync(StateHasChanged);
+
+    private List<PlayerEntry> Entries() => _album!.Tracks.Select(t => PlayerEntry.Owned(t, _album)).ToList();
+
+    private Task PlayFromAsync(int index) => Player.PlayAsync(Entries(), index);
+
+    public void Dispose()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        Player.Changed -= Redraw;
+    }
+}

@@ -28,14 +28,15 @@ public sealed class LibraryMatcher(
     private readonly Dictionary<string, Artist?> _artistsByName = new(StringComparer.OrdinalIgnoreCase);
     private double _threshold;
 
-    /// <param name="Deferred">Files left pending because the index was unavailable; the next scan matches them.</param>
-    public sealed record Result(int Matched, int Review, int Deferred);
+    /// <param name="Waiting">Files left pending because the index was unavailable; the next scan matches them.</param>
+    /// <param name="StillDeferred">Deferred files tried again that still didn't beat the threshold, so stay deferred.</param>
+    public sealed record Result(int Matched, int Review, int Waiting, int StillDeferred = 0);
 
     public async Task<Result> MatchPendingAsync(IProgress<string>? progress, CancellationToken ct)
     {
         var library = await settings.GetLibraryAsync(ct);
         _threshold = library.MatchThreshold;
-        var pending = await db.LibraryFiles.AsNoTracking().Where(f => f.MatchedAt == null && f.ExcludedAt == null).Select(f => new { f.Id, f.Path, f.TagsJson }).ToListAsync(ct);
+        var pending = await db.LibraryFiles.AsNoTracking().Where(f => f.MatchedAt == null && f.ExcludedAt == null && f.HiddenAt == null).Select(f => new { f.Id, f.Path, f.TagsJson }).ToListAsync(ct);
         var groups = pending
             .Select(f => (f.Id, Tags: FileTags.Parse(f.TagsJson), f.Path))
             .GroupBy(x => x.Tags.Album is null
@@ -52,7 +53,7 @@ public sealed class LibraryMatcher(
         // A group the source was too busy for goes to the back, so it gets time to recover before the next attempt.
         var queue = new Queue<(IGrouping<string, (Guid Id, FileTags Tags, string Path)> Group, int Attempt)>(groups.Select(g => (g, 1)));
         var backoff = new SourceBackoff(httpOptions.Value, logger);
-        int done = 0, matched = 0, review = 0, deferred = 0;
+        int done = 0, matched = 0, review = 0, deferred = 0, stillDeferred = 0;
         while (queue.TryDequeue(out var item))
         {
             ct.ThrowIfCancellationRequested();
@@ -105,7 +106,16 @@ public sealed class LibraryMatcher(
             foreach (var file in files.Select(c => c.File))
             {
                 file.MatchedAt = DateTime.UtcNow;
-                if (file.TrackId is null) review++; else matched++;
+                // A deferred file leaves the deferred list only by beating the threshold.
+                if (file.TrackId is not null)
+                {
+                    file.DeferredAt = null;
+                    matched++;
+                }
+                else if (file.DeferredAt is not null)
+                    stillDeferred++;
+                else
+                    review++;
             }
             await db.SaveChangesAsync(ct);
             // Artists join the library as their files match, so the library and missing pages fill in during a long
@@ -123,7 +133,7 @@ public sealed class LibraryMatcher(
         db.ChangeTracker.Clear();
 
         await UpdateLibraryArtistsAsync(db, ct);
-        return new Result(matched, review, deferred);
+        return new Result(matched, review, deferred, stillDeferred);
     }
 
     private sealed record Candidate(LibraryFile File, FileTags Tags);
@@ -146,7 +156,8 @@ public sealed class LibraryMatcher(
                     edition is null ? null : LibraryView.CoverUrl(edition.AlbumId, file.EditionId));
             }
             else
-                feed.Set(file.Path, ScanFileState.Review, tags.Title, tags.Artist, file.ReviewReason ?? "No confident match");
+                feed.Set(file.Path, ScanFileState.Review, tags.Title, tags.Artist,
+                    file.DeferredAt is not null ? "Deferred: still no confident match" : file.ReviewReason ?? "No confident match");
         }
     }
 

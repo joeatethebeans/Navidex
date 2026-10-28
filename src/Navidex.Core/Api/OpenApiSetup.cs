@@ -20,8 +20,8 @@ public static class OpenApiSetup
             document.Info.Title = "Navidex API";
             document.Info.Description =
                 "Find what's missing from a music library, fetch it through plugins, and listen now.\n\n"
-                + $"Apps authenticate with an API key in the `{AccessService.KeyHeader}` header, made under Settings → Security. Each key has scopes: "
-                + "`read`, `request`, `listen` and `admin`, which allows everything. Each operation below says the scope it needs. "
+                + $"Apps authenticate with an API key in the `{AccessService.KeyHeader}` header, made under Settings → API. Each key has scopes, "
+                + "the same permissions users have (`read`, `request`, `listen`, `review` and so on), and never more than the user who made it; `admin` is all they may. Each operation below says the scope it needs. "
                 + "The client guide (`docs/client-guide.md`) covers events, webhooks and errors.";
             document.Components ??= new OpenApiComponents();
             document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
@@ -30,7 +30,7 @@ public static class OpenApiSetup
                 Type = SecuritySchemeType.ApiKey,
                 In = ParameterLocation.Header,
                 Name = AccessService.KeyHeader,
-                Description = "An API key from Settings → Security. Where a header can't be set, such as an audio element, pass it as the apikey query parameter.",
+                Description = "An API key from Settings → API. Where a header can't be set, such as an audio element, pass it as the apikey query parameter.",
             };
             document.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference(KeyScheme, document)] = [] }];
             return Task.CompletedTask;

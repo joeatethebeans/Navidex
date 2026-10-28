@@ -1,0 +1,202 @@
+@page "/settings/api"
+@layout SettingsLayout
+@inject NavidexClient Api
+@inject AuthState Auth
+@using Microsoft.JSInterop
+@inject IJSRuntime Js
+
+<PageTitle>API · Navidex</PageTitle>
+
+@*
+    API keys. Each belongs to whoever made it and can do no more than they may; the admin sees everyone's. Webhooks
+    have a tab of their own.
+*@
+@if (!Auth.May(UserPermissions.Keys))
+{
+    <div class="empty card">You can't make API keys. The admin can give you that under Settings → Users.</div>
+}
+else if (_keys is null)
+{
+    <Loading />
+}
+else
+{
+    <section class="panel" aria-label="API keys">
+        <header class="panel-head">
+            <div class="panel-title">
+                <h2>API keys</h2>
+                <p class="muted small">
+                    Apps use a key to call Navidex, sent in the <code>X-Api-Key</code> header. A key is yours: it can do only what you may, and goes if
+                    you're removed. Give each app its own, with only what it needs, so you can revoke one without the others. See the
+                    <a href="api/docs" target="_blank" rel="noopener">API reference</a>.
+                </p>
+            </div>
+            <button class="primary small" @onclick="StartNewKey">New key</button>
+        </header>
+        @if (_keys.Count == 0)
+        {
+            <div class="panel-empty muted small">No keys yet. Make one for each app you connect.</div>
+        }
+        else
+        {
+            <div class="plugin-grid">
+                @foreach (var key in _keys)
+                {
+                    <div class="plugin-card">
+                        <div class="plugin-top">
+                            <strong class="ellipsis" title="@key.Name">@key.Name</strong>
+                            <span class="spacer"></span>
+                            <code class="small muted">@key.Prefix…</code>
+                        </div>
+                        <div class="scope-list">
+                            @foreach (var scope in key.Scopes)
+                            {
+                                <span class="badge neutral" title="@Hint(scope)">@Name(scope)</span>
+                            }
+                        </div>
+                        <div class="muted small">
+                            @if (key.UserId != Auth.Status?.UserId) { <span>@(key.Owner ?? "Someone")'s · </span> }
+                            Made @Format.Ago(key.CreatedAt) · @(key.LastUsedAt is { } used ? $"last used {Format.Ago(used)}" : "never used")
+                        </div>
+                        <div class="plugin-actions">
+                            <span class="spacer"></span>
+                            <IconButton Icon="remove" Class="remove" Title="Revoke" OnClick="() => _revoking = key" />
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    @if (_making)
+    {
+        <Dialog Title="New API key" OnClose="() => _making = false">
+            <label class="field">
+                <span class="field-label">Name</span>
+                <input type="text" placeholder="The app it's for" @bind="_keyName" @bind:event="oninput" />
+                <span class="muted small">Requests the app makes are credited to this name on the Activity page.</span>
+            </label>
+            <div class="field-label">What it can do</div>
+            <label class="dialog-choice">
+                <input type="checkbox" checked="@_keyScopes.Contains(UserPermissions.Admin)" @onchange="e => ToggleScope(UserPermissions.Admin, (bool)e.Value!)" />
+                <span><strong>Everything you may do</strong><span class="muted small">Now and later: it follows what the admin lets you do.</span></span>
+            </label>
+            @if (!_keyScopes.Contains(UserPermissions.Admin))
+            {
+                @foreach (var permission in UserPermissions.All.Where(p => Auth.May(p.Id)))
+                {
+                    <label class="dialog-choice">
+                        <input type="checkbox" checked="@_keyScopes.Contains(permission.Id)" @onchange="e => ToggleScope(permission.Id, (bool)e.Value!)" />
+                        <span><strong>@permission.Name</strong><span class="muted small">@permission.Hint</span></span>
+                    </label>
+                }
+            }
+            @if (_keyError is not null) { <p class="error small">@_keyError</p> }
+            <div class="toolbar dialog-buttons">
+                <button @onclick="() => _making = false">Cancel</button>
+                <button class="primary" disabled="@(_busy || string.IsNullOrWhiteSpace(_keyName) || _keyScopes.Count == 0)" @onclick="MakeKeyAsync">Make key</button>
+            </div>
+        </Dialog>
+    }
+
+    @if (_made is { } made)
+    {
+        <Dialog Title="@($"Key for {made.Info.Name}")" OnClose="() => _made = null">
+            <p>Copy it into the app now. Navidex keeps only a fingerprint of it, so it can't show it again.</p>
+            <div class="secret-box">
+                <code>@made.Key</code>
+                <IconButton Icon="copy" Title="Copy" Confirm="true" OnClick="() => CopyAsync(made.Key)" />
+            </div>
+            <div class="toolbar dialog-buttons"><button class="primary" @onclick="() => _made = null">Done</button></div>
+        </Dialog>
+    }
+
+    @if (_revoking is { } revoking)
+    {
+        <Dialog Title="@($"Revoke {revoking.Name}?")" OnClose="() => _revoking = null" Alert="true">
+            <p>Anything using this key is refused from now on. This can't be undone, but you can make a new key.</p>
+            <div class="toolbar dialog-buttons">
+                <button @onclick="() => _revoking = null">Cancel</button>
+                <button class="danger" disabled="@_busy" @onclick="() => RevokeAsync(revoking)">Revoke</button>
+            </div>
+        </Dialog>
+    }
+}
+
+@code {
+    private IReadOnlyList<ApiKeyInfo>? _keys;
+    private bool _busy;
+
+    private bool _making;
+    private string _keyName = "";
+    private HashSet<string> _keyScopes = [];
+    private string? _keyError;
+    private CreatedApiKey? _made;
+    private ApiKeyInfo? _revoking;
+
+    private static string Name(string scope) =>
+        scope == UserPermissions.Admin ? "Everything" : UserPermissions.All.FirstOrDefault(p => p.Id == scope)?.Name ?? scope;
+
+    private static string Hint(string scope) =>
+        scope == UserPermissions.Admin ? "Everything its owner may do" : UserPermissions.All.FirstOrDefault(p => p.Id == scope)?.Hint ?? "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Auth.May(UserPermissions.Keys))
+            _keys = await Api.ListApiKeysAsync();
+    }
+
+    private void StartNewKey()
+    {
+        _keyName = "";
+        _keyScopes = [UserPermissions.Read];
+        _keyError = null;
+        _making = true;
+    }
+
+    private void ToggleScope(string scope, bool on)
+    {
+        if (on)
+            _keyScopes.Add(scope);
+        else
+            _keyScopes.Remove(scope);
+    }
+
+    private async Task MakeKeyAsync()
+    {
+        _busy = true;
+        _keyError = null;
+        try
+        {
+            List<string> scopes = _keyScopes.Contains(UserPermissions.Admin) ? [UserPermissions.Admin] : UserPermissions.All.Select(p => p.Id).Where(_keyScopes.Contains).ToList();
+            _made = await Api.CreateApiKeyAsync(new CreateApiKey(_keyName, scopes));
+            _making = false;
+            _keys = await Api.ListApiKeysAsync();
+        }
+        catch (NavidexApiException e)
+        {
+            _keyError = e.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RevokeAsync(ApiKeyInfo key)
+    {
+        _busy = true;
+        try
+        {
+            await Api.RevokeApiKeyAsync(key.Id);
+            _revoking = null;
+            _keys = await Api.ListApiKeysAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CopyAsync(string text) => await Js.InvokeVoidAsync("navigator.clipboard.writeText", text);
+}

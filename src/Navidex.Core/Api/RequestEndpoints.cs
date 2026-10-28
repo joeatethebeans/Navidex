@@ -53,6 +53,37 @@ public static class RequestEndpoints
             })
             .RequireScope(Scopes.Request).WithName("CancelRequest").WithSummary("Cancel a request and its unfinished parts. Files already in the library stay.");
 
+        requests.MapPost("/{id:guid}/pause", async (Guid id, NavidexDbContext db, RequestService service, CancellationToken ct) =>
+            {
+                if (await db.Requests.FindAsync([id], ct) is not { } request)
+                    return Results.NotFound();
+                return await service.PauseAsync(request, ct) ? Results.Ok(await service.GetAsync(id, ct)) : Results.Conflict();
+            })
+            .RequireScope(Scopes.Request).WithName("PauseRequest")
+            .WithSummary("Hold a request and its unfinished parts back until resumed. Parts already fetching stop, and fetch again from the start when resumed. 409 if it's finished.")
+            .Produces<RequestInfo>().Produces(StatusCodes.Status409Conflict);
+
+        requests.MapPost("/{id:guid}/resume", async (Guid id, NavidexDbContext db, RequestService service, CancellationToken ct) =>
+            {
+                if (await db.Requests.FindAsync([id], ct) is not { } request)
+                    return Results.NotFound();
+                await service.ResumeAsync(request, ct);
+                return Results.Ok(await service.GetAsync(id, ct));
+            })
+            .RequireScope(Scopes.Request).WithName("ResumeRequest").WithSummary("Let a paused request go again, in its place in the queue.")
+            .Produces<RequestInfo>();
+
+        requests.MapPost("/{id:guid}/move", async (Guid id, MoveInQueue body, NavidexDbContext db, RequestService service, CancellationToken ct) =>
+            {
+                if (await db.Requests.FindAsync([id], ct) is not { } request)
+                    return Results.NotFound();
+                return await service.MoveAsync(request, body.Before, ct) ? Results.NoContent() : Results.Conflict();
+            })
+            .RequireScope(Scopes.Request).WithName("MoveRequest")
+            .WithSummary("Move an unfinished request, with its parts, to just before another in the queue, or to the end. Library and listen-now requests "
+                         + "queue separately. 409 for a finished request, a part, or a before that isn't in the same queue.")
+            .Produces(StatusCodes.Status204NoContent).Produces(StatusCodes.Status409Conflict);
+
         requests.MapPost("/{id:guid}/retry", async (Guid id, NavidexDbContext db, RequestService service, CancellationToken ct) =>
             {
                 if (await db.Requests.FindAsync([id], ct) is not { } request)
@@ -71,7 +102,7 @@ public static class RequestEndpoints
             .RequireScope(Scopes.Request).WithName("ChooseCandidate").WithSummary("Fetch one of the candidates an earlier search found, instead of searching again. For finished track or whole-album requests.")
             .Produces<RequestInfo>().Produces(StatusCodes.Status409Conflict);
 
-        var settings = api.MapGroup("/settings").WithTags("Settings").RequireScope(Scopes.Admin);
+        var settings = api.MapGroup("/settings").WithTags("Settings").RequireScope(Scopes.Settings);
         settings.MapGet("/fetch", (SettingsService s, CancellationToken ct) => s.GetFetchAsync(ct)).WithName("GetFetchSettings");
         settings.MapPut("/fetch", async (FetchSettings value, SettingsService s, CancellationToken ct) =>
             {

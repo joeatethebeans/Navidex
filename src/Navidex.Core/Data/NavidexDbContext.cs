@@ -26,6 +26,7 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
     public DbSet<ArtworkRecord> Artwork => Set<ArtworkRecord>();
+    public DbSet<User> Users => Set<User>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<Webhook> Webhooks => Set<Webhook>();
     public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
@@ -131,6 +132,12 @@ public class NavidexDbContext(DbContextOptions<NavidexDbContext> options) : DbCo
         modelBuilder.Entity<ApiKey>(e =>
         {
             e.HasIndex(k => k.Hash).IsUnique();
+            e.HasOne(k => k.User).WithMany().HasForeignKey(k => k.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<User>(e =>
+        {
+            e.HasIndex(u => u.NormalizedUsername).IsUnique();
         });
 
         modelBuilder.Entity<WebhookDelivery>(e =>

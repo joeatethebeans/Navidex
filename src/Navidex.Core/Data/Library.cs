@@ -61,10 +61,22 @@ public class LibraryFile
     public DateTime ScannedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// When the user excluded it from matching, for a file no catalogue knows. It's never matched, isn't on the review
-    /// list, and stays excluded across scans, even if it changes.
+    /// When the user excluded it from matching, for a file no catalogue knows. It's never matched and isn't on the review
+    /// list, but stays in the library as its own tags say. It stays excluded across scans, even if it changes.
     /// </summary>
     public DateTime? ExcludedAt { get; set; }
+
+    /// <summary>
+    /// When the user put off deciding: it leaves the review list, and each scan tries it again, matching it only when it
+    /// beats the threshold.
+    /// </summary>
+    public DateTime? DeferredAt { get; set; }
+
+    /// <summary>When the user hid it: it's out of the library altogether, though it stays in the music folder.</summary>
+    public DateTime? HiddenAt { get; set; }
+
+    /// <summary>When a format last rewrote it; a paused format skips files it has already done.</summary>
+    public DateTime? FormattedAt { get; set; }
 }
 
 public enum RequestMode
@@ -141,6 +153,15 @@ public class Request
 
     /// <summary>For artist and album requests, the request that fanned out to this one.</summary>
     public Guid? ParentRequestId { get; set; }
+
+    /// <summary>
+    /// Where it is in the queue: lower goes first. Starts as when it was made, in seconds, so the queue is oldest first
+    /// until someone moves things; parts share their request's place.
+    /// </summary>
+    public double QueueOrder { get; set; } = QueueOrders.Now();
+
+    /// <summary>Held back by the user: it isn't started until resumed. A request paused mid-fetch starts that fetch again.</summary>
+    public bool Paused { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -307,6 +328,7 @@ public enum BackgroundTaskStatus
     Running,
     Succeeded,
     Failed,
+    Cancelled,
 }
 
 /// <summary>Database-backed queue of internal work, such as library scans, so it survives restarts.</summary>
@@ -330,4 +352,31 @@ public class BackgroundTask
 
     /// <summary>Whether its finishing has been announced to webhooks and the event stream.</summary>
     public bool Announced { get; set; }
+
+    /// <summary>Where it is in the queue: lower goes first. See <see cref="Request.QueueOrder"/>.</summary>
+    public double QueueOrder { get; set; } = QueueOrders.Now();
+
+    /// <summary>
+    /// Held back by the user. A paused scan picks up where it stopped when resumed, as it skips files it has already
+    /// read and matched; shorter tasks simply run again.
+    /// </summary>
+    public bool Paused { get; set; }
+}
+
+public static class QueueOrders
+{
+    /// <summary>Now, in seconds: fine enough to keep requests made a moment apart in order.</summary>
+    public static double Now() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+
+    /// <summary>
+    /// The place to put something so it comes just before <paramref name="next"/>, after <paramref name="previous"/>,
+    /// or at an end of the queue when either is missing.
+    /// </summary>
+    public static double Between(double? previous, double? next) => (previous, next) switch
+    {
+        ({ } p, { } n) => (p + n) / 2,
+        (null, { } n) => n - 1,
+        ({ } p, null) => p + 1,
+        _ => Now(),
+    };
 }

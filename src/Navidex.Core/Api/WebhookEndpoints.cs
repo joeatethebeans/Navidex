@@ -12,7 +12,7 @@ public static class WebhookEndpoints
     public static RouteGroupBuilder MapWebhookEndpoints(this RouteGroupBuilder api)
     {
         // Webhooks carry their secrets, so even listing them is for the admin.
-        var webhooks = api.MapGroup("/webhooks").WithTags("Webhooks").RequireScope(Scopes.Admin);
+        var webhooks = api.MapGroup("/webhooks").WithTags("Webhooks").RequireScope(Scopes.Keys);
 
         webhooks.MapGet("", async (NavidexDbContext db, CancellationToken ct) =>
             {

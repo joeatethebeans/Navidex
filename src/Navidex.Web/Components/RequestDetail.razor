@@ -17,7 +17,7 @@
                             </button>
                             @if (child.Detail is not null) { <div class="muted small request-detail">@child.Detail</div> }
                         </td>
-                        <td class="num"><span class="badge @Format.RequestBadge(child.State)">@Format.RequestLabel(child)</span></td>
+                        <td class="num"><span class="badge @Format.RequestBadge(child)">@Format.RequestLabel(child)</span></td>
                         <td class="num actions"><Actions Request="child" OnChanged="ChangedAsync" /></td>
                     </tr>
                     @if (open && _open[child.Id] is { } detail)

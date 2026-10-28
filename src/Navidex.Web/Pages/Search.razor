@@ -1,5 +1,6 @@
 @page "/search"
 @inject NavidexClient Api
+@inject AuthState Auth
 @inject NavigationManager Navigation
 @inject Player Player
 @inject Preferences Prefs
@@ -27,7 +28,8 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
         </button>
         <Segmented T="string" Value="_kind" Options="Kinds" OnChange="KindAsync" Label="Show" />
-        <Segmented T="string" Value="_owned" Options="OwnedOptions" OnChange="v => _owned = v" Label="In your library" />
+        @* Coloured like the library's owned, all and missing, in the same order. *@
+        <Segmented T="string" Value="_owned" Options="OwnedOptions" OnChange="v => _owned = v" Label="In your library" Class="@($"ownership {(_owned == "" ? "all" : _owned)}")" />
         <SortMenu Options="SortOptions" Value="@_sort" Descending="_descending" CanReverse="@(_sort != "relevance")" DirectionHint="@DirectionHint"
                   OnChange="key => _sort = key" OnReverse="() => _descending = !_descending" />
         <span class="spinner ownership-busy @(_remoteBusy || _localBusy ? "on" : "")" role="status" aria-label="@(_remoteBusy || _localBusy ? "Searching" : null)"></span>
@@ -162,9 +164,9 @@ else
                                 @{
                                     var missing = album.Status == AlbumStatus.Missing;
                                     RenderFragment play = @<text>
-                                        <IconButton Icon="@(missing ? "listen" : "play")" Title="@(missing ? "Listen: fetch it to play now, without adding it to your library" : album.Status == AlbumStatus.Partial ? "Play, fetching the tracks you don't have to listen to" : "Play")"
+                                        <IconButton Icon="@(missing ? "listen" : "play")" Requires="@UserPermissions.Listen" Title="@(missing ? "Listen: fetch it to play now, without adding it to your library" : album.Status == AlbumStatus.Partial ? "Play, fetching the tracks you don't have to listen to" : "Play")"
                                                     OnClick="() => Player.PlayAlbumAsync(album.Id)" />
-                                        <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.QueueAlbumAsync(album.Id)" />
+                                        <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true" OnClick="() => Player.QueueAlbumAsync(album.Id)" />
                                     </text>;
                                 }
                                 @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
@@ -188,14 +190,14 @@ else
         @TrackList(track => @<text>
             @if (track.Owned)
             {
-                <IconButton Icon="play" Title="Play" OnClick="() => Player.PlayAsync([PlayerEntry.Owned(track)])" />
-                <IconButton Icon="queue" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track)])" />
+                <IconButton Icon="play" Requires="@UserPermissions.Listen" Title="Play" OnClick="() => Player.PlayAsync([PlayerEntry.Owned(track)])" />
+                <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track)])" />
             }
             else
             {
                 <FetchButton Kind="RequestKind.Track" Id="track.Id" Hint="Get it into your library">
-                    <IconButton Icon="listen" Title="Listen: fetch it to play now, without adding it to your library" OnClick="() => Player.ListenAsync(track.Id)" />
-                    <IconButton Icon="queue" Title="Add to the queue, fetching it to listen to" Confirm="true" OnClick="() => Player.ListenAsync(track.Id, next: true)" />
+                    <IconButton Icon="listen" Requires="@UserPermissions.Listen" Title="Listen: fetch it to play now, without adding it to your library" OnClick="() => Player.ListenAsync(track.Id)" />
+                    <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue, fetching it to listen to" Confirm="true" OnClick="() => Player.ListenAsync(track.Id, next: true)" />
                 </FetchButton>
             }
         </text>)
@@ -213,7 +215,7 @@ else
         [("", "All", null), ("artists", "Artists", "Only artists, which is quicker"), ("albums", "Albums", "Only albums, which is quicker"), ("tracks", "Tracks", "Only tracks, which is quicker")];
 
     private static readonly IReadOnlyList<(string Value, string Label, string? Hint)> OwnedOptions =
-        [("", "All", "Whether you have it or not"), ("owned", "Owned", "Only what you have"), ("missing", "Missing", "Only what you don't have")];
+        [("owned", "Owned", "Only what you have"), ("", "All", "Whether you have it or not"), ("missing", "Missing", "Only what you don't have")];
 
     private const string SearchHint = "Artist, album or track";
 
@@ -296,13 +298,22 @@ else
             return;
         _shown = null;
         _query = Query ?? "";
-        _file = FileId is { } fileId ? (await Api.GetReviewAsync()).FirstOrDefault(i => i.FileId == fileId) : null;
+        _file = FileId is { } fileId && Auth.May(UserPermissions.Review) ? await FindFileAsync(fileId) : null;
         _searchError = null;
         // What's shown (matches found while typing, say) stays until the search has something to replace it with.
         if (_query.Trim().Length > 0)
             await SearchAsync(_query.Trim());
         else
             _results = null;
+    }
+
+    // The file being matched may be under review, or one of those set aside, such as an excluded file matched from its album page.
+    private async Task<ReviewItem?> FindFileAsync(Guid fileId)
+    {
+        foreach (var list in Enum.GetValues<ReviewList>())
+            if ((await Api.GetReviewAsync(list)).FirstOrDefault(i => i.FileId == fileId) is { } item)
+                return item;
+        return null;
     }
 
     // Matches from what Navidex already holds show at once. MusicBrainz is asked for artists, albums and tracks
@@ -538,7 +549,7 @@ else
                                 else { <Cover Url="@track.CoverUrl" /> }
                             </td>
                             <td class="track-main">
-                                <div class="ellipsis">@track.Title</div>
+                                <div class="ellipsis"><a href="tracks/@track.Id" class="plain">@track.Title</a></div>
                                 <div class="muted small ellipsis">
                                     @if (track.ArtistId is { } artistId) { <a href="artists/@artistId">@track.ArtistCredit</a> } else { @track.ArtistCredit }
                                     @if (track.AlbumId is { } id) { <span> · <a href="albums/@id">@track.AlbumTitle</a></span> }

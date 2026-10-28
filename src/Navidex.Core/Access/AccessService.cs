@@ -1,6 +1,4 @@
 using System.Collections.Concurrent;
-using System.Net;
-using System.Net.Sockets;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,24 +9,17 @@ using Navidex.Core.Data;
 
 namespace Navidex.Core.Access;
 
-/// <summary>The admin login, kept in the settings table. Never sent to clients.</summary>
+/// <summary>The admin login from before there were users, kept in the settings table. Read once, to make the admin user.</summary>
 public sealed record AdminLogin
 {
     public string Username { get; init; } = "";
-
-    /// <summary>PBKDF2 with SHA-256: <c>pbkdf2-sha256$iterations$salt$hash</c>, salt and hash in base64.</summary>
     public string PasswordHash { get; init; } = "";
-
-    /// <summary>Let the local network in without signing in.</summary>
-    public bool SkipOnLocalNetwork { get; init; }
-
-    /// <summary>Changes with the password, which signs out every other session.</summary>
     public string Stamp { get; init; } = "";
 }
 
 /// <summary>
-/// Who may call the API: the admin, signed in with a session cookie or on the local network when that's allowed, and
-/// apps with API keys. The login and keys are cached in memory, as they're checked on every call.
+/// Who may call the API: users signed in with a session cookie, and apps with API keys, each key owned by a user and
+/// never able to do more than they may. Users and keys are cached in memory, as they're checked on every call.
 /// </summary>
 public sealed class AccessService(IServiceScopeFactory scopes, ILogger<AccessService> log)
 {
@@ -46,32 +37,28 @@ public sealed class AccessService(IServiceScopeFactory scopes, ILogger<AccessSer
     private const int FailuresAllowed = 5;
 
     private readonly SemaphoreSlim _loading = new(1, 1);
-    private AdminLogin? _login;
-    private bool _loginLoaded;
+    private Dictionary<Guid, User>? _users;
     private Dictionary<string, ApiKey>? _keys;
     private readonly ConcurrentDictionary<Guid, DateTime> _lastUsed = new();
     private readonly ConcurrentDictionary<string, ConcurrentQueue<DateTime>> _failures = new();
 
-    // ---- The admin login ----
+    // ---- Users ----
 
-    public async Task<AdminLogin?> GetLoginAsync(CancellationToken ct)
+    /// <summary>Every user, by ID. The first call makes the admin user from a login kept from before there were users.</summary>
+    public async Task<IReadOnlyDictionary<Guid, User>> UsersAsync(CancellationToken ct)
     {
-        if (_loginLoaded)
-            return _login;
+        if (_users is { } users)
+            return users;
         await _loading.WaitAsync(ct);
         try
         {
-            if (!_loginLoaded)
-            {
-                using var scope = scopes.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
-                var row = await db.Settings.FindAsync([LoginKey], ct);
-                _login = row is null ? null : JsonSerializer.Deserialize<AdminLogin>(row.ValueJson, NavidexJson.Options);
-                if (_login is { PasswordHash.Length: 0 })
-                    _login = null;
-                _loginLoaded = true;
-            }
-            return _login;
+            if (_users is not null)
+                return _users;
+            using var scope = scopes.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
+            await AdoptLegacyLoginAsync(db, ct);
+            _users = await db.Users.AsNoTracking().ToDictionaryAsync(u => u.Id, ct);
+            return _users;
         }
         finally
         {
@@ -79,37 +66,82 @@ public sealed class AccessService(IServiceScopeFactory scopes, ILogger<AccessSer
         }
     }
 
-    public async Task SaveLoginAsync(AdminLogin? login, CancellationToken ct)
+    /// <summary>Users changed: they're read again on the next call.</summary>
+    public void UsersChanged()
+    {
+        _users = null;
+        _keys = null;
+    }
+
+    /// <summary>The admin, if setup has made them.</summary>
+    public async Task<User?> AdminAsync(CancellationToken ct) => (await UsersAsync(ct)).Values.FirstOrDefault(u => u.IsAdmin);
+
+    /// <summary>Set up: the admin has a password. A login reset clears it, and the web app asks for a new one.</summary>
+    public async Task<bool> IsSetUpAsync(CancellationToken ct) => await AdminAsync(ct) is { PasswordHash.Length: > 0 };
+
+    public async Task<User?> FindAsync(string username, CancellationToken ct) =>
+        (await UsersAsync(ct)).Values.FirstOrDefault(u => u.NormalizedUsername == Normalize(username));
+
+    public static string Normalize(string username) => username.Trim().ToLowerInvariant();
+
+    /// <summary>What a user may do: every permission and admin for the admin, else theirs.</summary>
+    public static IReadOnlySet<string> PermissionsOf(User user) =>
+        user.IsAdmin ? Scopes.All.ToHashSet() : Scopes.Parse(user.Permissions).Where(Scopes.IsPermission).ToHashSet();
+
+    public static User NewUser(string username, string password, IEnumerable<string> permissions, bool isAdmin = false) => new()
+    {
+        Username = username.Trim(),
+        NormalizedUsername = Normalize(username),
+        PasswordHash = HashPassword(password),
+        Permissions = isAdmin ? "" : Scopes.Join(permissions.Where(Scopes.IsPermission)),
+        IsAdmin = isAdmin,
+        Stamp = NewStamp(),
+    };
+
+    // From before there were users: the single admin login, and keys nobody owned. Done once, then the old login goes.
+    private async Task AdoptLegacyLoginAsync(NavidexDbContext db, CancellationToken ct)
+    {
+        var row = await db.Settings.FindAsync([LoginKey], ct);
+        var admin = await db.Users.FirstOrDefaultAsync(u => u.IsAdmin, ct);
+        if (admin is null && row is not null && JsonSerializer.Deserialize<AdminLogin>(row.ValueJson, NavidexJson.Options) is { PasswordHash.Length: > 0 } login)
+        {
+            admin = new User
+            {
+                Username = login.Username, NormalizedUsername = Normalize(login.Username), PasswordHash = login.PasswordHash,
+                IsAdmin = true, Stamp = login.Stamp,
+            };
+            db.Users.Add(admin);
+            log.LogInformation("Made the admin user {Username} from the login kept before there were users", admin.Username);
+        }
+        if (row is not null)
+            db.Settings.Remove(row);
+        if (admin is not null)
+            await db.ApiKeys.Where(k => k.UserId == null).ExecuteUpdateAsync(u => u.SetProperty(k => k.UserId, admin.Id), ct);
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>The way back in when the admin's password is lost: it's cleared, and the web app asks for a new one.</summary>
+    public async Task ResetAdminAsync(CancellationToken ct)
     {
         using var scope = scopes.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
-        var row = await db.Settings.FindAsync([LoginKey], ct);
-        if (login is null)
-        {
-            if (row is not null)
-                db.Settings.Remove(row);
-        }
-        else
-        {
-            var json = JsonSerializer.Serialize(login, NavidexJson.Options);
-            if (row is null)
-                db.Settings.Add(new Setting { Key = LoginKey, ValueJson = json });
-            else
-                row.ValueJson = json;
-        }
-        await db.SaveChangesAsync(ct);
-        _login = login;
-        _loginLoaded = true;
+        await AdoptLegacyLoginAsync(db, ct);
+        await db.Users.Where(u => u.IsAdmin).ExecuteUpdateAsync(u => u.SetProperty(x => x.PasswordHash, "").SetProperty(x => x.Stamp, NewStamp()), ct);
+        UsersChanged();
     }
-
-    public static AdminLogin NewLogin(string username, string password, bool skipOnLocalNetwork) =>
-        new() { Username = username.Trim(), PasswordHash = HashPassword(password), SkipOnLocalNetwork = skipOnLocalNetwork, Stamp = NewStamp() };
 
     public static string NewStamp() => Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
 
-    /// <summary>What a session cookie carries: the username, and the stamp it was made under.</summary>
-    public static ClaimsPrincipal Principal(AdminLogin login) =>
-        new(new ClaimsIdentity([new Claim(ClaimTypes.Name, login.Username), new Claim(StampClaim, login.Stamp)], "cookie"));
+    /// <summary>What a session cookie carries: the user, and the stamp it was made under.</summary>
+    public static ClaimsPrincipal Principal(User user) =>
+        new(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), new Claim(ClaimTypes.Name, user.Username), new Claim(StampClaim, user.Stamp)], "cookie"));
+
+    /// <summary>The user a session belongs to, while it's still good: they exist, and their password hasn't changed since.</summary>
+    public async Task<User?> SessionUserAsync(ClaimsPrincipal principal, CancellationToken ct) =>
+        Guid.TryParse(principal.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var id) && (await UsersAsync(ct)).GetValueOrDefault(id) is { } user
+        && user.PasswordHash.Length > 0 && principal.FindFirst(StampClaim)?.Value == user.Stamp
+            ? user
+            : null;
 
     public static string HashPassword(string password)
     {
@@ -144,8 +176,8 @@ public sealed class AccessService(IServiceScopeFactory scopes, ILogger<AccessSer
 
     // ---- API keys ----
 
-    /// <summary>A new key: the full key, shown once, and the record kept of it.</summary>
-    public static (string Key, ApiKey Record) NewKey(string name, IEnumerable<string> scopes)
+    /// <summary>A new key for a user: the full key, shown once, and the record kept of it.</summary>
+    public static (string Key, ApiKey Record) NewKey(string name, IEnumerable<string> scopes, Guid userId)
     {
         var key = KeyPrefix + Base64Url(RandomNumberGenerator.GetBytes(32));
         return (key, new ApiKey
@@ -153,7 +185,8 @@ public sealed class AccessService(IServiceScopeFactory scopes, ILogger<AccessSer
             Name = name.Trim(),
             Prefix = key[..(KeyPrefix.Length + 6)],
             Hash = HashKey(key),
-            Scopes = string.Join(",", scopes.Distinct().Where(Scopes.IsKnown).OrderBy(s => Scopes.All.ToList().IndexOf(s))),
+            Scopes = Scopes.Join(scopes),
+            UserId = userId,
         });
     }
 
@@ -166,6 +199,7 @@ public sealed class AccessService(IServiceScopeFactory scopes, ILogger<AccessSer
     {
         if (_keys is { } keys)
             return keys;
+        await UsersAsync(ct);
         using var scope = scopes.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<NavidexDbContext>();
         keys = await db.ApiKeys.AsNoTracking().ToDictionaryAsync(k => k.Hash, ct);
@@ -173,12 +207,26 @@ public sealed class AccessService(IServiceScopeFactory scopes, ILogger<AccessSer
         return keys;
     }
 
+    /// <summary>
+    /// What a key may do: its scopes, as far as its owner may do them. Admin on a key means all its owner may do. A key
+    /// whose owner has gone can do nothing.
+    /// </summary>
+    public static IReadOnlySet<string> ScopesOf(ApiKey key, User? owner)
+    {
+        if (owner is null)
+            return new HashSet<string>();
+        var allowed = PermissionsOf(owner);
+        var asked = Scopes.Parse(key.Scopes).ToHashSet();
+        return asked.Contains(Scopes.Admin) ? allowed : asked.Where(allowed.Contains).ToHashSet();
+    }
+
     private async Task<Caller?> FromKeyAsync(string key, CancellationToken ct)
     {
         if (!(await KeysAsync(ct)).TryGetValue(HashKey(key), out var record))
             return null;
         NoteUsed(record.Id);
-        return new Caller(CallerKind.Key, record.Name, record.Scopes.Split(',', StringSplitOptions.RemoveEmptyEntries).ToHashSet(), record.Id);
+        var owner = record.UserId is { } id ? (await UsersAsync(ct)).GetValueOrDefault(id) : null;
+        return new Caller(CallerKind.Key, record.Name, ScopesOf(record, owner), owner?.Id, record.Id, owner?.IsAdmin == true);
     }
 
     // When a key was last used is worth knowing roughly, not worth a write on every call.
@@ -209,56 +257,22 @@ public sealed class AccessService(IServiceScopeFactory scopes, ILogger<AccessSer
     {
         None,
 
-        /// <summary>No admin login yet: the web app asks for one.</summary>
+        /// <summary>No admin yet, or the admin's login was reset: the web app asks for one.</summary>
         SetupRequired,
         SignInRequired,
         BadKey,
     }
 
-    /// <summary>Who's calling: an app by its key, the admin by their session, or the local network if that's let in.</summary>
+    /// <summary>Who's calling: an app by its key, or someone by their session.</summary>
     public async Task<(Caller? Caller, Refusal Refusal)> IdentifyAsync(HttpContext http, CancellationToken ct)
     {
         var key = http.Request.Headers[KeyHeader].FirstOrDefault() ?? http.Request.Query[KeyQuery].FirstOrDefault();
         if (!string.IsNullOrEmpty(key))
             return await FromKeyAsync(key, ct) is { } app ? (app, Refusal.None) : (null, Refusal.BadKey);
 
-        var login = await GetLoginAsync(ct);
-        if (http.User.Identity?.IsAuthenticated == true && login is not null)
-            return (new Caller(CallerKind.Admin, login.Username, AllScopes), Refusal.None);
-        if (login is null)
-            return (null, Refusal.SetupRequired);
-        if (login.SkipOnLocalNetwork && IsLocal(http))
-            return (new Caller(CallerKind.Local, login.Username, AllScopes), Refusal.None);
-        return (null, Refusal.SignInRequired);
-    }
-
-    private static readonly IReadOnlySet<string> AllScopes = Scopes.All.ToHashSet();
-
-    /// <summary>
-    /// From this machine or the local network, as best the core can tell. Anything that came through a reverse proxy
-    /// isn't, as the proxy may be passing on calls from anywhere.
-    /// </summary>
-    public static bool IsLocal(HttpContext http)
-    {
-        var headers = http.Request.Headers;
-        if (headers.ContainsKey("X-Forwarded-For") || headers.ContainsKey("Forwarded") || headers.ContainsKey("X-Real-IP"))
-            return false;
-        return http.Connection.RemoteIpAddress is { } address && IsLocal(address);
-    }
-
-    public static bool IsLocal(IPAddress address)
-    {
-        if (address.IsIPv4MappedToIPv6)
-            address = address.MapToIPv4();
-        if (IPAddress.IsLoopback(address))
-            return true;
-        if (address.AddressFamily == AddressFamily.InterNetwork)
-        {
-            var b = address.GetAddressBytes();
-            return b[0] == 10 || b[0] == 172 && b[1] is >= 16 and <= 31 || b[0] == 192 && b[1] == 168 || b[0] == 169 && b[1] == 254;
-        }
-        // Unique local (fc00::/7) and link-local addresses.
-        return address.AddressFamily == AddressFamily.InterNetworkV6 && (address.IsIPv6LinkLocal || (address.GetAddressBytes()[0] & 0xFE) == 0xFC);
+        if (http.User.Identity?.IsAuthenticated == true && await SessionUserAsync(http.User, ct) is { } user)
+            return (new Caller(CallerKind.User, user.Username, PermissionsOf(user), user.Id, IsAdmin: user.IsAdmin), Refusal.None);
+        return (null, await IsSetUpAsync(ct) ? Refusal.SignInRequired : Refusal.SetupRequired);
     }
 
     private static string Base64Url(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');

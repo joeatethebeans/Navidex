@@ -1,15 +1,17 @@
-using Microsoft.AspNetCore.Components.WebAssembly.Http;
+using Microsoft.JSInterop;
 
 namespace Navidex.Web;
 
 /// <summary>
-/// Reads <c>GET /events</c> for the whole app and says what changed, so pages reload instead of polling. Reconnects
-/// when the connection drops, for example while the core restarts.
+/// Reads <c>GET /events</c> for the whole app (events.js) and says what changed, so pages reload instead of polling.
+/// Reconnects when the connection drops, for example while the core restarts, and as soon as the app signs in.
 /// </summary>
-public sealed class ServerEvents(HttpClient http) : IDisposable
+public sealed class ServerEvents(IJSRuntime js, AuthState auth) : IAsyncDisposable
 {
-    private readonly CancellationTokenSource _stop = new();
-    private Task? _running;
+    private Task? _starting;
+    private DotNetObjectReference<ServerEvents>? _self;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _source;
 
     /// <summary>The kind of thing that changed: <c>requests</c>, <c>listen</c>, <c>library</c> or <c>tasks</c>.</summary>
     public event Action<string>? Received;
@@ -17,45 +19,60 @@ public sealed class ServerEvents(HttpClient http) : IDisposable
     /// <summary>Whether events are arriving, so pollers can slow down.</summary>
     public bool Connected { get; private set; }
 
-    public void EnsureStarted() => _running ??= RunAsync(_stop.Token);
+    public void EnsureStarted() => _starting ??= StartAsync();
 
-    private async Task RunAsync(CancellationToken ct)
+    private async Task StartAsync()
     {
-        var delay = TimeSpan.FromSeconds(1);
-        while (!ct.IsCancellationRequested)
+        try
         {
-            try
-            {
-                using var request = new HttpRequestMessage(HttpMethod.Get, "api/v1/events");
-                request.SetBrowserResponseStreamingEnabled(true);
-                using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-                response.EnsureSuccessStatusCode();
-                using var reader = new StreamReader(await response.Content.ReadAsStreamAsync(ct));
-                Connected = true;
-                delay = TimeSpan.FromSeconds(1);
-                // Missed while disconnected: everyone reloads.
-                Received?.Invoke("connected");
-                while (await reader.ReadLineAsync(ct) is { } line)
-                    if (line.StartsWith("event: ", StringComparison.Ordinal))
-                        Received?.Invoke(line["event: ".Length..]);
-            }
-            catch (Exception) when (!ct.IsCancellationRequested)
-            {
-                // Dropped or refused: try again, more slowly each time.
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-            Connected = false;
-            await Task.Delay(delay, ct).ContinueWith(_ => { }, TaskScheduler.Default);
-            delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, 30));
+            _self = DotNetObjectReference.Create(this);
+            _module = await js.InvokeAsync<IJSObjectReference>("import", "./js/events.js");
+            _source = await _module.InvokeAsync<IJSObjectReference>("listen", _self);
+            auth.Changed += OnAuthChanged;
+        }
+        catch (JSException)
+        {
+            // No events: pages fall back to polling.
         }
     }
 
-    public void Dispose()
+    // Refused before signing in, it would otherwise wait out its back-off.
+    private void OnAuthChanged()
     {
-        _stop.Cancel();
-        _stop.Dispose();
+        if (auth.Status is { LetIn: true } && !Connected && _source is not null)
+            _ = _source.InvokeVoidAsync("reconnect").AsTask();
+    }
+
+    [JSInvokable]
+    public void Opened()
+    {
+        Connected = true;
+        // Missed while disconnected: everyone reloads.
+        Received?.Invoke("connected");
+    }
+
+    [JSInvokable]
+    public void Closed() => Connected = false;
+
+    [JSInvokable]
+    public void Changed(string kind) => Received?.Invoke(kind);
+
+    public async ValueTask DisposeAsync()
+    {
+        auth.Changed -= OnAuthChanged;
+        try
+        {
+            if (_source is not null)
+            {
+                await _source.InvokeVoidAsync("dispose");
+                await _source.DisposeAsync();
+            }
+            if (_module is not null)
+                await _module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        _self?.Dispose();
     }
 }

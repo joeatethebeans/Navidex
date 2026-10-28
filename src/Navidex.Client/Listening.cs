@@ -38,6 +38,8 @@ public sealed record StartListen(RequestKind Kind, Guid Id, Guid? EditionId = nu
 /// <param name="ExpiresAt">When the file goes unless it's added or played again. Each play pushes it back.</param>
 /// <param name="RequestId">The request behind it, which the Activity page shows with its fetch attempts.</param>
 /// <param name="MediaServerTrackId">Once in the library, the media server's ID for it, to play it from there instead.</param>
+/// <param name="Paused">Its request is held back; resume it with <c>POST /requests/{requestId}/resume</c>.</param>
+/// <param name="QueueOrder">Its place among listen-now tracks waiting to be fetched: lower goes first.</param>
 public sealed record ListenNowInfo(
     Guid Id,
     Guid TrackId,
@@ -59,7 +61,9 @@ public sealed record ListenNowInfo(
     DateTime? ExpiresAt,
     Guid RequestId,
     string? MediaServerTrackId,
-    DateTime CreatedAt)
+    DateTime CreatedAt,
+    bool Paused = false,
+    double QueueOrder = 0)
 {
     /// <summary>Still on its way to being playable.</summary>
     public bool Pending => State is ListenNowState.Requested or ListenNowState.Fetching;

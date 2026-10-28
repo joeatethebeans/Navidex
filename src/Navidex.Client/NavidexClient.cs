@@ -23,8 +23,23 @@ public sealed class NavidexClient(HttpClient http)
     public async Task<IReadOnlyList<MissingAlbum>> GetMissingAsync(CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<MissingAlbum>>($"{Api}/library/missing", NavidexJson.Options, ct) ?? [];
 
-    public async Task<IReadOnlyList<ReviewItem>> GetReviewAsync(bool excluded = false, CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<List<ReviewItem>>($"{Api}/library/review{(excluded ? "?excluded=true" : "")}", NavidexJson.Options, ct) ?? [];
+    public async Task<IReadOnlyList<ReviewItem>> GetReviewAsync(ReviewList list = ReviewList.Review, CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<ReviewItem>>($"{Api}/library/review?list={list}", NavidexJson.Options, ct) ?? [];
+
+    /// <summary>Excludes, defers or hides a file, or with <see cref="SetAside.None"/> puts it back to be matched at the next scan.</summary>
+    public async Task SetFileAsideAsync(Guid fileId, SetAside setAside, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/library/files/{fileId}/set-aside", new SetFileAside(setAside), NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+    }
+
+    /// <summary>As <see cref="SetFileAsideAsync"/>, for many files.</summary>
+    public async Task<ReviewDone> SetFilesAsideAsync(IReadOnlyList<Guid> fileIds, SetAside setAside, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/library/review/set-aside", new SetFilesAside(fileIds, setAside), NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<ReviewDone>(NavidexJson.Options, ct))!;
+    }
 
     /// <summary>Excludes a file from matching, or includes it again.</summary>
     public async Task SetFileExcludedAsync(Guid fileId, bool excluded, CancellationToken ct = default)
@@ -33,9 +48,9 @@ public sealed class NavidexClient(HttpClient http)
         await EnsureAsync(response, ct);
     }
 
-    public async Task<TaskInfo> ScanLibraryAsync(CancellationToken ct = default)
+    public async Task<TaskInfo> ScanLibraryAsync(Rematch rematch = Rematch.None, CancellationToken ct = default)
     {
-        using var response = await http.PostAsync($"{Api}/library/scan", null, ct);
+        using var response = await http.PostAsJsonAsync($"{Api}/library/scan", new ScanLibrary(rematch), NavidexJson.Options, ct);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<TaskInfo>(NavidexJson.Options, ct))!;
     }
@@ -54,6 +69,8 @@ public sealed class NavidexClient(HttpClient http)
 
     public async Task<IReadOnlyList<AlbumSummary>> GetArtistAlbumsAsync(Guid id, CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<AlbumSummary>>($"{Api}/artists/{id}/albums", NavidexJson.Options, ct) ?? [];
+
+    public Task<TrackDetail?> GetTrackAsync(Guid id, CancellationToken ct = default) => GetOrNullAsync<TrackDetail>($"{Api}/tracks/{id}", ct);
 
     public Task<AlbumDetail?> GetAlbumAsync(Guid id, Guid? editionId = null, CancellationToken ct = default) =>
         GetOrNullAsync<AlbumDetail>(editionId is null ? $"{Api}/albums/{id}" : $"{Api}/albums/{id}?edition={editionId}", ct);
@@ -127,6 +144,17 @@ public sealed class NavidexClient(HttpClient http)
     public async Task<RemovalPreview> GetRemovalAsync(LibraryItemKind kind, Guid id, CancellationToken ct = default) =>
         (await http.GetFromJsonAsync<RemovalPreview>($"{Api}/library/removal?kind={kind}&id={id}", NavidexJson.Options, ct))!;
 
+    public async Task<FormatPlan> GetFormatPlanAsync(FormatScope scope, CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<FormatPlan>($"{Api}/library/format?kind={scope.Kind}{(scope.Id is { } id ? $"&id={id}" : "")}", NavidexJson.Options, ct))!;
+
+    /// <summary>Starts formatting in the background; the task reports progress like a scan.</summary>
+    public async Task<TaskInfo> StartFormatAsync(StartFormat body, CancellationToken ct = default)
+    {
+        var response = await http.PostAsJsonAsync($"{Api}/library/format", body, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<TaskInfo>(NavidexJson.Options, ct))!;
+    }
+
     public async Task<RemovalResult> RemoveFromLibraryAsync(RemoveFromLibrary body, CancellationToken ct = default)
     {
         var response = await http.PostAsJsonAsync($"{Api}/library/remove", body, NavidexJson.Options, ct);
@@ -155,6 +183,16 @@ public sealed class NavidexClient(HttpClient http)
     }
 
     /// <summary>How to play a track you have; null if you don't have it.</summary>
+    /// <summary>How to play one file, matched or not.</summary>
+    public Task<PlayInfo?> GetFilePlayInfoAsync(Guid fileId, CancellationToken ct = default) =>
+        GetOrNullAsync<PlayInfo>($"{Api}/library/files/{fileId}/play", ct);
+
+    public Task<LocalArtistDetail?> GetLocalArtistAsync(Guid id, CancellationToken ct = default) =>
+        GetOrNullAsync<LocalArtistDetail>($"{Api}/library/local/artists/{id}", ct);
+
+    public Task<LocalAlbumDetail?> GetLocalAlbumAsync(Guid id, CancellationToken ct = default) =>
+        GetOrNullAsync<LocalAlbumDetail>($"{Api}/library/local/albums/{id}", ct);
+
     public Task<PlayInfo?> GetPlayInfoAsync(Guid trackId, Guid? editionId = null, CancellationToken ct = default) =>
         GetOrNullAsync<PlayInfo>($"{Api}/tracks/{trackId}/play{(editionId is { } e ? $"?edition={e}" : "")}", ct);
 
@@ -259,12 +297,35 @@ public sealed class NavidexClient(HttpClient http)
         await EnsureAsync(response, ct);
     }
 
+    // ---- Pausing and ordering ----
+
+    public Task PauseRequestAsync(Guid id, CancellationToken ct = default) => PostAsync($"{Api}/requests/{id}/pause", null, ct);
+
+    public Task ResumeRequestAsync(Guid id, CancellationToken ct = default) => PostAsync($"{Api}/requests/{id}/resume", null, ct);
+
+    /// <summary>Moves a request to just before <paramref name="before"/> in its queue, or to the end.</summary>
+    public Task MoveRequestAsync(Guid id, Guid? before, CancellationToken ct = default) => PostAsync($"{Api}/requests/{id}/move", new MoveInQueue(before), ct);
+
+    public Task CancelTaskAsync(Guid id, CancellationToken ct = default) => PostAsync($"{Api}/tasks/{id}/cancel", null, ct);
+
+    public Task PauseTaskAsync(Guid id, CancellationToken ct = default) => PostAsync($"{Api}/tasks/{id}/pause", null, ct);
+
+    public Task ResumeTaskAsync(Guid id, CancellationToken ct = default) => PostAsync($"{Api}/tasks/{id}/resume", null, ct);
+
+    public Task MoveTaskAsync(Guid id, Guid? before, CancellationToken ct = default) => PostAsync($"{Api}/tasks/{id}/move", new MoveInQueue(before), ct);
+
+    private async Task PostAsync(string url, object? body, CancellationToken ct)
+    {
+        using var response = body is null ? await http.PostAsync(url, null, ct) : await http.PostAsJsonAsync(url, body, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+    }
+
     // ---- Access ----
 
     public async Task<AuthStatus> GetAuthStatusAsync(CancellationToken ct = default) =>
         (await http.GetFromJsonAsync<AuthStatus>($"{Api}/auth/status", NavidexJson.Options, ct))!;
 
-    /// <summary>Makes the admin login, the first time, and signs in with it.</summary>
+    /// <summary>Makes the admin account, the first time, and signs in with it.</summary>
     public async Task SetUpLoginAsync(SetUpLogin login, CancellationToken ct = default)
     {
         using var response = await http.PostAsJsonAsync($"{Api}/auth/setup", login, NavidexJson.Options, ct);
@@ -289,9 +350,26 @@ public sealed class NavidexClient(HttpClient http)
         await EnsureAsync(response, ct);
     }
 
-    public async Task SaveAccessSettingsAsync(AccessSettings settings, CancellationToken ct = default)
+    public async Task<IReadOnlyList<UserInfo>> ListUsersAsync(CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<UserInfo>>($"{Api}/users", NavidexJson.Options, ct) ?? [];
+
+    public async Task<UserInfo> CreateUserAsync(CreateUser user, CancellationToken ct = default)
     {
-        using var response = await http.PutAsJsonAsync($"{Api}/auth/settings", settings, NavidexJson.Options, ct);
+        using var response = await http.PostAsJsonAsync($"{Api}/users", user, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<UserInfo>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task<UserInfo> UpdateUserAsync(Guid id, UpdateUser update, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/users/{id}", update, NavidexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<UserInfo>(NavidexJson.Options, ct))!;
+    }
+
+    public async Task RemoveUserAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await http.DeleteAsync($"{Api}/users/{id}", ct);
         await EnsureAsync(response, ct);
     }
 

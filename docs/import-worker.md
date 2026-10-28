@@ -93,6 +93,39 @@ Response `200`, listing a file that was already gone as deleted:
 { "deleted": ["Portishead/Dummy/01 Mysterons.opus"], "failed": [{ "path": "Portishead/Dummy/02 Sour Times.opus", "error": "Permission denied" }] }
 ```
 
+## `POST /v1/format`
+
+Rewrites files already in the library, for formatting an artist, album, track or the whole library. Navidex works
+out every value from its catalogue; the worker only writes them.
+
+```json
+{
+  "files": [
+    { "path": "incoming/glory box.flac", "tags": { "title": "Glory Box", "album": "Dummy", "track": "11", "date": "1994-08-22" }, "artwork": "cover" }
+  ],
+  "artwork": { "cover": { "data": "<base64>" } },
+  "pathTemplate": "$albumartist/$album%aunique{}/$track $title"
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `files[].tags` | Tags to write, by beets field name. The rest stay as they are, and an empty value clears one. Navidex writes `title`, `artist`, `album`, `albumartist`, `track`, `tracktotal`, `disc`, `disctotal`, `date` and `original_date` (as `yyyy`, `yyyy-MM` or `yyyy-MM-dd`), `country`, `media`, `albumtype`, `label`, `catalognum`, `isrc` and the `mb_*` IDs; any other name fails that file. |
+| `files[].artwork` | The key of an image in `artwork` to embed as the front cover, replacing what's there. Omit it to leave the embedded art. |
+| `files[].removeArtwork` | Take the embedded art out. |
+| `artwork` | Images by key, base64, so an album's files share one copy. |
+| `pathTemplate` | Move each file to where this path format puts it, going by its new tags, as an import would. Omit it to leave files where they are. |
+
+A moved file never overwrites another: `.1`, `.2` and so on go before the extension. Once a folder holds no music,
+its artwork and the like follow the music to its new folder, and the folder goes, then any parent left empty.
+
+Response `200`, a result for each file in order. A file that couldn't be formatted, for example because it's gone
+or outside the library, says why, and the rest carry on:
+
+```json
+{ "files": [{ "path": "incoming/glory box.flac", "newPath": "Portishead/Dummy/11 Glory Box.flac", "size": 72970 }, { "path": "gone.flac", "error": "It isn't in the music folder any more." }] }
+```
+
 ## `GET /v1/health`
 
 `{ "status": "healthy" | "unhealthy", "message": "..." }`. Unhealthy when the staging or library volume isn't

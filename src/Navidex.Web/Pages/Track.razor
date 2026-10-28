@@ -1,0 +1,173 @@
+@page "/tracks/{Id:guid}"
+@implements IDisposable
+@inject NavidexClient Api
+@inject RequestTracker Tracker
+@inject Player Player
+
+<PageTitle>@(_track?.Title ?? "Track") · Navidex</PageTitle>
+
+@if (_notFound)
+{
+    <div class="empty card">That track isn't in the catalogue.</div>
+}
+else if (_track is null)
+{
+    <Loading />
+}
+else
+{
+    var track = _track;
+    var owned = track.Files.Count > 0;
+    // Where it'd be fetched to or listened from: the edition you have it on, or the first it's on.
+    var edition = track.Appearances.FirstOrDefault(a => a.InLibrary) ?? track.Appearances.FirstOrDefault();
+    <div class="page-head">
+        <Cover Url="@track.CoverUrl" />
+        <div>
+            <h1>@track.Title</h1>
+            <div class="row muted small">
+                <a href="artists/@track.ArtistId">@track.ArtistCredit</a>
+                @if (track.DurationSeconds is not null) { <span>@Format.Duration(track.DurationSeconds)</span> }
+                <StatusBadge Track="@(owned ? TrackStatus.Owned : track.Ignored ? TrackStatus.Ignored : TrackStatus.Missing)" />
+                <ProviderIds Ids="track.Ids" Entity="recording" />
+            </div>
+            <div class="row album-actions" style="margin-top: .5rem;">
+                @if (owned)
+                {
+                    <IconButton Icon="play" Requires="@UserPermissions.Listen" Primary="true" Large="true" Label="Play" Title="Play it" OnClick="() => Player.PlayAsync([Entry(track)])" />
+                    <IconButton Icon="queue" Requires="@UserPermissions.Listen" Large="true" Confirm="true" Title="Add to the queue" OnClick="() => Player.AddAsync([Entry(track)])" />
+                    <IconButton Icon="format" Requires="@UserPermissions.Format" Large="true" Label="Format" Title="Rewrite this song's files: their tags, cover and where they live" OnClick="() => _formatting = true" />
+                }
+                else if (!track.Ignored)
+                {
+                    <FetchButton Kind="RequestKind.Track" Id="track.Id" EditionId="edition?.EditionId" Primary="true" Label="Get track" Hint="Get it into your library">
+                        <IconButton Icon="listen" Requires="@UserPermissions.Listen" Large="true" Label="Listen now" Title="Fetch it to play now, without adding it to your library"
+                                    OnClick="() => Player.ListenAsync(track.Id, edition?.EditionId)" />
+                    </FetchButton>
+                }
+            </div>
+        </div>
+    </div>
+
+    <h2 class="section">On @Format.Count(track.Appearances.Select(a => a.AlbumId).Distinct().Count(), "album", "albums")</h2>
+    @if (track.Appearances.Count == 0)
+    {
+        <div class="empty card">No albums in the catalogue list this song yet.</div>
+    }
+    else
+    {
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Album</th>
+                        <th class="hide-narrow">Edition</th>
+                        <th class="num">#</th>
+                        <th class="hide-narrow">First released</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @* One row an album: the edition you have it on, or the first, standing for the rest. *@
+                    @foreach (var album in track.Appearances.GroupBy(a => a.AlbumId))
+                    {
+                        var on = album.FirstOrDefault(a => a.InLibrary) ?? album.First();
+                        var others = album.Count() - 1;
+                        <tr>
+                            <td>
+                                <a href="albums/@on.AlbumId">@on.AlbumTitle</a>
+                                <span class="muted small"> · @Format.TypeLabel(on.AlbumType)</span>
+                                @if (on.Title != track.Title) { <div class="muted small">as “@on.Title”</div> }
+                            </td>
+                            <td class="hide-narrow muted small">
+                                @on.EditionTitle@(on.Country is null ? "" : $" ({on.Country})")
+                                @if (others > 0) { <span> and @Format.Count(others, "other", "others")</span> }
+                            </td>
+                            <td class="num muted nowrap">@(on.Disc > 1 ? $"{on.Disc}-" : "")@on.Number</td>
+                            <td class="hide-narrow muted">@album.Select(a => a.ReleaseDate).Where(d => d is not null).Order().FirstOrDefault()</td>
+                            <td>@if (album.Any(a => a.InLibrary)) { <span class="badge owned">In library</span> }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (owned)
+    {
+        <h2 class="section">@(track.Files.Count == 1 ? "Its file" : $"Its {track.Files.Count} files")</h2>
+        @foreach (var file in track.Files)
+        {
+            <div class="card track-file">
+                <code>@file.Path</code>
+                <div class="row muted small">
+                    @if (file.Format is not null) { <span>@file.Format.ToUpperInvariant()</span> }
+                    @if (file.DurationSeconds is not null) { <span>@Format.Duration(file.DurationSeconds)</span> }
+                    <span>@Format.Size(file.Size)</span>
+                    @if (file.FormattedAt is { } formatted) { <span>Formatted @Format.Ago(formatted)</span> }
+                </div>
+                @if (file.Tags.Count > 0)
+                {
+                    <dl class="file-tags">
+                        @foreach (var tag in file.Tags)
+                        {
+                            <dt>@tag.Name</dt>
+                            <dd>@tag.Value</dd>
+                        }
+                    </dl>
+                }
+            </div>
+        }
+    }
+}
+
+@if (_formatting && _track is not null)
+{
+    <FormatDialog Scope="new FormatScope(FormatScopeKind.Track, _track.Id)" Name="@_track.Title" OnClose="() => _formatting = false" />
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private TrackDetail? _track;
+    private bool _notFound;
+    private bool _formatting;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        ScanStatus.LibraryChanged += Reload;
+        Tracker.Changed -= Redraw;
+        Tracker.Changed += Redraw;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _track = await Api.GetTrackAsync(Id);
+        _notFound = _track is null;
+    }
+
+    private void Reload() => InvokeAsync(async () =>
+    {
+        await LoadAsync();
+        StateHasChanged();
+    });
+
+    private void Redraw() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        Tracker.Changed -= Redraw;
+    }
+
+    private static PlayerEntry Entry(TrackDetail track)
+    {
+        var on = track.Files[0].EditionId is { } edition ? track.Appearances.FirstOrDefault(a => a.EditionId == edition) : null;
+        return new PlayerEntry
+        {
+            TrackId = track.Id, EditionId = on?.EditionId, Title = track.Title, ArtistCredit = track.ArtistCredit, ArtistId = track.ArtistId,
+            AlbumId = on?.AlbumId, AlbumTitle = on?.AlbumTitle, CoverUrl = track.CoverUrl, DurationSeconds = track.DurationSeconds,
+        };
+    }
+}

@@ -37,6 +37,10 @@ public enum RequestState
 /// <param name="EditionId">For an album or track, the edition to fetch; otherwise the one you own, or the planner's pick.</param>
 public sealed record CreateRequest(RequestKind Kind, Guid Id, Guid? EditionId = null);
 
+/// <summary>Body of <c>POST /requests/{id}/move</c> and <c>POST /tasks/{id}/move</c>.</summary>
+/// <param name="Before">Put it just before this one in the queue; null for the end.</param>
+public sealed record MoveInQueue(Guid? Before);
+
 /// <summary>Body of <c>POST /requests/{id}/choose</c>: a candidate from one of the request's jobs.</summary>
 public sealed record ChooseCandidate(Guid JobId, string CandidateId);
 
@@ -47,6 +51,8 @@ public sealed record ChooseCandidate(Guid JobId, string CandidateId);
 /// <param name="Children">The parts themselves, on <c>GET /requests/{id}</c> only.</param>
 /// <param name="Jobs">Attempts through retrieval plugins, oldest first, on <c>GET /requests/{id}</c> only.</param>
 /// <param name="ListenNow">A track fetched to listen to, not for the library; see <c>/listen</c>.</param>
+/// <param name="Paused">Held back: it won't start until resumed. One paused mid-fetch starts that fetch again.</param>
+/// <param name="QueueOrder">Its place in the queue: lower starts first.</param>
 public sealed record RequestInfo(
     Guid Id,
     RequestKind Kind,
@@ -61,7 +67,9 @@ public sealed record RequestInfo(
     RequestParts? Parts = null,
     IReadOnlyList<RequestInfo>? Children = null,
     IReadOnlyList<JobInfo>? Jobs = null,
-    bool ListenNow = false)
+    bool ListenNow = false,
+    bool Paused = false,
+    double QueueOrder = 0)
 {
     /// <summary>Whether it can still change: not in the library, failed, needing review or cancelled.</summary>
     public bool Active => State is not (RequestState.InLibrary or RequestState.NeedsReview or RequestState.Failed or RequestState.Cancelled or RequestState.Playable);

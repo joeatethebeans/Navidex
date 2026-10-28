@@ -1,0 +1,131 @@
+"""Rewriting files already in the library: their tags, their embedded cover, and where they live. See
+docs/import-worker.md.
+
+Navidex works out the values from its catalogue and sends them; this only writes them. Moving a file to where the
+path template says uses beets, as imports do, so formatted files land where an import would put them.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable
+
+from mediafile import Image, ImageType, MediaFile
+
+from .removal import LEFTOVERS
+
+TEXT_FIELDS = {"title", "artist", "album", "albumartist", "country", "media", "albumtype", "label", "catalognum",
+               "isrc", "mb_trackid", "mb_releasetrackid", "mb_albumid", "mb_artistid", "mb_albumartistid",
+               "mb_releasegroupid"}
+NUMBER_FIELDS = {"track", "tracktotal", "disc", "disctotal"}
+# Dates arrive as yyyy, yyyy-MM or yyyy-MM-dd and are written as their parts.
+DATE_FIELDS = {"date": ("year", "month", "day"), "original_date": ("original_year", "original_month", "original_day")}
+
+
+@dataclass
+class FormatFile:
+    path: str
+    tags: dict[str, str]
+    artwork: str | None
+    remove_artwork: bool
+
+
+class FormatFailed(Exception):
+    """One file couldn't be formatted, with why."""
+
+
+def write_tags(full: Path, tags: dict[str, str], artwork: bytes | None, remove_artwork: bool) -> None:
+    """Writes the given tags, leaving the rest as they are. An empty value clears the tag."""
+    unknown = [name for name in tags if name not in TEXT_FIELDS | NUMBER_FIELDS | DATE_FIELDS.keys()]
+    if unknown:
+        raise FormatFailed(f"Navidex doesn't write the tag {', '.join(unknown)}.")
+    media = MediaFile(full)
+    for name, value in tags.items():
+        if name in DATE_FIELDS:
+            parts = [int(p) for p in value.split("-")[:3] if p.isdigit()] if value else []
+            for field, part in zip(DATE_FIELDS[name], parts + [None] * 3):
+                setattr(media, field, part)
+        elif name in NUMBER_FIELDS:
+            setattr(media, name, int(value) if value else None)
+        else:
+            setattr(media, name, value or None)
+    if artwork is not None:
+        media.images = [Image(data=artwork, type=ImageType.front)]
+    elif remove_artwork:
+        media.images = []
+    media.save()
+
+
+def format_files(library: Path, files: list[FormatFile], artwork: dict[str, bytes],
+                 destination: Callable[[Path], Path] | None) -> list[dict[str, Any]]:
+    """Formats each file, moving it to <destination> of it (library-relative) when that's given. A file that can't be
+    formatted is reported with why and the rest carry on."""
+    results = []
+    moved_from: dict[Path, list[Path]] = defaultdict(list)
+    for file in files:
+        try:
+            full = inside(library, file.path)
+            if not full.is_file():
+                raise FormatFailed("It isn't in the music folder any more.")
+            if file.artwork is not None and file.artwork not in artwork:
+                raise FormatFailed(f"There's no artwork {file.artwork} in the request.")
+            write_tags(full, file.tags, artwork.get(file.artwork) if file.artwork else None, file.remove_artwork)
+            target = full
+            if destination is not None:
+                wanted = library / destination(full)
+                if wanted != full:
+                    target = unique(wanted)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(full, target)
+                    moved_from[full.parent].append(target.parent)
+            stat = target.stat()
+            results.append({"path": file.path, "newPath": target.relative_to(library).as_posix(), "size": stat.st_size})
+        except (FormatFailed, OSError, ValueError) as e:
+            results.append({"path": file.path, "error": str(e) or type(e).__name__})
+        except Exception as e:  # mediafile raises its own errors for files it can't read or write
+            results.append({"path": file.path, "error": f"{type(e).__name__}: {e}"})
+    for folder, targets in moved_from.items():
+        tidy(folder, Counter(targets).most_common(1)[0][0], library)
+    return results
+
+
+def tidy(folder: Path, moved_to: Path, library: Path) -> None:
+    """Once a folder holds no music, moves its cover art and the like to where its music went, then removes it and any
+    parent folder left empty. A folder that still holds music, or anything else, stays."""
+    try:
+        entries = list(os.scandir(folder))
+    except OSError:
+        return
+    if any(e.is_dir() or os.path.splitext(e.name)[1].lower() not in LEFTOVERS for e in entries):
+        return
+    for entry in entries:
+        if not (moved_to / entry.name).exists():
+            shutil.move(entry.path, moved_to / entry.name)
+        else:
+            os.remove(entry.path)
+    while folder != library and library in folder.parents:
+        try:
+            folder.rmdir()
+        except OSError:
+            return
+        folder = folder.parent
+
+
+def inside(library: Path, path: str) -> Path:
+    full = (library / path).resolve()
+    if library not in full.parents:
+        raise FormatFailed("It isn't inside the library.")
+    return full
+
+
+def unique(path: Path) -> Path:
+    """The path, or with .1, .2 and so on before the extension if a file is already there, as beets does."""
+    candidate, n = path, 0
+    while candidate.exists():
+        n += 1
+        candidate = path.with_name(f"{path.stem}.{n}{path.suffix}")
+    return candidate

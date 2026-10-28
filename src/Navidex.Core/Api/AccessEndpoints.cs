@@ -17,42 +17,56 @@ public static class AccessEndpoints
 
         auth.MapGet("/status", async (HttpContext http, AccessService access, CancellationToken ct) =>
             {
-                var login = await access.GetLoginAsync(ct);
                 var (caller, _) = await access.IdentifyAsync(http, ct);
-                // An app's key lets it in, but the admin's details are only for the admin.
-                var admin = caller is { Kind: not CallerKind.Key };
-                return new AuthStatus(login is not null, caller?.Kind == CallerKind.Admin, caller is not null, admin ? login!.Username : null,
-                    admin ? login!.SkipOnLocalNetwork : null, AccessService.IsLocal(http));
+                return new AuthStatus(await access.IsSetUpAsync(ct), caller?.Kind == CallerKind.User, caller is not null, caller?.Name, caller?.UserId,
+                    caller is { Kind: CallerKind.User, IsAdmin: true }, caller is null ? [] : Scopes.All.Where(caller.Scopes.Contains).ToList());
             })
             .AllowAnyone()
             .WithName("GetAuthStatus")
-            .WithSummary("Whether an admin login has been made, and whether this browser is signed in or let in from the local network. Open to anyone.");
+            .WithSummary("Whether the admin account has been made, and who this caller is and what they may do. Open to anyone.");
 
-        auth.MapPost("/setup", async (SetUpLogin body, HttpContext http, AccessService access, CancellationToken ct) =>
+        auth.MapPost("/setup", async (SetUpLogin body, HttpContext http, AccessService access, NavidexDbContext db, CancellationToken ct) =>
             {
-                if (await access.GetLoginAsync(ct) is not null)
-                    return Results.Problem("There's already an admin login. Sign in instead.", statusCode: StatusCodes.Status409Conflict, title: "Already set up");
+                if (await access.IsSetUpAsync(ct))
+                    return Results.Problem("There's already an admin account. Sign in instead.", statusCode: StatusCodes.Status409Conflict, title: "Already set up");
                 if (Invalid(body.Username, body.Password) is { } invalid)
                     return invalid;
-                var login = AccessService.NewLogin(body.Username, body.Password, body.SkipOnLocalNetwork);
-                await access.SaveLoginAsync(login, ct);
-                await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, AccessService.Principal(login));
+                // After a login reset the admin is kept, with their keys, and only gets a new name and password.
+                var admin = await db.Users.FirstOrDefaultAsync(u => u.IsAdmin, ct);
+                if (await TakenAsync(db, body.Username, admin?.Id, ct))
+                    return Taken();
+                if (admin is null)
+                {
+                    admin = AccessService.NewUser(body.Username, body.Password, [], isAdmin: true);
+                    db.Users.Add(admin);
+                }
+                else
+                {
+                    admin.Username = body.Username.Trim();
+                    admin.NormalizedUsername = AccessService.Normalize(body.Username);
+                    admin.PasswordHash = AccessService.HashPassword(body.Password);
+                    admin.Stamp = AccessService.NewStamp();
+                }
+                admin.LastSignInAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(ct);
+                access.UsersChanged();
+                await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, AccessService.Principal(admin));
                 return Results.NoContent();
             })
             .AllowAnyone()
             .WithName("SetUpLogin")
-            .WithSummary("Make the admin login, the first time Navidex runs, and sign in with it. Refused (409) once there is one.")
+            .WithSummary("Make the admin account, the first time Navidex runs, and sign in with it. The admin may do everything, including "
+                         + "adding other users. Refused (409) once there is one.")
             .Produces(StatusCodes.Status204NoContent).ProducesValidationProblem().ProducesProblem(StatusCodes.Status409Conflict);
 
-        auth.MapPost("/login", async (SignIn body, HttpContext http, AccessService access, CancellationToken ct) =>
+        auth.MapPost("/login", async (SignIn body, HttpContext http, AccessService access, NavidexDbContext db, CancellationToken ct) =>
             {
                 var address = http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
                 if (access.TooManyFailures(address))
                     return Results.Problem("Too many wrong passwords. Wait a few minutes, then try again.", statusCode: StatusCodes.Status429TooManyRequests,
                         title: "Too many tries");
-                var login = await access.GetLoginAsync(ct);
-                if (login is null || !string.Equals(body.Username.Trim(), login.Username, StringComparison.OrdinalIgnoreCase)
-                                  || !AccessService.CheckPassword(body.Password, login.PasswordHash))
+                var user = await access.FindAsync(body.Username, ct);
+                if (user is not { PasswordHash.Length: > 0 } || !AccessService.CheckPassword(body.Password, user.PasswordHash))
                 {
                     access.Failed(address);
                     // Slows guessing, and doesn't say which of the two was wrong.
@@ -60,12 +74,16 @@ public static class AccessEndpoints
                     return Results.Problem("That username and password don't match.", statusCode: StatusCodes.Status401Unauthorized, title: "Not signed in");
                 }
                 access.Succeeded(address);
-                await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, AccessService.Principal(login));
+                await db.Users.Where(u => u.Id == user.Id).ExecuteUpdateAsync(u => u.SetProperty(x => x.LastSignInAt, DateTime.UtcNow), ct);
+                access.UsersChanged();
+                await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, AccessService.Principal(user),
+                    new AuthenticationProperties { IsPersistent = body.RememberMe });
                 return Results.NoContent();
             })
             .AllowAnyone()
             .WithName("SignIn")
-            .WithSummary("Sign in as the admin. The session is a cookie, for browsers; apps use an API key instead.")
+            .WithSummary("Sign in. The session is a cookie, for browsers: remembered for 30 days from the last visit, or until the browser closes. "
+                         + "Apps use an API key instead.")
             .Produces(StatusCodes.Status204NoContent).ProducesProblem(StatusCodes.Status401Unauthorized).ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         auth.MapPost("/logout", async (HttpContext http) =>
@@ -77,46 +95,144 @@ public static class AccessEndpoints
             .WithName("SignOut")
             .WithSummary("End this browser's session.");
 
-        auth.MapPut("/account", async (UpdateLogin body, HttpContext http, AccessService access, CancellationToken ct) =>
+        auth.MapPut("/account", async (UpdateLogin body, HttpContext http, AccessService access, NavidexDbContext db, CancellationToken ct) =>
             {
-                var login = (await access.GetLoginAsync(ct))!;
-                if (!AccessService.CheckPassword(body.CurrentPassword, login.PasswordHash))
+                var caller = Caller.Of(http);
+                if (caller.Kind != CallerKind.User || await db.Users.FindAsync([caller.UserId], ct) is not { } user)
+                    return Results.Problem("Only someone signed in can change their account.", statusCode: StatusCodes.Status403Forbidden, title: "Not allowed");
+                if (!AccessService.CheckPassword(body.CurrentPassword, user.PasswordHash))
                     return Results.ValidationProblem(new Dictionary<string, string[]> { ["currentPassword"] = ["That isn't the current password."] });
-                var username = string.IsNullOrWhiteSpace(body.Username) ? login.Username : body.Username.Trim();
+                var username = string.IsNullOrWhiteSpace(body.Username) ? user.Username : body.Username.Trim();
                 if (Invalid(username, body.NewPassword ?? new string('x', MinPasswordLength)) is { } invalid)
                     return invalid;
+                if (await TakenAsync(db, username, user.Id, ct))
+                    return Taken();
+                user.Username = username;
+                user.NormalizedUsername = AccessService.Normalize(username);
                 // A new password signs out every other session; this one carries on under the new stamp.
-                var updated = body.NewPassword is { Length: > 0 } password
-                    ? login with { Username = username, PasswordHash = AccessService.HashPassword(password), Stamp = AccessService.NewStamp() }
-                    : login with { Username = username };
-                await access.SaveLoginAsync(updated, ct);
-                if (http.User.Identity?.IsAuthenticated == true)
-                    await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, AccessService.Principal(updated));
+                if (body.NewPassword is { Length: > 0 } password)
+                {
+                    user.PasswordHash = AccessService.HashPassword(password);
+                    user.Stamp = AccessService.NewStamp();
+                }
+                await db.SaveChangesAsync(ct);
+                access.UsersChanged();
+                await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, AccessService.Principal(user),
+                    new AuthenticationProperties { IsPersistent = await RememberedAsync(http) });
                 return Results.NoContent();
             })
+            .RequireScope(Scopes.Read)
             .WithName("UpdateLogin")
-            .WithSummary("Change the admin's username or password. A new password signs out every other session.")
+            .WithSummary("Change your own username or password. A new password signs out your other sessions.")
             .Produces(StatusCodes.Status204NoContent).ProducesValidationProblem();
 
-        auth.MapPut("/settings", async (AccessSettings body, AccessService access, CancellationToken ct) =>
+        MapUsers(api);
+        MapKeys(api);
+        return api;
+    }
+
+    private static void MapUsers(RouteGroupBuilder api)
+    {
+        var users = api.MapGroup("/users").WithTags("Access").RequireScope(Scopes.Users);
+
+        users.MapGet("", async (NavidexDbContext db, CancellationToken ct) =>
             {
-                var login = (await access.GetLoginAsync(ct))!;
-                await access.SaveLoginAsync(login with { SkipOnLocalNetwork = body.SkipOnLocalNetwork }, ct);
+                var keys = await db.ApiKeys.Where(k => k.UserId != null).GroupBy(k => k.UserId!.Value).Select(g => new { g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+                return (await db.Users.AsNoTracking().ToListAsync(ct))
+                    .OrderByDescending(u => u.IsAdmin).ThenBy(u => u.Username, StringComparer.OrdinalIgnoreCase)
+                    .Select(u => Info(u, keys.GetValueOrDefault(u.Id))).ToList();
+            })
+            .WithName("ListUsers").WithSummary("Everyone who signs in, the admin first, with what they may do.");
+
+        users.MapPost("", async (CreateUser body, HttpContext http, NavidexDbContext db, AccessService access, CancellationToken ct) =>
+            {
+                if (Invalid(body.Username, body.Password) is { } invalid)
+                    return invalid;
+                if (Beyond(Caller.Of(http), body.Permissions) is { } beyond)
+                    return beyond;
+                if (await TakenAsync(db, body.Username, null, ct))
+                    return Taken();
+                var user = AccessService.NewUser(body.Username, body.Password, body.Permissions);
+                db.Users.Add(user);
+                await db.SaveChangesAsync(ct);
+                access.UsersChanged();
+                return Results.Created($"/api/v1/users/{user.Id}", Info(user, 0));
+            })
+            .WithName("CreateUser")
+            .WithSummary("Add someone who can sign in, with what they may do. You can only give permissions you have yourself.")
+            .Produces<UserInfo>(StatusCodes.Status201Created).ProducesValidationProblem();
+
+        users.MapPut("/{id:guid}", async (Guid id, UpdateUser body, HttpContext http, NavidexDbContext db, AccessService access, CancellationToken ct) =>
+            {
+                var caller = Caller.Of(http);
+                if (await db.Users.FindAsync([id], ct) is not { } user)
+                    return Results.NotFound();
+                if (user.IsAdmin && !caller.IsAdmin || user.IsAdmin && caller.Kind != CallerKind.User)
+                    return Results.Problem("Only the admin can change the admin's account.", statusCode: StatusCodes.Status403Forbidden, title: "Not allowed");
+                if (body.Permissions is { } permissions && !user.IsAdmin && Beyond(caller, permissions) is { } beyond)
+                    return beyond;
+                var username = string.IsNullOrWhiteSpace(body.Username) ? user.Username : body.Username.Trim();
+                if (Invalid(username, string.IsNullOrEmpty(body.Password) ? new string('x', MinPasswordLength) : body.Password) is { } invalid)
+                    return invalid;
+                if (await TakenAsync(db, username, user.Id, ct))
+                    return Taken();
+                user.Username = username;
+                user.NormalizedUsername = AccessService.Normalize(username);
+                if (body.Permissions is not null && !user.IsAdmin)
+                    user.Permissions = Scopes.Join(body.Permissions.Where(Scopes.IsPermission));
+                if (body.Password is { Length: > 0 } password)
+                {
+                    user.PasswordHash = AccessService.HashPassword(password);
+                    user.Stamp = AccessService.NewStamp();
+                }
+                await db.SaveChangesAsync(ct);
+                access.UsersChanged();
+                // Changing your own password here keeps you signed in, as changing it under your account does.
+                if (user.Id == caller.UserId && caller.Kind == CallerKind.User)
+                    await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, AccessService.Principal(user),
+                        new AuthenticationProperties { IsPersistent = await RememberedAsync(http) });
+                return Results.Ok(Info(user, await db.ApiKeys.CountAsync(k => k.UserId == user.Id, ct)));
+            })
+            .WithName("UpdateUser")
+            .WithSummary("Rename someone, set a new password for them (which signs them out everywhere), or change what they may do. Only the admin "
+                         + "can change the admin, whose permissions are fixed, and you can only give permissions you have yourself.")
+            .Produces<UserInfo>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound);
+
+        users.MapDelete("/{id:guid}", async (Guid id, HttpContext http, NavidexDbContext db, AccessService access, CancellationToken ct) =>
+            {
+                if (await db.Users.FindAsync([id], ct) is not { } user)
+                    return Results.NotFound();
+                if (user.IsAdmin)
+                    return Results.Problem("The admin can't be removed.", statusCode: StatusCodes.Status409Conflict, title: "Can't remove the admin");
+                if (user.Id == Caller.Of(http).UserId)
+                    return Results.Problem("You can't remove yourself. Ask the admin.", statusCode: StatusCodes.Status409Conflict, title: "Can't remove yourself");
+                db.Users.Remove(user);
+                await db.SaveChangesAsync(ct);
+                access.UsersChanged();
                 return Results.NoContent();
             })
-            .WithName("UpdateAccessSettings")
-            .WithSummary("Whether the local network is let in without signing in.")
-            .Produces(StatusCodes.Status204NoContent);
+            .WithName("RemoveUser").WithSummary("Remove someone, signing them out and revoking their API keys. The admin can't be removed.")
+            .Produces(StatusCodes.Status204NoContent).Produces(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
+    }
 
-        var keys = api.MapGroup("/keys").WithTags("Access");
+    private static void MapKeys(RouteGroupBuilder api)
+    {
+        var keys = api.MapGroup("/keys").WithTags("Access").RequireScope(Scopes.Keys);
 
-        keys.MapGet("", async (NavidexDbContext db, CancellationToken ct) =>
-                (await db.ApiKeys.AsNoTracking().OrderBy(k => k.CreatedAt).ToListAsync(ct)).Select(Info).ToList())
-            .RequireScope(Scopes.Admin)
-            .WithName("ListApiKeys").WithSummary("The API keys apps use, without the keys themselves.");
-
-        keys.MapPost("", async (CreateApiKey body, NavidexDbContext db, AccessService access, CancellationToken ct) =>
+        keys.MapGet("", async (HttpContext http, NavidexDbContext db, CancellationToken ct) =>
             {
+                var caller = Caller.Of(http);
+                var query = db.ApiKeys.AsNoTracking().Include(k => k.User).AsQueryable();
+                if (!caller.IsAdmin)
+                    query = query.Where(k => k.UserId == caller.UserId);
+                return (await query.OrderBy(k => k.CreatedAt).ToListAsync(ct)).Select(Info).ToList();
+            })
+            .WithName("ListApiKeys").WithSummary("Your API keys, without the keys themselves. The admin sees everyone's.");
+
+        keys.MapPost("", async (CreateApiKey body, HttpContext http, NavidexDbContext db, AccessService access, CancellationToken ct) =>
+            {
+                var caller = Caller.Of(http);
                 var errors = new Dictionary<string, string[]>();
                 if (string.IsNullOrWhiteSpace(body.Name))
                     errors["name"] = ["Give the key a name, such as the app it's for."];
@@ -124,30 +240,65 @@ public static class AccessEndpoints
                     errors["scopes"] = [$"Choose one or more of {string.Join(", ", Scopes.All)}."];
                 if (errors.Count > 0)
                     return Results.ValidationProblem(errors);
-                var (key, record) = AccessService.NewKey(body.Name, body.Scopes);
+                if (caller.UserId is not { } owner)
+                    return Results.Problem("Keys belong to a user: sign in to make one.", statusCode: StatusCodes.Status403Forbidden, title: "Not allowed");
+                // Admin on a key means all its owner may, so anyone can ask for it.
+                if (Beyond(caller, body.Scopes.Where(s => s != Scopes.Admin)) is { } beyond)
+                    return beyond;
+                var (key, record) = AccessService.NewKey(body.Name, body.Scopes, owner);
                 db.ApiKeys.Add(record);
                 await db.SaveChangesAsync(ct);
                 access.KeysChanged();
+                record.User = (await access.UsersAsync(ct)).GetValueOrDefault(owner);
                 return Results.Created($"/api/v1/keys/{record.Id}", new CreatedApiKey(Info(record), key));
             })
             .WithName("CreateApiKey")
-            .WithSummary("Make a key for an app. The key is in this answer only: Navidex keeps just a hash of it.")
+            .WithSummary("Make a key for an app. It's yours: it can do only what you may, and goes if you're removed. The key is in this answer "
+                         + "only: Navidex keeps just a hash of it.")
             .Produces<CreatedApiKey>(StatusCodes.Status201Created).ProducesValidationProblem();
 
-        keys.MapDelete("/{id:guid}", async (Guid id, NavidexDbContext db, AccessService access, CancellationToken ct) =>
+        keys.MapDelete("/{id:guid}", async (Guid id, HttpContext http, NavidexDbContext db, AccessService access, CancellationToken ct) =>
             {
-                var removed = await db.ApiKeys.Where(k => k.Id == id).ExecuteDeleteAsync(ct);
+                var caller = Caller.Of(http);
+                var removed = await db.ApiKeys.Where(k => k.Id == id && (caller.IsAdmin || k.UserId == caller.UserId)).ExecuteDeleteAsync(ct);
                 access.KeysChanged();
                 return removed == 0 ? Results.NotFound() : Results.NoContent();
             })
-            .WithName("RevokeApiKey").WithSummary("Revoke a key. Apps using it are refused from then on.")
+            .WithName("RevokeApiKey").WithSummary("Revoke one of your keys (the admin can revoke anyone's). Apps using it are refused from then on.")
             .Produces(StatusCodes.Status204NoContent).Produces(StatusCodes.Status404NotFound);
-
-        return api;
     }
 
     private static ApiKeyInfo Info(ApiKey key) =>
-        new(key.Id, key.Name, key.Prefix, key.Scopes.Split(',', StringSplitOptions.RemoveEmptyEntries), key.CreatedAt, key.LastUsedAt);
+        new(key.Id, key.Name, key.Prefix, Scopes.Parse(key.Scopes).ToList(), key.CreatedAt, key.LastUsedAt, key.UserId, key.User?.Username);
+
+    private static UserInfo Info(User user, int keys) =>
+        new(user.Id, user.Username, user.IsAdmin, Scopes.All.Where(AccessService.PermissionsOf(user).Contains).ToList(), user.CreatedAt, user.LastSignInAt, keys);
+
+    // Nobody can give more than they have.
+    private static IResult? Beyond(Caller caller, IEnumerable<string> permissions)
+    {
+        var unknown = permissions.Where(p => !Scopes.IsPermission(p)).ToList();
+        if (unknown.Count > 0)
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["permissions"] = [$"{string.Join(", ", unknown)} isn't a permission. Choose from {string.Join(", ", Scopes.Permissions)}."] });
+        var missing = permissions.Where(p => !caller.May(p)).ToList();
+        return missing.Count == 0
+            ? null
+            : Results.Problem($"You can only give permissions you have yourself, and you don't have {string.Join(", ", missing)}.",
+                statusCode: StatusCodes.Status403Forbidden, title: "Not allowed");
+    }
+
+    private static Task<bool> TakenAsync(NavidexDbContext db, string username, Guid? except, CancellationToken ct)
+    {
+        var normalized = AccessService.Normalize(username);
+        return db.Users.AnyAsync(u => u.NormalizedUsername == normalized && u.Id != except, ct);
+    }
+
+    private static IResult Taken() =>
+        Results.ValidationProblem(new Dictionary<string, string[]> { ["username"] = ["Someone already has that username."] });
+
+    // Whether this browser's session is remembered, so signing it in again under a new stamp keeps it so.
+    private static async Task<bool> RememberedAsync(HttpContext http) =>
+        (await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme)).Properties?.IsPersistent == true;
 
     private static IResult? Invalid(string username, string password)
     {

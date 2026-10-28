@@ -306,7 +306,9 @@ public sealed class ListenNowService(
                 state == ListenNowState.Playable ? item.ExpiresAt : null,
                 item.RequestId,
                 state == ListenNowState.InLibrary ? mediaServerIds.FirstOrDefault(m => m.TrackId == item.TrackId)?.MediaServerTrackId : null,
-                item.CreatedAt);
+                item.CreatedAt,
+                request?.Paused ?? false,
+                request?.QueueOrder ?? 0);
         }).ToList();
     }
 

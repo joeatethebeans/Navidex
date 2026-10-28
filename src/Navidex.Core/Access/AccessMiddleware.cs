@@ -7,7 +7,10 @@ public static class AccessMiddleware
 {
     public const string SessionCookie = "navidex.session";
 
-    /// <summary>The admin's session: a cookie the web app keeps, valid until signed out or the password changes.</summary>
+    /// <summary>
+    /// A user's session: a cookie the web app keeps, valid until signed out, the password changes or the user is removed.
+    /// Remembered, it lasts 30 days from the last visit; otherwise it ends when the browser closes.
+    /// </summary>
     public static IServiceCollection AddNavidexAccess(this IServiceCollection services)
     {
         services.AddSingleton<AccessService>();
@@ -16,7 +19,7 @@ public static class AccessMiddleware
             {
                 cookie.Cookie.Name = SessionCookie;
                 cookie.Cookie.HttpOnly = true;
-                // Only this site sends it, so other sites can't act as the admin.
+                // Only this site sends it, so other sites can't act as the user.
                 cookie.Cookie.SameSite = SameSiteMode.Strict;
                 cookie.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 cookie.ExpireTimeSpan = TimeSpan.FromDays(30);
@@ -32,11 +35,11 @@ public static class AccessMiddleware
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;
                     return Task.CompletedTask;
                 };
-                // A session from before the password changed, or before the login was reset, is over.
+                // A session from before the password changed, or of a user since removed, is over.
                 cookie.Events.OnValidatePrincipal = async context =>
                 {
-                    var login = await context.HttpContext.RequestServices.GetRequiredService<AccessService>().GetLoginAsync(context.HttpContext.RequestAborted);
-                    if (login is null || context.Principal?.FindFirst(AccessService.StampClaim)?.Value != login.Stamp)
+                    var access = context.HttpContext.RequestServices.GetRequiredService<AccessService>();
+                    if (context.Principal is null || await access.SessionUserAsync(context.Principal, context.HttpContext.RequestAborted) is null)
                     {
                         context.RejectPrincipal();
                         await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -65,7 +68,7 @@ public static class AccessMiddleware
         {
             var (code, detail) = refusal switch
             {
-                AccessService.Refusal.SetupRequired => ("setup-required", "Navidex has no admin login yet. Open the web app to set one."),
+                AccessService.Refusal.SetupRequired => ("setup-required", "Navidex has no admin account yet. Open the web app to make one."),
                 AccessService.Refusal.BadKey => ("invalid-key", "That API key isn't known. It may have been revoked."),
                 _ => ("sign-in-required", $"Sign in, or send an API key in the {AccessService.KeyHeader} header."),
             };
@@ -77,7 +80,10 @@ public static class AccessMiddleware
         if (!caller.May(scope))
         {
             await Problem(http, StatusCodes.Status403Forbidden, "Not allowed",
-                $"This key can't do that: it needs the {scope} scope. Make a key with it under Settings → Security.", "scope-required", scope);
+                caller.Kind == CallerKind.Key
+                    ? $"This key can't do that: it needs the {scope} permission, and its owner needs it too. Keys are made under Settings → API."
+                    : scope == Scopes.Admin ? "Only the admin can do that." : $"You can't do that: it needs the {scope} permission, which the admin can give you.",
+                "scope-required", scope);
             return;
         }
 

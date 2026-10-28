@@ -1,5 +1,6 @@
 @implements IDisposable
 @inject RequestTracker Tracker
+@inject AuthState Auth
 
 @*
     Asks for an artist, album or track to be fetched, or shows how that's going. The other actions for the same thing
@@ -7,8 +8,8 @@
 *@
 @if (Tracker.Find(Kind, Id) is { } request)
 {
-    <a class="badge @Format.RequestBadge(request.State)" href="activity?open=@request.Id" title="@request.Detail">@Format.RequestLabel(request)</a>
-    @if (!request.Active)
+    <a class="badge @Format.RequestBadge(request)" href="activity?open=@request.Id" title="@request.Detail">@Format.RequestLabel(request)</a>
+    @if (!request.Active && Auth.May(UserPermissions.Request))
     {
         <IconButton Icon="retry" Title="@(ScanStatus.Reading ? WaitHint : "Try again")" Disabled="@(_busy || ScanStatus.Reading)" OnClick="GetAsync" />
     }
@@ -16,7 +17,10 @@
 else
 {
     @ChildContent
-    @if (Primary)
+    @if (!Auth.May(UserPermissions.Request))
+    {
+    }
+    else if (Primary)
     {
         <button class="primary" disabled="@(_busy || ScanStatus.Reading)" title="@(ScanStatus.Reading ? WaitHint : Hint)" @onclick="GetAsync">@Label</button>
     }

@@ -9,7 +9,7 @@ namespace Navidex.Core.Library;
 
 /// <summary>
 /// Removes an artist, album or file from the library: has the import worker (the only thing that writes the music
-/// folder) delete the files and tells the media server, or keeps them and excludes them from matching so Navidex
+/// folder) delete the files and tells the media server, or keeps them and hides them so Navidex
 /// stops counting them.
 /// </summary>
 public sealed class LibraryRemover(NavidexDbContext db, IImportWorker worker, ConnectorPlugins connectors, ILogger<LibraryRemover> logger)
@@ -45,20 +45,13 @@ public sealed class LibraryRemover(NavidexDbContext db, IImportWorker worker, Co
         }
         else
         {
-            var now = DateTime.UtcNow;
             foreach (var file in files)
             {
-                file.ExcludedAt ??= now;
-                file.TrackId = file.EditionId = file.SuggestedTrackId = file.SuggestedEditionId = null;
-                file.ArtistId = null;
-                file.MatchMethod = MatchMethod.Unmatched;
-                file.MatchConfidence = null;
-                file.ReviewReason = null;
-                file.MatchedAt ??= now;
+                SetAsides.Apply(file, SetAside.Hidden);
                 removed.Add(file);
             }
             await db.SaveChangesAsync(ct);
-            logger.LogInformation("Removed {Count} files from the library, keeping them in the music folder as excluded files", removed.Count);
+            logger.LogInformation("Removed {Count} files from the library, keeping them in the music folder as hidden files", removed.Count);
         }
         await LibraryMatcher.UpdateLibraryArtistsAsync(db, ct);
         return new RemovalResult(removed.Count, failed);
