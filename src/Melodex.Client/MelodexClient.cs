@@ -350,6 +350,9 @@ public sealed class MelodexClient(HttpClient http)
         await EnsureAsync(response, ct);
     }
 
+    public async Task<ServerVersion> GetVersionAsync(CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<ServerVersion>($"{Api}/version", MelodexJson.Options, ct))!;
+
     public async Task<SetupStatus> GetSetupAsync(CancellationToken ct = default) =>
         (await http.GetFromJsonAsync<SetupStatus>($"{Api}/setup", MelodexJson.Options, ct))!;
 

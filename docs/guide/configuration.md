@@ -25,5 +25,6 @@ Variables named `Navidex__…`, from before the rename, still work; a `Melodex__
 | **Users**, **API**, **Webhooks** | See [Users and permissions](users-and-permissions.md) and the [client guide](../client-guide.md) |
 | **Appearance** | See [Appearance](appearance.md) |
 | **Help** | This guide |
+| **About** | The version, links to GitHub, and who made Melodex |
 
 Next: [Upgrading](upgrading.md).

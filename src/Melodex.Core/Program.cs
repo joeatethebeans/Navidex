@@ -168,7 +168,12 @@ api.MapWebhookEndpoints();
 
 // The web app: Blazor WebAssembly, served from the same origin and talking only to the public API.
 app.MapStaticAssets();
-app.MapFallbackToFile("index.html");
+// The page itself is checked on every visit, as /index.html is: kept by the browser, an old one would load the new
+// app without the scripts it now needs.
+app.MapFallbackToFile("index.html", new StaticFileOptions
+{
+    OnPrepareResponse = file => file.Context.Response.Headers.CacheControl = "no-cache",
+});
 
 app.Run();
 

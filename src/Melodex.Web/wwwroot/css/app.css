@@ -15,6 +15,11 @@
     --covered-bg: #e2edf7;
     --missing: #a23b2d;
     --missing-bg: #f8e4e1;
+    /* Fills, for the ownership meters and legend: brighter than the text colours, which have to be read on their backgrounds. */
+    --owned-fill: #2e9e63;
+    --partial-fill: #e5a32b;
+    --covered-fill: #4a8fd6;
+    --missing-fill: #f3cdc7;
     color-scheme: light;
 
     /* Pink, Melodex's own, until theme.js says otherwise. */
@@ -43,6 +48,10 @@
     --covered-bg: #18293a;
     --missing: #f08a7c;
     --missing-bg: #3a1d19;
+    --owned-fill: #5cc890;
+    --partial-fill: #e8b453;
+    --covered-fill: #78aee0;
+    --missing-fill: #4a2520;
     color-scheme: dark;
 
     --bg: #151012; --surface: #1f181b; --text: #f0e6ea; --muted: #a8969e; --border: #352a2f; --accent: #f27aae; --accent-text: #1a0d13;
@@ -74,6 +83,10 @@
     --covered-bg: #d6e9f7;
     --missing: #93306a;
     --missing-bg: #f6dcec;
+    --owned-fill: #009e73;
+    --partial-fill: #e69f00;
+    --covered-fill: #0072b2;
+    --missing-fill: #ecc4dc;
 }
 
 :root[data-contrast="high"]:is([data-mode="dark"], [data-mode="black"]) {
@@ -88,6 +101,10 @@
     --covered-bg: #0b2a40;
     --missing: #f08ccb;
     --missing-bg: #3d1530;
+    --owned-fill: #2fc597;
+    --partial-fill: #f2a91a;
+    --covered-fill: #3fa3e8;
+    --missing-fill: #5a2148;
 }
 
 :root[data-contrast="high"] :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -164,8 +181,8 @@ label { display: inline-flex; align-items: center; gap: .4rem; }
 .badge.missing { color: var(--missing); background: var(--missing-bg); }
 .badge.neutral, .badge.ignored { color: var(--muted); background: var(--bg); border: 1px solid var(--border); }
 
-.meter { height: 6px; background: var(--missing-bg); border-radius: 999px; overflow: hidden; min-width: 80px; }
-.meter > span { display: block; height: 100%; background: var(--owned); }
+.meter { height: 6px; background: var(--missing-fill); border-radius: 999px; overflow: hidden; min-width: 80px; }
+.meter > span { display: block; height: 100%; background: var(--owned-fill); }
 
 .ids { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .8rem; }
 .ids code { background: var(--bg); padding: .05rem .35rem; border-radius: 4px; border: 1px solid var(--border); }
@@ -493,26 +510,30 @@ tr.playing td:nth-child(2) { color: var(--accent); font-weight: 600; }
 .loading .spinner { width: 1rem; height: 1rem; color: var(--accent); }
 
 /* The Log page's level toggles, in the colours of the entries they show. */
-.toggle.level input { accent-color: currentColor; }
+/* Each tick box is given its colour: currentColor leaves them black. The warning's edge is the meter's brighter amber,
+   as the darker text colour looks brown against the light tint. */
+.toggle.level.information input { accent-color: var(--accent); }
+.toggle.level.warning input { accent-color: var(--partial); }
+.toggle.level.error input { accent-color: var(--missing); }
 .toggle.level.information:has(input:checked) { border-color: var(--border); color: var(--text); background: var(--surface); }
-.toggle.level.warning:has(input:checked) { border-color: var(--partial); color: var(--partial); background: var(--partial-bg); }
+.toggle.level.warning:has(input:checked) { border-color: var(--partial-fill); color: var(--partial); background: var(--partial-bg); }
 .toggle.level.error:has(input:checked) { border-color: var(--missing); color: var(--missing); background: var(--missing-bg); }
 .toggle.level:not(:has(input:checked)) { opacity: .65; }
 
 /* The library's ownership bar: owned, partly owned and covered segments over the missing colour. */
 .segmented-meter { display: flex; }
 .segmented-meter > span { flex: none; }
-.segmented-meter > .complete { background: var(--owned); }
-.segmented-meter > .partial { background: var(--partial); }
-.segmented-meter > .covered { background: var(--covered); }
+.segmented-meter > .complete { background: var(--owned-fill); }
+.segmented-meter > .partial { background: var(--partial-fill); }
+.segmented-meter > .covered { background: var(--covered-fill); }
 .segmented-meter > span + span { box-shadow: -1px 0 0 var(--surface); }
 .legend { display: flex; gap: 1rem; flex-wrap: wrap; margin: -.25rem 0 .75rem; }
 .legend span { display: inline-flex; align-items: center; gap: .35rem; }
 .legend i { width: .7rem; height: .7rem; border-radius: 3px; display: inline-block; }
-.legend .complete { background: var(--owned); }
-.legend .partial { background: var(--partial); }
-.legend .covered { background: var(--covered); }
-.legend .missing { background: var(--missing-bg); border: 1px solid var(--missing); }
+.legend .complete { background: var(--owned-fill); }
+.legend .partial { background: var(--partial-fill); }
+.legend .covered { background: var(--covered-fill); }
+.legend .missing { background: var(--missing-fill); }
 
 /* A scan's files on the Activity page: the file while it's read, the song once it's matched. */
 .scan-files-head { justify-content: space-between; margin-bottom: .35rem; }
@@ -835,3 +856,16 @@ svg.flip { transform: scaleY(-1); }
 @media (max-width: 600px) { .setup-body { padding-left: 1rem; } }
 .markdown td code { white-space: nowrap; }
 .setup-body .error { max-width: none; white-space: normal; }
+
+/* Settings → About. */
+.about { padding: 1.2rem 1.4rem 1.4rem; max-width: 44rem; }
+.about-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
+.about-head h2 { margin: 0; font-size: 1.5rem; }
+.about-head p { margin: .2rem 0 0; }
+.about-logo { width: 4rem; height: 4rem; }
+.about-facts { display: grid; grid-template-columns: max-content 1fr; gap: .45rem 1.2rem; margin: 0 0 1.2rem; }
+.about-facts dt { color: var(--muted); }
+.about-facts dd { margin: 0; overflow-wrap: anywhere; }
+.about-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.2rem; }
+.about h3 { font-size: 1rem; margin: 0 0 .3rem; }
+@media (max-width: 520px) { .about-facts { grid-template-columns: 1fr; gap: .1rem; } .about-facts dd { margin-bottom: .5rem; } }

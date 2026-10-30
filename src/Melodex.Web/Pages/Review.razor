@@ -3,6 +3,7 @@
 @inject MelodexClient Api
 @inject RequestTracker Tracker
 @inject AuthState Auth
+@inject NavigationManager Nav
 
 <PageTitle>Review · Melodex</PageTitle>
 
@@ -68,12 +69,15 @@ else
     <div class="toolbar">
         <input type="search" placeholder="Filter, for example a title, artist or folder" @bind="_filter" @bind:event="oninput" />
         <span class="spacer"></span>
-        <button class="primary" disabled="@(_busy || approvable == 0)" title="@(some ? "Accept the suggestion for every file the filter shows" : "Accept the suggestion for every file that has one")"
-                @onclick="@(() => _confirm = "approve")">@(some ? "Approve these" : "Approve all")</button>
-        @foreach (var (aside, verb) in Asides)
+        @* The buttons for every file carry their names, which teaches the icons each file has below. *@
+        <IconButton Icon="approve" Primary="true" Label="@(some ? "Approve these" : "Approve all")" Disabled="@(_busy || approvable == 0)"
+                    Title="@(some ? "Accept the suggestion for every file the filter shows" : "Accept the suggestion for every file that has one")"
+                    OnClick="@(() => _confirm = "approve")" />
+        @foreach (var (aside, verb, icon) in Asides)
         {
-            <button disabled="@(_busy || !Visible.Any())" title="@($"{verb} every file {(some ? "the filter shows" : "waiting for review")}")"
-                    @onclick="() => _confirm = aside.ToString()">@verb @(some ? "these" : "all")</button>
+            <IconButton Icon="@icon" Label="@($"{verb} {(some ? "these" : "all")}")" Disabled="@(_busy || !Visible.Any())"
+                        Title="@($"{verb} every file {(some ? "the filter shows" : "waiting for review")}. {AsideHint(aside)}")"
+                        OnClick="() => _confirm = aside.ToString()" />
         }
     </div>
     @if (_confirm == "approve")
@@ -151,12 +155,12 @@ else
             <div class="review-actions">
                 @if (item.Suggestion is { } suggestion)
                 {
-                    <button class="primary" disabled="@_busy" @onclick="() => ApproveAsync(item, suggestion)">Approve</button>
+                    <IconButton Icon="approve" Primary="true" Title="Approve: match it to the suggestion" Disabled="_busy" OnClick="() => ApproveAsync(item, suggestion)" />
                 }
-                <a class="button" href="@SearchLink(item)">Search</a>
-                @foreach (var (aside, verb) in Asides)
+                <IconButton Icon="search" Title="Search for what it is" OnClick="() => Nav.NavigateTo(SearchLink(item))" />
+                @foreach (var (aside, verb, icon) in Asides)
                 {
-                    <button disabled="@_busy" title="@AsideHint(aside)" @onclick="() => SetAsideAsync(item, aside)">@verb</button>
+                    <IconButton Icon="@icon" Title="@($"{verb}. {AsideHint(aside)}")" Disabled="_busy" OnClick="() => SetAsideAsync(item, aside)" />
                 }
             </div>
         </div>
@@ -188,8 +192,9 @@ else
                                 <div class="muted small path">@item.Path</div>
                             </td>
                             <td class="num actions">
-                                <a class="small" href="@SearchLink(item)">Search</a>
-                                <button class="link small" disabled="@_busy" title="Back to the review list, matched again at the next scan" @onclick="() => SetAsideAsync(item, SetAside.None)">Put back</button>
+                                <IconButton Icon="search" Class="small" Title="Search for what it is" OnClick="() => Nav.NavigateTo(SearchLink(item))" />
+                                <IconButton Icon="putback" Class="small" Title="Put back: on the review list again, and matched again at the next scan" Disabled="_busy"
+                                            OnClick="() => SetAsideAsync(item, SetAside.None)" />
                             </td>
                         </tr>
                     }
@@ -204,7 +209,8 @@ else
     private Dictionary<ReviewList, IReadOnlyList<ReviewItem>> _lists = [];
     private readonly HashSet<ReviewList> _open = [];
 
-    private static readonly (SetAside As, string Verb)[] Asides = [(SetAside.Excluded, "Exclude"), (SetAside.Deferred, "Defer"), (SetAside.Hidden, "Hide")];
+    private static readonly (SetAside As, string Verb, string Icon)[] Asides =
+        [(SetAside.Excluded, "Exclude", "exclude"), (SetAside.Deferred, "Defer", "defer"), (SetAside.Hidden, "Hide", "hide")];
 
     private static readonly (ReviewList List, string Title, string Hint)[] Lists =
     [

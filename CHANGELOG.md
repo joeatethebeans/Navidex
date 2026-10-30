@@ -23,6 +23,13 @@ Everything on the way to 1.0.
   library.
 - **Scan menu**: match unmatched files again, or everything, and format the library.
 - **Tasks** can be paused, cancelled and reordered; tracks have pages of their own.
+- **About**, under Settings: the version, what it was built from, and links to GitHub.
+
+### Fixed
+
+- Browsers could keep an old copy of the web app's page, showing *Loading Navidex* and failing to change the theme.
+- The ownership meters and legend use brighter colours in light themes.
+- The Log page's Info, Warnings and Errors toggles have tick boxes in their own colours, not black.
 
 ### Changed
 

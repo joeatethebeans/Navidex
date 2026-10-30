@@ -17,8 +17,11 @@ COPY src/ src/
 COPY docs/guide/ docs/guide/
 COPY CHANGELOG.md ./
 # Releases build with the tag's version; anything else keeps the one in Directory.Build.props.
+# The commit, which the About page links to, is passed in too: .git isn't part of the build context.
 ARG VERSION=""
-RUN dotnet publish src/Melodex.Core/Melodex.Core.csproj -c Release -o /app --no-restore ${VERSION:+-p:Version=$VERSION}
+ARG COMMIT=""
+RUN dotnet publish src/Melodex.Core/Melodex.Core.csproj -c Release -o /app --no-restore \
+    ${VERSION:+-p:Version=$VERSION} ${COMMIT:+-p:SourceRevisionId=$COMMIT}
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 LABEL org.opencontainers.image.title="Melodex" \

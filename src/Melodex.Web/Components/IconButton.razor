@@ -65,6 +65,18 @@
                 case "approve":
                     <path d="M5 12.5l4.5 4.5L19 7.5" />
                     break;
+                case "exclude":
+                    <circle cx="12" cy="12" r="8" /><path d="M6.4 6.4l11.2 11.2" />
+                    break;
+                case "defer":
+                    <circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" />
+                    break;
+                case "hide":
+                    <path d="M3 3l18 18M10.6 6.1A9.6 9.6 0 0 1 12 6c5 0 8.5 4 9.5 6a13 13 0 0 1-2.9 3.6M6.4 7.6A13.4 13.4 0 0 0 2.5 12c1 2 4.5 6 9.5 6a9.5 9.5 0 0 0 4.2-1M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+                    break;
+                case "putback":
+                    <path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+                    break;
                 case "search":
                     <circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" />
                     break;
@@ -100,7 +112,7 @@
 }
 
 @code {
-    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard, remove, cancel, up, down, test, settings, power, approve, search, copy, key, show, history, pause, top or format.</summary>
+    /// <summary>play, listen, get, queue, ignore, unignore, retry, add, discard, remove, cancel, up, down, test, settings, power, approve, search, copy, key, show, history, pause, top, format, exclude, defer, hide or putback.</summary>
     [Parameter, EditorRequired] public string Icon { get; set; } = "";
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public EventCallback OnClick { get; set; }

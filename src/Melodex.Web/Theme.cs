@@ -25,10 +25,29 @@ public sealed class Theme(IJSRuntime js)
         (ThemeMode.Black, "Black", "Dark, with pure black behind, for OLED screens"),
     ];
 
-    public ValueTask ApplyAsync(Appearance appearance) => js.InvokeVoidAsync("melodexTheme.apply", new
+    private const string ReloadedKey = "melodex.reloaded-for-theme";
+
+    public async Task ApplyAsync(Appearance appearance)
     {
-        color = appearance.Color.ToString().ToLowerInvariant(),
-        mode = appearance.Mode.ToString().ToLowerInvariant(),
-        highContrast = appearance.HighContrast,
-    });
+        try
+        {
+            await js.InvokeVoidAsync("melodexTheme.apply", new
+            {
+                color = appearance.Color.ToString().ToLowerInvariant(),
+                mode = appearance.Mode.ToString().ToLowerInvariant(),
+                highContrast = appearance.HighContrast,
+            });
+            await js.InvokeVoidAsync("sessionStorage.removeItem", ReloadedKey);
+        }
+        catch (JSException)
+        {
+            // The page is one a browser kept from an older version, without theme.js. Loading it again fetches the
+            // current one; once only, so a page that really is broken doesn't reload for ever.
+            if (await js.InvokeAsync<string?>("sessionStorage.getItem", ReloadedKey) is null)
+            {
+                await js.InvokeVoidAsync("sessionStorage.setItem", ReloadedKey, "1");
+                await js.InvokeVoidAsync("location.reload");
+            }
+        }
+    }
 }

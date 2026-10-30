@@ -24,6 +24,7 @@
         }
         <NavLink href="settings/appearance">Appearance</NavLink>
         <NavLink href="settings/help">Help</NavLink>
+        <NavLink href="settings/about">About</NavLink>
     </nav>
     <div class="settings-body">
         @if (Needed is null || Auth.May(Needed))
@@ -43,7 +44,7 @@
     {
         "settings/users" or "settings/security" => UserPermissions.Users,
         "settings/api" or "settings/webhooks" => UserPermissions.Keys,
-        "settings/appearance" => null,
+        "settings/appearance" or "settings/about" => null,
         var help when help == "settings/help" || help.StartsWith("settings/help/") => null,
         _ => UserPermissions.Settings,
     };

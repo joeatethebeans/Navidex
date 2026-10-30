@@ -15,3 +15,8 @@ public sealed record SetupStatus(bool Done, string LibraryPath, bool LibraryRead
 {
     public const int CountLimit = 10_000;
 }
+
+/// <summary>Answer to <c>GET /version</c>.</summary>
+/// <param name="Version">The server's version, with the commit it was built from after a <c>+</c> where known.</param>
+/// <param name="Contracts">The plugin contract versions it supports, by kind of plugin.</param>
+public sealed record ServerVersion(string Version, string ApiVersion, IReadOnlyDictionary<string, string> Contracts);

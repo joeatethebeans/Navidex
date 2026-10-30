@@ -14,7 +14,9 @@ Scans and other long jobs show on **Activity**, where they can be paused, cancel
 
 ## Review
 
-Files Melodex couldn't match confidently wait on **Review**. They don't count as owned until they're matched. For each:
+Files Melodex couldn't match confidently wait on **Review**. They don't count as owned until they're matched. Each file
+has a button for each of these; hover over one to see what it does. The buttons at the top, with their names, do the
+same for every file the filter shows.
 
 - **Approve** the suggested match, or **Search** for the right one.
 - **Exclude** it: it's never matched, and the library shows it as its own tags say. Use this for music no catalogue
