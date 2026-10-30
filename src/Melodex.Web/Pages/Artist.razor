@@ -1,0 +1,150 @@
+@page "/artists/{Id:guid}"
+@implements IDisposable
+@inject MelodexClient Api
+@inject Preferences Prefs
+
+<PageTitle>@(_artist?.Name ?? "Artist") · Melodex</PageTitle>
+
+@if (_notFound)
+{
+    <div class="empty card">That artist isn't in the catalogue.</div>
+}
+else if (_artist is null)
+{
+    <Loading />
+}
+else
+{
+    <div class="page-head">
+        <Cover Url="@_artist.ImageUrl" Artist="true" />
+        <div>
+            <h1>@_artist.Name</h1>
+            <div class="row muted small">
+                @if (_artist.Disambiguation is not null) { <span>@_artist.Disambiguation</span> }
+                @if (_artist.Country is not null) { <span>@_artist.Country</span> }
+                <span>@Owned owned · @Missing missing@(Covered > 0 ? $" · {Covered} covered" : "")</span>
+                <ProviderIds Ids="_artist.Ids" Entity="artist" />
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        @if (Missing > 0 || _artist.Albums.Any(a => a.Status == AlbumStatus.Partial && !a.Ignored))
+        {
+            <FetchButton Kind="RequestKind.Artist" Id="_artist.Id" Primary="true" Label="Get everything missing"
+                         Hint="Fetch the missing albums shown here, and the missing tracks of albums you partly own" />
+        }
+        @if (_artist.InLibrary)
+        {
+            <IconButton Icon="format" Requires="@UserPermissions.Format" Label="Format" Title="Rewrite this artist's files: their tags, covers and where they live" OnClick="() => _formatting = true" />
+        }
+        <OwnershipFilter OnChange="StateHasChanged" OwnedHint="Only albums you have" MissingHint="Only missing albums, and albums with tracks missing" />
+    </div>
+
+    @if (_artist.Albums.Count == 0 || Catalogue.Count == 0 && Prefs.Ownership == OwnershipView.Missing)
+    {
+        <div class="empty card">No albums in the catalogue for this artist.</div>
+    }
+    else if (Prefs.Ownership != OwnershipView.All && !Shown.Any())
+    {
+        <div class="empty card">@(Prefs.Ownership == OwnershipView.Missing ? "Nothing missing" : "Nothing owned") for @_artist.Name.</div>
+    }
+
+    @foreach (var group in Shown.GroupBy(a => a.Type).OrderBy(g => g.Key))
+    {
+        var open = IsOpen(group.Key);
+        <h2 class="section">
+            <button class="section-toggle" aria-expanded="@(open ? "true" : "false")" @onclick="() => ToggleAsync(group.Key)">
+                <span class="chevron @(open ? "open" : "")" aria-hidden="true"></span>
+                @Format.TypeName(group.Key) <span class="muted small">@group.Count()</span>
+            </button>
+        </h2>
+        @if (open)
+        {
+            <AlbumTable Albums="group.ToList()" OnIgnore="ToggleIgnoreAsync" />
+        }
+    }
+
+    @if (Prefs.Ownership == OwnershipView.All && Hidden.Any())
+    {
+        <details>
+            <summary>@Hidden.Count() more hidden by the default filters (live, compilations, remixes, bootlegs…)</summary>
+            <AlbumTable Albums="Hidden.ToList()" OnIgnore="ToggleIgnoreAsync" ShowSecondary="true" />
+        </details>
+    }
+
+    @if (Prefs.Ownership != OwnershipView.Missing && _artist.Albums.Any(a => a.Local))
+    {
+        <h2 class="section">From your own files <span class="muted small">@_artist.Albums.Count(a => a.Local)</span></h2>
+        <p class="muted small">Music no catalogue knows, which you excluded from matching, shown as its tags say.</p>
+        <AlbumTable Albums="_artist.Albums.Where(a => a.Local).ToList()" OnIgnore="ToggleIgnoreAsync" />
+    }
+}
+
+@if (_formatting && _artist is not null)
+{
+    <FormatDialog Scope="new FormatScope(FormatScopeKind.Artist, _artist.Id)" Name="@_artist.Name" OnClose="() => _formatting = false" />
+}
+
+@code {
+    private bool _formatting;
+
+    [Parameter] public Guid Id { get; set; }
+
+    private const string SectionsKey = "artistSections";
+
+    private ArtistDetail? _artist;
+    private bool _notFound;
+
+    // Which sections are open, by type; remembered for every artist. Albums start open, the rest closed.
+    private Dictionary<AlbumType, bool> _sections = [];
+
+    // Owned albums always show; the default filters only hide albums you don't have. With only missing on, the albums
+    // the library counts as missing, and owned ones with tracks still missing. With only owned, the albums you have.
+    private IEnumerable<AlbumSummary> Shown => Prefs.Ownership switch
+    {
+        OwnershipView.Missing => Catalogue.Where(a => IsMissing(a) || a.Status == AlbumStatus.Partial && !a.Ignored),
+        OwnershipView.Owned => Catalogue.Where(a => a.Status is AlbumStatus.Complete or AlbumStatus.Partial),
+        _ => Catalogue.Where(a => !a.HiddenByDefault || a.Status is AlbumStatus.Complete or AlbumStatus.Partial),
+    };
+    private IEnumerable<AlbumSummary> Hidden => Catalogue.Except(Shown);
+
+    // The catalogue's albums; albums of your own files are listed apart.
+    private List<AlbumSummary> Catalogue => _artist!.Albums.Where(a => !a.Local).ToList();
+    private static bool IsMissing(AlbumSummary a) => a.Status == AlbumStatus.Missing && !a.HiddenByDefault && !a.Ignored;
+    private int Owned => _artist!.Albums.Count(a => a.Status is AlbumStatus.Complete or AlbumStatus.Partial);
+    private int Missing => _artist!.Albums.Count(IsMissing);
+    private int Covered => _artist!.Albums.Count(a => a.Status == AlbumStatus.Covered && !a.HiddenByDefault);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        ScanStatus.LibraryChanged += Reload;
+        await Prefs.LoadAsync();
+        _sections = await Prefs.GetAsync<Dictionary<AlbumType, bool>>(SectionsKey, []);
+        _artist = await Api.GetArtistAsync(Id);
+        _notFound = _artist is null;
+    }
+
+    private void Reload() => InvokeAsync(async () =>
+    {
+        _artist = await Api.GetArtistAsync(Id);
+        StateHasChanged();
+    });
+
+    private bool IsOpen(AlbumType type) => _sections.TryGetValue(type, out var open) ? open : type == AlbumType.Album;
+
+    private Task ToggleAsync(AlbumType type)
+    {
+        _sections[type] = !IsOpen(type);
+        return Prefs.SetAsync(SectionsKey, _sections);
+    }
+
+    private async Task ToggleIgnoreAsync(AlbumSummary album)
+    {
+        await Api.SetAlbumIgnoredAsync(album.Id, !album.Ignored);
+        _artist = await Api.GetArtistAsync(Id);
+    }
+
+    public void Dispose() => ScanStatus.LibraryChanged -= Reload;
+}

@@ -1,10 +1,10 @@
-# Navidex client guide
+# Melodex client guide
 
-How an app works with Navidex: finding what's in a library and what's missing, asking for music, listening to a
+How an app works with Melodex: finding what's in a library and what's missing, asking for music, listening to a
 track before it's in the library, and hearing about it when things happen. Everything here is version 1 of the API,
-at `/api/v1` on the Navidex server (port 8787 by default).
+at `/api/v1` on the Melodex server (port 8787 by default).
 
-The [interactive API reference](#the-api-reference), served by Navidex itself, lists every call with its fields. This
+The [interactive API reference](#the-api-reference), served by Melodex itself, lists every call with its fields. This
 guide covers what the reference can't: how the pieces fit together.
 
 ## Contents
@@ -28,15 +28,15 @@ choosing what it may do, and gives it to your app. A key belongs to whoever made
 may: if their permissions shrink, or they're removed, so does the key. Send it on every call in the `X-Api-Key` header:
 
 ```bash
-curl -H "X-Api-Key: ndx_..." http://navidex.local:8787/api/v1/library
+curl -H "X-Api-Key: mdx_..." http://melodex.local:8787/api/v1/library
 ```
 
 Where a header can't be set, such as the `src` of an audio element, pass it as the `apikey` query parameter instead.
 Prefer the header: query strings end up in logs.
 
-Keys start with `ndx_`. Navidex keeps only a hash, so a lost key can't be shown again: make a new one and revoke the
+Keys start with `mdx_`. Melodex keeps only a hash, so a lost key can't be shown again: make a new one and revoke the
 old. A revoked key is refused at once. Ask for one key per app, so each can be revoked alone. Requests your app makes
-are credited to the key's name on the Navidex Activity page and in events.
+are credited to the key's name on the Melodex Activity page and in events.
 
 The web app itself signs in with a username and password and a session cookie (`/auth/*`). Apps don't use those.
 Everyone signs in, even on the local network.
@@ -74,7 +74,7 @@ Calling something your key can't do gives `403`, with the scope it needed:
 
 ## IDs
 
-Navidex IDs are GUIDs, and stable: an artist, album, edition or track keeps its ID for the life of the server.
+Melodex IDs are GUIDs, and stable: an artist, album, edition or track keeps its ID for the life of the server.
 They aren't MusicBrainz IDs, which can merge or move. Each object carries its outside IDs in `ids`, as
 `{ "provider": "musicbrainz", "value": "..." }`, to match against your own data.
 
@@ -84,14 +84,14 @@ The catalogue models music in four levels:
 - **Album**: the release group, such as *Dummy*. An album's `status` is `complete`, `partial`, `covered` (you have
   every song, on other albums) or `missing`.
 - **Edition**: a specific release of it, such as the 1994 CD or a deluxe reissue, each with its own track list.
-- **Track**: a song, which can be on many editions. Requests and listen-now can name a track alone; Navidex picks the
+- **Track**: a song, which can be on many editions. Requests and listen-now can name a track alone; Melodex picks the
   edition, or you can pass `editionId`.
 
 ## Finding music
 
 | Call | What |
 | --- | --- |
-| `GET /catalogue/search?q=...` | Artists, albums and tracks, each saying whether you have it. Add `kinds=tracks` (or `artists`, `albums`, comma-separated) to search less, which is quicker; `local=true` searches only what Navidex already holds, and answers at once |
+| `GET /catalogue/search?q=...` | Artists, albums and tracks, each saying whether you have it. Add `kinds=tracks` (or `artists`, `albums`, comma-separated) to search less, which is quicker; `local=true` searches only what Melodex already holds, and answers at once |
 | `GET /artists/{id}` | An artist's whole discography, each album with its status |
 | `GET /albums/{id}` | An album's editions, and the tracks of one edition with their status |
 | `GET /library/artists`, `/library/albums`, `/library/tracks` | What's in the library |
@@ -106,11 +106,11 @@ answer `503` with `Retry-After` while being fetched for the first time, and `404
 
 ## Requests
 
-A request asks Navidex to fetch an artist, an album or a track into the library.
+A request asks Melodex to fetch an artist, an album or a track into the library.
 
 ```http
 POST /api/v1/requests
-X-Api-Key: ndx_...
+X-Api-Key: mdx_...
 Content-Type: application/json
 
 { "kind": "album", "id": "0190f1c4-...", "editionId": null }
@@ -122,7 +122,7 @@ Content-Type: application/json
 
 A request's `state` moves `queued` → `searching` → `fetching` → `verifying` → `importing` → `notifying` → `inLibrary`.
 It stops at `inLibrary`, `failed`, `needsReview` (every source was tried and nothing passed the checks; the person
-running Navidex can choose a candidate) or `cancelled`. Artist and album requests are `inProgress` while their parts
+running Melodex can choose a candidate) or `cancelled`. Artist and album requests are `inProgress` while their parts
 run, and `parts` counts where those stand; `GET /requests/{id}` lists them in `children`.
 
 | Call | What |
@@ -160,7 +160,7 @@ Each item's `state`:
 | `failed` | Nothing found passed the checks |
 | `expired` | Discarded, or not played in time; the file is gone |
 
-A playable track is kept for the time set in Navidex's settings (an hour by default) after it was last played, so
+A playable track is kept for the time set in Melodex's settings (an hour by default) after it was last played, so
 `expiresAt` moves later each time it's played. `POST /listen/{id}/add` adds it to the library without fetching it
 again; `DELETE /listen/{id}` discards it now.
 
@@ -172,7 +172,7 @@ The `listen.ready` event says when an item becomes playable, with its stream URL
 
 ## Events
 
-Navidex announces what happens in two ways: a stream your app reads while it's running, and webhooks for when it
+Melodex announces what happens in two ways: a stream your app reads while it's running, and webhooks for when it
 isn't.
 
 ### The event stream
@@ -216,22 +216,22 @@ Every event has the same envelope:
 | `ping` | Only from **Test** on a webhook | `{ message }` |
 
 `request` is the same object `GET /requests/{id}` returns (without `children` and `jobs`), `listen` the same as
-`GET /listen/{id}`, and `task` the same as `GET /tasks/{id}`. `requester` is `admin` or the name of the key that
-asked. Only requests asked for directly are announced, not the parts of an artist or album request. More types may
+`GET /listen/{id}`, and `task` the same as `GET /tasks/{id}`. `requester` is the username of whoever asked, or
+the name of the key that did. Only requests asked for directly are announced, not the parts of an artist or album request. More types may
 be added; ignore ones you don't know.
 
 ## Webhooks
 
-A webhook is an address Navidex posts events to, set up under **Settings → Webhooks** (or `POST /webhooks`, with
+A webhook is an address Melodex posts events to, set up under **Settings → Webhooks** (or `POST /webhooks`, with
 `admin`). Each chooses its events, or takes all of them.
 
 Each delivery is a `POST` of one event's JSON, with these headers:
 
 | Header | Value |
 | --- | --- |
-| `Navidex-Event` | The event type |
-| `Navidex-Delivery` | The delivery's ID |
-| `Navidex-Signature` | `t=<unix seconds>,v1=<hex HMAC-SHA256>` |
+| `Melodex-Event` | The event type |
+| `Melodex-Delivery` | The delivery's ID |
+| `Melodex-Signature` | `t=<unix seconds>,v1=<hex HMAC-SHA256>` |
 
 Answer with any `2xx` within 15 seconds. Anything else, or no answer, is tried again after 30 seconds, 2 minutes,
 10 minutes, an hour and 6 hours, then given up. A retry sends the same body, so the event `id` is the same: use it to
@@ -298,7 +298,7 @@ Invalid bodies are `400` with `errors`, field by field:
 | Status | Meaning |
 | --- | --- |
 | `400` | Something in the body is wrong; see `errors` |
-| `401` | No key, or a revoked one. `code` is `invalid-key` for a key Navidex doesn't know, `sign-in-required` for no key, or `setup-required` before Navidex has been set up |
+| `401` | No key, or a revoked one. `code` is `invalid-key` for a key Melodex doesn't know, `sign-in-required` for no key, or `setup-required` before Melodex has been set up |
 | `403` | The key lacks a scope; see [Scopes](#scopes). A stream URL whose signature is wrong or out of date is also `403` |
 | `404` | No such thing |
 | `409` | Not now: for example, asking while a scan reads the library, or listening to a track you have |
@@ -306,13 +306,13 @@ Invalid bodies are `400` with `errors`, field by field:
 
 ## Versioning
 
-Everything under `/api/v1` keeps working the same way for the life of v1. Within it, Navidex may add calls, fields,
+Everything under `/api/v1` keeps working the same way for the life of v1. Within it, Melodex may add calls, fields,
 event types, enum values (such as a new request state) and query parameters, so ignore what you don't know and don't
 reject unknown values. Anything that would break a client goes into `/api/v2`, with v1 kept alongside for a while.
 `GET /version` gives the server's version and its `apiVersion`.
 
 ## The API reference
 
-Navidex serves an interactive reference at `/api/docs`, where you can try calls with a key, and the OpenAPI document
+Melodex serves an interactive reference at `/api/docs`, where you can try calls with a key, and the OpenAPI document
 it's built from at `/openapi/v1.json`, to generate a client from. Both are open to anyone, as there's nothing private
 in them.

@@ -1,4 +1,4 @@
-"""The yt-dlp retrieval plugin's HTTP API (Navidex retrieval contract v1.0)."""
+"""The yt-dlp retrieval plugin's HTTP API (Melodex retrieval contract v1.0)."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ SETTINGS_SCHEMA: dict[str, Any] = {
 }
 
 MANIFEST: dict[str, Any] = {
-    "id": "navidex.retrieval.ytdlp",
+    "id": "melodex.retrieval.ytdlp",
     "name": "YouTube (yt-dlp)",
     "version": VERSION,
     "type": "retrieval",
@@ -61,7 +61,7 @@ MANIFEST: dict[str, Any] = {
     "retrieval": {"formats": youtube.FORMATS, "minBitrateKbps": 96, "maxBitrateKbps": 320, "lossless": False},
 }
 
-app = FastAPI(title="Navidex yt-dlp retriever", version=VERSION)
+app = FastAPI(title="Melodex yt-dlp retriever", version=VERSION)
 jobs = Jobs(int(env("PARALLEL_FETCHES", "2")))
 
 

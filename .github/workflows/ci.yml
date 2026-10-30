@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -24,18 +25,18 @@ jobs:
       - name: Check the model matches the migrations
         run: |
           dotnet tool restore
-          dotnet ef migrations has-pending-model-changes -p src/Navidex.Core --no-build --configuration Release
+          dotnet ef migrations has-pending-model-changes -p src/Melodex.Core --no-build --configuration Release
 
   docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose build
+      - run: docker compose -f docker-compose.yml -f docker-compose.build.yml build
       # The tests run in Development, which serves the web app differently; this checks the published image.
       - name: Smoke-test the image
         run: |
           mkdir -p music
-          docker compose up -d
+          docker compose -f docker-compose.yml -f docker-compose.build.yml up -d
           for i in $(seq 30); do curl -fs http://localhost:8787/api/v1/health && break; sleep 2; done
           page=$(curl -fs http://localhost:8787/)
           assets=$(echo "$page" | grep -oE '(src|href)="[^"#]+\.(js|css)"' | cut -d'"' -f2)
@@ -43,4 +44,4 @@ jobs:
           for asset in $assets; do curl -fs -o /dev/null "http://localhost:8787/$asset" || { echo "missing: $asset"; exit 1; }; done
           if echo "$page" | grep -q '#\['; then echo "unfilled asset placeholder in index.html"; exit 1; fi
       - if: failure()
-        run: docker compose logs
+        run: docker compose -f docker-compose.yml -f docker-compose.build.yml logs

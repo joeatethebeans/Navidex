@@ -1,0 +1,837 @@
+/*
+    Themes. theme.js sets three attributes on <html> from the signed-in user's appearance (or, before sign-in, the last
+    one this browser used): data-color, data-mode (light, dark or black; auto is resolved to light or dark) and
+    data-contrast="high". Every colour in the app comes from these properties.
+*/
+
+/* Light, and the status colours every light theme shares. */
+:root {
+    --radius: 8px;
+    --owned: #1f7a4d;
+    --owned-bg: #e3f3ea;
+    --partial: #8a5a00;
+    --partial-bg: #fbf0d9;
+    --covered: #2f5f8a;
+    --covered-bg: #e2edf7;
+    --missing: #a23b2d;
+    --missing-bg: #f8e4e1;
+    color-scheme: light;
+
+    /* Pink, Melodex's own, until theme.js says otherwise. */
+    --bg: #faf6f8;
+    --surface: #ffffff;
+    --text: #231a1f;
+    --muted: #6d5f66;
+    --border: #eadde3;
+    --accent: #b8296a;
+    --accent-text: #ffffff;
+}
+
+:root[data-color="green"] { --bg: #f6f7f5; --surface: #ffffff; --text: #1b1f1d; --muted: #5f6763; --border: #dde1de; --accent: #1f6f5c; --accent-text: #ffffff; }
+:root[data-color="blue"] { --bg: #f5f7fa; --surface: #ffffff; --text: #1a1e24; --muted: #5d6570; --border: #dce2ea; --accent: #2a5fb0; --accent-text: #ffffff; }
+:root[data-color="grey"] { --bg: #f5f5f5; --surface: #ffffff; --text: #1c1c1c; --muted: #616161; --border: #dddddd; --accent: #2e2e2e; --accent-text: #ffffff; }
+:root[data-color="purple"] { --bg: #f8f6fb; --surface: #ffffff; --text: #1f1a26; --muted: #655d70; --border: #e2dcea; --accent: #6a3dbb; --accent-text: #ffffff; }
+:root[data-color="amber"] { --bg: #faf7f2; --surface: #ffffff; --text: #241d14; --muted: #6b6155; --border: #ebe2d5; --accent: #a64b06; --accent-text: #ffffff; }
+
+/* Dark, and black, which is dark with pure black behind for OLED screens. */
+:root:is([data-mode="dark"], [data-mode="black"]) {
+    --owned: #6fd19f;
+    --owned-bg: #193325;
+    --partial: #f0c062;
+    --partial-bg: #3a2e14;
+    --covered: #8cbbe6;
+    --covered-bg: #18293a;
+    --missing: #f08a7c;
+    --missing-bg: #3a1d19;
+    color-scheme: dark;
+
+    --bg: #151012; --surface: #1f181b; --text: #f0e6ea; --muted: #a8969e; --border: #352a2f; --accent: #f27aae; --accent-text: #1a0d13;
+}
+
+:root:is([data-mode="dark"], [data-mode="black"])[data-color="green"] { --bg: #121513; --surface: #1b1f1d; --text: #e6e9e7; --muted: #9aa39e; --border: #2d3330; --accent: #4fb89a; --accent-text: #0d1311; }
+:root:is([data-mode="dark"], [data-mode="black"])[data-color="blue"] { --bg: #10141a; --surface: #181e26; --text: #e5eaf0; --muted: #97a2b0; --border: #2a323d; --accent: #6ea8f5; --accent-text: #0b1320; }
+:root:is([data-mode="dark"], [data-mode="black"])[data-color="grey"] { --bg: #121212; --surface: #1c1c1c; --text: #ececec; --muted: #9e9e9e; --border: #2f2f2f; --accent: #e6e6e6; --accent-text: #121212; }
+:root:is([data-mode="dark"], [data-mode="black"])[data-color="purple"] { --bg: #13101a; --surface: #1c1824; --text: #ebe6f2; --muted: #a39cb0; --border: #312a3c; --accent: #b294f5; --accent-text: #150d24; }
+:root:is([data-mode="dark"], [data-mode="black"])[data-color="amber"] { --bg: #15110c; --surface: #1f1a13; --text: #f2ebe1; --muted: #aa9f90; --border: #372e22; --accent: #f5a54a; --accent-text: #1f1305; }
+
+/* Black keeps each colour's accent, with neutral black and near-black behind it. */
+/* As specific as the colours' dark rules above, so it wins by coming after them. */
+:root[data-mode="black"][data-color] { --bg: #000000; --surface: #0c0c0c; --border: #242424; }
+
+/*
+    High contrast: plainer text and borders, and status colours from the Okabe-Ito palette, which people with the
+    common kinds of colour blindness can tell apart: bluish green, orange, blue and reddish purple.
+*/
+:root[data-contrast="high"] {
+    --text: #000000;
+    --muted: #333333;
+    --border: #767676;
+    --owned: #00664a;
+    --owned-bg: #d9f2ea;
+    --partial: #8a4b00;
+    --partial-bg: #fde9cc;
+    --covered: #005a9c;
+    --covered-bg: #d6e9f7;
+    --missing: #93306a;
+    --missing-bg: #f6dcec;
+}
+
+:root[data-contrast="high"]:is([data-mode="dark"], [data-mode="black"]) {
+    --text: #ffffff;
+    --muted: #d0d0d0;
+    --border: #8a8a8a;
+    --owned: #3fd6a8;
+    --owned-bg: #0b3326;
+    --partial: #ffb84d;
+    --partial-bg: #3d2a0a;
+    --covered: #6cc0ff;
+    --covered-bg: #0b2a40;
+    --missing: #f08ccb;
+    --missing-bg: #3d1530;
+}
+
+:root[data-contrast="high"] :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.15rem; margin: 1.75rem 0 .5rem; }
+
+.boot { padding: 3rem; text-align: center; color: var(--muted); }
+
+/* Layout */
+.topbar {
+    display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+    padding: .6rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+}
+.brand { display: inline-flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1.1rem; color: var(--text); }
+.brand:hover { text-decoration: none; }
+.logo { width: 1.6rem; height: 1.6rem; flex: none; }
+.nav { display: flex; gap: .25rem; flex-wrap: wrap; }
+.nav a { padding: .3rem .6rem; border-radius: 6px; color: var(--muted); }
+.nav a.active { background: var(--bg); color: var(--text); font-weight: 600; }
+.nav a:hover { text-decoration: none; color: var(--text); }
+.spacer { flex: 1; }
+main { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+/* Controls */
+button, .button {
+    font: inherit; padding: .4rem .8rem; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button:disabled { opacity: .55; cursor: default; }
+button.link { border: none; background: none; color: var(--accent); padding: 0; }
+input[type=search], input[type=text], input[type=number], select {
+    font: inherit; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--text);
+}
+input[type=search] { width: 100%; max-width: 420px; }
+label { display: inline-flex; align-items: center; gap: .4rem; }
+
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
+
+/* Cards and tables */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { text-align: left; padding: .5rem .75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.table th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+.table tr:last-child td { border-bottom: none; }
+.table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table tr.dim td { opacity: .6; }
+
+/* Status badges */
+.badge {
+    display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .78rem; font-weight: 600; white-space: nowrap;
+}
+.badge.complete, .badge.owned { color: var(--owned); background: var(--owned-bg); }
+.badge.partial { color: var(--partial); background: var(--partial-bg); }
+.badge.covered, .badge.ownedElsewhere { color: var(--covered); background: var(--covered-bg); }
+.badge.missing { color: var(--missing); background: var(--missing-bg); }
+.badge.neutral, .badge.ignored { color: var(--muted); background: var(--bg); border: 1px solid var(--border); }
+
+.meter { height: 6px; background: var(--missing-bg); border-radius: 999px; overflow: hidden; min-width: 80px; }
+.meter > span { display: block; height: 100%; background: var(--owned); }
+
+.ids { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .8rem; }
+.ids code { background: var(--bg); padding: .05rem .35rem; border-radius: 4px; border: 1px solid var(--border); }
+
+.notice { padding: .75rem 1rem; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); margin: 1rem 0; }
+.empty { padding: 2rem; text-align: center; color: var(--muted); }
+
+details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem; }
+
+#blazor-error-ui {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; padding: .75rem 1rem;
+    background: var(--missing-bg); color: var(--missing); z-index: 100;
+}
+#blazor-error-ui .dismiss { cursor: pointer; float: right; }
+
+@media (max-width: 640px) {
+    .hide-narrow { display: none; }
+    .table th, .table td { padding: .45rem .5rem; }
+}
+
+/* Album lists stack per type on the artist page; fixed columns keep them aligned. */
+.table.albums { table-layout: fixed; }
+.table.albums th:nth-child(3) { width: 4.5rem; }
+.table.albums th:nth-child(4) { width: 8rem; }
+.table.albums th:nth-child(5) { width: 6.5rem; }
+.table.albums td:nth-child(5) { white-space: nowrap; }
+.table.albums th:nth-child(6) { width: 12.5rem; }
+.table.albums td:nth-child(2) { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+    .table.albums th:nth-child(4) { width: 6.5rem; }
+}
+.nowrap { white-space: nowrap; }
+
+/* A failed scan's reason in the top bar; the full text is in the tooltip. */
+.error { color: var(--missing); max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) { .error { max-width: 18ch; } }
+
+/* The activity log: one line per event, warnings and errors marked by colour and a left rule. */
+.log { padding: .25rem 0; font-size: .875rem; }
+.log-entry { display: grid; grid-template-columns: 4.5rem 8.5rem 1fr; gap: .75rem; padding: .3rem 1rem; border-left: 3px solid transparent; }
+.log-entry + .log-entry { border-top: 1px solid var(--border); }
+.log-entry.warning { border-left-color: var(--partial); background: var(--partial-bg); }
+.log-entry.warning .log-message { color: var(--partial); }
+.log-entry.error { border-left-color: var(--missing); background: var(--missing-bg); }
+.log-entry.error .log-message { color: var(--missing); }
+.log-entry.success { border-left-color: var(--owned); background: var(--owned-bg); }
+.log-entry.success .log-message { color: var(--owned); }
+.log-time { font-variant-numeric: tabular-nums; }
+.log-source { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-message { overflow-wrap: anywhere; min-width: 0; }
+@media (max-width: 640px) {
+    .log-entry { grid-template-columns: 4rem 1fr; gap: .5rem; padding: .3rem .75rem; }
+}
+
+/* Artwork, or a placeholder icon until artwork is fetched. Square, and as wide as its container. */
+/* Nothing inside takes up room, so the placeholder icon can't stretch the box: it's always as wide as it's told. */
+.cover {
+    position: relative; aspect-ratio: 1; width: 100%; min-width: 0; min-height: 0; border-radius: 6px; overflow: hidden;
+    display: block; background: var(--bg); border: 1px solid var(--border); box-sizing: border-box; flex: none;
+}
+.cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover svg {
+    position: absolute; inset: 0; margin: auto; width: 45%; height: 45%;
+    fill: none; stroke: var(--muted); stroke-width: 1.5; opacity: .7;
+}
+
+/* The library: one square per artist. */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+.tile {
+    display: flex; flex-direction: column; gap: .4rem; padding: .75rem; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-width: 0;
+}
+.tile:hover { text-decoration: none; border-color: var(--accent); }
+.tile .tile-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile .meter { min-width: 0; }
+@media (max-width: 640px) { .tiles { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .75rem; } }
+
+/* "Only missing" stands out from the other filters: it changes what the library and artist pages are for. */
+.toggle {
+    padding: .35rem .7rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); cursor: pointer;
+}
+.toggle:has(input:checked) { border-color: var(--missing); color: var(--missing); background: var(--missing-bg); }
+
+/* Artist and album pages: artwork beside the title. */
+.page-head { display: flex; gap: 1rem; align-items: center; }
+.page-head > .cover { width: 96px; flex: none; }
+@media (max-width: 640px) { .page-head > .cover { width: 64px; } }
+
+/* Collapsible sections on the artist page. */
+h2.section { margin: 1.5rem 0 .5rem; }
+.section-toggle {
+    font: inherit; font-weight: 700; border: none; background: none; padding: 0; color: var(--text);
+    display: inline-flex; align-items: center; gap: .5rem;
+}
+.chevron { width: .5rem; height: .5rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; }
+.chevron.open { transform: rotate(45deg); }
+
+/* Album lists start with a small cover. */
+.table .cover-col { width: 3.5rem; padding-right: 0; }
+.table td.cover-col > a { display: block; width: 2.5rem; }
+.table td.cover-col .cover { width: 2.5rem; }
+
+/* A long option, such as an edition's full description, mustn't push the page wider than the screen. */
+.toolbar label { max-width: 100%; min-width: 0; }
+.toolbar select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
+
+/* Requests on their way: a badge in the accent colour, linking to the Activity page. */
+.badge.active { color: var(--accent); background: var(--bg); border: 1px solid var(--accent); }
+/* Something happening right now shimmers; something only waiting its turn doesn't. */
+.badge.active:not(.waiting) {
+    background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--accent) 28%, transparent) 50%, transparent 70%);
+    background-size: 250% 100%; background-repeat: no-repeat; animation: badge-shimmer 1.6s linear infinite;
+}
+@keyframes badge-shimmer { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+@media (prefers-reduced-motion: reduce) { .badge.active:not(.waiting) { animation: none; } }
+a.badge:hover { text-decoration: none; filter: brightness(1.1); }
+td.actions { white-space: nowrap; }
+td.actions > * + * { margin-left: .6rem; }
+
+/* Review: the file on the left, the suggestion beside it, the actions at the end. Stacks on a phone. */
+/* The file and the suggestion share the room; the buttons take what they need, so nothing runs into them. */
+.review-item {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 1rem; padding: .75rem 1rem; margin-bottom: .75rem; align-items: start;
+}
+.review-item > div { min-width: 0; overflow-wrap: anywhere; }
+.suggestion-row { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: .6rem; align-items: start; }
+.suggestion-row > a { display: block; }
+.suggestion-row .cover { width: 3rem; }
+.suggestion-text { min-width: 0; }
+.suggestion-text .suggestion { display: flex; gap: .5rem; align-items: baseline; min-width: 0; flex-wrap: nowrap; }
+/* A long title wraps to two lines, then ends with an ellipsis, rather than running under the buttons. */
+.suggestion-title { min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.suggestion-text .confidence { flex: none; }
+.review-item .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; margin-bottom: .15rem; }
+.review-item .path { overflow-wrap: anywhere; }
+.review-actions { display: flex; gap: .5rem; align-items: center; justify-content: flex-end; white-space: nowrap; }
+.suggestion { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.confidence { font-size: .78rem; font-weight: 700; padding: .05rem .45rem; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.confidence.high { color: var(--owned); background: var(--owned-bg); }
+.confidence.medium { color: var(--partial); background: var(--partial-bg); }
+.confidence.low { color: var(--missing); background: var(--missing-bg); }
+a.button { display: inline-block; color: var(--text); }
+a.button:hover { text-decoration: none; border-color: var(--accent); }
+@media (max-width: 640px) {
+    .review-item { grid-template-columns: 1fr; gap: .6rem; }
+    .review-actions { justify-content: flex-start; }
+}
+
+/* Activity: one row per request, opening to its parts and attempts. */
+.request { padding: .6rem 1rem; }
+.request + .request { border-top: 1px solid var(--border); }
+/* Every row has the same columns, whatever it is, so titles, kinds, states and times line up down the list. */
+.request-head {
+    display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem 7.5rem 5.5rem 10.75rem; gap: .75rem; align-items: center; min-height: 1.9rem;
+}
+.request-toggle {
+    font: inherit; font-weight: 600; border: none; background: none; padding: 0; color: var(--text); text-align: left;
+    display: grid; grid-template-columns: .9rem minmax(0, 1fr); gap: .5rem; align-items: center; min-width: 0;
+}
+button.request-toggle { cursor: pointer; }
+.request-title { overflow-wrap: anywhere; }
+.request-state { min-width: 0; }
+.request-time { text-align: right; white-space: nowrap; }
+.request-actions { display: flex; justify-content: flex-end; gap: .3rem; }
+.request-detail { margin: .15rem 0 0 1.4rem; overflow-wrap: anywhere; }
+.request-meter { margin: .4rem 0 0 1.4rem; max-width: 320px; }
+.request-body { margin: .6rem 0 0 1.4rem; }
+.request-body .table td { padding-left: 0; }
+.icon-button.small { min-width: 1.9rem; height: 1.9rem; }
+.icon-button.small svg { width: .9rem; height: .9rem; }
+@media (max-width: 640px) {
+    .request { padding: .6rem .75rem; }
+    .request-head { grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; }
+}
+.section-toggle.small { font-weight: 500; font-size: .9rem; text-align: left; }
+.job { padding: .5rem 0; border-top: 1px dashed var(--border); }
+.job details > summary { margin: .3rem 0; }
+.job-log { margin: 0; padding: .5rem .75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-size: .8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notice.error { max-width: none; white-space: normal; }
+
+/* Settings forms and plugin rows. */
+h3 { font-size: 1rem; margin: 1.25rem 0 .25rem; }
+.field { margin: .6rem 0; }
+.field-label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: .2rem; }
+label.field { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+.field > span.muted.small { display: block; margin-top: .2rem; }
+.field input[type=text], .field input[type=password], .field select { width: 100%; max-width: 32rem; }
+input[type=password] { font: inherit; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+code { font-size: .85em; background: var(--bg); padding: .05rem .3rem; border-radius: 4px; border: 1px solid var(--border); overflow-wrap: anywhere; }
+.plugin-message { color: var(--partial); overflow-wrap: anywhere; }
+
+/* Plugins: a panel per kind, each plugin a card of the same shape, with its actions along the bottom. */
+.plugin-sections { display: flex; flex-direction: column; gap: 1.25rem; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.panel-head { display: flex; align-items: flex-start; gap: 1rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--border); }
+.panel-title { flex: 1; min-width: 0; }
+.panel-title h2 { margin: 0; font-size: 1.05rem; }
+.panel-title p { margin: .25rem 0 0; }
+.panel-empty { padding: 1rem 1.1rem; }
+.plugin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .75rem; padding: .9rem 1.1rem 1.1rem; }
+.plugin-card {
+    display: grid; grid-template-rows: auto auto 1fr auto; gap: .3rem; min-width: 0; height: 9.5rem; box-sizing: border-box;
+    padding: .7rem .8rem .6rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+}
+.plugin-top { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.plugin-top strong { min-width: 0; }
+.plugin-top .badge { flex: none; }
+.plugin-order {
+    flex: none; display: inline-grid; place-items: center; width: 1.35rem; height: 1.35rem; border-radius: 50%;
+    font-size: .75rem; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+}
+.plugin-about, .plugin-card .plugin-message { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.plugin-card .plugin-message { align-self: start; }
+.plugin-actions { display: flex; align-items: center; gap: .3rem; }
+.plugin-card.off .plugin-top strong, .plugin-card.off .plugin-about { opacity: .55; }
+@media (max-width: 640px) {
+    .panel-head { padding: .75rem .9rem; }
+    .plugin-grid { grid-template-columns: minmax(0, 1fr); padding: .75rem .9rem .9rem; }
+    .plugin-card { height: auto; min-height: 8rem; }
+}
+
+/* The library's views: artists, albums and tracks. */
+.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.segmented button { font: inherit; border: none; background: none; padding: .35rem .9rem; color: var(--muted); cursor: pointer; }
+.segmented button + button { border-left: 1px solid var(--border); }
+.segmented button.selected { color: var(--text); background: var(--bg); font-weight: 600; }
+/* Each label keeps room for itself in bold, so picking one doesn't make the control grow. */
+.segment-label { display: inline-flex; flex-direction: column; align-items: center; }
+.segment-label::after { content: attr(data-label); font-weight: 600; height: 0; overflow: hidden; visibility: hidden; user-select: none; pointer-events: none; }
+.tile .tile-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.track-list { table-layout: fixed; }
+.track-list td { height: 56px; box-sizing: border-box; }
+.track-list col.cover-col { width: 3.5rem; }
+.track-list col.format-col { width: 4.5rem; }
+.track-list col.length-col { width: 4.5rem; }
+.track-list col.status-col { width: 8rem; }
+.track-list col.action-col { width: 5rem; }
+.track-list col.wide-action-col { width: 11rem; }
+@media (max-width: 640px) { .track-list col.hide-narrow { width: 0; } .track-list col.status-col { width: 6.5rem; } .track-list col.wide-action-col { width: 8.5rem; } }
+
+/* A heading with a button beside it. */
+.section-head { display: flex; align-items: center; gap: .75rem; margin-top: 1.5rem; }
+.section-head h2, .section-head h3 { margin: 0; }
+.section-head.sub { margin-top: 1rem; }
+h2.section-title { margin: 1.5rem 0 0; }
+.templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .75rem; margin-bottom: .75rem; }
+.template {
+    font: inherit; color: var(--text); text-align: left; cursor: pointer; padding: .75rem 1rem;
+    display: flex; flex-direction: column; align-items: flex-start; gap: .35rem;
+}
+.template:hover:not(:disabled) { border-color: var(--accent); }
+.template:disabled { cursor: default; opacity: .7; }
+.dialog.wide { width: min(44rem, 100%); }
+.dialog .templates { margin: 0; }
+.template { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+
+/* The player: fixed along the bottom, with the queue opening above it. The spacer keeps it off the page's end. */
+.player-space { height: 5.5rem; }
+.player { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; }
+.player-bar {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.2fr) auto; gap: 1rem; align-items: center;
+    padding: .6rem 1rem; background: var(--surface); border-top: 1px solid var(--border);
+}
+.player-track { display: flex; gap: .75rem; align-items: center; min-width: 0; }
+.player-track > .cover { width: 3rem; flex: none; }
+.player-text { min-width: 0; }
+.player-title a { color: var(--text); font-weight: 600; }
+.player-controls, .player-end { display: flex; gap: .35rem; align-items: center; }
+.player-seek { display: flex; gap: .6rem; align-items: center; }
+.player-seek input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.player-seek .time { width: 3rem; text-align: center; font-variant-numeric: tabular-nums; }
+button.icon {
+    display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border-radius: 999px;
+    border: none; background: none; color: var(--text);
+}
+button.icon:hover:not(:disabled), button.icon.on { background: var(--bg); }
+button.icon svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+button.icon.play { width: 2.75rem; height: 2.75rem; background: var(--accent); color: var(--accent-text); }
+button.icon.play:hover:not(:disabled) { background: var(--accent); filter: brightness(1.1); }
+button.icon.play svg { fill: currentColor; }
+.spinner {
+    width: 1.1rem; height: 1.1rem; border-radius: 999px; border: 2px solid currentColor; border-right-color: transparent;
+    animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.player-queue {
+    position: absolute; right: 1rem; bottom: calc(100% + .5rem); width: min(26rem, calc(100vw - 2rem));
+    max-height: 60vh; overflow: auto; padding: .6rem .75rem; box-shadow: 0 6px 24px rgb(0 0 0 / .18);
+}
+.player-queue ol { list-style: none; margin: 0; padding: 0; }
+.player-queue li { display: flex; gap: .5rem; align-items: center; padding: .3rem .25rem; border-radius: 6px; }
+.player-queue li.now { background: var(--bg); }
+.player-queue li.now .queue-title > span:first-child { font-weight: 700; color: var(--accent); }
+.player-queue li.dim { opacity: .55; }
+.player-queue .queue-title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; text-align: left; color: var(--text); }
+.player-queue .queue-title > span { max-width: 100%; }
+@media (max-width: 760px) {
+    /* On a phone the seek bar takes a row of its own. */
+    .player-space { height: 8rem; }
+    .player-bar { grid-template-columns: minmax(0, 1fr) auto auto; gap: .4rem .5rem; padding: .5rem .75rem; }
+    .player-seek { grid-column: 1 / -1; grid-row: 2; }
+    .player-controls { grid-column: 2; grid-row: 1; gap: 0; }
+    .player-end { grid-column: 3; grid-row: 1; gap: 0; }
+}
+
+/* Play and Listen buttons beside tracks and albums. */
+button.play-link { display: inline-flex; align-items: center; gap: .3rem; }
+button.play-link svg { width: .8rem; height: .8rem; fill: currentColor; }
+tr.playing td { background: var(--bg); }
+tr.playing td:nth-child(2) { color: var(--accent); font-weight: 600; }
+
+/* Listen now: one row per track, with how long it's kept. */
+.listen-item { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .6rem 1rem; }
+.listen-item + .listen-item { border-top: 1px solid var(--border); }
+.listen-actions { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 640px) {
+    .listen-item { grid-template-columns: 2.5rem minmax(0, 1fr); }
+    .listen-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
+/* Loading: a spinner beside what's loading. */
+.loading { display: flex; align-items: center; justify-content: center; gap: .6rem; padding: 2rem; color: var(--muted); }
+.loading.inline { display: inline-flex; padding: 0; justify-content: flex-start; }
+.loading .spinner { width: 1rem; height: 1rem; color: var(--accent); }
+
+/* The Log page's level toggles, in the colours of the entries they show. */
+.toggle.level input { accent-color: currentColor; }
+.toggle.level.information:has(input:checked) { border-color: var(--border); color: var(--text); background: var(--surface); }
+.toggle.level.warning:has(input:checked) { border-color: var(--partial); color: var(--partial); background: var(--partial-bg); }
+.toggle.level.error:has(input:checked) { border-color: var(--missing); color: var(--missing); background: var(--missing-bg); }
+.toggle.level:not(:has(input:checked)) { opacity: .65; }
+
+/* The library's ownership bar: owned, partly owned and covered segments over the missing colour. */
+.segmented-meter { display: flex; }
+.segmented-meter > span { flex: none; }
+.segmented-meter > .complete { background: var(--owned); }
+.segmented-meter > .partial { background: var(--partial); }
+.segmented-meter > .covered { background: var(--covered); }
+.segmented-meter > span + span { box-shadow: -1px 0 0 var(--surface); }
+.legend { display: flex; gap: 1rem; flex-wrap: wrap; margin: -.25rem 0 .75rem; }
+.legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.legend i { width: .7rem; height: .7rem; border-radius: 3px; display: inline-block; }
+.legend .complete { background: var(--owned); }
+.legend .partial { background: var(--partial); }
+.legend .covered { background: var(--covered); }
+.legend .missing { background: var(--missing-bg); border: 1px solid var(--missing); }
+
+/* A scan's files on the Activity page: the file while it's read, the song once it's matched. */
+.scan-files-head { justify-content: space-between; margin-bottom: .35rem; }
+.scan-files-head .link { display: inline-flex; align-items: center; gap: .3rem; }
+.sort-icon { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+/* Rows are one height, so the list can be scrolled without drawing every file. */
+.scan-files { max-height: min(32rem, 70vh); overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.scan-file {
+    display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: .6rem; align-items: center;
+    height: 52px; box-sizing: border-box; padding: 0 .6rem; border-bottom: 1px solid var(--border);
+}
+.scan-file > a { display: block; line-height: 0; }
+.scan-file .cover { width: 2.25rem; }
+.scan-file-icon { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; color: var(--muted); }
+.scan-file-icon .spinner { width: 1rem; height: 1rem; color: var(--accent); }
+.scan-file-icon svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.scan-file-text { min-width: 0; }
+.scan-file.matched.fresh { animation: matched .6s ease-out; }
+@keyframes matched { from { background: var(--owned-bg); } to { background: transparent; } }
+
+/* Square icon buttons beside albums and tracks: play, listen, get, queue, ignore. Their titles say what they do. */
+.icon-button {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem; vertical-align: middle;
+    min-width: 2rem; height: 2rem; padding: 0; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.icon-button svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.icon-button svg .fill { fill: currentColor; stroke: none; }
+.icon-button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.icon-button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.icon-button.primary:hover:not(:disabled) { color: var(--accent-text); filter: brightness(1.1); }
+.icon-button.large { min-width: 2.5rem; height: 2.5rem; }
+.icon-button.large svg { width: 1.2rem; height: 1.2rem; }
+.icon-button:has(span:not(.spinner)) { padding: 0 .9rem 0 .7rem; }
+.icon-button.done { border-color: var(--owned); color: var(--owned); }
+.icon-button .spinner { width: .9rem; height: .9rem; }
+td.actions > .icon-button + .icon-button, td.actions > .icon-button + .badge, td.actions > .badge + .icon-button { margin-left: .3rem; }
+.album-actions { gap: .4rem; }
+.track-list col.icons-2-col { width: 5.5rem; }
+.track-list col.icons-3-col { width: 9.5rem; }
+/* Room between the last button and the card's edge. */
+.table tr > td:last-child.actions { padding-right: 1rem; }
+
+/* Artwork on its way shimmers; the placeholder icon shows only when there's none. */
+.cover.pending svg, .cover.loaded svg { display: none; }
+.cover.pending img { opacity: 0; }
+/* "blank", not "empty": that's the padded "nothing here" card. */
+.cover.blank img { display: none; }
+.cover.loaded img { animation: fade-in .25s ease-out; }
+.cover.pending {
+    background: linear-gradient(100deg, var(--bg) 30%, var(--border) 50%, var(--bg) 70%) 0 0 / 300% 100%;
+    animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    .cover.pending { animation: none; }
+    .cover.loaded img { animation: none; }
+}
+
+/* Choices with a highlight that slides to the one picked; owned and missing wear their colours. */
+.segmented.slider { position: relative; display: inline-grid; grid-template-columns: repeat(var(--count), 1fr); }
+.segmented.slider button { position: relative; z-index: 1; transition: color .2s; white-space: nowrap; }
+.segmented.slider button + button { border-left: none; }
+.segmented.slider button.selected { background: none; }
+.segmented.slider .thumb {
+    position: absolute; top: 0; bottom: 0; left: 0; width: calc(100% / var(--count)); border-radius: 999px; background: var(--bg);
+    transform: translateX(calc(var(--index) * 100%)); transition: transform .25s ease, background-color .25s;
+}
+.segmented.ownership.owned .thumb { background: var(--owned-bg); }
+.segmented.ownership.owned button.selected { color: var(--owned); }
+.segmented.ownership.missing .thumb { background: var(--missing-bg); }
+.segmented.ownership.missing button.selected { color: var(--missing); }
+@media (prefers-reduced-motion: reduce) { .segmented.slider .thumb { transition: none; } }
+.ownership-busy { width: 1rem; height: 1rem; color: var(--accent); opacity: 0; transition: opacity 0s; }
+.ownership-busy.on { opacity: 1; transition-delay: .12s; }
+/* The page itself doesn't take part in transitions, only the tiles, so the rest changes at once without a flicker. */
+:root { view-transition-name: none; }
+::view-transition-group(*) { animation-duration: .28s; animation-timing-function: ease; }
+::view-transition-new(*):only-child { animation: fade-in .2s ease-out; }
+::view-transition-old(*):only-child { animation: fade-out .15s ease-in forwards; }
+@keyframes fade-out { to { opacity: 0; } }
+
+/* A dialog over the page, for questions that need an answer before anything happens. */
+.dialog-backdrop {
+    position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem;
+    background: rgb(0 0 0 / .55); animation: fade-in .15s ease-out;
+}
+.dialog {
+    width: min(34rem, 100%); max-height: calc(100vh - 2rem); overflow: auto; padding: 1.25rem 1.4rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 12px 40px rgb(0 0 0 / .35);
+}
+.dialog:focus { outline: none; }
+.dialog h2 { margin: 0 0 .75rem; font-size: 1.15rem; }
+.dialog p { margin: .5rem 0; }
+.dialog-list { margin: .25rem 0 .75rem; padding-left: 1.2rem; }
+.dialog-list code { overflow-wrap: anywhere; }
+.dialog-choice {
+    display: flex; gap: .6rem; align-items: flex-start; padding: .6rem .75rem; margin: .4rem 0;
+    border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+}
+.dialog-choice:has(input:checked) { border-color: var(--accent); }
+.dialog-choice.disabled { opacity: .6; cursor: default; }
+.dialog-choice input { margin-top: .2rem; }
+.dialog-choice > span { display: flex; flex-direction: column; gap: .2rem; }
+.dialog-buttons { justify-content: flex-end; margin-top: 1rem; margin-bottom: 0; }
+/* A link that reads as text until pointed at, such as a song's title in an album's track list. */
+a.plain { color: inherit; }
+a.plain:hover { color: var(--accent); }
+
+/* A track page's files, and the tags each has. */
+.track-file { padding: .75rem 1rem; margin-bottom: .75rem; }
+.track-file > code { display: block; overflow-wrap: anywhere; margin-bottom: .3rem; }
+.file-tags { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .2rem 1rem; margin: .6rem 0 0; font-size: .9rem; }
+.file-tags dt { color: var(--muted); }
+.file-tags dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Formatting: where each part of a file's metadata comes from. */
+.notice.warning { border-color: var(--partial); background: var(--partial-bg); color: var(--text); margin: .25rem 0 .75rem; }
+.format-choices { display: grid; gap: .5rem; margin: .75rem 0; }
+.format-choices label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 13rem); gap: .75rem; align-items: center; }
+.format-choices label > span { display: flex; flex-direction: column; }
+.format-choices select { width: 100%; }
+@media (max-width: 480px) { .format-choices label { grid-template-columns: 1fr; gap: .25rem; } }
+button.danger { background: var(--missing); border-color: var(--missing); color: #fff; }
+button.danger:hover:not(:disabled) { filter: brightness(1.1); }
+button .spinner { width: .85rem; height: .85rem; vertical-align: -2px; margin-right: .3rem; }
+
+/* A remove button in the corner of a library tile, shown on hover or focus. */
+.tile-wrap { position: relative; display: grid; min-width: 0; }
+.tile-remove { position: absolute; top: .4rem; right: .4rem; opacity: 0; transition: opacity .15s; }
+.tile-wrap:hover .tile-remove, .tile-wrap:focus-within .tile-remove { opacity: 1; }
+@media (hover: none) { .tile-remove { opacity: 1; } }
+.icon-button.remove:hover:not(:disabled) { color: var(--missing); border-color: var(--missing); }
+
+/* The library's sort: what by, and which way. */
+/* Toolbar controls share one height, so a row of them lines up. */
+.toolbar { --control: 2.25rem; }
+/* Blazor focuses the heading after navigating, for screen readers; it needn't show. */
+h1:focus { outline: none; }
+.toolbar input[type=search], .toolbar select, .toolbar .icon-button, .toolbar > button, .toolbar .segmented { height: var(--control); box-sizing: border-box; }
+.toolbar .icon-button { min-width: var(--control); }
+.toolbar .segmented button { padding-top: 0; padding-bottom: 0; }
+.toolbar .toggle { height: var(--control); box-sizing: border-box; display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; }
+.toolbar.one-line select { min-width: 0; max-width: 11rem; }
+svg.flip { transform: scaleY(-1); }
+.icon-button.on { border-color: var(--accent); color: var(--accent); }
+
+/* Sorting: a button that opens the ways to sort, and one that reverses the order. */
+.sort-menu { position: relative; display: inline-flex; gap: .3rem; flex: none; }
+.sort-menu svg.flip { transform: scaleY(-1); }
+.menu-backdrop { position: fixed; inset: 0; z-index: 30; }
+.menu {
+    position: absolute; top: calc(100% + .3rem); left: 0; z-index: 31; min-width: 11rem; padding: .25rem;
+    display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / .3);
+}
+.menu button { border: none; background: none; text-align: left; padding: .45rem .7rem; border-radius: 6px; white-space: nowrap; }
+.menu button:hover { background: var(--bg); }
+.menu button.selected { color: var(--accent); font-weight: 600; }
+.menu.right { left: auto; right: 0; }
+.menu hr { border: none; border-top: 1px solid var(--border); margin: .25rem 0; }
+
+/* The account button at the top right, and its menu. */
+.account-menu { position: relative; display: inline-flex; margin-left: .5rem; }
+.account-button { border-radius: 50%; padding: 0; width: 2.1rem; height: 2.1rem; display: inline-flex; align-items: center; justify-content: center; }
+.avatar { font-weight: 600; font-size: .9rem; }
+.menu a { color: var(--text); text-decoration: none; padding: .45rem .7rem; border-radius: 6px; white-space: nowrap; }
+.menu a:hover { background: var(--bg); }
+.menu-note { display: flex; flex-direction: column; padding: .45rem .7rem; max-width: 16rem; }
+.dialog-choice.dim { opacity: .55; }
+
+/* The scan button: scanning for changes, and a menu of the rest. */
+.split-button { position: relative; display: inline-flex; }
+.split-button > button:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.split-button > button.more { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid rgb(0 0 0 / .25); padding-inline: .45rem; display: inline-flex; align-items: center; }
+.split-button > button.more svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.scan-menu { min-width: 17rem; }
+.scan-menu button, .scan-menu a { display: flex; flex-direction: column; gap: .1rem; color: var(--text); text-decoration: none; padding: .45rem .7rem; border-radius: 6px; }
+.scan-menu a:hover { background: var(--bg); }
+.scan-menu .small { white-space: normal; }
+
+/* The library's toolbar keeps to one line; when it runs short of room the filter box becomes a button that opens it
+   below, and only on narrow screens does the row wrap. */
+.library-bar { container-type: inline-size; margin: 1rem 0; }
+.library-bar .toolbar { margin: 0; }
+.toolbar.one-line { flex-wrap: nowrap; }
+.toolbar.one-line > * { flex: none; }
+.toolbar.one-line .filter { flex: 1 1 12rem; min-width: 8rem; max-width: 420px; }
+.toolbar.one-line .count { margin-left: auto; white-space: nowrap; }
+.filter-toggle, .filter-drop { display: none; }
+.filter-drop { margin-top: .6rem; }
+.filter-drop input[type=search] { max-width: none; }
+@container (max-width: 760px) {
+    .toolbar.one-line .filter { display: none; }
+    .toolbar.one-line .filter-toggle { display: inline-flex; }
+    .filter-drop { display: block; }
+}
+@container (max-width: 560px) {
+    .toolbar.one-line { flex-wrap: wrap; }
+}
+
+/* Recent artists and searches on the Search page, before anything's typed. */
+.recent-artists { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); margin: .75rem 0 1.5rem; }
+.recent-searches { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0 1.5rem; }
+.chip {
+    display: inline-flex; align-items: center; gap: .25rem; height: 2.25rem; box-sizing: border-box; max-width: 100%;
+    padding: 0 .3rem 0 .8rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+    transition: border-color .15s;
+}
+.chip:hover { border-color: var(--accent); }
+.chip a { display: inline-flex; align-items: center; gap: .45rem; min-width: 0; color: var(--text); text-decoration: none; }
+.chip a svg { width: .95rem; height: .95rem; flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
+.chip-remove {
+    display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; flex: none; padding: 0;
+    border: none; border-radius: 50%; background: none; color: var(--muted); cursor: pointer;
+}
+.chip-remove svg { width: .85rem; height: .85rem; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.chip-remove:hover { color: var(--missing); background: var(--missing-bg); }
+.toolbar.one-line .search-box { max-width: none; }
+/* The search page has more to fit: its box becomes a button sooner, and when even the rest won't fit on one line, the
+   box takes the first line to itself and the rest wrap below it, rather than a lone button. */
+@container (max-width: 900px) {
+    .search-bar .toolbar.one-line .filter { display: none; }
+    .search-bar .toolbar.one-line .filter-toggle { display: inline-flex; }
+    .search-bar .filter-drop { display: block; }
+}
+@container (max-width: 760px) {
+    .search-bar .toolbar.one-line { flex-wrap: wrap; }
+    .search-bar .toolbar.one-line .filter { display: block; flex: 1 1 100%; max-width: none; }
+    .search-bar .toolbar.one-line .filter-toggle, .search-bar .filter-drop { display: none; }
+    /* It would wrap to a line of its own; "Searching MusicBrainz…" below says as much. */
+    .search-bar .ownership-busy { display: none; }
+}
+.search-note { margin-bottom: .5rem; }
+
+/* Settings: its sections down the left, or across the top on narrow screens. */
+.settings-page { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.settings-nav { display: flex; flex-direction: column; gap: .15rem; position: sticky; top: 4.5rem; }
+.settings-nav a { padding: .45rem .75rem; border-radius: 6px; color: var(--muted); text-decoration: none; }
+.settings-nav a:hover { background: var(--surface); color: var(--text); }
+.settings-nav a.active { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+.settings-body > :first-child { margin-top: 0; }
+@media (max-width: 720px) {
+    .settings-page { grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+    .settings-nav { flex-direction: row; position: static; overflow-x: auto; }
+    .settings-nav a.active { box-shadow: inset 0 -2px 0 var(--accent); }
+}
+
+/* Signing in, and the first run's setup */
+.auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem 1rem; box-sizing: border-box; }
+.auth-card {
+    width: min(24rem, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; display: flex; flex-direction: column; gap: .25rem; box-sizing: border-box;
+}
+.auth-card .brand { color: var(--accent); margin-bottom: .5rem; }
+.auth-card h1 { margin-bottom: .25rem; }
+.auth-card .field input { max-width: none; box-sizing: border-box; }
+.auth-card > button.primary { margin-top: .75rem; justify-content: center; }
+.auth-card code { overflow-wrap: anywhere; }
+.auth-check { display: flex; gap: .6rem; align-items: flex-start; margin: .6rem 0; cursor: pointer; }
+.auth-check input { margin-top: .25rem; }
+.auth-check > span { display: flex; flex-direction: column; gap: .2rem; }
+
+/* Security and webhooks */
+.panel-body { padding: .4rem 1.1rem 1rem; }
+.panel-body h3 { font-size: .95rem; margin: 1.2rem 0 .25rem; }
+.scope-list { display: flex; flex-wrap: wrap; gap: .3rem; }
+.secret-box { display: flex; align-items: center; gap: .5rem; padding: .5rem .5rem .5rem .75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+.secret-box code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: .85rem; }
+.table-scroll { overflow-x: auto; }
+
+/* Settings → Appearance. Each swatch shows its colour's accent in light and dark, half each. */
+.appearance { display: grid; gap: .6rem; padding: 1rem 1.1rem 1.2rem; max-width: 40rem; }
+.appearance .field-label:not(:first-child) { margin-top: .6rem; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: .5rem; }
+.swatch {
+    display: flex; align-items: center; gap: .6rem; padding: .55rem .7rem; font: inherit; color: var(--text); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.swatch:hover { border-color: var(--muted); }
+.swatch.selected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
+.swatch-dot {
+    width: 1.5rem; height: 1.5rem; flex: none; border-radius: 50%; border: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--light) 50%, var(--dark) 50%);
+}
+.mode-choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .5rem; }
+
+/* Settings → Help: the guide, as written in docs/guide. */
+.help { padding: 1rem 1.4rem 1.5rem; }
+.help-nav { margin-bottom: .5rem; }
+.markdown { max-width: 48rem; }
+.markdown h1 { font-size: 1.5rem; margin: .25rem 0 .75rem; }
+.markdown h2 { font-size: 1.15rem; margin: 1.6rem 0 .5rem; }
+.markdown h3 { font-size: 1rem; margin: 1.2rem 0 .4rem; }
+.markdown p, .markdown li { line-height: 1.6; }
+.markdown code { font-size: .88em; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: .05rem .3rem; }
+.markdown pre { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: .75rem 1rem; overflow-x: auto; }
+.markdown pre code { background: none; border: none; padding: 0; }
+.markdown table { border-collapse: collapse; width: 100%; margin: .5rem 0 1rem; font-size: .93rem; display: block; overflow-x: auto; }
+.markdown th, .markdown td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.markdown th { color: var(--muted); font-weight: 600; }
+
+/* The setup steps after making the admin account. */
+.setup-steps { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: .5rem; max-width: 46rem; }
+.setup-step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.setup-step.open { border-color: var(--accent); }
+.setup-head {
+    display: flex; align-items: center; gap: .75rem; width: 100%; padding: .8rem 1rem; font: inherit; color: var(--text);
+    background: none; border: none; cursor: pointer; text-align: left;
+}
+.setup-head strong { flex: 1; }
+.setup-number {
+    display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; flex: none;
+    background: var(--bg); border: 1px solid var(--border); font-size: .85rem; font-weight: 600;
+}
+.setup-step.open .setup-number { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.setup-body { padding: 0 1rem 1rem 3.35rem; display: grid; gap: .6rem; }
+.setup-body p { margin: 0; }
+@media (max-width: 600px) { .setup-body { padding-left: 1rem; } }
+.markdown td code { white-space: nowrap; }
+.setup-body .error { max-width: none; white-space: normal; }

@@ -1,19 +1,18 @@
-# Navidex joins an existing Navidrome setup; Navidrome itself isn't part of this stack.
+# Melodex joins an existing Navidrome setup; Navidrome itself isn't part of this stack.
+# MELODEX_VERSION picks the release, such as 1.0.0; latest follows each one. To build from source instead:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
 # Point MUSIC_PATH at the same folder Navidrome reads, and run as the user who owns it (PUID and PGID).
-# After starting, add Navidrome and the two plugins under Connections; each is offered under Add.
+# After making the admin account, the web app walks you through adding Navidrome and the two plugins.
 # On SELinux hosts with podman, files carry the categories of the container that wrote them, and downloads pass from
 # a plugin through beets to the core and Navidrome. Give every container here, and Navidrome, the same
 # `security_opt: ["label=level:s0:c100,c200"]` so they can read each other's files.
 
 services:
   core:
-    build:
-      context: .
-      dockerfile: docker/core.Dockerfile
-    image: navidex/core:dev
-    container_name: navidex-core
+    image: ghcr.io/joeatethebeans/melodex:${MELODEX_VERSION:-latest}
+    container_name: melodex-core
     ports:
-      - "${NAVIDEX_PORT:-8787}:8080"
+      - "${MELODEX_PORT:-8787}:8080"
     volumes:
       - config:/config
       - ${MUSIC_PATH:-./music}:/music:ro
@@ -25,9 +24,8 @@ services:
 
   # The import engine, and the only thing that writes the library; the core and Navidrome only read it.
   beets-worker:
-    build: beets-worker
-    image: navidex/beets-worker:dev
-    container_name: navidex-beets-worker
+    image: ghcr.io/joeatethebeans/melodex-beets-worker:${MELODEX_VERSION:-latest}
+    container_name: melodex-beets-worker
     user: "${PUID:-1000}:${PGID:-1000}"
     volumes:
       - ${MUSIC_PATH:-./music}:/music
@@ -36,18 +34,16 @@ services:
 
   # Retrieval plugins, one container each. They live in plugins/ for now and will move to their own repositories.
   retriever-ytdlp:
-    build: plugins/retriever-ytdlp
-    image: navidex/retriever-ytdlp:dev
-    container_name: navidex-retriever-ytdlp
+    image: ghcr.io/joeatethebeans/melodex-retriever-ytdlp:${MELODEX_VERSION:-latest}
+    container_name: melodex-retriever-ytdlp
     user: "${PUID:-1000}:${PGID:-1000}"
     volumes:
       - staging:/staging
     restart: unless-stopped
 
   retriever-inbox:
-    build: plugins/retriever-inbox
-    image: navidex/retriever-inbox:dev
-    container_name: navidex-retriever-inbox
+    image: ghcr.io/joeatethebeans/melodex-retriever-inbox:${MELODEX_VERSION:-latest}
+    container_name: melodex-retriever-inbox
     user: "${PUID:-1000}:${PGID:-1000}"
     volumes:
       - ${INBOX_PATH:-./inbox}:/inbox

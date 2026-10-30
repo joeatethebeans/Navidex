@@ -1,4 +1,4 @@
-"""The beets worker's HTTP API, called by the Navidex core. See docs/import-worker.md."""
+"""The beets worker's HTTP API, called by the Melodex core. See docs/import-worker.md."""
 
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ class DeleteRequest(Model):
     paths: list[str]
 
 
-app = FastAPI(title="Navidex beets worker", version="0.1.0")
+app = FastAPI(title="Melodex beets worker", version="0.1.0")
 importer: Importer | None = None
 
 

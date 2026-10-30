@@ -6,9 +6,9 @@ riderModule.iml
 .idea/
 *.user
 /data/
-src/Navidex.Core/data/
+src/Melodex.Core/data/
 /music/
-src/Navidex.Core/plugins/
+src/Melodex.Core/plugins/
 __pycache__/
 .venv/
 .pytest_cache/

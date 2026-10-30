@@ -1,0 +1,13 @@
+# Builds every image from this checkout instead of pulling releases:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+services:
+  core:
+    build:
+      context: .
+      dockerfile: docker/core.Dockerfile
+  beets-worker:
+    build: beets-worker
+  retriever-ytdlp:
+    build: plugins/retriever-ytdlp
+  retriever-inbox:
+    build: plugins/retriever-inbox

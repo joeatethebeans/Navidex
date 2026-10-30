@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Melodex.Client</RootNamespace>
+    <PackageId>Melodex.Client</PackageId>
+    <Description>Typed .NET client and models for the Melodex public API (/api/v1).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Melodex.Contracts\Melodex.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

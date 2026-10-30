@@ -1,0 +1,415 @@
+@page "/"
+@implements IDisposable
+@inject LibraryStore Store
+@inject Preferences Prefs
+@inject Player Player
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@inject NavigationManager Nav
+@inject ViewTransitions Transitions
+
+<PageTitle>Library · Melodex</PageTitle>
+
+<h1>Library</h1>
+<p class="muted">@Intro</p>
+
+@* One line where there's room: the filter box gives way first, to a button that opens it below. *@
+<div class="library-bar">
+    <div class="toolbar one-line">
+        <Segmented T="string" Value="_picked" Options="Views" OnChange="ShowAsync" Label="View" />
+        <input class="filter" type="search" placeholder="@FilterHint" aria-label="@FilterHint" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
+        <button class="icon-button filter-toggle @(_filterOpen || _filter.Length > 0 ? "on" : "")" type="button" title="@FilterHint" aria-label="@FilterHint"
+                aria-expanded="@(_filterOpen ? "true" : "false")" @onclick="ToggleFilter">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
+        </button>
+        <SortMenu Options="SortMenuOptions" Value="@_sort.Key" Descending="_sort.Descending" DirectionHint="@DirectionHint"
+                  OnChange="key => SortAsync(key, null)" OnReverse="() => SortAsync(_sort.Key, !_sort.Descending)" />
+        @if (_view != "tracks")
+        {
+            <OwnershipFilter OnChange="ResetLimit" Busy="_switching" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
+                             MissingHint="@(_view == "albums" ? "Only albums with tracks missing" : "Only artists with something missing")" />
+        }
+        else
+        {
+            <span class="spinner ownership-busy @(_switching ? "on" : "")" role="status" aria-label="@(_switching ? "Loading" : null)"></span>
+            @if (Store.Tracks is { Count: > 0 } tracks)
+            {
+                <span class="muted small count">@VisibleTracks.Count() of @tracks.Count</span>
+            }
+        }
+    </div>
+    @if (_filterOpen)
+    {
+        <div class="filter-drop">
+            <input type="search" placeholder="@FilterHint" aria-label="@FilterHint" @ref="_filterDrop" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
+        </div>
+    }
+</div>
+
+@if (_error is not null)
+{
+    <div class="notice error">Couldn't load the library: @_error <button class="link" @onclick="LoadAsync">Try again</button></div>
+}
+
+@if (_removing is { } removing)
+{
+    <RemoveDialog Kind="removing.Kind" Id="removing.Id" Name="@removing.Name" OnClose="Removed" />
+}
+
+@switch (_view)
+{
+    case "albums":
+        @if (Store.Albums is null) { <Loading /> }
+        else if (Store.Albums.Count == 0) { <div class="empty card">No albums yet. Scan the library to read your music folder.</div> }
+        else
+        {
+            var albums = VisibleAlbums.ToList();
+            @if (albums.Count == 0) { <div class="empty card">@(Prefs.Ownership switch { OwnershipView.Missing => "No partly owned albums", OwnershipView.Owned => "No complete albums", _ => "No albums" }) @(_filter.Length > 0 ? "match that filter." : "right now.")</div> }
+            <div class="tiles">
+                @foreach (var item in albums.Take(_limit))
+                {
+                    var album = item.Album;
+                    <div class="tile-wrap" @key="album.Id" data-vt="@album.Id.ToString("N")">
+                        <a class="tile" href="@Format.AlbumHref(album)" title="@album.Title · @item.ArtistName">
+                            <Cover Url="@album.CoverUrl" />
+                            <div class="tile-name">@album.Title</div>
+                            <div class="muted small tile-sub">@item.ArtistName@(Format.Year(album.FirstReleaseDate) is { Length: > 0 } year ? $" · {year}" : "")</div>
+                            @if (album.TotalTracks is { } total and > 0)
+                            {
+                                <div class="meter" title="@album.OwnedTracks of @total tracks"><span style="width:@(100 * (album.OwnedTracks ?? 0) / total)%"></span></div>
+                                <div class="muted small">@(album.OwnedTracks == total ? $"All {total} tracks" : $"{album.OwnedTracks} of {total} tracks")</div>
+                            }
+                        </a>
+                        @if (!album.Local)
+                        {
+                            <IconButton Icon="remove" Requires="@UserPermissions.Remove" Class="remove tile-remove" Title="Remove from your library…"
+                                        OnClick="() => RemoveAlbum(item)" />
+                        }
+                    </div>
+                }
+            </div>
+            @if (albums.Count > _limit) { <MoreOnScroll OnMore="More" Remaining="albums.Count - _limit" /> }
+        }
+        break;
+
+    case "tracks":
+        @if (Store.Tracks is null) { <Loading /> }
+        else if (Store.Tracks.Count == 0) { <div class="empty card">No tracks yet. Scan the library to read your music folder.</div> }
+        else if (!VisibleTracks.Any()) { <div class="empty card">No tracks match that filter.</div> }
+        else
+        {
+            var tracks = VisibleTracks.ToList();
+            <div class="card">
+                <table class="table track-list">
+                    @* Fixed widths, so the columns stay put as more rows are drawn. *@
+                    <colgroup><col class="cover-col" /><col /><col class="format-col hide-narrow" /><col class="length-col" /><col class="icons-3-col" /></colgroup>
+                    <tbody>
+                        @foreach (var track in tracks.Take(_limit))
+                        {
+                            <tr @key="track.FileId">
+                                <td class="cover-col">
+                                    @if (Format.AlbumHref(track) is { } albumHref) { <a href="@albumHref" tabindex="-1"><Cover Url="@track.CoverUrl" /></a> }
+                                    else { <Cover Url="@track.CoverUrl" /> }
+                                </td>
+                                <td class="track-main">
+                                    <div class="ellipsis"><a href="@(track.Local ? Format.AlbumHref(track) : $"tracks/{track.TrackId}")" class="plain">@track.Title</a></div>
+                                    <div class="muted small ellipsis">
+                                        @if (track.ArtistId is { } artistId) { <a href="artists/@artistId">@track.ArtistCredit</a> } else { @track.ArtistCredit }
+                                        @if (Format.AlbumHref(track) is { } href) { <span> · <a href="@href">@track.AlbumTitle</a></span> }
+                                    </div>
+                                </td>
+                                <td class="num muted small hide-narrow">@track.Format</td>
+                                <td class="num muted">@Format.Duration(track.DurationSeconds)</td>
+                                <td class="num actions">
+                                    <IconButton Icon="play" Requires="@UserPermissions.Listen" Title="Play the tracks listed from here" OnClick="() => PlayFromAsync(track)" />
+                                    <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Owned(track)])" />
+                                    <IconButton Icon="remove" Requires="@UserPermissions.Remove" Class="remove" Title="Remove from your library…"
+                                                OnClick="() => RemoveTrack(track)" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (tracks.Count > _limit) { <MoreOnScroll OnMore="More" Remaining="tracks.Count - _limit" /> }
+            </div>
+        }
+        break;
+
+    default:
+        @if (Store.Artists is null) { <Loading /> }
+        else if (Store.Artists.Count == 0) { <div class="empty card">No artists yet. Scan the library to read your music folder.</div> }
+        else
+        {
+            var artists = VisibleArtists.ToList();
+            @if (artists.Count == 0) { <div class="empty card">@(Prefs.Ownership switch { OwnershipView.Missing => "Nothing missing", OwnershipView.Owned => "No artist you have everything of", _ => "No artists" }) @(_filter.Length > 0 ? "matches that filter." : "right now.")</div> }
+            <div class="legend small muted">
+                <span><i class="complete"></i>Owned</span>
+                <span><i class="partial"></i>Partly owned</span>
+                <span><i class="covered"></i>Covered by other albums</span>
+                <span><i class="missing"></i>Missing</span>
+            </div>
+            <div class="tiles">
+                @foreach (var artist in artists.Take(_limit))
+                {
+                    var total = artist.OwnedAlbums + artist.MissingAlbums;
+                    <div class="tile-wrap" @key="artist.Id" data-vt="@artist.Id.ToString("N")">
+                        <a class="tile" href="@(artist.Local ? "local/artists" : "artists")/@artist.Id" title="@Title(artist)">
+                            <Cover Url="@artist.ImageUrl" Artist="true" />
+                            <div class="tile-name">@artist.Name</div>
+                            <OwnershipMeter Complete="artist.OwnedAlbums - artist.PartialAlbums" Partial="artist.PartialAlbums" Covered="artist.CoveredAlbums" Missing="artist.MissingAlbums" />
+                            <div class="muted small">
+                                @artist.OwnedAlbums of @total owned@(artist.MissingAlbums > 0 ? $" · {artist.MissingAlbums} missing" : "")@(artist.PartialAlbums > 0 ? $" · {artist.PartialAlbums} partly owned" : "")@(artist.CoveredAlbums > 0 ? $" · {artist.CoveredAlbums} covered" : "")
+                            </div>
+                        </a>
+                        @if (!artist.Local)
+                        {
+                            <IconButton Icon="remove" Requires="@UserPermissions.Remove" Class="remove tile-remove" Title="Remove from your library…"
+                                        OnClick="() => Remove(LibraryItemKind.Artist, artist.Id, artist.Name)" />
+                        }
+                    </div>
+                }
+            </div>
+            @if (artists.Count > _limit) { <MoreOnScroll OnMore="More" Remaining="artists.Count - _limit" /> }
+        }
+        break;
+}
+
+@code {
+    private static readonly IReadOnlyList<(string Value, string Label, string? Hint)> Views =
+        [("artists", "Artists", null), ("albums", "Albums", null), ("tracks", "Tracks", null)];
+
+    /// <summary>A way to sort a view. Text sorts read A to Z; number sorts start with the most when descending.</summary>
+    private sealed record SortOption(string Key, string Label, bool Numeric);
+
+    private sealed record SortChoice(string Key, bool Descending);
+
+    private static readonly Dictionary<string, SortOption[]> Sorts = new()
+    {
+        ["artists"] =
+        [
+            new("name", "Name", false), new("owned", "Albums owned", true), new("missing", "Albums missing", true),
+            new("complete", "How complete", true), new("tracks", "Tracks", true),
+        ],
+        ["albums"] =
+        [
+            new("title", "Title", false), new("artist", "Artist", false), new("year", "Year", true),
+            new("complete", "How complete", true), new("tracks", "Tracks owned", true),
+        ],
+        ["tracks"] = [new("title", "Title", false), new("artist", "Artist", false), new("album", "Album", false), new("length", "Length", true)],
+    };
+
+    private SortChoice _sort = new("name", false);
+
+    private SortOption[] SortOptions => Sorts.GetValueOrDefault(_view) ?? Sorts["artists"];
+    private SortOption CurrentSort => SortOptions.FirstOrDefault(o => o.Key == _sort.Key) ?? SortOptions[0];
+    private IReadOnlyList<(string Key, string Label)> SortMenuOptions => SortOptions.Select(o => (o.Key, o.Label)).ToList();
+    private string DirectionHint => $"Sorted {(CurrentSort.Numeric ? (_sort.Descending ? "most first" : "least first") : (_sort.Descending ? "Z to A" : "A to Z"))}; click to reverse";
+
+    private static string SortKey(string view) => $"librarySort.{view}";
+
+    private async Task SortAsync(string key, bool? descending)
+    {
+        var option = SortOptions.FirstOrDefault(o => o.Key == key) ?? SortOptions[0];
+        // A new number sort starts with the most, which is usually what's wanted.
+        var choice = new SortChoice(option.Key, descending ?? option.Numeric);
+        await Prefs.SetAsync(SortKey(_view), choice);
+        await Transitions.RunAsync(() =>
+        {
+            _sort = choice;
+            _limit = Page;
+            StateHasChanged();
+            return Task.CompletedTask;
+        });
+    }
+
+    private IEnumerable<T> Sorted<T>(IEnumerable<T> items, Func<T, string> name, Func<T, string, IComparable?> key)
+    {
+        var option = CurrentSort;
+        var text = StringComparer.CurrentCultureIgnoreCase;
+        IOrderedEnumerable<T> ordered = option.Numeric
+            ? (_sort.Descending ? items.OrderByDescending(i => key(i, option.Key)) : items.OrderBy(i => key(i, option.Key)))
+            : (_sort.Descending ? items.OrderByDescending(i => (string?)key(i, option.Key) ?? "", text) : items.OrderBy(i => (string?)key(i, option.Key) ?? "", text));
+        return ordered.ThenBy(name, text);
+    }
+
+    private static double Ratio(int? part, int? whole) => whole is > 0 ? (double)(part ?? 0) / whole.Value : 0;
+
+    // Tiles and tracks are drawn a page at a time as the page is scrolled: drawing hundreds at once makes every change slow.
+    private const int Page = 60;
+
+    [SupplyParameterFromQuery(Name = "view")] public string? ViewParameter { get; set; }
+
+    private string _view = "";
+    // The view picked, which the picker shows at once while the view itself is drawn.
+    private string _picked = "";
+    private bool _switching;
+    private bool _filterOpen;
+    private bool _focusFilter;
+    private ElementReference _filterDrop;
+    private string _filter = "";
+    private string? _error;
+    private int _limit = Page;
+    private (LibraryItemKind Kind, Guid Id, string Name)? _removing;
+
+    private string Intro => _view switch
+    {
+        "albums" => "Every album you have some or all of.",
+        "tracks" => "Every track in your music folder that Melodex has matched.",
+        _ => "Every artist in your music folder, and how much of their catalogue you have.",
+    };
+
+    private string FilterHint => _view switch
+    {
+        "albums" => "Filter by album or artist",
+        "tracks" => "Filter by title, artist or album",
+        _ => "Filter artists",
+    };
+
+    private bool Matches(params string?[] texts) =>
+        _filter.Length == 0 || texts.Any(t => t?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true);
+
+    // Owned and missing split the list in two: an artist or album is one or the other.
+    private IEnumerable<LibraryArtist> VisibleArtists => Sorted(Store.Artists!
+            .Where(a => Matches(a.Name))
+            .Where(a => Prefs.Ownership == OwnershipView.All || (a.MissingAlbums > 0 || a.PartialAlbums > 0) == (Prefs.Ownership == OwnershipView.Missing)),
+        a => a.SortName ?? a.Name,
+        (a, key) => key switch
+        {
+            "owned" => a.OwnedAlbums,
+            "missing" => a.MissingAlbums,
+            "complete" => Ratio(a.OwnedAlbums - a.PartialAlbums, a.OwnedAlbums + a.MissingAlbums),
+            "tracks" => a.Files,
+            _ => a.SortName ?? a.Name,
+        });
+
+    private IEnumerable<LibraryAlbum> VisibleAlbums => Sorted(Store.Albums!
+            .Where(a => Matches(a.Album.Title, a.ArtistName))
+            .Where(a => Prefs.Ownership == OwnershipView.All || (a.Album.Status == AlbumStatus.Partial) == (Prefs.Ownership == OwnershipView.Missing)),
+        a => a.Album.Title,
+        (a, key) => key switch
+        {
+            "artist" => a.ArtistName,
+            "year" => a.Album.FirstReleaseDate ?? "",
+            "complete" => Ratio(a.Album.OwnedTracks, a.Album.TotalTracks),
+            "tracks" => a.Album.OwnedTracks ?? 0,
+            _ => a.Album.Title,
+        });
+
+    private IEnumerable<LibraryTrack> VisibleTracks => Sorted(Store.Tracks!.Where(t => Matches(t.Title, t.ArtistCredit, t.AlbumTitle)),
+        t => t.Title,
+        (t, key) => key switch
+        {
+            "artist" => t.ArtistCredit,
+            "album" => t.AlbumTitle,
+            "length" => t.DurationSeconds ?? 0,
+            _ => t.Title,
+        });
+
+    private Task PlayFromAsync(LibraryTrack from)
+    {
+        var tracks = VisibleTracks.ToList();
+        return Player.PlayAsync(tracks.Select(PlayerEntry.Owned).ToList(), tracks.IndexOf(from));
+    }
+
+    private static string Title(LibraryArtist a) => a.Disambiguation is null ? a.Name : $"{a.Name} ({a.Disambiguation})";
+
+    private void ResetLimit() => _limit = Page;
+
+    private void More() => _limit += Page;
+
+    private void ToggleFilter()
+    {
+        _filterOpen = !_filterOpen;
+        _focusFilter = _filterOpen;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusFilter)
+        {
+            _focusFilter = false;
+            await _filterDrop.FocusAsync();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ScanStatus.LibraryChanged += Reload;
+        await Prefs.LoadAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // The address says which view; without one, the last view used.
+        var view = Views.Any(v => v.Value == ViewParameter) ? ViewParameter! : await Prefs.GetAsync("libraryView", "artists");
+        await ApplyViewAsync(view);
+    }
+
+    private async Task ApplyViewAsync(string view)
+    {
+        if (view != _view)
+        {
+            _view = _picked = view;
+            _limit = Page;
+            _sort = await Prefs.GetAsync<SortChoice?>(SortKey(view), null) is { } saved && SortOptions.Any(o => o.Key == saved.Key)
+                ? saved
+                : new SortChoice(SortOptions[0].Key, false);
+            // What was loaded last shows straight away, while a fresh copy loads.
+            await LoadAsync();
+        }
+        _switching = false;
+    }
+
+    private async Task ShowAsync(string view)
+    {
+        if (view == _view)
+            return;
+        // The picker moves and the spinner shows before the new view is drawn, which can take a moment.
+        _picked = view;
+        _switching = true;
+        StateHasChanged();
+        await Task.Delay(1);
+        await Prefs.SetAsync("libraryView", view);
+        // Shown here rather than left to the address changing: going to artists from the last view used, at the bare
+        // address, doesn't change it.
+        await ApplyViewAsync(view);
+        Nav.NavigateTo(view == "artists" ? "" : $"?view={view}", replace: true);
+    }
+
+    private async Task LoadAsync()
+    {
+        _error = null;
+        try
+        {
+            switch (_view)
+            {
+                case "albums": await Store.LoadAlbumsAsync(); break;
+                case "tracks": await Store.LoadTracksAsync(); break;
+                default: await Store.LoadArtistsAsync(); break;
+            }
+        }
+        catch (HttpRequestException e)
+        {
+            _error = e.Message;
+        }
+    }
+
+    private void Reload() => InvokeAsync(async () =>
+    {
+        await LoadAsync();
+        StateHasChanged();
+    });
+
+    private void Remove(LibraryItemKind kind, Guid id, string name) => _removing = (kind, id, name);
+    private void RemoveAlbum(LibraryAlbum item) => Remove(LibraryItemKind.Album, item.Album.Id, $"{item.Album.Title} by {item.ArtistName}");
+    private void RemoveTrack(LibraryTrack track) => Remove(LibraryItemKind.File, track.FileId, $"{track.Title} by {track.ArtistCredit}");
+
+    // The server works out the library again in the background, so drop what went straight away rather than wait for it.
+    private void Removed(bool removed)
+    {
+        if (removed && _removing is { } item)
+            Store.Forget(item.Kind, item.Id);
+        _removing = null;
+    }
+
+    public void Dispose() => ScanStatus.LibraryChanged -= Reload;
+}

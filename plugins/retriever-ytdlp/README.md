@@ -1,9 +1,9 @@
 # YouTube (yt-dlp) retrieval plugin
 
-A Navidex retrieval plugin (contract v1.0) that finds songs on YouTube Music with
+A Melodex retrieval plugin (contract v1.0) that finds songs on YouTube Music with
 [ytmusicapi](https://github.com/sigma67/ytmusicapi) and downloads their audio with [yt-dlp](https://github.com/yt-dlp/yt-dlp).
 
-It lives in the Navidex repository for now and will move to its own repository later.
+It lives in the Melodex repository for now and will move to its own repository later.
 
 ## What it does
 
@@ -33,14 +33,14 @@ retriever-ytdlp:
     - staging:/staging
 ```
 
-Then add `http://retriever-ytdlp:8080` under Settings → Plugins in Navidex (it's one of the templates under Add).
+Then add `http://retriever-ytdlp:8080` under Settings → Plugins in Melodex (it's one of the templates under Add).
 
 The container needs ffmpeg and deno, which the Dockerfile installs. It contacts `music.youtube.com`,
 `www.youtube.com` and `*.googlevideo.com`. Environment variables: `STAGING_ROOT` (default `/staging`) and
 `PARALLEL_FETCHES` (default `2`).
 
 yt-dlp changes often to keep up with YouTube. Rebuild the image to pick up a newer version, then press Test in
-Navidex to refresh the manifest.
+Melodex to refresh the manifest.
 
 You are responsible for complying with YouTube's terms and the law where you live.
 

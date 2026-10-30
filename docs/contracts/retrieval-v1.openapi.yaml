@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
-  title: Navidex retrieval plugin contract
+  title: Melodex retrieval plugin contract
   version: "1.0"
   description: |
-    The HTTP API every Navidex retrieval plugin implements. The Navidex core is the only client.
+    The HTTP API every Melodex retrieval plugin implements. The Melodex core is the only client.
     Plugins are stateless apart from in-flight fetch jobs: settings are sent with every call, and
     candidate IDs carry everything needed to fetch. See retrieval-plugins.md.
   license:
@@ -117,7 +117,7 @@ components:
       type: object
       required: [id, name, version, type, contractVersion]
       properties:
-        id: { type: string, examples: [navidex.retrieval.ytdlp] }
+        id: { type: string, examples: [melodex.retrieval.ytdlp] }
         name: { type: string }
         version: { type: string }
         type: { type: string, const: retrieval }

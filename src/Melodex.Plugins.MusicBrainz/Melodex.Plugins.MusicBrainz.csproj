@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Melodex.Plugins.MusicBrainz</RootNamespace>
+    <Description>Melodex index plugin backed by MusicBrainz.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Melodex.Contracts\Melodex.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MetaBrainz.MusicBrainz" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>

@@ -1,7 +1,7 @@
-"""Navidex retrieval contract v1.0: wire models, the in-memory job store, and file probing.
+"""Melodex retrieval contract v1.0: wire models, the in-memory job store, and file probing.
 
 The core sends settings with every call and candidates carry everything needed to fetch them, so the only state a
-plugin keeps is its running jobs. See docs/contracts/retrieval-plugins.md in the Navidex repository.
+plugin keeps is its running jobs. See docs/contracts/retrieval-plugins.md in the Melodex repository.
 """
 
 from __future__ import annotations

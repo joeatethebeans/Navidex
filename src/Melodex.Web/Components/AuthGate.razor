@@ -1,0 +1,156 @@
+@implements IDisposable
+@inject MelodexClient Api
+@inject AuthState Auth
+
+@* The app, once this browser is signed in; until then, making the admin account or signing in. *@
+@if (Auth.Status is not { } status)
+{
+    @if (_error is not null)
+    {
+        <div class="auth-page"><div class="auth-card"><p class="error">@_error</p><button @onclick="LoadAsync">Try again</button></div></div>
+    }
+    else
+    {
+        <div class="boot loading"><span class="spinner"></span> Loading Melodex…</div>
+    }
+}
+else if (status.LetIn)
+{
+    @ChildContent
+}
+else
+{
+    <PageTitle>@(status.SetUp ? "Sign in" : "Set up") · Melodex</PageTitle>
+    <div class="auth-page">
+        <form class="auth-card" @onsubmit="SubmitAsync" @onsubmit:preventDefault="true">
+            <div class="brand"><Logo />Melodex</div>
+            @if (status.SetUp)
+            {
+                <h1>Sign in</h1>
+            }
+            else
+            {
+                <h1>Make the admin account</h1>
+                <p class="muted small">
+                    The admin may do everything in Melodex, including adding other people under Settings → Users with only what they need.
+                    Everyone signs in, even at home.
+                </p>
+            }
+
+            <label class="field">
+                <span class="field-label">Username</span>
+                <input type="text" autocomplete="username" @bind="_username" @bind:event="oninput" required autofocus />
+            </label>
+            <label class="field">
+                <span class="field-label">Password</span>
+                <input type="password" autocomplete="@(status.SetUp ? "current-password" : "new-password")" @bind="_password" @bind:event="oninput" required />
+                @if (!status.SetUp) { <span class="muted small">At least 8 characters.</span> }
+            </label>
+            @if (!status.SetUp)
+            {
+                <label class="field">
+                    <span class="field-label">Password again</span>
+                    <input type="password" autocomplete="new-password" @bind="_confirm" @bind:event="oninput" required />
+                </label>
+            }
+            else
+            {
+                <label class="auth-check">
+                    <input type="checkbox" @bind="_remember" />
+                    <span>
+                        Remember me
+                        <span class="muted small">Stay signed in on this browser for 30 days from your last visit. Leave it off on a shared computer.</span>
+                    </span>
+                </label>
+            }
+
+            @if (_error is not null) { <p class="error small">@_error</p> }
+
+            <button class="primary" type="submit" disabled="@(_busy || !Ready(status))">
+                @if (_busy) { <span class="spinner"></span> }
+                @(status.SetUp ? "Sign in" : "Make the admin account")
+            </button>
+
+            @if (status.SetUp)
+            {
+                <p class="muted small">
+                    Forgotten your password? The admin can set a new one under Settings → Users. If you're the admin, start Melodex once with
+                    <code>Melodex__ResetLogin=true</code> to choose a new one.
+                </p>
+            }
+        </form>
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string _username = "";
+    private string _password = "";
+    private string _confirm = "";
+    private bool _remember;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Auth.Changed += OnChanged;
+        await LoadAsync();
+        if (Auth.Status is { SetUp: false })
+            _username = "admin";
+    }
+
+    private async Task LoadAsync()
+    {
+        _error = null;
+        try
+        {
+            Auth.Set(await Api.GetAuthStatusAsync());
+        }
+        catch (Exception)
+        {
+            _error = "Melodex isn't answering. It may be starting up.";
+        }
+    }
+
+    private void OnChanged()
+    {
+        _password = _confirm = "";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private bool Ready(AuthStatus status) =>
+        _username.Trim().Length > 0 && _password.Length > 0 && (status.SetUp || _confirm.Length > 0);
+
+    private async Task SubmitAsync()
+    {
+        var status = Auth.Status!;
+        if (!Ready(status))
+            return;
+        if (!status.SetUp && _password != _confirm)
+        {
+            _error = "The passwords don't match.";
+            return;
+        }
+        _busy = true;
+        _error = null;
+        try
+        {
+            if (status.SetUp)
+                await Api.SignInAsync(new SignIn(_username, _password, _remember));
+            else
+                await Api.SetUpLoginAsync(new SetUpLogin(_username, _password));
+            Auth.Set(await Api.GetAuthStatusAsync());
+        }
+        catch (MelodexApiException e)
+        {
+            _error = e.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    public void Dispose() => Auth.Changed -= OnChanged;
+}

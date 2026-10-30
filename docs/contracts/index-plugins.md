@@ -1,7 +1,7 @@
 # Index plugins (contract v1.0)
 
 Index plugins answer **what exists**: artists, their albums, each album's editions and track listings. They fill
-the catalogue side of the comparison that produces the missing view. Code: `Navidex.Contracts.Plugins.Index`.
+the catalogue side of the comparison that produces the missing view. Code: `Melodex.Contracts.Plugins.Index`.
 
 ## Entities
 

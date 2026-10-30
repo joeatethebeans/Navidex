@@ -1,6 +1,6 @@
-# Navidex beets worker
+# Melodex beets worker
 
-The only thing that writes the music library. Navidex sends it staged files with the MusicBrainz release and
+The only thing that writes the music library. Melodex sends it staged files with the MusicBrainz release and
 recordings they are; beets tags them and works out where they go, and the worker moves them into the library.
 
 The HTTP API is in [docs/import-worker.md](../docs/import-worker.md).
@@ -16,7 +16,7 @@ beets-worker:
     - /path/to/music:/music
 ```
 
-Navidex finds it at `http://beets-worker:8080` by default (`Navidex:ImportWorker:Url`).
+Melodex finds it at `http://beets-worker:8080` by default (`Melodex:ImportWorker:Url`).
 
 ## Development
 

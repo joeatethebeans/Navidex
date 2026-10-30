@@ -1,0 +1,17 @@
+namespace Melodex.Client;
+
+/// <summary>
+/// Answer to <c>GET /setup</c>: how far a new install has got with the steps the web app walks the admin through after
+/// making their account.
+/// </summary>
+/// <param name="Done">The steps were finished or skipped, or this install had music before there were steps.</param>
+/// <param name="LibraryPath">The music folder, as the core sees it.</param>
+/// <param name="LibraryReadable">The core can list the music folder.</param>
+/// <param name="AudioFiles">Audio files found in it, counting no further than <see cref="CountLimit"/>.</param>
+/// <param name="MediaServer">A media server, such as Navidrome, has been added.</param>
+/// <param name="Retrieval">At least one retrieval plugin has been added.</param>
+/// <param name="Scanned">The library has been scanned at least once.</param>
+public sealed record SetupStatus(bool Done, string LibraryPath, bool LibraryReadable, int AudioFiles, bool MediaServer, bool Retrieval, bool Scanned)
+{
+    public const int CountLimit = 10_000;
+}

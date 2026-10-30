@@ -2,7 +2,7 @@
 
 Connectors tell a media server about new music and confirm it's there. They are the last step of the import
 pipeline: once beets has filed a track, the connector triggers a scan, the core polls until the server has the
-track, and the server's track ID is recorded so apps can switch to it. Code: `Navidex.Contracts.Plugins.Connectors`.
+track, and the server's track ID is recorded so apps can switch to it. Code: `Melodex.Contracts.Plugins.Connectors`.
 
 ## Required: `IMediaServerConnector`
 

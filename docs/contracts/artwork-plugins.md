@@ -3,7 +3,7 @@
 Artwork plugins find pictures: artist photos, album covers, and the covers of particular editions. They're part of
 the catalogue alongside index plugins, and sit under Catalogue in Settings → Plugins, but are a type of their own,
 because a source of pictures usually can't answer the questions an index plugin must (fanart.tv can't search for
-albums). Code: `Navidex.Contracts.Plugins.Artwork`.
+albums). Code: `Melodex.Contracts.Plugins.Artwork`.
 
 ## How the core uses them
 

@@ -1,6 +1,6 @@
 # Testing without a real library
 
-Navidex is developed against a generated test library and a throwaway Navidrome, so nothing touches a real
+Melodex is developed against a generated test library and a throwaway Navidrome, so nothing touches a real
 music collection until you choose to point it at one.
 
 ## The test library
@@ -39,7 +39,7 @@ recording ID, and MP4 freeform atoms.
 
 ### The answer key
 
-`expected.json` says, for each file, the match method Navidex should use (named as in `MatchMethod`) and the
+`expected.json` says, for each file, the match method Melodex should use (named as in `MatchMethod`) and the
 recording, edition and album it belongs to; stray files say `Unmatched`. For each artist, it lists the owned albums
 (complete or with their missing tracks), the missing albums the default filters show, and how many missing albums
 the filters hide.
@@ -60,7 +60,7 @@ status against the answer key, in both duplicate modes. It replays recorded Musi
 asks for, record them again (about ten minutes, at one request a second) and commit the fixtures:
 
 ```bash
-NAVIDEX_RECORD=1 dotnet test --filter LibraryGateTests
+MELODEX_RECORD=1 dotnet test --filter LibraryGateTests
 ```
 
 It's skipped if the library hasn't been generated. CI generates it first.
@@ -68,7 +68,7 @@ It's skipped if the library hasn't been generated. CI generates it first.
 ## The sandbox
 
 `sandbox/sandbox.sh` runs the whole stack over a copy of the test library, with podman or docker: Navidrome 0.64.2,
-the Navidex core, the beets worker, and both retrieval plugins.
+the Melodex core, the beets worker, and both retrieval plugins.
 
 ```bash
 sandbox/sandbox.sh up
@@ -76,10 +76,10 @@ sandbox/sandbox.sh up
 
 This generates the library if it isn't there, copies it to `sandbox/music` (the beets worker writes into it, so the
 generated library stays as the answer key expects), builds any image that's missing, starts everything on a private
-network, creates a Navidrome admin, adds Navidrome and both plugins to Navidex, and scans.
+network, creates a Navidrome admin, adds Navidrome and both plugins to Melodex, and scans.
 
 - Navidrome: http://localhost:4533. The user is `admin`; the password is generated into `sandbox/.env` on first run.
-- Navidex: http://localhost:8787. Press **Scan library**, then use the Get buttons.
+- Melodex: http://localhost:8787. Press **Scan library**, then use the Get buttons.
 - The inbox plugin reads `sandbox/inbox`. Drop files there, then press Retry on the request.
 
 The beets worker and the plugins run as you, so the files they write in `sandbox/music` and take from `sandbox/inbox`

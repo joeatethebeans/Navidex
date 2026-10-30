@@ -1,0 +1,255 @@
+@page "/downloads"
+@implements IDisposable
+@inject MelodexClient Api
+@inject AuthState Auth
+@inject Player Player
+@inject ServerEvents Events
+@inject Preferences Prefs
+
+<PageTitle>Downloads · Melodex</PageTitle>
+
+@*
+    Tracks fetched to listen to. Now shows those still to play or add; all time adds those discarded, expired or added
+    to the library.
+*@
+<h1>Downloads</h1>
+<p class="muted">
+    Tracks fetched to listen to without adding them to your library. Each is kept for @Format.Minutes(_expiry) after you last
+    play it, unless you add it.
+</p>
+
+<div class="toolbar">
+    <Segmented T="bool" Value="_all" Options="Tabs" OnChange="ShowAsync" Label="Show" />
+    @if (_items is { Count: > 0 })
+    {
+        var playable = Playable;
+        <button class="primary" disabled="@(playable.Count == 0)" @onclick="() => PlayAsync(playable, 0)">Play all</button>
+    }
+    @if (_error is not null) { <span class="error small" title="@_error">@_error</span> }
+</div>
+
+@if (_items is null)
+{
+    <Loading />
+}
+else if (_items.Count == 0)
+{
+    <div class="empty card">
+        @if (_all) { <span>Nothing fetched to listen to yet. Use the listen buttons on album and search pages.</span> }
+        else
+        {
+            <span>Nothing to play or add right now. </span>
+            <button class="link" @onclick="() => ShowAsync(true)">Show all time</button>
+        }
+    </div>
+}
+else
+{
+    var playable = Playable;
+    <div class="card">
+        @foreach (var item in _items)
+        {
+            <div class="listen-item">
+                <Cover Url="@item.CoverUrl" />
+                <div style="min-width: 0;">
+                    <div class="ellipsis"><strong>@item.Title</strong></div>
+                    <div class="muted small ellipsis">
+                        @if (item.ArtistId is { } artist) { <a class="muted" href="artists/@artist">@item.ArtistCredit</a> } else { @item.ArtistCredit }
+                        @if (item.AlbumId is { } album) { <span> · </span><a class="muted" href="albums/@album">@item.AlbumTitle</a> }
+                    </div>
+                    <div class="row small" style="gap: .5rem;">
+                        <span class="badge @(item.Paused && item.Pending ? "neutral" : Badge(item.State))" title="@item.Detail">@Label(item)</span>
+                        @if (item.State == ListenNowState.Playable && item.ExpiresAt is { } expires)
+                        {
+                            <span class="muted" title="@expires.ToLocalTime().ToString("f")">Deleted @Format.Until(expires)</span>
+                        }
+                        @if (item.State == ListenNowState.Failed && item.Detail is not null)
+                        {
+                            <span class="muted ellipsis" title="@item.Detail">@item.Detail</span>
+                        }
+                        @if (item.Codec is not null)
+                        {
+                            <span class="muted hide-narrow">@item.Codec.ToUpperInvariant()@(item.BitrateKbps is { } kbps ? $" · {kbps} kbps" : "")</span>
+                        }
+                    </div>
+                </div>
+                <div class="listen-actions">
+                    @if (item.State is ListenNowState.Playable or ListenNowState.Importing or ListenNowState.InLibrary || item.Pending)
+                    {
+                        <IconButton Icon="play" Requires="@UserPermissions.Listen" Title="@(Player.IsNow(item.TrackId) ? "Playing" : "Play")" Primary="@Player.IsNow(item.TrackId)"
+                                    OnClick="() => PlayAsync(playable, playable.IndexOf(item))" />
+                        <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true" OnClick="() => Player.AddAsync([PlayerEntry.Listening(item)])" />
+                    }
+                    @if (item.State == ListenNowState.Playable)
+                    {
+                        <IconButton Icon="add" Disabled="@ScanStatus.Reading"
+                                    Title="@(ScanStatus.Reading ? "Wait until the scan has read your files" : "Add to your library, without fetching it again")"
+                                    OnClick="() => AddAsync(item)" />
+                    }
+                    @if (item.State == ListenNowState.Failed)
+                    {
+                        <a class="icon-button" href="activity?open=@item.RequestId" title="Details" aria-label="Details">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></svg>
+                        </a>
+                    }
+                    @if (item.State == ListenNowState.Requested && !item.Paused && Waiting.IndexOf(item) is var place and >= 0)
+                    {
+                        <IconButton Icon="up" Title="Fetch sooner" Disabled="@(place == 0)" OnClick="() => MoveAsync(item, place - 1)" />
+                        <IconButton Icon="down" Title="Fetch later" Disabled="@(place == Waiting.Count - 1)" OnClick="() => MoveAsync(item, place + 2)" />
+                    }
+                    @if (item.Pending)
+                    {
+                        @if (item.Paused)
+                        {
+                            <IconButton Icon="play" Requires="@UserPermissions.Request" Title="Resume fetching" OnClick="() => RunAsync(() => Api.ResumeRequestAsync(item.RequestId))" />
+                        }
+                        else
+                        {
+                            <IconButton Icon="pause" Title="@(item.State == ListenNowState.Fetching ? "Pause: it fetches again from the start when resumed" : "Pause")"
+                                        OnClick="() => RunAsync(() => Api.PauseRequestAsync(item.RequestId))" />
+                        }
+                    }
+                    @if (item.State is not (ListenNowState.Importing or ListenNowState.InLibrary or ListenNowState.Expired))
+                    {
+                        <IconButton Icon="discard" Title="@(item.Pending ? "Stop fetching it" : "Delete it now")" OnClick="() => DiscardAsync(item)" />
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private static readonly IReadOnlyList<(bool Value, string Label, string? Hint)> Tabs =
+        [(false, "Now", "Still to play, fetch or add"), (true, "All time", "Including those deleted or added to the library")];
+
+    private const string AllKey = "downloadsAll";
+
+    // Include those discarded, expired or added to the library.
+    private bool _all;
+    private IReadOnlyList<ListenNowInfo>? _items;
+
+    private List<ListenNowInfo> Playable => _items!.Where(i => i.State is not (ListenNowState.Failed or ListenNowState.Expired)).ToList();
+    private int _expiry = 60;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Events.Received += OnEvent;
+        Player.Changed += Redraw;
+        _all = await Prefs.GetAsync(AllKey, false);
+        // Only someone who may read the settings can see how long songs are kept; the rest see the usual hour.
+        if (Auth.May(UserPermissions.Settings))
+            _expiry = (await Api.GetFetchSettingsAsync()).ListenNowExpiryMinutes;
+        await LoadAsync();
+    }
+
+    private async Task ShowAsync(bool all)
+    {
+        _all = all;
+        await Prefs.SetAsync(AllKey, all);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var all = _all;
+        var items = await Api.ListListeningAsync(all);
+        // Those still to fetch first, in the order they'll be fetched; then the rest, newest first.
+        if (all == _all)
+            _items = items.Where(i => i.Pending).OrderBy(i => i.QueueOrder).ThenBy(i => i.CreatedAt)
+                .Concat(items.Where(i => !i.Pending)).ToList();
+    }
+
+    private void OnEvent(string type)
+    {
+        if (type is "listen" or "connected")
+            InvokeAsync(async () =>
+            {
+                await LoadAsync();
+                StateHasChanged();
+            });
+    }
+
+    private void Redraw() => InvokeAsync(StateHasChanged);
+
+    private Task PlayAsync(List<ListenNowInfo> items, int start) =>
+        Player.PlayAsync(items.Select(PlayerEntry.Listening).ToList(), Math.Max(start, 0));
+
+    private async Task AddAsync(ListenNowInfo item)
+    {
+        _error = null;
+        try
+        {
+            await Api.AddListeningAsync(item.Id);
+        }
+        catch (MelodexApiException e)
+        {
+            _error = e.Message;
+        }
+        await LoadAsync();
+    }
+
+    /// <summary>Tracks waiting to be fetched, in the order they will be.</summary>
+    private List<ListenNowInfo> Waiting => _items!.Where(i => i.State == ListenNowState.Requested && !i.Paused).ToList();
+
+    // To just before the track now at this place among those waiting, or to the end past it.
+    private Task MoveAsync(ListenNowInfo item, int place) =>
+        RunAsync(() => Api.MoveRequestAsync(item.RequestId, place < Waiting.Count ? Waiting[place].RequestId : null));
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        _error = null;
+        try
+        {
+            await action();
+        }
+        catch (MelodexApiException e)
+        {
+            _error = e.Message;
+        }
+        await LoadAsync();
+    }
+
+    private async Task DiscardAsync(ListenNowInfo item)
+    {
+        _error = null;
+        try
+        {
+            await Api.DiscardListeningAsync(item.Id);
+        }
+        catch (MelodexApiException e)
+        {
+            _error = e.Message;
+        }
+        await LoadAsync();
+    }
+
+    private static string Label(ListenNowInfo item) => item.State switch
+    {
+        ListenNowState.Requested or ListenNowState.Fetching when item.Paused => "Paused",
+        ListenNowState.Requested => "Waiting",
+        ListenNowState.Fetching => "Fetching",
+        ListenNowState.Playable => "Ready to play",
+        ListenNowState.Importing => "Adding to library",
+        ListenNowState.InLibrary => "In library",
+        ListenNowState.Failed => "Couldn't fetch",
+        _ => "Deleted",
+    };
+
+    private static string Badge(ListenNowState state) => state switch
+    {
+        ListenNowState.Playable => "covered",
+        ListenNowState.InLibrary => "owned",
+        ListenNowState.Failed => "missing",
+        ListenNowState.Expired => "neutral",
+        ListenNowState.Requested => "active waiting",
+        _ => "active",
+    };
+
+    public void Dispose()
+    {
+        Events.Received -= OnEvent;
+        Player.Changed -= Redraw;
+    }
+}

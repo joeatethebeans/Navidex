@@ -1,0 +1,73 @@
+@inject MelodexClient Api
+@inject AuthState Auth
+
+@*
+    For a request that's running: move it in the queue (while it waits), pause or resume it, and cancel it. For one
+    that stopped short: retry it.
+*@
+@if (!Auth.May(UserPermissions.Request))
+{
+}
+else if (Request.Active)
+{
+    @if (Queue is not null && Request.State == RequestState.Queued && _index >= 0)
+    {
+        <IconButton Icon="top" Class="small" Title="Move to the front of the queue" Disabled="@(_busy || _index == 0)" OnClick="() => MoveAsync(0)" />
+        <IconButton Icon="up" Class="small" Title="Move up the queue" Disabled="@(_busy || _index == 0)" OnClick="() => MoveAsync(_index - 1)" />
+        <IconButton Icon="down" Class="small" Title="Move down the queue" Disabled="@(_busy || _index == Queue.Count - 1)" OnClick="() => MoveAsync(_index + 2)" />
+    }
+    @if (Request.Paused)
+    {
+        <IconButton Icon="play" Class="small" Title="Resume" Disabled="_busy" OnClick="ResumeAsync" />
+    }
+    else
+    {
+        <IconButton Icon="pause" Class="small" Title="@(Request.State == RequestState.Queued ? "Pause" : "Pause: it fetches again from the start when resumed")"
+                    Disabled="_busy" OnClick="PauseAsync" />
+    }
+    <IconButton Icon="cancel" Class="small" Title="Cancel" Disabled="_busy" OnClick="CancelAsync" />
+}
+else if (Request.State is RequestState.NeedsReview or RequestState.Failed or RequestState.Cancelled
+         || Request.Parts is { } p && p.NeedsReview + p.Failed + p.Cancelled > 0)
+{
+    <IconButton Icon="retry" Class="small" Title="Retry" Disabled="_busy" OnClick="RetryAsync" />
+}
+
+@code {
+    [Parameter, EditorRequired] public RequestInfo Request { get; set; } = null!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    /// <summary>The queue it's in, in order, to move it up and down; none for parts, which move with their request.</summary>
+    [Parameter] public IReadOnlyList<RequestInfo>? Queue { get; set; }
+
+    private bool _busy;
+    private int _index = -1;
+
+    protected override void OnParametersSet() => _index = Queue?.ToList().FindIndex(r => r.Id == Request.Id) ?? -1;
+
+    private Task CancelAsync() => RunAsync(() => Api.CancelRequestAsync(Request.Id));
+
+    private Task RetryAsync() => RunAsync(() => Api.RetryRequestAsync(Request.Id));
+
+    private Task PauseAsync() => RunAsync(() => Api.PauseRequestAsync(Request.Id));
+
+    private Task ResumeAsync() => RunAsync(() => Api.ResumeRequestAsync(Request.Id));
+
+    // To just before the request now at this place in the queue, or to the end past it.
+    private Task MoveAsync(int place) => RunAsync(() => Api.MoveRequestAsync(Request.Id, place < Queue!.Count ? Queue[place].Id : null));
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        _busy = true;
+        try
+        {
+            await action();
+        }
+        catch (MelodexApiException)
+        {
+            // It finished or started meanwhile; the refresh shows where it is now.
+        }
+        _busy = false;
+        await OnChanged.InvokeAsync();
+    }
+}

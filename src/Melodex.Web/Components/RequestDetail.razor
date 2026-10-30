@@ -1,0 +1,140 @@
+@inject MelodexClient Api
+
+@* A request's parts and attempts, for the Activity page. *@
+<div class="request-body">
+    @if (Request.Children is { Count: > 0 } children)
+    {
+        <table class="table">
+            <tbody>
+                @foreach (var child in children)
+                {
+                    var open = _open.ContainsKey(child.Id);
+                    <tr>
+                        <td>
+                            <button class="section-toggle small" aria-expanded="@(open ? "true" : "false")" @onclick="() => ToggleAsync(child.Id)">
+                                <span class="chevron @(open ? "open" : "")" aria-hidden="true"></span>
+                                @child.Title
+                            </button>
+                            @if (child.Detail is not null) { <div class="muted small request-detail">@child.Detail</div> }
+                        </td>
+                        <td class="num"><span class="badge @Format.RequestBadge(child)">@Format.RequestLabel(child)</span></td>
+                        <td class="num actions"><Actions Request="child" OnChanged="ChangedAsync" /></td>
+                    </tr>
+                    @if (open && _open[child.Id] is { } detail)
+                    {
+                        <tr><td colspan="3"><RequestDetail Request="detail" OnChanged="ChangedAsync" /></td></tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+
+    @foreach (var job in Request.Jobs ?? [])
+    {
+        <div class="job">
+            <div class="row small">
+                <strong>Attempt @job.Attempt</strong>
+                <span>@(job.Plugin ?? "removed plugin")</span>
+                <span class="badge @JobBadge(job)">@JobLabel(job)</span>
+                @if (job.VerificationDetail is not null) { <span class="muted">@job.VerificationDetail</span> }
+            </div>
+            @if (job.Candidate is { } fetched)
+            {
+                <div class="small"><Candidate Value="fetched" /></div>
+            }
+            <details>
+                <summary class="small">Log</summary>
+                <pre class="job-log">@job.Log</pre>
+            </details>
+            @if (job.Candidates.Count > 0)
+            {
+                <details>
+                    <summary class="small">All @job.Candidates.Count candidates from @job.Plugin</summary>
+                    <table class="table small">
+                        <tbody>
+                            @foreach (var candidate in job.Candidates)
+                            {
+                                <tr>
+                                    <td><Candidate Value="candidate" /></td>
+                                    <td class="num">
+                                        @if (CanChoose)
+                                        {
+                                            <button class="link small" disabled="@_busy" @onclick="() => ChooseAsync(job, candidate)">Fetch this</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </details>
+            }
+        </div>
+    }
+
+    @if (Request.Jobs is { Count: 0 } && Request.Children is not { Count: > 0 })
+    {
+        <div class="muted small">No attempts yet.</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RequestInfo Request { get; set; } = null!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private readonly Dictionary<Guid, RequestInfo?> _open = [];
+    private bool _busy;
+
+    // A candidate can be picked once the request has stopped without its file, and only for a request without parts.
+    private bool CanChoose => !Request.Active && Request.State != RequestState.InLibrary && Request.Children is not { Count: > 0 };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        foreach (var id in _open.Keys.ToList())
+            _open[id] = await Api.GetRequestAsync(id);
+    }
+
+    private async Task ToggleAsync(Guid id)
+    {
+        if (!_open.Remove(id))
+            _open[id] = await Api.GetRequestAsync(id);
+    }
+
+    private async Task ChooseAsync(JobInfo job, JobCandidate candidate)
+    {
+        _busy = true;
+        try
+        {
+            await Api.ChooseCandidateAsync(Request.Id, new ChooseCandidate(job.Id, candidate.CandidateId));
+        }
+        catch (MelodexApiException)
+        {
+        }
+        _busy = false;
+        await ChangedAsync();
+    }
+
+    private Task ChangedAsync() => OnChanged.InvokeAsync();
+
+    private static string JobLabel(JobInfo job) => job.Verification switch
+    {
+        Verification.DurationMismatch => "Wrong length",
+        Verification.FingerprintMismatch => "Wrong recording",
+        _ => job.State switch
+        {
+            JobState.Succeeded => "Filed",
+            JobState.Running => "Running",
+            JobState.Queued => "Queued",
+            JobState.Cancelled => "Cancelled",
+            _ => "Failed",
+        },
+    };
+
+    private static string JobBadge(JobInfo job) => job.State switch
+    {
+        JobState.Succeeded => "owned",
+        JobState.Running => "active",
+        JobState.Queued => "active waiting",
+        JobState.Cancelled => "neutral",
+        _ => "missing",
+    };
+}

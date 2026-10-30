@@ -24,7 +24,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 API = "https://musicbrainz.org/ws/2"
-USER_AGENT = "Navidex-testlib/0.1 (test fixture generator for the Navidex project)"
+USER_AGENT = "Melodex-testlib/0.1 (test fixture generator for the Melodex project)"
 
 _last_request = 0.0
 

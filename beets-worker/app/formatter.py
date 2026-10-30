@@ -1,7 +1,7 @@
 """Rewriting files already in the library: their tags, their embedded cover, and where they live. See
 docs/import-worker.md.
 
-Navidex works out the values from its catalogue and sends them; this only writes them. Moving a file to where the
+Melodex works out the values from its catalogue and sends them; this only writes them. Moving a file to where the
 path template says uses beets, as imports do, so formatted files land where an import would put them.
 """
 
@@ -42,7 +42,7 @@ def write_tags(full: Path, tags: dict[str, str], artwork: bytes | None, remove_a
     """Writes the given tags, leaving the rest as they are. An empty value clears the tag."""
     unknown = [name for name in tags if name not in TEXT_FIELDS | NUMBER_FIELDS | DATE_FIELDS.keys()]
     if unknown:
-        raise FormatFailed(f"Navidex doesn't write the tag {', '.join(unknown)}.")
+        raise FormatFailed(f"Melodex doesn't write the tag {', '.join(unknown)}.")
     media = MediaFile(full)
     for name, value in tags.items():
         if name in DATE_FIELDS:

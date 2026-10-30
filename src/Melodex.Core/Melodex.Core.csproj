@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>Melodex.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.18.3" />
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Melodex.Contracts\Melodex.Contracts.csproj" />
+    <ProjectReference Include="..\Melodex.Plugins.MusicBrainz\Melodex.Plugins.MusicBrainz.csproj" />
+    <ProjectReference Include="..\Melodex.Client\Melodex.Client.csproj" />
+    <ProjectReference Include="..\Melodex.Web\Melodex.Web.csproj" />
+    <ProjectReference Include="..\Melodex.Plugins.Navidrome\Melodex.Plugins.Navidrome.csproj" />
+    <ProjectReference Include="..\Melodex.Plugins.FanartTv\Melodex.Plugins.FanartTv.csproj" />
+    <ProjectReference Include="..\Melodex.Plugins.Wikimedia\Melodex.Plugins.Wikimedia.csproj" />
+    <ProjectReference Include="..\Melodex.Plugins.Deezer\Melodex.Plugins.Deezer.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <RootNamespace>Melodex.Web</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="1.5.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.13" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- The user guide, shown under Settings → Help, and the changelog. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\docs\guide\*.md" LogicalName="help/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="help/CHANGELOG.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Melodex.Client\Melodex.Client.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,175 @@
+@page "/settings/log"
+@layout SettingsLayout
+@implements IDisposable
+@inject MelodexClient Api
+
+<PageTitle>Log · Melodex</PageTitle>
+
+<p class="muted">What Melodex has been doing: scans, matches, requests, catalogue updates, and anything that went wrong. How far back it goes, and how long the backup files under <code>data/logs</code> are kept, is set under <a href="settings">General</a>.</p>
+
+<div class="library-bar">
+    <div class="toolbar one-line">
+        <input class="filter" type="search" placeholder="@FilterHint" aria-label="@FilterHint" @bind="_filter" @bind:event="oninput" />
+        <button class="icon-button filter-toggle @(_filterOpen || _filter.Length > 0 ? "on" : "")" type="button" title="@FilterHint" aria-label="@FilterHint"
+                aria-expanded="@(_filterOpen ? "true" : "false")" @onclick="ToggleFilter">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
+        </button>
+        <button class="icon-button" type="button" title="@DirectionHint" aria-label="@DirectionHint" @onclick="() => _newestFirst = !_newestFirst">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="@(_newestFirst ? "flip" : "")"><path d="M7 4v16M3 16l4 4 4-4" /><path d="M14 5h7M14 10h5M14 15h3" /></svg>
+        </button>
+        <select @bind="_source" aria-label="Source">
+            <option value="">All sources</option>
+            @foreach (var source in _entries.Select(e => e.Source).Distinct().Order())
+            {
+                <option value="@source">@source</option>
+            }
+        </select>
+        @* Each toggle wears its entries' colours, so the log explains itself. *@
+        <label class="toggle level information small" title="Information"><input type="checkbox" @bind="_information" /> Info</label>
+        <label class="toggle level warning small" title="Warnings"><input type="checkbox" @bind="_warnings" /> Warnings <span>(@Count(LogEntryLevel.Warning))</span></label>
+        <label class="toggle level error small" title="Errors"><input type="checkbox" @bind="_errors" /> Errors <span>(@Count(LogEntryLevel.Error))</span></label>
+    </div>
+    @if (_filterOpen)
+    {
+        <div class="filter-drop">
+            <input type="search" placeholder="@FilterHint" aria-label="@FilterHint" @ref="_filterDrop" @bind="_filter" @bind:event="oninput" />
+        </div>
+    }
+</div>
+
+@if (!_loaded)
+{
+    <Loading />
+}
+else if (_entries.Count == 0)
+{
+    <div class="empty card">Nothing yet. Scan the library and it'll show up here.</div>
+}
+else
+{
+    <div class="card log">
+        @foreach (var entry in Visible.Take(Shown))
+        {
+            <div class="log-entry @entry.Level.ToString().ToLowerInvariant()">
+                <span class="log-time muted" title="@entry.Time.ToLocalTime().ToString("F")">@entry.Time.ToLocalTime().ToString("HH:mm:ss")</span>
+                <span class="log-source muted hide-narrow">@entry.Source</span>
+                <span class="log-message">
+                    @{ var whole = entry.Error is not null && !entry.Message.Contains(entry.Error) ? $"{entry.Message} · {entry.Error}" : entry.Message; }
+                    @if (whole.Length > Brief && !_expanded.Contains(entry.Seq))
+                    {
+                        @whole[..Brief]<text>… </text><button class="link small" @onclick="() => _expanded.Add(entry.Seq)">Show all</button>
+                    }
+                    else
+                    {
+                        @whole
+                    }
+                </span>
+            </div>
+        }
+    </div>
+    @if (Visible.Count() > Shown)
+    {
+        <p class="muted small">Showing the @(_newestFirst ? "newest" : "oldest") @Shown. Filter to narrow it down.</p>
+    }
+}
+
+@code {
+    private const int Kept = 5000;
+    private const int Shown = 1000;
+
+    /// <summary>How much of a long entry shows until it's opened.</summary>
+    private const int Brief = 500;
+
+    private readonly HashSet<long> _expanded = [];
+
+    private readonly List<LogEntry> _entries = [];
+    private long _latest;
+    private string _filter = "";
+    private string _source = "";
+    private bool _information = true;
+    private bool _warnings = true;
+    private bool _errors = true;
+    private Timer? _timer;
+    private bool _loaded;
+
+    private const string FilterHint = "Filter, for example a folder or artist";
+
+    private bool _newestFirst = true;
+    private bool _filterOpen;
+    private bool _focusFilter;
+    private ElementReference _filterDrop;
+
+    private string DirectionHint => $"{(_newestFirst ? "Newest" : "Oldest")} first; click to reverse";
+
+    private IEnumerable<LogEntry> Visible => (_newestFirst ? Enumerable.Reverse(_entries) : _entries)
+        .Where(e => e.Level switch
+        {
+            LogEntryLevel.Warning => _warnings,
+            LogEntryLevel.Error => _errors,
+            _ => _information,
+        })
+        .Where(e => _source.Length == 0 || e.Source == _source)
+        .Where(e => _filter.Length == 0 || e.Message.Contains(_filter, StringComparison.OrdinalIgnoreCase) || e.Source.Contains(_filter, StringComparison.OrdinalIgnoreCase));
+
+    private int Count(LogEntryLevel level) => _entries.Count(e => e.Level == level);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+        _timer = new Timer(_ => InvokeAsync(async () =>
+        {
+            await RefreshAsync();
+            StateHasChanged();
+        }), null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+    }
+
+    private bool _refreshing;
+
+    private async Task RefreshAsync()
+    {
+        // A tick can arrive while the last fetch is still out; both would add the same entries.
+        if (_refreshing)
+            return;
+        _refreshing = true;
+        try
+        {
+            var page = await Api.GetLogAsync(_latest);
+            // The server restarted: its numbering starts again.
+            if (page.Latest < _latest)
+            {
+                _entries.Clear();
+                _latest = 0;
+                page = await Api.GetLogAsync();
+            }
+            _entries.AddRange(page.Entries.Where(e => e.Seq > _latest));
+            if (_entries.Count > Kept)
+                _entries.RemoveRange(0, _entries.Count - Kept);
+            _latest = page.Latest;
+            _loaded = true;
+        }
+        catch (HttpRequestException)
+        {
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+
+    private void ToggleFilter()
+    {
+        _filterOpen = !_filterOpen;
+        _focusFilter = _filterOpen;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusFilter)
+        {
+            _focusFilter = false;
+            await _filterDrop.FocusAsync();
+        }
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

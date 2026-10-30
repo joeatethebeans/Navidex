@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# A throwaway Navidrome + Navidex stack over a copy of the generated test library, so nothing touches a real library.
+# A throwaway Navidrome + Melodex stack over a copy of the generated test library, so nothing touches a real library.
 #
-#   sandbox/sandbox.sh up       copy the test library, build what's missing, start everything, configure Navidex, scan
-#   sandbox/sandbox.sh build    rebuild the Navidex images
-#   sandbox/sandbox.sh status   show what Navidrome has indexed and how Navidex's plugins are doing
+#   sandbox/sandbox.sh up       copy the test library, build what's missing, start everything, configure Melodex, scan
+#   sandbox/sandbox.sh build    rebuild the Melodex images
+#   sandbox/sandbox.sh status   show what Navidrome has indexed and how Melodex's plugins are doing
 #   sandbox/sandbox.sh scan     ask Navidrome to rescan and wait for it
 #   sandbox/sandbox.sh down     stop and remove the containers and their data
 #   sandbox/sandbox.sh reset    down, and throw away the library copy and the inbox
 #
-# Works with podman or docker. Navidrome's and Navidex's credentials are generated on first run into sandbox/.env.
+# Works with podman or docker. Navidrome's and Melodex's credentials are generated on first run into sandbox/.env.
 
 set -euo pipefail
 
@@ -19,22 +19,22 @@ TESTLIB="$ROOT/tools/testlib/out/music"
 MUSIC="$SANDBOX/music"
 INBOX="$SANDBOX/inbox"
 ENV_FILE="$SANDBOX/.env"
-# Navidex's session, for the calls this script makes.
+# Melodex's session, for the calls this script makes.
 COOKIES="$SANDBOX/.cookies"
 
 NAVIDROME_IMAGE="docker.io/deluan/navidrome:0.64.2"
-NETWORK="navidex-sandbox"
+NETWORK="melodex-sandbox"
 NAVIDROME_PORT="${NAVIDROME_PORT:-4533}"
-NAVIDEX_PORT="${NAVIDEX_PORT:-8787}"
-CONTAINERS=(navidex-sandbox-navidrome navidex-sandbox-core navidex-sandbox-beets navidex-sandbox-ytdlp navidex-sandbox-inbox)
-VOLUMES=(navidex-sandbox-navidrome navidex-sandbox-config navidex-sandbox-staging)
+MELODEX_PORT="${MELODEX_PORT:-8787}"
+CONTAINERS=(melodex-sandbox-navidrome melodex-sandbox-core melodex-sandbox-beets melodex-sandbox-ytdlp melodex-sandbox-inbox)
+VOLUMES=(melodex-sandbox-navidrome melodex-sandbox-config melodex-sandbox-staging)
 
 # Image, then build context and Dockerfile.
 IMAGES=(
-  "localhost/navidex/core:dev|$ROOT|$ROOT/docker/core.Dockerfile"
-  "localhost/navidex/beets-worker:dev|$ROOT/beets-worker|$ROOT/beets-worker/Dockerfile"
-  "localhost/navidex/retriever-ytdlp:dev|$ROOT/plugins/retriever-ytdlp|$ROOT/plugins/retriever-ytdlp/Dockerfile"
-  "localhost/navidex/retriever-inbox:dev|$ROOT/plugins/retriever-inbox|$ROOT/plugins/retriever-inbox/Dockerfile"
+  "localhost/melodex/core:dev|$ROOT|$ROOT/docker/core.Dockerfile"
+  "localhost/melodex/beets-worker:dev|$ROOT/beets-worker|$ROOT/beets-worker/Dockerfile"
+  "localhost/melodex/retriever-ytdlp:dev|$ROOT/plugins/retriever-ytdlp|$ROOT/plugins/retriever-ytdlp/Dockerfile"
+  "localhost/melodex/retriever-inbox:dev|$ROOT/plugins/retriever-inbox|$ROOT/plugins/retriever-inbox/Dockerfile"
 )
 
 ENGINE="$(command -v podman || command -v docker || true)"
@@ -54,14 +54,14 @@ SHARED=(--network "$NETWORK" --security-opt label=level:s0:c100,c200)
 if [[ ! -f "$ENV_FILE" ]]; then
   printf 'NAVIDROME_USER=admin\nNAVIDROME_PASSWORD=%s\n' "$(head -c 18 /dev/urandom | base64 | tr -d '/+=')" > "$ENV_FILE"
 fi
-if ! grep -q '^NAVIDEX_PASSWORD=' "$ENV_FILE"; then
-  printf 'NAVIDEX_USER=admin\nNAVIDEX_PASSWORD=%s\n' "$(head -c 18 /dev/urandom | base64 | tr -d '/+=')" >> "$ENV_FILE"
+if ! grep -q '^MELODEX_PASSWORD=' "$ENV_FILE"; then
+  printf 'MELODEX_USER=admin\nMELODEX_PASSWORD=%s\n' "$(head -c 18 /dev/urandom | base64 | tr -d '/+=')" >> "$ENV_FILE"
 fi
 # shellcheck source=/dev/null
 source "$ENV_FILE"
 
 navidrome_url="http://localhost:$NAVIDROME_PORT"
-navidex_url="http://localhost:$NAVIDEX_PORT/api/v1"
+melodex_url="http://localhost:$MELODEX_PORT/api/v1"
 
 # Calls the Subsonic API with token auth and prints the JSON response.
 subsonic() {
@@ -71,18 +71,18 @@ subsonic() {
   token="$(printf '%s%s' "$NAVIDROME_PASSWORD" "$salt" | md5sum | cut -d' ' -f1)"
   curl -sf -G "$navidrome_url/rest/$method" \
     --data-urlencode "u=$NAVIDROME_USER" --data-urlencode "t=$token" --data-urlencode "s=$salt" \
-    -d v=1.16.1 -d c=navidex-sandbox -d f=json "$@"
+    -d v=1.16.1 -d c=melodex-sandbox -d f=json "$@"
 }
 
-navidex() {
+melodex() {
   local method="$1" path="$2"; shift 2
-  curl -sf -X "$method" "$navidex_url$path" -H 'Content-Type: application/json' -b "$COOKIES" -c "$COOKIES" "$@"
+  curl -sf -X "$method" "$melodex_url$path" -H 'Content-Type: application/json' -b "$COOKIES" -c "$COOKIES" "$@"
 }
 
-# Signs in to Navidex, making the admin login first if it's a new stack.
+# Signs in to Melodex, making the admin login first if it's a new stack.
 sign_in() {
-  local login="{\"username\":\"$NAVIDEX_USER\",\"password\":\"$NAVIDEX_PASSWORD\"}"
-  navidex POST /auth/setup -o /dev/null -d "$login" 2>/dev/null || navidex POST /auth/login -o /dev/null -d "$login"
+  local login="{\"username\":\"$MELODEX_USER\",\"password\":\"$MELODEX_PASSWORD\"}"
+  melodex POST /auth/setup -o /dev/null -d "$login" 2>/dev/null || melodex POST /auth/login -o /dev/null -d "$login"
 }
 
 wait_for() {
@@ -114,26 +114,26 @@ build() {
   done
 }
 
-# Adds the plugins to Navidex, once: Navidrome as the media server, then the two retrieval plugins.
+# Adds the plugins to Melodex, once: Navidrome as the media server, then the two retrieval plugins.
 configure() {
   local plugins
-  plugins="$(navidex GET /plugins)"
-  if ! grep -q '"navidex.connector.navidrome"' <<<"$plugins"; then
-    navidex POST /plugins -o /dev/null -d "{\"pluginId\":\"navidex.connector.navidrome\",\"settings\":{\"url\":\"http://navidrome:4533\",\"username\":\"$NAVIDROME_USER\",\"password\":\"$NAVIDROME_PASSWORD\"}}"
+  plugins="$(melodex GET /plugins)"
+  if ! grep -q '"melodex.connector.navidrome"' <<<"$plugins"; then
+    melodex POST /plugins -o /dev/null -d "{\"pluginId\":\"melodex.connector.navidrome\",\"settings\":{\"url\":\"http://navidrome:4533\",\"username\":\"$NAVIDROME_USER\",\"password\":\"$NAVIDROME_PASSWORD\"}}"
   fi
   for endpoint in http://retriever-inbox:8080 http://retriever-ytdlp:8080; do
     grep -q "\"$endpoint\"" <<<"$plugins" && continue
     # The plugin may still be starting.
     for _ in $(seq 1 30); do
-      navidex POST /plugins -o /dev/null -d "{\"endpoint\":\"$endpoint\"}" && continue 2
+      melodex POST /plugins -o /dev/null -d "{\"endpoint\":\"$endpoint\"}" && continue 2
       sleep 1
     done
     echo "couldn't add the plugin at $endpoint" >&2
     exit 1
   done
   # Test each, so Settings shows how they're doing.
-  for id in $(navidex GET /plugins | grep -o '"id":"[^"]*"' | cut -d'"' -f4); do
-    navidex POST "/plugins/$id/test" -o /dev/null || true
+  for id in $(melodex GET /plugins | grep -o '"id":"[^"]*"' | cut -d'"' -f4); do
+    melodex POST "/plugins/$id/test" -o /dev/null || true
   done
 }
 
@@ -143,9 +143,9 @@ status() {
   echo "Navidrome: $navidrome_url (user $NAVIDROME_USER, password in sandbox/.env)"
   echo "  tracks indexed: $(sed -n 's/.*"count":\([0-9]*\).*/\1/p' <<<"$scan")"
   echo "  artists: $(subsonic getArtists | grep -o '"albumCount"' | wc -l)"
-  echo "Navidex:   http://localhost:$NAVIDEX_PORT (user $NAVIDEX_USER, password in sandbox/.env) -> $(curl -sf "$navidex_url/health" || echo 'not running')"
+  echo "Melodex:   http://localhost:$MELODEX_PORT (user $MELODEX_USER, password in sandbox/.env) -> $(curl -sf "$melodex_url/health" || echo 'not running')"
   sign_in 2>/dev/null || true
-  navidex GET /plugins 2>/dev/null | python3 -I -c '
+  melodex GET /plugins 2>/dev/null | python3 -I -c '
 import json, sys
 for p in json.load(sys.stdin):
     message = p.get("healthMessage")
@@ -173,31 +173,31 @@ up() {
   "$ENGINE" network inspect "$NETWORK" >/dev/null 2>&1 || "$ENGINE" network create "$NETWORK" >/dev/null
   remove
 
-  "$ENGINE" run -d --name navidex-sandbox-navidrome "${SHARED[@]}" --network-alias navidrome \
+  "$ENGINE" run -d --name melodex-sandbox-navidrome "${SHARED[@]}" --network-alias navidrome \
     -p "$NAVIDROME_PORT:4533" \
-    -v "$MUSIC:/music:ro,z" -v navidex-sandbox-navidrome:/data \
+    -v "$MUSIC:/music:ro,z" -v melodex-sandbox-navidrome:/data \
     -e ND_LOGLEVEL=warn -e ND_SCANNER_SCHEDULE=0 -e ND_ENABLEINSIGHTSCOLLECTOR=false \
     "$NAVIDROME_IMAGE" >/dev/null
   # The core first, so the staging volume takes its ownership from the core's image.
-  "$ENGINE" run -d --name navidex-sandbox-core "${SHARED[@]}" --network-alias navidex \
-    -p "$NAVIDEX_PORT:8080" \
-    -v "$MUSIC:/music:ro,z" -v navidex-sandbox-config:/config -v navidex-sandbox-staging:/staging \
-    localhost/navidex/core:dev >/dev/null
-  "$ENGINE" run -d --name navidex-sandbox-beets "${SHARED[@]}" --network-alias beets-worker "${AS_YOU[@]}" \
-    -v "$MUSIC:/music:z" -v navidex-sandbox-staging:/staging \
-    localhost/navidex/beets-worker:dev >/dev/null
-  "$ENGINE" run -d --name navidex-sandbox-ytdlp "${SHARED[@]}" --network-alias retriever-ytdlp "${AS_YOU[@]}" \
-    -v navidex-sandbox-staging:/staging \
-    localhost/navidex/retriever-ytdlp:dev >/dev/null
-  "$ENGINE" run -d --name navidex-sandbox-inbox "${SHARED[@]}" --network-alias retriever-inbox "${AS_YOU[@]}" \
-    -v "$INBOX:/inbox:z" -v navidex-sandbox-staging:/staging \
-    localhost/navidex/retriever-inbox:dev >/dev/null
+  "$ENGINE" run -d --name melodex-sandbox-core "${SHARED[@]}" --network-alias melodex \
+    -p "$MELODEX_PORT:8080" \
+    -v "$MUSIC:/music:ro,z" -v melodex-sandbox-config:/config -v melodex-sandbox-staging:/staging \
+    localhost/melodex/core:dev >/dev/null
+  "$ENGINE" run -d --name melodex-sandbox-beets "${SHARED[@]}" --network-alias beets-worker "${AS_YOU[@]}" \
+    -v "$MUSIC:/music:z" -v melodex-sandbox-staging:/staging \
+    localhost/melodex/beets-worker:dev >/dev/null
+  "$ENGINE" run -d --name melodex-sandbox-ytdlp "${SHARED[@]}" --network-alias retriever-ytdlp "${AS_YOU[@]}" \
+    -v melodex-sandbox-staging:/staging \
+    localhost/melodex/retriever-ytdlp:dev >/dev/null
+  "$ENGINE" run -d --name melodex-sandbox-inbox "${SHARED[@]}" --network-alias retriever-inbox "${AS_YOU[@]}" \
+    -v "$INBOX:/inbox:z" -v melodex-sandbox-staging:/staging \
+    localhost/melodex/retriever-inbox:dev >/dev/null
 
   wait_for Navidrome "$navidrome_url/ping"
   # First run only: Navidrome accepts creating the admin while it has no users.
   curl -sf -o /dev/null -X POST "$navidrome_url/auth/createAdmin" -H 'Content-Type: application/json' \
     -d "{\"username\":\"$NAVIDROME_USER\",\"password\":\"$NAVIDROME_PASSWORD\"}" || true
-  wait_for Navidex "$navidex_url/health"
+  wait_for Melodex "$melodex_url/health"
   rm -f "$COOKIES"
   sign_in
   configure

@@ -3,7 +3,7 @@
 
 Builds silent audio files (FLAC, MP3 and M4A) with the exact durations MusicBrainz lists, tags them the way
 each scenario album asks (full MusicBrainz tags as beets and Picard write them, ISRC only, basic tags only,
-or none), and writes expected.json: what Navidex should match each file to and, per artist, which albums are
+or none), and writes expected.json: what Melodex should match each file to and, per artist, which albums are
 owned, which tracks they're missing, and which albums the missing view should show.
 
     python3 tools/testlib/generate.py [--out DIR]
@@ -31,7 +31,7 @@ ENCODERS = {
     "m4a": ["-c:a", "aac", "-b:a", "16k"],
 }
 
-# Match methods, named as in Navidex.Core.Data.MatchMethod.
+# Match methods, named as in Melodex.Core.Data.MatchMethod.
 METHOD_FOR_TAGS = {"musicbrainz": "MusicBrainzTags", "isrc": "IsrcOrUpc", "basic": "Fuzzy"}
 
 
@@ -233,7 +233,7 @@ def shown_by_default(group: dict, policy: dict) -> bool:
 
 def covered_groups(catalogue: dict, editions: dict[str, dict], files: list[File]) -> set[str]:
     """
-    Release groups that every track of some edition is owned for, on other albums: what Navidex calls covered when a
+    Release groups that every track of some edition is owned for, on other albums: what Melodex calls covered when a
     song on several albums is fetched once. Only official editions count when the group has any, so a one-track promo
     doesn't hide a B-side. A track counts as owned if a matched file has its recording, or a recording sharing one of
     its ISRCs.

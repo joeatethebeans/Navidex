@@ -1,8 +1,8 @@
-"""Tagging and filing staged files with beets, pinned to the release Navidex already chose.
+"""Tagging and filing staged files with beets, pinned to the release Melodex already chose.
 
-Navidex is the library's database, so each import uses a throwaway beets library: beets fetches the release from
+Melodex is the library's database, so each import uses a throwaway beets library: beets fetches the release from
 MusicBrainz, maps the files onto its tracks, writes the tags and works out the path from the template, and this
-module moves the files into the music library. Nothing beets keeps between imports can disagree with Navidex.
+module moves the files into the music library. Nothing beets keeps between imports can disagree with Melodex.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from mediafile import MediaFile
 
 from .formatter import FormatFile, format_files
 
-# Beets fields returned to Navidex after an import.
+# Beets fields returned to Melodex after an import.
 TAG_FIELDS = ["title", "artist", "album", "albumartist", "track", "tracktotal", "disc", "disctotal", "year",
               "original_year", "date", "label", "catalognum", "isrc", "country", "media", "albumtype", "mb_trackid",
               "mb_releasetrackid", "mb_albumid", "mb_artistid", "mb_albumartistid", "mb_releasegroupid", "genre"]
@@ -58,7 +58,7 @@ class StagedFile:
 
 class PinnedSession(ImportSession):
     """An import session that takes the pinned release whatever beets thinks of the match, and checks every file
-    landed on the recording Navidex said it is."""
+    landed on the recording Melodex said it is."""
 
     def __init__(self, lib: Library, path: Path, release: Release, files: dict[str, StagedFile]):
         super().__init__(lib, None, [os.fsencode(path)])
@@ -89,7 +89,7 @@ class PinnedSession(ImportSession):
         return match
 
     def choose_item(self, task):
-        self.error = "Navidex imports albums, not singletons."
+        self.error = "Melodex imports albums, not singletons."
         return Action.SKIP
 
 
@@ -115,7 +115,7 @@ class Importer:
                            "reflink": False, "resume": False, "incremental": False, "quiet": True, "timid": False,
                            "autotag": True, "singletons": False, "group_albums": False, "log": None}.items():
             config["import"][key] = value
-        # Navidex's catalogue lists every track of a release, so a requested track may be a video or data track,
+        # Melodex's catalogue lists every track of a release, so a requested track may be a video or data track,
         # such as a live film on an EP's DVD; beets would leave it out of the release and match the file elsewhere.
         config["match"]["ignore_video_tracks"] = False
         config["match"]["ignore_data_tracks"] = False
@@ -131,7 +131,7 @@ class Importer:
             raise ImportFailed("destinationDirectory must be a folder inside the library.")
         with self._lock, tempfile.TemporaryDirectory(prefix="import-", dir=self._scratch.name) as scratch:
             self._use_server(server)
-            # Only the requested files go to beets, under names that can't clash, tagged with what Navidex knows so
+            # Only the requested files go to beets, under names that can't clash, tagged with what Melodex knows so
             # beets maps each one onto the right track.
             work = Path(scratch) / "album"
             work.mkdir()
@@ -153,7 +153,7 @@ class Importer:
                 session.run()
                 return self._file(session, source, destination, by_name)
             finally:
-                # The library only lives for the import: Navidex is the database.
+                # The library only lives for the import: Melodex is the database.
                 for album in self._lib.albums():
                     album.remove(delete=False, with_items=True)
                 for item in self._lib.items():
@@ -202,7 +202,7 @@ class Importer:
         return results
 
     def _use_server(self, server: str | None) -> None:
-        """Points beets at the MusicBrainz server Navidex uses, so a mirror applies to imports too."""
+        """Points beets at the MusicBrainz server Melodex uses, so a mirror applies to imports too."""
         server = (server or "https://musicbrainz.org").rstrip("/")
         if server == self._server:
             return

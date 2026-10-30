@@ -1,4 +1,4 @@
-"""How closely something a source offers matches what Navidex asked for, from 0 to 1."""
+"""How closely something a source offers matches what Melodex asked for, from 0 to 1."""
 
 from __future__ import annotations
 

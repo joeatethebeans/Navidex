@@ -1,6 +1,6 @@
 # Plugin contracts
 
-Navidex is pluggable on three axes (what exists, how music is fetched, and where it ends up), plus the pictures that
+Melodex is pluggable on three axes (what exists, how music is fetched, and where it ends up), plus the pictures that
 go with the catalogue. Each has its own contract:
 
 | Type | Answers | Runs | Contract | Reference plugin |
@@ -10,7 +10,7 @@ go with the catalogue. Each has its own contract:
 | [Media-server connector](media-server-connectors.md) | Where music ends up | In process (.NET assembly) | `IMediaServerConnector` v1.0 | Navidrome (Subsonic API) |
 | [Artwork plugin](artwork-plugins.md) | What it looks like | In process (.NET assembly) | `IArtworkPlugin` v1.0 | Cover Art Archive, Wikimedia Commons, Deezer |
 
-The .NET types live in the `Navidex.Contracts` package (`src/Navidex.Contracts`). The XML docs on those types
+The .NET types live in the `Melodex.Contracts` package (`src/Melodex.Contracts`). The XML docs on those types
 are normative; these pages explain the intent and the rules around them.
 
 ## Rules for every plugin
@@ -32,13 +32,13 @@ plugins serve it at `GET /v1/manifest`. Over JSON, names are camelCase and enums
 
 ```json
 {
-  "id": "navidex.retrieval.ytdlp",
+  "id": "melodex.retrieval.ytdlp",
   "name": "yt-dlp",
   "version": "0.1.0",
   "type": "retrieval",
   "contractVersion": "1.0",
   "description": "Fetches tracks and albums from YouTube with yt-dlp.",
-  "homepage": "https://github.com/example/navidex-retriever-ytdlp",
+  "homepage": "https://github.com/example/melodex-retriever-ytdlp",
   "capabilities": ["fetch-track", "fetch-album", "cancel"],
   "settingsSchema": {
     "type": "object",
@@ -89,14 +89,14 @@ Each type is versioned on its own as `major.minor`:
 
 ## Writing a .NET plugin (index, artwork and media-server plugins)
 
-Reference `Navidex.Contracts`, then add one public `IPluginFactory` per plugin:
+Reference `Melodex.Contracts`, then add one public `IPluginFactory` per plugin:
 
 ```csharp
 public sealed class MusicBrainzFactory : IPluginFactory
 {
     public PluginManifest Manifest { get; } = new()
     {
-        Id = "navidex.index.musicbrainz",
+        Id = "melodex.index.musicbrainz",
         Name = "MusicBrainz",
         Version = "0.1.0",
         Type = PluginType.Index,

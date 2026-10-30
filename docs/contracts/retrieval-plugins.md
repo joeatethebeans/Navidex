@@ -5,7 +5,7 @@ can be written in any language and updated on its own schedule. That matters bec
 tools like yt-dlp. The core ships no retrieval plugins; they live in their own repositories.
 
 The normative spec is [`retrieval-v1.openapi.yaml`](retrieval-v1.openapi.yaml). The matching .NET wire types are in
-`Navidex.Contracts.Plugins.Retrieval`, with `RetrievalJson.Options` for serialization.
+`Melodex.Contracts.Plugins.Retrieval`, with `RetrievalJson.Options` for serialization.
 
 ## Endpoints
 

@@ -1,0 +1,83 @@
+@page "/settings/help"
+@page "/settings/help/{Page}"
+@layout SettingsLayout
+@using System.Reflection
+@using Markdig
+@using Markdig.Syntax
+@using Markdig.Syntax.Inlines
+
+<PageTitle>Help · Melodex</PageTitle>
+
+@*
+    The user guide from docs/guide, built into the web app so it matches this version. Links between its pages stay
+    here; links to the rest of the repository go to GitHub.
+*@
+<article class="panel help">
+    <div class="help-nav muted small">
+        <span>Melodex @Version</span><span> · </span>
+        @if (Page is not null && Page != "README")
+        {
+            <a href="settings/help">Guide</a><span> · </span>
+        }
+        <a href="settings/help/CHANGELOG">What's new</a>
+        <span> · </span>
+        <a href="@Repository" target="_blank" rel="noopener">On GitHub</a>
+    </div>
+    <div class="markdown">
+        @if (_html is null)
+        {
+            <p>There's no page called @Page. <a href="settings/help">Back to the guide</a></p>
+        }
+        else
+        {
+            @((MarkupString)_html)
+        }
+    </div>
+</article>
+
+@code {
+    private const string Repository = "https://github.com/joeatethebeans/Melodex";
+
+    // The web app is built with the core, so its version is the server's.
+    private static readonly string Version =
+        typeof(Help).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "";
+
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+
+    [Parameter] public string? Page { get; set; }
+
+    private string? _html;
+
+    protected override void OnParametersSet()
+    {
+        var page = string.IsNullOrEmpty(Page) ? "README" : Page;
+        using var stream = typeof(Help).Assembly.GetManifestResourceStream($"help/{page}.md");
+        if (stream is null)
+        {
+            _html = null;
+            return;
+        }
+        var document = Markdown.Parse(new StreamReader(stream).ReadToEnd(), Pipeline);
+        foreach (var link in document.Descendants<LinkInline>())
+            link.Url = Rewrite(link.Url, page);
+        _html = document.ToHtml(Pipeline);
+    }
+
+    // Guide pages open here; the rest of the repository (the client guide, the changelog's links) opens on GitHub.
+    private static string? Rewrite(string? url, string page)
+    {
+        if (string.IsNullOrEmpty(url) || url.Contains("://") || url.StartsWith("mailto:"))
+            return url;
+        if (url.StartsWith('#'))
+            return $"settings/help/{page}{url}";
+        var (path, fragment) = url.Split('#', 2) is [var p, var f] ? (p, "#" + f) : (url, "");
+        if (!path.Contains('/') && path.EndsWith(".md"))
+            return $"settings/help/{path[..^3]}{fragment}";
+        // Relative to docs/guide, or to the root for the changelog.
+        var from = page == "CHANGELOG" ? "" : "docs/guide/";
+        var resolved = new Uri(new Uri($"https://x/{from}"), path).AbsolutePath.TrimStart('/');
+        return resolved.StartsWith("docs/guide/") && resolved.EndsWith(".md")
+            ? $"settings/help/{resolved["docs/guide/".Length..^3]}{fragment}"
+            : $"{Repository}/blob/main/{resolved}{fragment}";
+    }
+}

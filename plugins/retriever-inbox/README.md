@@ -1,9 +1,9 @@
 # Inbox folder retrieval plugin
 
-A Navidex retrieval plugin (contract v1.0) that offers audio files you drop into a folder. Use it for music you
-bought, ripped or got from a friend: put the files in the inbox, then request the track or album in Navidex.
+A Melodex retrieval plugin (contract v1.0) that offers audio files you drop into a folder. Use it for music you
+bought, ripped or got from a friend: put the files in the inbox, then request the track or album in Melodex.
 
-It lives in the Navidex repository for now and will move to its own repository later.
+It lives in the Melodex repository for now and will move to its own repository later.
 
 ## How files are matched
 
@@ -17,7 +17,7 @@ Each search reads the inbox's tags (cached until a file changes):
 On fetch, the files are moved into staging (or copied, with **Keep originals**) and empty folders are tidied away.
 Beets then tags and files them like anything else.
 
-Navidex looks in the inbox when a request is made or retried. If you add files for a request that's waiting in
+Melodex looks in the inbox when a request is made or retried. If you add files for a request that's waiting in
 Review, press Retry on it.
 
 ## Settings
@@ -37,7 +37,7 @@ retriever-inbox:
     - staging:/staging
 ```
 
-Then add `http://retriever-inbox:8080` under Settings → Plugins in Navidex (it's one of the templates under Add). The plugin makes no network calls.
+Then add `http://retriever-inbox:8080` under Settings → Plugins in Melodex (it's one of the templates under Add). The plugin makes no network calls.
 Environment variables: `INBOX_ROOT` (default `/inbox`), `STAGING_ROOT` (default `/staging`) and `PARALLEL_FETCHES`
 (default `2`).
 

@@ -1,0 +1,15 @@
+@* The Melodex mark, an equaliser whose bars trace an M, in the theme's accent. The same shape as wwwroot/favicon.svg. *@
+<svg class="logo @Class" viewBox="0 0 32 32" aria-hidden="true">
+    <rect width="32" height="32" rx="8" fill="var(--accent)" />
+    <g fill="var(--accent-text)">
+        <rect x="4.2" y="7" width="3.2" height="18" rx="1.6" />
+        <rect x="9.3" y="16" width="3.2" height="9" rx="1.6" />
+        <rect x="14.4" y="11" width="3.2" height="14" rx="1.6" />
+        <rect x="19.5" y="16" width="3.2" height="9" rx="1.6" />
+        <rect x="24.6" y="7" width="3.2" height="18" rx="1.6" />
+    </g>
+</svg>
+
+@code {
+    [Parameter] public string? Class { get; set; }
+}
