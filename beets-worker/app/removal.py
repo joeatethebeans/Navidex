@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import os
 
-# What a folder may still hold and be deleted with its music: artwork, playlists, rip logs and notes.
+# What a folder may still hold and be deleted with its music: artwork, playlists, lyrics, rip logs and notes.
 LEFTOVERS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".cue", ".log", ".m3u", ".m3u8", ".nfo", ".txt",
-             ".sfv", ".accurip", ".md5"}
+             ".sfv", ".accurip", ".md5", ".lrc"}
 
 
 def delete(library: str, paths: list[str]) -> tuple[list[str], list[dict[str, str]]]:
@@ -30,6 +30,11 @@ def delete(library: str, paths: list[str]) -> tuple[list[str], list[dict[str, st
             continue
         deleted.append(path)
         folders.add(os.path.dirname(full))
+        # Its lyrics go with it.
+        try:
+            os.remove(os.path.splitext(full)[0] + ".lrc")
+        except OSError:
+            pass
     for folder in sorted(folders, key=len, reverse=True):
         _remove_emptied(folder, root)
     return deleted, failed

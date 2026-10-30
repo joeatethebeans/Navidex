@@ -78,6 +78,22 @@ public sealed class MelodexClient(HttpClient http)
         return (await response.Content.ReadFromJsonAsync<TaskInfo>(MelodexJson.Options, ct))!;
     }
 
+    /// <summary>A song's lyrics, as its files have them.</summary>
+    public async Task<TrackLyrics> GetTrackLyricsAsync(Guid trackId, CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<TrackLyrics>($"{Api}/library/tracks/{trackId}/lyrics", MelodexJson.Options, ct))!;
+
+    /// <summary>A file's lyrics.</summary>
+    public async Task<TrackLyrics> GetFileLyricsAsync(Guid fileId, CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<TrackLyrics>($"{Api}/library/files/{fileId}/lyrics", MelodexJson.Options, ct))!;
+
+    /// <summary>Looks for a song's lyrics now and writes them to its files, replacing any it has.</summary>
+    public async Task<TrackLyrics> FindTrackLyricsAsync(Guid trackId, CancellationToken ct = default)
+    {
+        var response = await http.PostAsync($"{Api}/library/tracks/{trackId}/lyrics", null, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<TrackLyrics>(MelodexJson.Options, ct))!;
+    }
+
     private static string CoverPath(CoverSubject subject, Guid id) => $"{Api}/library/{(subject == CoverSubject.Album ? "albums" : "tracks")}/{id}/cover";
 
     /// <summary>The covers an album or song could have, from every release it's on.</summary>

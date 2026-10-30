@@ -74,6 +74,23 @@ cover image too: it replaces a `cover`, `folder` or `front` image already there,
 shows it in place of what the artwork plugins found, and keeps it when artwork is fetched afresh. A song's own cover goes
 only into that song's files, so the rest of the album keeps the album's cover. Choosing needs the **Format** permission.
 
+## Lyrics
+
+After each scan, Melodex looks for lyrics for every song you have that has none, through the lyrics plugins (LRCLIB
+out of the box). Each song's page says whether it has synced lyrics (each line with when it's sung, so the player can
+follow along), plain lyrics, or none, shows them, and has **Find lyrics** to look again now, which needs the **Format**
+permission.
+
+Set it up under **Settings → General → Lyrics**: whether scans look for lyrics, and where they go.
+
+- **Beside each song** (the default): an `.lrc` file with the song's name. Navidrome and most players read these, and
+  the music files aren't changed.
+- **In each song's file**: its lyrics tag.
+- **Both**.
+
+A song that already has lyrics, in an `.lrc` file or its tags, keeps them. One no source has lyrics for is asked about
+again after a month. Lyrics move with their song when formatting moves it, and go when it's removed.
+
 ## Removing music
 
 The Library page can remove an artist, album or track. Either the files are deleted (with any folder left holding

@@ -12,7 +12,8 @@ namespace Melodex.Core.Library;
 /// <summary>
 /// Scans the music folder, matches new and changed files, then fills in the catalogue for every library artist:
 /// their discography and the editions of each album the missing view might show, which reveals bootleg-only albums
-/// and albums covered by tracks owned elsewhere.
+/// and albums covered by tracks owned elsewhere. Then, if the settings say so, it queues finding lyrics for songs
+/// without them.
 /// </summary>
 public sealed class LibraryScanTask(
     LibraryScanner scanner,
@@ -20,6 +21,9 @@ public sealed class LibraryScanTask(
     CatalogueRefresher refresher,
     LibraryReading reading,
     ScanFeed feed,
+    LyricsFinder lyrics,
+    SettingsService settings,
+    TaskQueue queue,
     MelodexDbContext db) : ITaskHandler
 {
     public const string TaskKind = "library-scan";
@@ -67,6 +71,9 @@ public sealed class LibraryScanTask(
         if (failures > 0)
             notes.Add(Count(failures, "catalogue update", "catalogue updates") + " failed and will be retried next scan");
         progress.Report($"{scan.Files} files: {match.Matched} newly matched, {match.Review} to review" + string.Concat(notes.Select(n => "; " + n)));
+
+        if ((await settings.GetLibraryAsync(ct)).FetchLyrics && await lyrics.HaveSourcesAsync(ct) && await lyrics.Wanting().AnyAsync(ct))
+            await queue.EnqueueAsync(LyricsTask.TaskKind, null, ct);
     }
 
     private static string Count(int n, string one, string many) => LibraryMatcher.Plural(n, one, many);

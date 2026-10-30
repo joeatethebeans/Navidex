@@ -18,6 +18,9 @@ public enum PluginType
 
     /// <summary>Pictures of artists and albums. Part of the catalogue, alongside index plugins.</summary>
     Artwork,
+
+    /// <summary>The words of songs, written beside or into the files in the library.</summary>
+    Lyrics,
 }
 
 /// <summary>
@@ -49,7 +52,7 @@ public sealed record PluginManifest
 
     /// <summary>
     /// Capability names from <see cref="Index.IndexCapabilities"/>, <see cref="Retrieval.RetrievalCapabilities"/>,
-    /// <see cref="Connectors.ConnectorCapabilities"/> or <see cref="Artwork.ArtworkCapabilities"/>. The core and API only offer what is declared here.
+    /// <see cref="Connectors.ConnectorCapabilities"/>, <see cref="Artwork.ArtworkCapabilities"/> or <see cref="Lyrics.LyricsCapabilities"/>. The core and API only offer what is declared here.
     /// </summary>
     public IReadOnlyList<string> Capabilities { get; init; } = [];
 

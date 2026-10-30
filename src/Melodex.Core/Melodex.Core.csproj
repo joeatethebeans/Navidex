@@ -25,6 +25,7 @@
     <ProjectReference Include="..\Melodex.Plugins.FanartTv\Melodex.Plugins.FanartTv.csproj" />
     <ProjectReference Include="..\Melodex.Plugins.Wikimedia\Melodex.Plugins.Wikimedia.csproj" />
     <ProjectReference Include="..\Melodex.Plugins.Deezer\Melodex.Plugins.Deezer.csproj" />
+    <ProjectReference Include="..\Melodex.Plugins.Lrclib\Melodex.Plugins.Lrclib.csproj" />
   </ItemGroup>
 
 </Project>

@@ -942,3 +942,11 @@ input[type=search]:disabled { opacity: .6; }
 .cover-choice .muted.small { font-size: .75rem; overflow-wrap: anywhere; }
 /* No picture there: nothing to choose. */
 .cover-choice:has(.cover.blank) { display: none; }
+
+/* A song's lyrics on its page: folded away until opened, synced lines with when they're sung. */
+.lyrics { padding: .6rem 1rem; margin: .5rem 0 0; }
+.lyrics summary { cursor: pointer; font-weight: 500; }
+.lyrics-lines { margin: .75rem 0 .5rem; display: grid; gap: .15rem; line-height: 1.5; }
+.lyrics-line { display: flex; gap: .75rem; align-items: baseline; }
+.lyrics-line.gap { min-height: .75rem; }
+.lyrics-time { font-variant-numeric: tabular-nums; min-width: 2.6rem; }

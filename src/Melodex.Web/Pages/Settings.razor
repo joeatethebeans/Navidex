@@ -95,6 +95,29 @@ else
         <div class="muted small">Files you exclude from matching always show as their own tags and pictures say.</div>
     </div>
 
+    <h2>Lyrics</h2>
+    <p class="muted small">Found through the lyrics plugins, set up on the <a href="settings/plugins">Plugins</a> page, and written by the beets worker.</p>
+    <div class="card settings-card">
+        <label class="dialog-choice">
+            <input type="checkbox" checked="@_settings.FetchLyrics" @onchange="e => _settings = _settings with { FetchLyrics = (bool)e.Value! }" />
+            <span>
+                <strong>Find lyrics after each scan</strong>
+                <span class="muted small">For songs without them. A song no source has lyrics for is asked about again after a month. Each song's page can look for them any time.</span>
+            </span>
+        </label>
+        <div class="muted small">Where lyrics go:</div>
+        @foreach (var (storage, name, hint) in LyricsStorages)
+        {
+            <label class="dialog-choice">
+                <input type="radio" name="lyrics-storage" checked="@(_settings.LyricsStorage == storage)" @onchange="() => _settings = _settings with { LyricsStorage = storage }" />
+                <span>
+                    <strong>@name</strong>
+                    <span class="muted small">@hint</span>
+                </span>
+            </label>
+        }
+    </div>
+
     <h2>Fetching</h2>
     <div class="card settings-card">
         <div class="field">
@@ -161,6 +184,13 @@ else
 }
 
 @code {
+    private static readonly (LyricsStorage Storage, string Name, string Hint)[] LyricsStorages =
+    [
+        (LyricsStorage.Sidecar, "Beside each song", "An .lrc file with the song's name. Navidrome and most players read these, and the music files themselves aren't changed."),
+        (LyricsStorage.Embedded, "In each song's file", "Its lyrics tag, so the lyrics travel with the file."),
+        (LyricsStorage.Both, "Both", "An .lrc file beside it and its lyrics tag."),
+    ];
+
     private LibrarySettings? _settings;
     private FetchSettings? _fetch;
     private LogSettings? _log;

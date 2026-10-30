@@ -17,7 +17,7 @@ out everywhere else.
 | **Request** | Asking for music to be fetched into the library, and ignoring albums and songs |
 | **Listen** | Playing music, and fetching songs to listen to without adding them |
 | **Review and match** | Approving, matching, excluding, deferring and hiding files on Review |
-| **Format** | Rewriting files' tags and covers, and moving them; choosing album and song covers |
+| **Format** | Rewriting files' tags and covers, and moving them; choosing album and song covers; looking for a song's lyrics |
 | **Remove music** | Deleting music from the library, or hiding it |
 | **Scan** | Scanning the library, and pausing, cancelling and reordering tasks |
 | **Settings and plugins** | Changing settings and plugins, and reading the log |

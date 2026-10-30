@@ -28,6 +28,9 @@ else
         @Section(PluginType.Artwork, "Artwork",
             "Pictures of artists and album covers. For each picture, Melodex asks these in order and keeps the first one found.",
             "No artwork sources, so artists and albums show placeholders.")
+        @Section(PluginType.Lyrics, "Lyrics",
+            "The words of songs, found for each song in your library after a scan and written beside or into its files. Melodex asks these in order and keeps the first lyrics found.",
+            "No lyrics sources, so songs won't get lyrics.")
     </div>
 
     @if (_choosing is { } type)
@@ -169,10 +172,11 @@ else
         PluginType.Retrieval => "Sources",
         PluginType.Connector => "Media server",
         PluginType.Index => "Catalogue",
+        PluginType.Lyrics => "Lyrics",
         _ => "Artwork",
     };
 
-    private static bool Ordered(PluginType type) => type is PluginType.Retrieval or PluginType.Artwork;
+    private static bool Ordered(PluginType type) => type is PluginType.Retrieval or PluginType.Artwork or PluginType.Lyrics;
 
     private RenderFragment Section(PluginType type, string title, string about, string empty) => __builder =>
     {

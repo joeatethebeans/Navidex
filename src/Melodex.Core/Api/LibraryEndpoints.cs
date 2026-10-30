@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Melodex.Client;
 using Melodex.Contracts.Catalogue;
 using Melodex.Contracts.Plugins.Index;
@@ -31,6 +32,14 @@ public static class LibraryEndpoints
         if (await db.BackgroundTasks.FindAsync([id], ct) is not { } task)
             return Results.NotFound();
         return await action(task) ? Results.Ok((await TitledAsync(db, [task], ct))[0]) : Results.Conflict();
+    }
+
+    // The first of the files with lyrics, or none.
+    private static TrackLyrics LyricsOf(IReadOnlyList<string> paths, string libraryPath)
+    {
+        var root = Path.GetFullPath(libraryPath);
+        return paths.Select(p => LyricsFiles.Lyrics(Path.Combine(root, p))).FirstOrDefault(l => l.Kind != LyricsKind.None)
+               ?? new TrackLyrics(LyricsKind.None, [], null);
     }
 
     private static CoverSubject CoverSubjectOf(string subject) => subject == "albums" ? CoverSubject.Album : CoverSubject.Track;
@@ -166,6 +175,52 @@ public static class LibraryEndpoints
                          + "This writes your music files.")
             .Produces<CoverChosen>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status503ServiceUnavailable);
+
+        library.MapGet("/tracks/{id:guid}/lyrics", async (Guid id, MelodexDbContext db, IOptions<MelodexOptions> options, CancellationToken ct) =>
+                await db.LibraryFiles.Where(f => f.TrackId == id && f.ExcludedAt == null).OrderBy(f => f.Path).Select(f => f.Path).ToListAsync(ct) is { Count: > 0 } paths
+                    ? Results.Ok(LyricsOf(paths, options.Value.LibraryPath))
+                    : Results.NotFound())
+            .RequireScope(Scopes.Read).WithName("GetTrackLyrics")
+            .WithSummary("A song's lyrics, as its files in the library have them: from an .lrc file beside one, or its lyrics tag. Synced lyrics come "
+                         + "line by line with when each is sung. 404 when the song has no files.")
+            .Produces<TrackLyrics>().Produces(StatusCodes.Status404NotFound);
+
+        library.MapGet("/files/{id:guid}/lyrics", async (Guid id, MelodexDbContext db, IOptions<MelodexOptions> options, CancellationToken ct) =>
+                await db.LibraryFiles.Where(f => f.Id == id).Select(f => f.Path).FirstOrDefaultAsync(ct) is { } path
+                    ? Results.Ok(LyricsOf([path], options.Value.LibraryPath))
+                    : Results.NotFound())
+            .RequireScope(Scopes.Read).WithName("GetFileLyrics")
+            .WithSummary("A file's lyrics: from an .lrc file beside it, or its lyrics tag.")
+            .Produces<TrackLyrics>().Produces(StatusCodes.Status404NotFound);
+
+        library.MapPost("/tracks/{id:guid}/lyrics", async (Guid id, LyricsFinder finder, MelodexDbContext db, IOptions<MelodexOptions> options,
+                CancellationToken ct) =>
+            {
+                var files = await db.LibraryFiles.Where(f => f.TrackId == id && f.ExcludedAt == null).OrderBy(f => f.Path).ToListAsync(ct);
+                if (files.Count == 0)
+                    return Results.NotFound();
+                if (!await finder.HaveSourcesAsync(ct))
+                    return Results.Problem("There are no lyrics sources. Add one on the Plugins page.", statusCode: StatusCodes.Status409Conflict);
+                LyricsFinder.Outcome outcome;
+                try
+                {
+                    outcome = await finder.FindAsync(files.Select(f => f.Id).ToList(), again: true, ct);
+                }
+                catch (HttpRequestException e)
+                {
+                    return Results.Problem($"The beets worker, which writes the music folder, couldn't be reached: {e.Message}",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+                if (outcome is { Found: 0, Failed: > 0 })
+                    return Results.Problem($"Couldn't get the lyrics: {outcome.Problem}", statusCode: StatusCodes.Status502BadGateway);
+                return Results.Ok(LyricsOf(files.Select(f => f.Path).ToList(), options.Value.LibraryPath));
+            })
+            .RequireScope(Scopes.Format).WithName("FindTrackLyrics")
+            .WithSummary("Look for a song's lyrics now through the lyrics plugins, replacing any it has, and write them where the settings say: an .lrc "
+                         + "file beside each of its files, their lyrics tag, or both. Answers with the lyrics as they now are; none, if no source has "
+                         + "any. This writes your music files.")
+            .Produces<TrackLyrics>().Produces(StatusCodes.Status404NotFound).Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status502BadGateway).Produces(StatusCodes.Status503ServiceUnavailable);
 
         library.MapGet("/review", (LibraryView view, ReviewList? list, bool? excluded, CancellationToken ct) =>
                 excluded == true && list is null ? view.GetExcludedAsync(ct) : view.GetReviewAsync(list ?? ReviewList.Review, ct))
@@ -477,6 +532,7 @@ public static class LibraryEndpoints
                     => $"Catalogue update · {name}",
                 ArtistRefreshTask.TaskKind => "Catalogue update",
                 FormatTask.TaskKind => FormatTask.Title(t.PayloadJson),
+                LyricsTask.TaskKind => LyricsTask.Title,
                 _ => t.Kind,
             },
         }).ToList();

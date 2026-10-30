@@ -377,6 +377,13 @@ namespace Melodex.Core.Data.Migrations
                     b.Property<DateTime?>("HiddenAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Lyrics")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LyricsCheckedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<double?>("MatchConfidence")
                         .HasColumnType("REAL");
 

@@ -381,9 +381,10 @@ public sealed class RequestPipeline(
                 row.ModifiedAt = info.LastWriteTimeUtc;
                 try
                 {
-                    var (tags, duration) = LibraryScanner.ReadTags(full);
+                    var (tags, duration, lyrics) = LibraryScanner.ReadTags(full);
                     row.TagsJson = tags.ToJson();
                     row.Duration = duration;
+                    row.Lyrics = lyrics;
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {

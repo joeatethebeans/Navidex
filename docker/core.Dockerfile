@@ -10,6 +10,7 @@ COPY src/Melodex.Plugins.Navidrome/Melodex.Plugins.Navidrome.csproj src/Melodex.
 COPY src/Melodex.Plugins.FanartTv/Melodex.Plugins.FanartTv.csproj src/Melodex.Plugins.FanartTv/
 COPY src/Melodex.Plugins.Wikimedia/Melodex.Plugins.Wikimedia.csproj src/Melodex.Plugins.Wikimedia/
 COPY src/Melodex.Plugins.Deezer/Melodex.Plugins.Deezer.csproj src/Melodex.Plugins.Deezer/
+COPY src/Melodex.Plugins.Lrclib/Melodex.Plugins.Lrclib.csproj src/Melodex.Plugins.Lrclib/
 COPY src/Melodex.Core/Melodex.Core.csproj src/Melodex.Core/
 RUN dotnet restore src/Melodex.Core/Melodex.Core.csproj
 COPY src/ src/

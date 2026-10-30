@@ -64,7 +64,8 @@ public sealed record FormatRequest(IReadOnlyList<FormatFile> Files, IReadOnlyDic
 /// <param name="Tags">Tags to write, by beets field name; the rest stay as they are. An empty value clears one.</param>
 /// <param name="Artwork">The key of the image to embed as the front cover; null to leave the embedded art.</param>
 /// <param name="RemoveArtwork">Take the embedded art out.</param>
-public sealed record FormatFile(string Path, IReadOnlyDictionary<string, string> Tags, string? Artwork, bool RemoveArtwork);
+/// <param name="Lrc">Lyrics to write to an .lrc file beside it, with the same name; null to leave any there.</param>
+public sealed record FormatFile(string Path, IReadOnlyDictionary<string, string> Tags, string? Artwork, bool RemoveArtwork, string? Lrc = null);
 
 /// <param name="Data">The image, base64.</param>
 public sealed record FormatArtwork(string Data);

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Melodex.Contracts.Plugins;
 using Melodex.Plugins.Deezer;
 using Melodex.Plugins.FanartTv;
+using Melodex.Plugins.Lrclib;
 using Melodex.Plugins.Wikimedia;
 using Melodex.Plugins.MusicBrainz;
 using Melodex.Plugins.Navidrome;
@@ -26,7 +27,7 @@ public sealed class PluginCatalog
 {
     private static readonly Assembly[] BuiltIn =
         [typeof(MusicBrainzIndexFactory).Assembly, typeof(NavidromeConnectorFactory).Assembly, typeof(FanartTvFactory).Assembly,
-         typeof(WikimediaCommonsFactory).Assembly, typeof(DeezerFactory).Assembly];
+         typeof(WikimediaCommonsFactory).Assembly, typeof(DeezerFactory).Assembly, typeof(LrclibFactory).Assembly];
 
     private readonly Dictionary<string, DiscoveredPlugin> _plugins = new(StringComparer.Ordinal);
 

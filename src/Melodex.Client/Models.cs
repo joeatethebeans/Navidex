@@ -184,6 +184,12 @@ public sealed record LibrarySettings
     /// <summary>Show covers from your files (an embedded picture, or one like folder.jpg beside them) rather than the catalogue's, wherever there's one.</summary>
     public bool PreferFileCovers { get; init; }
 
+    /// <summary>Find lyrics for songs in the library that have none, after each scan, through the lyrics plugins.</summary>
+    public bool FetchLyrics { get; init; } = true;
+
+    /// <summary>Where lyrics that are found are written.</summary>
+    public LyricsStorage LyricsStorage { get; init; } = LyricsStorage.Sidecar;
+
     // Settings saved before each kind had its own choice, and tags and covers their own switch, are read into the above.
     private IReadOnlyList<AlbumType>? _oldShownTypes;
     private bool? _oldHideSecondary;
@@ -628,6 +634,7 @@ public sealed record TrackAppearance(
 /// <summary>A file of the song in the library, and the tags it has.</summary>
 /// <param name="Path">Relative to the music folder.</param>
 /// <param name="FormattedAt">When a format last rewrote it.</param>
+/// <param name="Lyrics">What lyrics it has, in an .lrc file beside it or in its tags.</param>
 public sealed record TrackFile(
     Guid Id,
     string Path,
@@ -637,7 +644,46 @@ public sealed record TrackFile(
     Guid? AlbumId,
     Guid? EditionId,
     IReadOnlyList<FileTag> Tags,
-    DateTime? FormattedAt);
+    DateTime? FormattedAt,
+    LyricsKind Lyrics = LyricsKind.None);
+
+/// <summary>What lyrics a song has.</summary>
+public enum LyricsKind
+{
+    /// <summary>None, or none found yet.</summary>
+    None,
+
+    /// <summary>The words, without timings.</summary>
+    Plain,
+
+    /// <summary>The words, each line with when it's sung, to follow along.</summary>
+    Synced,
+
+    /// <summary>A lyrics source said it has no words.</summary>
+    Instrumental,
+}
+
+/// <summary>Where lyrics found for the library are written.</summary>
+public enum LyricsStorage
+{
+    /// <summary>An .lrc file beside each song, with the same name. Most players read these, and the music files aren't changed.</summary>
+    Sidecar,
+
+    /// <summary>The lyrics tag in the music file itself.</summary>
+    Embedded,
+
+    /// <summary>Both.</summary>
+    Both,
+}
+
+/// <summary>A line of lyrics.</summary>
+/// <param name="Seconds">When it's sung, for synced lyrics; null for plain ones.</param>
+public sealed record LyricLine(double? Seconds, string Text);
+
+/// <summary>A song's lyrics, as its file in the library has them.</summary>
+/// <param name="Lines">Synced lyrics in the order they're sung, or plain ones in order. Empty when there are none.</param>
+/// <param name="Source">Where they were read from: <c>sidecar</c> (an .lrc file) or <c>embedded</c> (the file's tags).</param>
+public sealed record TrackLyrics(LyricsKind Kind, IReadOnlyList<LyricLine> Lines, string? Source);
 
 /// <summary>A tag as read from a file, with a name to show.</summary>
 public sealed record FileTag(string Name, string Value);

@@ -182,9 +182,12 @@ public sealed class FormatTask(
         file.Format = Path.GetExtension(full).TrimStart('.').ToLowerInvariant();
         try
         {
-            var (tags, duration) = LibraryScanner.ReadTags(full);
+            var (tags, duration, lyrics) = LibraryScanner.ReadTags(full);
             file.TagsJson = tags.ToJson();
             file.Duration = duration ?? file.Duration;
+            // Kept when there are none to read: a source may have said it's instrumental.
+            if (lyrics != LyricsKind.None || file.Lyrics != LyricsKind.Instrumental)
+                file.Lyrics = lyrics;
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {

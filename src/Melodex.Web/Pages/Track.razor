@@ -28,6 +28,10 @@ else
                 <a href="artists/@track.ArtistId">@track.ArtistCredit</a>
                 @if (track.DurationSeconds is not null) { <span>@Format.Duration(track.DurationSeconds)</span> }
                 <StatusBadge Track="@(owned ? TrackStatus.Owned : track.Ignored ? TrackStatus.Ignored : TrackStatus.Missing)" />
+                @if (owned)
+                {
+                    <span class="badge @(Lyrics(track) is LyricsKind.Synced or LyricsKind.Plain ? "owned" : "neutral")" title="@LyricsHint(Lyrics(track))">@LyricsLabel(Lyrics(track))</span>
+                }
                 <ProviderIds Ids="track.Ids" Entity="recording" />
             </div>
             <div class="row album-actions" style="margin-top: .5rem;">
@@ -95,6 +99,41 @@ else
 
     @if (owned)
     {
+        var kind = Lyrics(track);
+        <div class="section-head">
+            <h2>Lyrics</h2>
+            <IconButton Icon="search" Requires="@UserPermissions.Format" Disabled="_findingLyrics" Label="@(_findingLyrics ? "Finding…" : kind is LyricsKind.None ? "Find lyrics" : "Find again")"
+                        Title="Look for the lyrics now through the lyrics plugins, and write them to the files as Settings say" OnClick="FindLyricsAsync" />
+        </div>
+        @if (_lyricsError is not null) { <p class="error small">@_lyricsError</p> }
+        @if (kind is LyricsKind.Synced or LyricsKind.Plain)
+        {
+            <details class="card lyrics" @ontoggle="ShowLyricsAsync">
+                <summary>@(kind == LyricsKind.Synced ? "Synced lyrics, each line with when it's sung" : "Lyrics")</summary>
+                @if (_lyrics is null)
+                {
+                    <Loading Inline="true" />
+                }
+                else
+                {
+                    <div class="lyrics-lines">
+                        @foreach (var line in _lyrics.Lines)
+                        {
+                            <div class="lyrics-line @(line.Text.Length == 0 ? "gap" : "")">
+                                @if (line.Seconds is { } at) { <span class="muted small lyrics-time">@Format.Duration(at)</span> }
+                                <span>@line.Text</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="muted small">From @(_lyrics.Source == "sidecar" ? "an .lrc file beside the song" : "the file's lyrics tag").</div>
+                }
+            </details>
+        }
+        else
+        {
+            <p class="muted">@LyricsHint(kind)</p>
+        }
+
         <h2 class="section">@(track.Files.Count == 1 ? "Its file" : $"Its {track.Files.Count} files")</h2>
         @foreach (var file in track.Files)
         {
@@ -139,6 +178,60 @@ else
     private bool _notFound;
     private bool _formatting;
     private bool _choosingCover;
+    private bool _findingLyrics;
+    private TrackLyrics? _lyrics;
+    private string? _lyricsError;
+
+    // The best any of its files has.
+    private static LyricsKind Lyrics(TrackDetail track) =>
+        track.Files.Select(f => f.Lyrics).OrderBy(k => k switch { LyricsKind.Synced => 0, LyricsKind.Plain => 1, LyricsKind.Instrumental => 2, _ => 3 })
+            .FirstOrDefault();
+
+    private static string LyricsLabel(LyricsKind kind) => kind switch
+    {
+        LyricsKind.Synced => "Synced lyrics",
+        LyricsKind.Plain => "Lyrics",
+        LyricsKind.Instrumental => "Instrumental",
+        _ => "No lyrics",
+    };
+
+    private static string LyricsHint(LyricsKind kind) => kind switch
+    {
+        LyricsKind.Synced => "Its lyrics are timed, so the player can follow along",
+        LyricsKind.Plain => "It has lyrics, without timings",
+        LyricsKind.Instrumental => "A lyrics source says it has no words.",
+        _ => "No lyrics yet. Scans look for them through the lyrics plugins, when Settings say to.",
+    };
+
+    private async Task ShowLyricsAsync()
+    {
+        if (_lyrics is null && _track is not null)
+        {
+            _lyrics = await Api.GetTrackLyricsAsync(_track.Id);
+            StateHasChanged();
+        }
+    }
+
+    private async Task FindLyricsAsync()
+    {
+        if (_track is null)
+            return;
+        _findingLyrics = true;
+        _lyricsError = null;
+        try
+        {
+            var found = await Api.FindTrackLyricsAsync(_track.Id);
+            if (found.Kind == LyricsKind.None)
+                _lyricsError = "None of the lyrics sources has lyrics for it.";
+            _lyrics = found.Kind == LyricsKind.None ? null : found;
+            await LoadAsync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _lyricsError = e.Message;
+        }
+        _findingLyrics = false;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -151,6 +244,8 @@ else
 
     private async Task LoadAsync()
     {
+        if (_track?.Id != Id)
+            _lyrics = null;
         _track = await Api.GetTrackAsync(Id);
         _notFound = _track is null;
     }

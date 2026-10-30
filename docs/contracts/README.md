@@ -1,7 +1,7 @@
 # Plugin contracts
 
 Melodex is pluggable on three axes (what exists, how music is fetched, and where it ends up), plus the pictures that
-go with the catalogue. Each has its own contract:
+go with the catalogue and the words of the songs. Each has its own contract:
 
 | Type | Answers | Runs | Contract | Reference plugin |
 | --- | --- | --- | --- | --- |
@@ -9,6 +9,7 @@ go with the catalogue. Each has its own contract:
 | [Retrieval plugin](retrieval-plugins.md) | How music is fetched | Own container, over HTTP | [`retrieval-v1.openapi.yaml`](retrieval-v1.openapi.yaml) v1.0 | yt-dlp |
 | [Media-server connector](media-server-connectors.md) | Where music ends up | In process (.NET assembly) | `IMediaServerConnector` v1.0 | Navidrome (Subsonic API) |
 | [Artwork plugin](artwork-plugins.md) | What it looks like | In process (.NET assembly) | `IArtworkPlugin` v1.0 | Cover Art Archive, Wikimedia Commons, Deezer |
+| [Lyrics plugin](lyrics-plugins.md) | What the words are | In process (.NET assembly) | `ILyricsPlugin` v1.0 | LRCLIB |
 
 The .NET types live in the `Melodex.Contracts` package (`src/Melodex.Contracts`). The XML docs on those types
 are normative; these pages explain the intent and the rules around them.
@@ -57,7 +58,7 @@ plugins serve it at `GET /v1/manifest`. Over JSON, names are camelCase and enums
 | --- | --- | --- |
 | `id` | yes | Stable, globally unique, reverse-DNS style. Never change it between versions. |
 | `name`, `version` | yes | Display name and the plugin's own semver. |
-| `type` | yes | `index`, `retrieval`, `connector` or `artwork`. |
+| `type` | yes | `index`, `retrieval`, `connector`, `artwork` or `lyrics`. |
 | `contractVersion` | yes | The contract version the plugin was built against, `major.minor`. |
 | `capabilities` | no | Optional features, from the capability list of the plugin's type. |
 | `settingsSchema` | no | JSON Schema (draft 2020-12) for settings. Mark secrets `"writeOnly": true`; the API never returns them. |
@@ -84,10 +85,10 @@ Each type is versioned on its own as `major.minor`:
    the schema before saving them.
 3. **Test.** The Test button runs the plugin's health check with the entered settings, before they're saved.
 4. **Run.** The core creates one instance per configuration and orders instances by priority: field priority for
-   index plugins, fallback order for retrieval and artwork plugins. Only one connector is active at a time in v1.
+   index plugins, fallback order for retrieval, artwork and lyrics plugins. Only one connector is active at a time in v1.
 5. **Monitor.** The core repeats the health check periodically and shows the result next to the plugin.
 
-## Writing a .NET plugin (index, artwork and media-server plugins)
+## Writing a .NET plugin (index, artwork, lyrics and media-server plugins)
 
 Reference `Melodex.Contracts`, then add one public `IPluginFactory` per plugin:
 

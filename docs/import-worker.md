@@ -110,14 +110,16 @@ out every value from its catalogue; the worker only writes them.
 
 | Field | Meaning |
 | --- | --- |
-| `files[].tags` | Tags to write, by beets field name. The rest stay as they are, and an empty value clears one. Melodex writes `title`, `artist`, `album`, `albumartist`, `track`, `tracktotal`, `disc`, `disctotal`, `date` and `original_date` (as `yyyy`, `yyyy-MM` or `yyyy-MM-dd`), `country`, `media`, `albumtype`, `label`, `catalognum`, `isrc` and the `mb_*` IDs; any other name fails that file. |
+| `files[].tags` | Tags to write, by beets field name. The rest stay as they are, and an empty value clears one. Melodex writes `title`, `artist`, `album`, `albumartist`, `track`, `tracktotal`, `disc`, `disctotal`, `date` and `original_date` (as `yyyy`, `yyyy-MM` or `yyyy-MM-dd`), `country`, `media`, `albumtype`, `label`, `catalognum`, `isrc`, `lyrics` and the `mb_*` IDs; any other name fails that file. |
 | `files[].artwork` | The key of an image in `artwork` to embed as the front cover, replacing what's there. Omit it to leave the embedded art. |
 | `files[].removeArtwork` | Take the embedded art out. |
+| `files[].lrc` | Lyrics to write to an `.lrc` file beside the file, with its name. Omit it to leave any there. |
 | `artwork` | Images by key, base64, so an album's files share one copy. |
 | `pathTemplate` | Move each file to where this path format puts it, going by its new tags, as an import would. Omit it to leave files where they are. |
 | `folderArtwork` | The key of an image in `artwork` to write as each formatted file's folder image too, for an album's chosen cover. It replaces a `cover`, `folder` or `front` image already there, under that name, or else goes in as `cover.jpg` (`.png` for a PNG). |
 
-A moved file never overwrites another: `.1`, `.2` and so on go before the extension. Once a folder holds no music,
+A moved file never overwrites another: `.1`, `.2` and so on go before the extension. Its `.lrc`, if it has one, moves
+with it under its new name. Once a folder holds no music,
 its artwork and the like follow the music to its new folder, and the folder goes, then any parent left empty.
 
 Response `200`, a result for each file in order. A file that couldn't be formatted, for example because it's gone

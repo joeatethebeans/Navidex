@@ -397,7 +397,7 @@ public sealed partial class LibraryView(MelodexDbContext db, SettingsService set
         return new TrackDetail(track.Id, track.Title, track.ArtistCredit, track.ArtistId, track.Artist.Name, track.Duration?.TotalSeconds, track.Ignored,
             ids, cover, appearances,
             files.Select(f => new TrackFile(f.Id, f.Path, f.Format, f.Duration?.TotalSeconds, f.Size, f.Edition?.AlbumId, f.EditionId,
-                TagsOf(FileTags.Parse(f.TagsJson)), f.FormattedAt)).ToList());
+                TagsOf(FileTags.Parse(f.TagsJson)), f.FormattedAt, f.Lyrics)).ToList());
     }
 
     // The tags worth showing, in the order a tag editor would.

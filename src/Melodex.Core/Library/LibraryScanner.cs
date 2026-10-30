@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Melodex.Core.Data;
+using LyricsKind = Melodex.Client.LyricsKind;
 using ScanFileState = Melodex.Client.ScanFileState;
 
 namespace Melodex.Core.Library;
@@ -112,6 +113,8 @@ public sealed class LibraryScanner(MelodexDbContext db, IOptions<MelodexOptions>
             existing.Format = Path.GetExtension(fullPath).TrimStart('.').ToLowerInvariant();
             existing.Duration = read.Value.Duration;
             existing.TagsJson = read.Value.Tags.ToJson();
+            existing.Lyrics = read.Value.Lyrics;
+            existing.LyricsCheckedAt = null;
             existing.ScannedAt = DateTime.UtcNow;
             // Changed files are matched again from scratch. Excluded ones keep their new tags, which the library shows,
             // but nothing matches them.
@@ -180,7 +183,7 @@ public sealed class LibraryScanner(MelodexDbContext db, IOptions<MelodexOptions>
         return $"Found no audio files in {root} ({walk.Files.Count} other files). Check that MUSIC_PATH points at your music library.";
     }
 
-    private (FileTags Tags, TimeSpan? Duration)? Read(string path)
+    private (FileTags Tags, TimeSpan? Duration, LyricsKind Lyrics)? Read(string path)
     {
         try
         {
@@ -197,11 +200,13 @@ public sealed class LibraryScanner(MelodexDbContext db, IOptions<MelodexOptions>
         }
     }
 
-    /// <summary>A file's tags and length. Throws if it can't be read as audio.</summary>
-    public static (FileTags Tags, TimeSpan? Duration) ReadTags(string path)
+    /// <summary>A file's tags, length and lyrics (from an .lrc beside it, else its tags). Throws if it can't be read as audio.</summary>
+    public static (FileTags Tags, TimeSpan? Duration, LyricsKind Lyrics) ReadTags(string path)
     {
         using var file = TagLib.File.Create(path);
         var tag = file.Tag;
+        var sidecar = LyricsFiles.SidecarOf(path);
+        var lyrics = File.Exists(sidecar) ? LyricsFiles.KindOf(path) : LyricsFiles.KindOfText(tag.Lyrics);
         return (new FileTags
         {
             Title = Blank(tag.Title),
@@ -217,7 +222,7 @@ public sealed class LibraryScanner(MelodexDbContext db, IOptions<MelodexOptions>
             MusicBrainzReleaseGroupId = Blank(tag.MusicBrainzReleaseGroupId),
             MusicBrainzArtistId = Blank(tag.MusicBrainzArtistId?.Split('/', ';')[0]),
             MusicBrainzAlbumArtistId = Blank(tag.MusicBrainzReleaseArtistId?.Split('/', ';')[0]),
-        }, file.Properties?.Duration is { Ticks: > 0 } d ? d : null);
+        }, file.Properties?.Duration is { Ticks: > 0 } d ? d : null, lyrics);
     }
 
     private string RelativePath(string path) =>

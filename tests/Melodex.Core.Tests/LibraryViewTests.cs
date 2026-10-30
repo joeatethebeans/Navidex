@@ -114,6 +114,9 @@ public sealed class LibraryViewTests : IDisposable
 
     private async Task ScanAsync()
     {
+        // The test library is shared, so no lyrics are written into it.
+        using (var scope = _factory.Services.CreateScope())
+            await scope.ServiceProvider.GetRequiredService<Melodex.Core.Library.SettingsService>().SaveLibraryAsync(new LibrarySettings { FetchLyrics = false }, default);
         var task = await _api.ScanLibraryAsync();
         var deadline = DateTime.UtcNow + TimeSpan.FromMinutes(3);
         while (task.Active && DateTime.UtcNow < deadline)

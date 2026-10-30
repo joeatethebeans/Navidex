@@ -19,7 +19,7 @@ from mediafile import Image, ImageType, MediaFile
 from .removal import LEFTOVERS
 
 TEXT_FIELDS = {"title", "artist", "album", "albumartist", "country", "media", "albumtype", "label", "catalognum",
-               "isrc", "mb_trackid", "mb_releasetrackid", "mb_albumid", "mb_artistid", "mb_albumartistid",
+               "isrc", "lyrics", "mb_trackid", "mb_releasetrackid", "mb_albumid", "mb_artistid", "mb_albumartistid",
                "mb_releasegroupid"}
 NUMBER_FIELDS = {"track", "tracktotal", "disc", "disctotal"}
 # Dates arrive as yyyy, yyyy-MM or yyyy-MM-dd and are written as their parts.
@@ -32,6 +32,7 @@ class FormatFile:
     tags: dict[str, str]
     artwork: str | None
     remove_artwork: bool
+    lrc: str | None = None
 
 
 class FormatFailed(Exception):
@@ -43,6 +44,8 @@ def write_tags(full: Path, tags: dict[str, str], artwork: bytes | None, remove_a
     unknown = [name for name in tags if name not in TEXT_FIELDS | NUMBER_FIELDS | DATE_FIELDS.keys()]
     if unknown:
         raise FormatFailed(f"Melodex doesn't write the tag {', '.join(unknown)}.")
+    if not tags and artwork is None and not remove_artwork:
+        return
     media = MediaFile(full)
     for name, value in tags.items():
         if name in DATE_FIELDS:
@@ -76,6 +79,8 @@ def format_files(library: Path, files: list[FormatFile], artwork: dict[str, byte
             if file.artwork is not None and file.artwork not in artwork:
                 raise FormatFailed(f"There's no artwork {file.artwork} in the request.")
             write_tags(full, file.tags, artwork.get(file.artwork) if file.artwork else None, file.remove_artwork)
+            if file.lrc is not None:
+                full.with_suffix(".lrc").write_text(file.lrc if file.lrc.endswith("\n") else file.lrc + "\n", encoding="utf-8")
             target = full
             if destination is not None:
                 wanted = library / destination(full)
@@ -83,6 +88,9 @@ def format_files(library: Path, files: list[FormatFile], artwork: dict[str, byte
                     target = unique(wanted)
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.move(full, target)
+                    # Its lyrics go with it, under its new name.
+                    if full.with_suffix(".lrc").is_file():
+                        shutil.move(full.with_suffix(".lrc"), target.with_suffix(".lrc"))
                     moved_from[full.parent].append(target.parent)
             folders.add(target.parent)
             stat = target.stat()

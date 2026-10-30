@@ -173,6 +173,28 @@ def test_a_chosen_cover_is_embedded_and_replaces_the_folder_image(client, roots)
     assert missing.status_code == 400
 
 
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
+def test_lyrics_go_beside_the_song_and_into_it_and_move_and_go_with_it(client, roots):
+    library = roots[1]
+    silent_flac(library / "in" / "roads.flac", title="Roads")
+    synced = "[00:01.00] Oh, can't anybody see\n[00:05.50] We've got a war to fight"
+    body = {"files": [{"path": "in/roads.flac", "lrc": synced, "tags": {"lyrics": synced}}]}
+    assert client.post("/v1/format", json=body).json()["files"][0]["newPath"] == "in/roads.flac"
+    assert (library / "in" / "roads.lrc").read_text(encoding="utf-8") == synced + "\n"
+    assert MediaFile(library / "in" / "roads.flac").lyrics == synced
+
+    # Moved, the lyrics go too, under the song's new name; the old folder goes.
+    moved = client.post("/v1/format", json={"files": [{"path": "in/roads.flac", "tags": {"albumartist": "Portishead", "album": "Dummy"}}],
+                                             "pathTemplate": "$albumartist/$album/$title"}).json()["files"][0]
+    assert moved["newPath"] == "Portishead/Dummy/Roads.flac"
+    assert (library / "Portishead" / "Dummy" / "Roads.lrc").exists()
+    assert not (library / "in").exists()
+
+    # Deleted, they go with it, and so does the folder.
+    client.post("/v1/delete", json={"paths": ["Portishead/Dummy/Roads.flac"]})
+    assert not (library / "Portishead").exists()
+
+
 def test_formatting_refuses_files_outside_the_library_and_unknown_tags(client, roots):
     library = roots[1]
     (library / "song.flac").write_bytes(b"x")

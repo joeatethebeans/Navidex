@@ -1,3 +1,4 @@
+using Melodex.Client;
 using Melodex.Contracts.Plugins;
 
 namespace Melodex.Core.Data;
@@ -38,6 +39,12 @@ public class LibraryFile
     public Track? Track { get; set; }
 
     /// <summary>The edition the file belongs to; null for a track matched on its own, without an album.</summary>
+    /// <summary>What lyrics the file has, beside it in an .lrc file or in its tags, as last read or written.</summary>
+    public LyricsKind Lyrics { get; set; }
+
+    /// <summary>When the lyrics plugins were last asked and had none, so they aren't asked again for a while.</summary>
+    public DateTime? LyricsCheckedAt { get; set; }
+
     public Guid? EditionId { get; set; }
 
     public Edition? Edition { get; set; }

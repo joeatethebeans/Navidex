@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Melodex.Plugins.Lrclib</RootNamespace>
+    <Description>Melodex lyrics plugin for synced and plain lyrics from LRCLIB.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Melodex.Contracts\Melodex.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

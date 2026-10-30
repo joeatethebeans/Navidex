@@ -55,6 +55,7 @@ builder.Services.AddSingleton<PluginHost>();
 builder.Services.AddScoped<IndexPlugins>();
 builder.Services.AddScoped<ConnectorPlugins>();
 builder.Services.AddScoped<ArtworkPlugins>();
+builder.Services.AddScoped<LyricsPlugins>();
 builder.Services.AddSingleton<ArtworkCache>();
 builder.Services.AddHostedService<ArtworkWarmer>();
 builder.Services.AddScoped<RetrievalPlugins>();
@@ -71,6 +72,7 @@ builder.Services.AddScoped<LocalMusic>();
 builder.Services.AddScoped<LibraryRemover>();
 builder.Services.AddScoped<LibraryFormatter>();
 builder.Services.AddScoped<CoverChooser>();
+builder.Services.AddScoped<LyricsFinder>();
 builder.Services.AddScoped<CatalogueSearch>();
 
 // Background work
@@ -80,6 +82,7 @@ builder.Services.AddScoped<TaskQueue>();
 builder.Services.AddScoped<ITaskHandler, LibraryScanTask>();
 builder.Services.AddScoped<ITaskHandler, ArtistRefreshTask>();
 builder.Services.AddScoped<ITaskHandler, FormatTask>();
+builder.Services.AddScoped<ITaskHandler, LyricsTask>();
 builder.Services.AddHostedService<TaskWorker>();
 
 // Requests: fetch, verify, import with beets, tell the media server
@@ -119,6 +122,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
     await IndexPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
     await ArtworkPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
+    await LyricsPlugins.EnsureDefaultAsync(db, scope.ServiceProvider.GetRequiredService<PluginCatalog>());
     await app.Services.GetRequiredService<StreamSigner>().InitialiseAsync(db);
 }
 

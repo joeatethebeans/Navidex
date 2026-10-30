@@ -54,7 +54,7 @@ public sealed class FakeImporter(string stagingRoot, string libraryRoot) : IImpo
 
     public ConcurrentQueue<FormatRequest> Formats { get; } = new();
 
-    // Tags and embedded covers aren't written, but folder images are; moving goes to Artist/Album/title, as the tags say.
+    // Tags and embedded covers aren't written, but folder images and .lrc files are; moving goes to Artist/Album/title, as the tags say.
     public Task<FormatResult> FormatAsync(FormatRequest request, CancellationToken ct)
     {
         Formats.Enqueue(request);
@@ -67,6 +67,8 @@ public sealed class FakeImporter(string stagingRoot, string libraryRoot) : IImpo
                 results.Add(new FormattedFile(file.Path, null, null, "It isn't in the music folder any more."));
                 continue;
             }
+            if (file.Lrc is not null)
+                File.WriteAllText(Path.ChangeExtension(full, ".lrc"), file.Lrc);
             var path = file.Path;
             if (request.PathTemplate is not null && file.Tags.TryGetValue("albumartist", out var artist) && file.Tags.TryGetValue("album", out var album)
                 && file.Tags.TryGetValue("title", out var title))

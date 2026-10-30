@@ -37,6 +37,9 @@ public static class ContractVersions
     /// <summary>Artwork plugins: pictures of artists and albums.</summary>
     public static readonly ContractVersion Artwork = new(1, 0);
 
+    /// <summary>Lyrics plugins: the words of songs.</summary>
+    public static readonly ContractVersion Lyrics = new(1, 0);
+
     /// <summary>The version the core supports for a given plugin type.</summary>
     public static ContractVersion For(PluginType type) => type switch
     {
@@ -44,6 +47,7 @@ public static class ContractVersions
         PluginType.Retrieval => Retrieval,
         PluginType.Connector => Connector,
         PluginType.Artwork => Artwork,
+        PluginType.Lyrics => Lyrics,
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
     };
 }

@@ -6,8 +6,10 @@ using Melodex.Contracts.Plugins;
 using Melodex.Contracts.Plugins.Artwork;
 using Melodex.Contracts.Plugins.Connectors;
 using Melodex.Contracts.Plugins.Index;
+using Melodex.Contracts.Plugins.Lyrics;
 using Melodex.Core.Data;
 using Melodex.Plugins.Deezer;
+using Melodex.Plugins.Lrclib;
 using Melodex.Plugins.MusicBrainz;
 using Melodex.Plugins.Wikimedia;
 
@@ -178,6 +180,47 @@ public sealed class ArtworkPlugins(MelodexDbContext db, PluginHost host, PluginC
             db.Settings.Add(new Setting { Key = DefaultsSetting, ValueJson = value });
         else
             setting.ValueJson = value;
+        await db.SaveChangesAsync();
+    }
+}
+
+/// <summary>The enabled lyrics plugins, in the user's order.</summary>
+public sealed class LyricsPlugins(MelodexDbContext db, PluginHost host, PluginCatalog catalog)
+{
+    public const string DefaultsSetting = "lyrics.defaults";
+
+    public async Task<IReadOnlyList<(PluginInstance Instance, ILyricsPlugin Plugin)>> GetAsync(CancellationToken ct)
+    {
+        var instances = await db.PluginInstances.Where(p => p.Type == PluginType.Lyrics && p.Enabled).OrderBy(p => p.Priority).ToListAsync(ct);
+        var plugins = new List<(PluginInstance, ILyricsPlugin)>();
+        foreach (var instance in instances)
+        {
+            if (catalog.Find(instance.PluginId) is not { Factory: not null })
+                continue;
+            if (await host.ResolveAsync(db, instance, ct) is { } running)
+                plugins.Add((instance, host.Get<ILyricsPlugin>(running)));
+        }
+        return plugins;
+    }
+
+    /// <summary>Sets up LRCLIB once, as it needs no account, so lyrics work out of the box. Removing it sticks.</summary>
+    public static async Task EnsureDefaultAsync(MelodexDbContext db, PluginCatalog catalog)
+    {
+        if (await db.Settings.FindAsync(DefaultsSetting) is not null)
+            return;
+        if (catalog.Find(LrclibFactory.PluginId) is { } found && !await db.PluginInstances.AnyAsync(p => p.Type == PluginType.Lyrics))
+        {
+            db.PluginInstances.Add(new PluginInstance
+            {
+                PluginId = found.Manifest.Id,
+                Type = PluginType.Lyrics,
+                Name = found.Manifest.Name,
+                Priority = 0,
+                ContractVersion = found.Manifest.ContractVersion,
+                SettingsJson = SettingsSchema.Defaults(found.Manifest.SettingsSchema).ToJsonString(),
+            });
+        }
+        db.Settings.Add(new Setting { Key = DefaultsSetting, ValueJson = JsonSerializer.Serialize(new[] { LrclibFactory.PluginId }) });
         await db.SaveChangesAsync();
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Melodex.Client;
 using Melodex.Core.Import;
+using Melodex.Core.Library;
 using Melodex.Core.Plugins;
 using Melodex.Core.Requests;
 using Melodex.Core.Tests.Support;
@@ -27,6 +28,12 @@ public sealed class RequestFixture : IAsyncLifetime
     public FakeRetrieval Retrieval { get; private set; } = null!;
     public FakeImporter Importer { get; private set; } = null!;
 
+    /// <summary>The songs LRCLIB has lyrics for, by title.</summary>
+    public System.Collections.Concurrent.ConcurrentDictionary<string, string> Lyrics { get; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Glory Box"] = "[00:01.00] Glory box",
+    };
+
     public async Task InitializeAsync()
     {
         if (!TestLibrary.Exists)
@@ -44,7 +51,7 @@ public sealed class RequestFixture : IAsyncLifetime
             {
                 services.Configure<PluginHttpOptions>(http =>
                 {
-                    http.PrimaryHandler = () => new ReplayHandler(TestLibrary.MusicBrainzFixtures);
+                    http.PrimaryHandler = () => new FakeLrclib(new ReplayHandler(TestLibrary.MusicBrainzFixtures), Lyrics);
                     http.RateLimit = false;
                 });
                 services.Configure<RequestPipelineOptions>(o => o.PollInterval = TimeSpan.FromMilliseconds(20));
@@ -53,6 +60,9 @@ public sealed class RequestFixture : IAsyncLifetime
                 services.AddSingleton<IImportWorker>(Importer);
             }));
         Api = new MelodexClient(Factory.CreateSignedInClient());
+        // Lyrics are found after a scan only where a test asks, so none are written behind other tests' backs.
+        using (var scope = Factory.Services.CreateScope())
+            await scope.ServiceProvider.GetRequiredService<SettingsService>().SaveLibraryAsync(new LibrarySettings { FetchLyrics = false }, default);
 
         var task = await Api.ScanLibraryAsync();
         while (task.State is TaskState.Queued or TaskState.Running)

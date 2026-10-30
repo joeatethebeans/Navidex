@@ -1,6 +1,6 @@
 # Plugins
 
-Melodex is pluggable in four ways. Manage them under **Settings → Plugins**, where **Add** offers what's available and
+Melodex is pluggable in five ways. Manage them under **Settings → Plugins**, where **Add** offers what's available and
 **Test** checks each one.
 
 | Kind | Does | Comes with Melodex |
@@ -9,8 +9,9 @@ Melodex is pluggable in four ways. Manage them under **Settings → Plugins**, w
 | **Media server** | Told to scan when music arrives; also lends its covers | Navidrome |
 | **Retrieval** | Fetches music | YouTube Music (yt-dlp) and the inbox folder, as containers in the compose file |
 | **Artwork** | Covers and artist pictures | Cover Art Archive, Wikimedia Commons, Deezer, fanart.tv (with your own key) |
+| **Lyrics** | The words of songs, synced where they can be | LRCLIB |
 
-Retrieval plugins are tried in order; move them up and down to change it. A retrieval plugin is a separate service that
+Retrieval, artwork and lyrics plugins are tried in order; move them up and down to change it. A retrieval plugin is a separate service that
 speaks a small HTTP contract, so anyone can write one: see [the plugin contracts](../contracts/README.md).
 
 ## The inbox
