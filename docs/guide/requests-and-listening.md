@@ -33,4 +33,19 @@ The **Downloads** page lists what you've fetched to listen to.
 Play, queue and skip from any album, artist or track. The queue is kept in this browser. Songs you don't have are
 fetched as the queue reaches them.
 
+The bar along the bottom has what's playing on the left, the controls and seek bar in the middle, and lyrics, the
+queue, the volume and the full-screen player on the right. On a phone, the lyrics and volume are in the full-screen
+player.
+
+**The full-screen player** opens from the cover in the bar, or its expand button. It shows the cover large, over a
+blur of itself, with a visualiser that moves with the music, and beside it, either:
+
+- **Lyrics**: synced lyrics light up line by line as they're sung, and stay in view. Click a line to play from it.
+  Scroll them yourself and they wait a few seconds before following again. Plain lyrics are shown as they are. A song
+  without lyrics can be looked up from here, if you may format; see [lyrics](library.md#lyrics).
+- **The queue**.
+
+The visualiser can be turned off, and the browser's own full screen turned on, from the buttons at the top. Escape
+closes it. The volume and whether the visualiser shows are kept in this browser.
+
 Next: [Your library](library.md).

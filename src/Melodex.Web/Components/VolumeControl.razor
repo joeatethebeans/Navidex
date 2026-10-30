@@ -1,0 +1,48 @@
+@inject Player Player
+
+@* The volume: a slider, and a button that mutes and unmutes. Kept per browser. *@
+<div class="volume @Class">
+    <button class="icon" title="@(_volume == 0 ? "Unmute" : "Mute")" @onclick="MuteAsync">
+        <svg viewBox="0 0 24 24">
+            <path d="M4 9v6h4l5 4V5L8 9z" />
+            @if (_volume == 0)
+            {
+                <path d="M17 9l4 6M21 9l-4 6" />
+            }
+            else
+            {
+                <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+                @if (_volume > .5) { <path d="M19 6a8.5 8.5 0 0 1 0 12" /> }
+            }
+        </svg>
+    </button>
+    <input type="range" min="0" max="1" step="0.01" value="@_volume.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+           aria-label="Volume" @oninput="SetAsync" />
+</div>
+
+@code {
+    [Parameter] public string? Class { get; set; }
+
+    private double _volume = 1;
+    private double _before = 1;
+
+    protected override async Task OnInitializedAsync() => _volume = await Player.GetVolumeAsync();
+
+    private async Task SetAsync(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, out var v))
+        {
+            _volume = v;
+            await Player.SetVolumeAsync(v);
+        }
+    }
+
+    private async Task MuteAsync()
+    {
+        if (_volume > 0)
+            (_before, _volume) = (_volume, 0);
+        else
+            _volume = _before > 0 ? _before : 1;
+        await Player.SetVolumeAsync(_volume);
+    }
+}

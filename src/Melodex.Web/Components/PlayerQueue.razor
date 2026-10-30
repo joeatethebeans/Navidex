@@ -1,0 +1,34 @@
+@inject Player Player
+
+@* The queue: what's playing and what's next, to jump to or take out. In the player bar's pop-up and the full-screen player. *@
+<div class="section-head" style="margin: 0 0 .25rem;">
+    <h3>Queue</h3>
+    <span class="spacer"></span>
+    <button class="link small" @onclick="Player.ClearAsync">Clear</button>
+</div>
+<ol class="queue-list">
+    @for (var i = 0; i < Player.Queue.Count; i++)
+    {
+        var index = i;
+        var entry = Player.Queue[i];
+        <li class="@(index == Player.Current ? "now" : "") @(entry.Unplayable ? "dim" : "")">
+            <button class="link queue-title" @onclick="() => Player.JumpAsync(index)">
+                <span class="ellipsis">@entry.Title</span>
+                <span class="muted small ellipsis">@entry.ArtistCredit</span>
+            </button>
+            <span class="small muted nowrap">@EntryState(entry)</span>
+            <button class="link small" title="Remove from the queue" @onclick="() => Player.RemoveAsync(index)">✕</button>
+        </li>
+    }
+</ol>
+
+@code {
+    private static string EntryState(PlayerEntry entry) => entry switch
+    {
+        { Unplayable: true } => entry.Detail is { Length: < 40 } d ? d : "Can't play",
+        { Waiting: true } => "Fetching…",
+        { ListenState: ListenNowState.Playable } => "Listen now",
+        { ListenState: ListenNowState.Importing } => "Adding…",
+        _ => Format.Duration(entry.DurationSeconds),
+    };
+}

@@ -1,0 +1,311 @@
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@inject Player Player
+@inject Preferences Preferences
+@inject MelodexClient Api
+@inject AuthState Auth
+
+@*
+    The full-screen player: the cover large over a blur of itself, a visualiser that moves with the music, and beside
+    it the lyrics, lit line by line as they're sung, or the queue. Opened from the player bar; Escape closes it.
+*@
+@{
+    var now = Player.Now;
+}
+<div class="now-playing" role="dialog" aria-modal="true" aria-label="Now playing" tabindex="-1" @ref="_root" @onkeydown="KeyAsync">
+    <div class="np-backdrop" style="@(now?.CoverUrl is { } cover ? $"background-image: url('{cover}')" : "")"></div>
+    <div class="np-shade"></div>
+
+    <header class="np-head">
+        <button class="icon" title="Close the full-screen player (Esc)" @onclick="CloseAsync">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+        <div class="np-from">
+            @if (now?.AlbumTitle is { } album)
+            {
+                <span class="muted">Playing from</span>
+                @if (now.AlbumHref is { } href) { <a href="@href" @onclick="CloseAsync">@album</a> } else { <strong>@album</strong> }
+            }
+        </div>
+        <button class="icon @(Player.Panel == PlayerPanel.Lyrics ? "on" : "")" title="Lyrics" @onclick="() => Player.TogglePanel(PlayerPanel.Lyrics)">
+            <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M8 9h8M8 12h5" /></svg>
+        </button>
+        <button class="icon @(Player.Panel == PlayerPanel.Queue ? "on" : "")" title="Queue (@Player.Queue.Count)" @onclick="() => Player.TogglePanel(PlayerPanel.Queue)">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h10M17 15v6l4-3z" /></svg>
+        </button>
+        <button class="icon @(_visualiser ? "on" : "")" title="@(_visualiser ? "Hide the visualiser" : "Show the visualiser")" @onclick="ToggleVisualiserAsync">
+            <svg viewBox="0 0 24 24"><path d="M5 20V12M9 20V6M13 20V9M17 20V4M21 20v-6" /></svg>
+        </button>
+        <button class="icon" title="@(_fullscreen ? "Leave full screen" : "Full screen")" @onclick="ToggleFullscreenAsync">
+            @if (_fullscreen)
+            {
+                <svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>
+            }
+            else
+            {
+                <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+            }
+        </button>
+    </header>
+
+    <div class="np-body @(Player.Panel != PlayerPanel.None ? "with-panel" : "")">
+        <section class="np-main">
+            <div class="np-art"><Cover Url="@now?.CoverUrl" /></div>
+            @if (_visualiser)
+            {
+                <canvas class="np-visualiser" @ref="_canvas" aria-hidden="true"></canvas>
+            }
+            <div class="np-info">
+                @if (now is null)
+                {
+                    <div class="np-title muted">End of the queue</div>
+                }
+                else
+                {
+                    <div class="np-title ellipsis">@now.Title</div>
+                    <div class="muted ellipsis">
+                        @if (now.ArtistId is { } artist) { <a class="muted" href="artists/@artist" @onclick="CloseAsync">@now.ArtistCredit</a> } else { @now.ArtistCredit }
+                    </div>
+                }
+                @if (Player.Error is { } error) { <div class="error small">@error</div> }
+            </div>
+            <div class="player-seek np-seek">
+                <span class="small muted time">@Format.Duration(Player.Position)</span>
+                <input type="range" min="0" max="@Math.Max(Player.Duration, 1).ToString("0")" step="1" value="@Player.Position.ToString("0")"
+                       disabled="@(now is null || now.Waiting)" aria-label="Position" @onchange="SeekAsync" />
+                <span class="small muted time">@Format.Duration(Player.Duration)</span>
+            </div>
+            <div class="np-controls">
+                <button class="icon" title="Previous" disabled="@(now is null)" @onclick="Player.PreviousAsync">
+                    <svg viewBox="0 0 24 24"><path d="M6 5v14M18 5 8 12l10 7z" /></svg>
+                </button>
+                <button class="icon play" title="@(Player.Playing ? "Pause" : "Play")" disabled="@(now is null)" @onclick="Player.ToggleAsync">
+                    @if (now?.Waiting == true)
+                    {
+                        <span class="spinner"></span>
+                    }
+                    else if (Player.Playing)
+                    {
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></svg>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24"><path d="M7 4.5v15L19 12z" /></svg>
+                    }
+                </button>
+                <button class="icon" title="Next" disabled="@(now is null || Player.Current + 1 >= Player.Queue.Count)" @onclick="Player.NextAsync">
+                    <svg viewBox="0 0 24 24"><path d="M18 5v14M6 5l10 7-10 7z" /></svg>
+                </button>
+            </div>
+            <VolumeControl Class="np-volume" />
+        </section>
+
+        @if (Player.Panel == PlayerPanel.Queue)
+        {
+            <aside class="np-panel np-queue"><PlayerQueue /></aside>
+        }
+        else if (Player.Panel == PlayerPanel.Lyrics)
+        {
+            <aside class="np-panel np-lyrics @(_lyrics?.Kind == LyricsKind.Plain ? "plain" : "")" @ref="_lyricsPanel">
+                @if (now is null)
+                {
+                    <p class="muted np-note">Nothing's playing.</p>
+                }
+                else if (_lyrics is null)
+                {
+                    <Loading Inline="true" />
+                }
+                else if (_lyrics.Kind == LyricsKind.Synced)
+                {
+                    @foreach (var line in _lyrics.Lines)
+                    {
+                        <div class="line @(line.Text.Length == 0 ? "gap" : "")" data-time="@line.Seconds?.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)">@(line.Text.Length == 0 ? "♪" : line.Text)</div>
+                    }
+                }
+                else if (_lyrics.Kind == LyricsKind.Plain)
+                {
+                    <p class="muted small np-note">These lyrics aren't timed, so they don't follow along.</p>
+                    @foreach (var line in _lyrics.Lines)
+                    {
+                        <div class="line @(line.Text.Length == 0 ? "gap" : "")">@line.Text</div>
+                    }
+                }
+                else
+                {
+                    <div class="np-note">
+                        <p>No lyrics for this song.</p>
+                        @if (now.ListenId is not null && now.ListenState is not ListenNowState.InLibrary)
+                        {
+                            <p class="muted small">Songs fetched just to listen to get lyrics once they're added to your library.</p>
+                        }
+                        else if (now.FileId is null && Auth.May(UserPermissions.Format))
+                        {
+                            <button @onclick="FindLyricsAsync" disabled="@_finding">
+                                @if (_finding) { <span class="spinner"></span> }
+                                Find lyrics
+                            </button>
+                            @if (_findError is not null) { <p class="error small">@_findError</p> }
+                        }
+                    </div>
+                }
+            </aside>
+        }
+    </div>
+</div>
+
+@code {
+    private ElementReference _root, _canvas, _lyricsPanel;
+    private IJSObjectReference? _script;
+    private bool _visualiser = true, _visualising, _fullscreen;
+    private TrackLyrics? _lyrics;
+    private PlayerEntry? _lyricsOf;
+    private bool _following, _finding;
+    private string? _findError;
+    private PlayerPanel _lastPanel;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Player.Changed += Redraw;
+        Player.TimeChanged += Redraw;
+        _visualiser = await Preferences.GetAsync("visualiser", true);
+    }
+
+    protected override async Task OnParametersSetAsync() => await LoadLyricsAsync();
+
+    private void Redraw() => InvokeAsync(async () =>
+    {
+        await LoadLyricsAsync();
+        StateHasChanged();
+    });
+
+    // The lyrics of what's playing, when the panel shows them; fetched again when the song changes.
+    private async Task LoadLyricsAsync()
+    {
+        if (Player.Panel != PlayerPanel.Lyrics || Player.Now is not { } now || ReferenceEquals(now, _lyricsOf))
+            return;
+        _lyricsOf = now;
+        _lyrics = null;
+        _following = false;
+        _findError = null;
+        try
+        {
+            var lyrics = await Player.LyricsAsync(now);
+            if (ReferenceEquals(Player.Now, now))
+                _lyrics = lyrics;
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _lyrics = new TrackLyrics(LyricsKind.None, [], null);
+        }
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _script ??= await Player.ScriptAsync();
+        if (firstRender)
+            await _root.FocusAsync();
+
+        if (_visualiser && !_visualising)
+        {
+            _visualising = true;
+            await _script.InvokeVoidAsync("startVisualiser", _canvas);
+        }
+
+        // The panel changed, or the lyrics did: follow them, or stop.
+        var synced = Player.Panel == PlayerPanel.Lyrics && _lyrics?.Kind == LyricsKind.Synced;
+        if (synced && !_following)
+        {
+            _following = true;
+            await _script.InvokeVoidAsync("followLyrics", _lyricsPanel);
+        }
+        else if (!synced && _following)
+        {
+            _following = false;
+            await _script.InvokeVoidAsync("unfollowLyrics");
+        }
+        if (Player.Panel != _lastPanel)
+        {
+            _lastPanel = Player.Panel;
+            if (Player.Panel == PlayerPanel.Lyrics)
+                await LoadLyricsAsync();
+        }
+    }
+
+    private async Task ToggleVisualiserAsync()
+    {
+        _visualiser = !_visualiser;
+        await Preferences.SetAsync("visualiser", _visualiser);
+        if (!_visualiser && _script is not null)
+        {
+            _visualising = false;
+            await _script.InvokeVoidAsync("stopVisualiser");
+        }
+    }
+
+    private async Task ToggleFullscreenAsync()
+    {
+        _script ??= await Player.ScriptAsync();
+        _fullscreen = await _script.InvokeAsync<bool>("toggleFullscreen", _root);
+    }
+
+    private async Task FindLyricsAsync()
+    {
+        if (Player.Now is not { } now)
+            return;
+        _finding = true;
+        _findError = null;
+        try
+        {
+            var lyrics = await Api.FindTrackLyricsAsync(now.TrackId);
+            Player.SetLyrics(now, lyrics);
+            if (ReferenceEquals(Player.Now, now))
+                _lyrics = lyrics;
+            if (lyrics.Kind == LyricsKind.None)
+                _findError = "None of the lyrics sources has lyrics for it.";
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _findError = e.Message;
+        }
+        _finding = false;
+    }
+
+    private async Task KeyAsync(KeyboardEventArgs e)
+    {
+        if (e.Key != "Escape")
+            return;
+        // The browser leaves full screen itself on Escape; a second one closes the player.
+        if (_script is not null && await _script.InvokeAsync<bool>("isFullscreen"))
+            _fullscreen = false;
+        else
+            await CloseAsync();
+    }
+
+    private async Task CloseAsync()
+    {
+        if (_script is not null)
+            await _script.InvokeVoidAsync("exitFullscreen");
+        Player.Collapse();
+    }
+
+    private Task SeekAsync(ChangeEventArgs e) =>
+        double.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, out var s) ? Player.SeekAsync(s) : Task.CompletedTask;
+
+    public async ValueTask DisposeAsync()
+    {
+        Player.Changed -= Redraw;
+        Player.TimeChanged -= Redraw;
+        if (_script is not null)
+        {
+            try
+            {
+                await _script.InvokeVoidAsync("stopVisualiser");
+                await _script.InvokeVoidAsync("unfollowLyrics");
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
+}

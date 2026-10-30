@@ -440,21 +440,33 @@ h2.section-title { margin: 1.5rem 0 0; }
 .dialog .templates { margin: 0; }
 .template { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
 
-/* The player: fixed along the bottom, with the queue opening above it. The spacer keeps it off the page's end. */
-.player-space { height: 5.5rem; }
+/* The player: fixed along the bottom, with the queue opening above it. The spacer keeps it off the page's end. What's
+   playing is on the left, the controls and seek bar in the middle, and the rest on the right, as music apps have it. */
+.player-space { height: 5.75rem; }
 .player { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; }
 .player-bar {
-    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.2fr) auto; gap: 1rem; align-items: center;
-    padding: .6rem 1rem; background: var(--surface); border-top: 1px solid var(--border);
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr); gap: 1rem; align-items: center;
+    padding: .5rem 1rem; background: var(--surface); border-top: 1px solid var(--border);
 }
 .player-track { display: flex; gap: .75rem; align-items: center; min-width: 0; }
-.player-track > .cover { width: 3rem; flex: none; }
+.player-art { position: relative; width: 3.5rem; flex: none; padding: 0; border: none; background: none; border-radius: 6px; height: auto; }
+.player-art .cover { width: 100%; }
+.player-art > svg {
+    position: absolute; top: .2rem; right: .2rem; width: 1.1rem; height: 1.1rem; padding: .1rem; border-radius: 999px;
+    background: rgb(0 0 0 / .6); stroke: white; stroke-width: 2.5; fill: none; opacity: 0; transition: opacity .15s;
+}
+.player-art:hover > svg, .player-art:focus-visible > svg { opacity: 1; }
 .player-text { min-width: 0; }
 .player-title a { color: var(--text); font-weight: 600; }
+.player-centre { display: flex; flex-direction: column; align-items: center; gap: .1rem; min-width: 0; }
+.player-centre .player-seek { width: 100%; max-width: 40rem; }
 .player-controls, .player-end { display: flex; gap: .35rem; align-items: center; }
+.player-end { justify-content: flex-end; }
 .player-seek { display: flex; gap: .6rem; align-items: center; }
 .player-seek input { flex: 1; min-width: 0; accent-color: var(--accent); }
 .player-seek .time { width: 3rem; text-align: center; font-variant-numeric: tabular-nums; }
+.volume { display: flex; align-items: center; gap: .1rem; }
+.volume input { width: 6rem; accent-color: var(--accent); }
 button.icon {
     display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border-radius: 999px;
     border: none; background: none; color: var(--text);
@@ -473,20 +485,95 @@ button.icon.play svg { fill: currentColor; }
     position: absolute; right: 1rem; bottom: calc(100% + .5rem); width: min(26rem, calc(100vw - 2rem));
     max-height: 60vh; overflow: auto; padding: .6rem .75rem; box-shadow: 0 6px 24px rgb(0 0 0 / .18);
 }
-.player-queue ol { list-style: none; margin: 0; padding: 0; }
-.player-queue li { display: flex; gap: .5rem; align-items: center; padding: .3rem .25rem; border-radius: 6px; }
-.player-queue li.now { background: var(--bg); }
-.player-queue li.now .queue-title > span:first-child { font-weight: 700; color: var(--accent); }
-.player-queue li.dim { opacity: .55; }
-.player-queue .queue-title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; text-align: left; color: var(--text); }
-.player-queue .queue-title > span { max-width: 100%; }
+.queue-list { list-style: none; margin: 0; padding: 0; }
+.queue-list li { display: flex; gap: .5rem; align-items: center; padding: .3rem .25rem; border-radius: 6px; }
+.queue-list li.now { background: var(--bg); }
+.queue-list li.now .queue-title > span:first-child { font-weight: 700; color: var(--accent); }
+.queue-list li.dim { opacity: .55; }
+.queue-list .queue-title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; text-align: left; color: var(--text); }
+.queue-list .queue-title > span { max-width: 100%; }
 @media (max-width: 760px) {
-    /* On a phone the seek bar takes a row of its own. */
-    .player-space { height: 8rem; }
-    .player-bar { grid-template-columns: minmax(0, 1fr) auto auto; gap: .4rem .5rem; padding: .5rem .75rem; }
-    .player-seek { grid-column: 1 / -1; grid-row: 2; }
+    /* On a phone the seek bar takes a row of its own, and the rest is in the full-screen player. */
+    .player-space { height: 7.5rem; }
+    .player-bar { grid-template-columns: minmax(0, 1fr) auto auto; gap: .3rem .5rem; padding: .5rem .75rem; }
+    .player-art { width: 3rem; }
+    .player-centre { display: contents; }
+    .player-centre .player-seek { grid-column: 1 / -1; grid-row: 2; max-width: none; }
     .player-controls { grid-column: 2; grid-row: 1; gap: 0; }
     .player-end { grid-column: 3; grid-row: 1; gap: 0; }
+    .player-bar .hide-narrow { display: none; }
+}
+
+/* The full-screen player: the cover large over a blur of itself, with lyrics or the queue beside it. */
+.now-playing {
+    position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--bg); color: var(--text); animation: np-in .25s ease-out;
+}
+.now-playing:focus { outline: none; }
+@keyframes np-in { from { opacity: 0; transform: translateY(2rem); } }
+.np-backdrop {
+    position: absolute; inset: -15%; background-size: cover; background-position: center;
+    filter: blur(70px) saturate(1.5); opacity: .6; transition: background-image .6s;
+}
+.np-shade {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 35%, transparent), color-mix(in srgb, var(--bg) 80%, transparent));
+}
+.np-head, .np-body { position: relative; }
+.np-head { display: flex; align-items: center; gap: .25rem; padding: .75rem 1rem; }
+.np-from { flex: 1; min-width: 0; text-align: center; font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np-from .muted { text-transform: uppercase; letter-spacing: .06em; font-size: .72rem; margin-right: .4rem; }
+.np-from a { color: var(--text); font-weight: 600; }
+.now-playing button.icon:hover:not(:disabled), .now-playing button.icon.on { background: color-mix(in srgb, var(--text) 12%, transparent); }
+.now-playing button.icon.on { color: var(--accent); }
+.np-body {
+    flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem;
+    padding: 0 2.5rem 2rem; max-width: 90rem; width: 100%; margin: 0 auto; box-sizing: border-box;
+}
+.np-body.with-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+.np-main { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .9rem; min-height: 0; }
+.np-art { width: min(28rem, 100%, 48vh); }
+.np-art .cover { border: none; border-radius: 10px; box-shadow: 0 24px 60px rgb(0 0 0 / .45); }
+.np-visualiser { display: block; width: min(30rem, 100%); height: 3.5rem; margin-top: -.4rem; color: var(--accent); opacity: .85; }
+.np-info { width: min(30rem, 100%); min-width: 0; }
+.np-title { font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+.np-seek { width: min(30rem, 100%); }
+.np-controls { display: flex; gap: 1.25rem; align-items: center; }
+.np-controls button.icon { width: 2.75rem; height: 2.75rem; }
+.np-controls button.icon svg { width: 1.5rem; height: 1.5rem; }
+.np-controls button.icon.play { width: 4rem; height: 4rem; }
+.np-controls button.icon.play svg { width: 1.7rem; height: 1.7rem; }
+.np-volume input { width: 9rem; }
+.np-panel {
+    position: relative; min-height: 0; overflow: auto; border-radius: 14px; padding: 1rem 1.5rem;
+    background: color-mix(in srgb, var(--surface) 45%, transparent); backdrop-filter: blur(12px);
+}
+.np-queue .queue-list li.now { background: color-mix(in srgb, var(--text) 10%, transparent); }
+.np-lyrics { padding: 30vh 2rem; font-size: clamp(1.25rem, 2.2vw, 2rem); font-weight: 700; line-height: 1.35; scrollbar-width: none; }
+.np-lyrics::-webkit-scrollbar { display: none; }
+.np-lyrics .line { margin: .45em 0; opacity: .4; cursor: pointer; transition: opacity .35s, color .35s, transform .35s; transform-origin: left center; }
+.np-lyrics .line:hover { opacity: .75; }
+.np-lyrics .line.past { opacity: .6; }
+.np-lyrics .line.active { opacity: 1; color: var(--accent); transform: scale(1.03); }
+.np-lyrics .line.gap { opacity: .3; }
+.np-lyrics.plain { padding: 2rem; font-size: clamp(1.1rem, 1.6vw, 1.4rem); }
+.np-lyrics.plain .line { opacity: .9; cursor: default; transform: none; }
+.np-lyrics.plain .line.gap { min-height: .8em; }
+.np-note { font-size: 1rem; font-weight: 400; }
+.np-lyrics:has(.np-note:only-child), .np-lyrics:has(> .loading) { padding: 2rem; display: grid; place-items: center; text-align: center; }
+@media (max-width: 860px) {
+    /* On a phone: the panel takes the cover's place, above the controls. */
+    .np-body { padding: 0 1rem 1.25rem; gap: 1rem; }
+    .np-body.with-panel { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+    .np-body.with-panel .np-panel { order: -1; }
+    .np-body.with-panel .np-art, .np-body.with-panel .np-visualiser { display: none; }
+    .np-art { width: min(100%, 45vh); }
+    .np-lyrics { padding: 20vh 1rem; }
+    .np-title { font-size: 1.3rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .now-playing { animation: none; }
+    .np-lyrics .line { transition: none; }
 }
 
 /* Play and Listen buttons beside tracks and albums. */

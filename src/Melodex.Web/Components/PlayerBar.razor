@@ -1,7 +1,11 @@
 @implements IDisposable
 @inject Player Player
 
-@* The player along the bottom of every page, once something has been played. The queue opens above it. *@
+@*
+    The player along the bottom of every page, once something has been played: what's playing on the left, the controls
+    in the middle, and the queue, lyrics and volume on the right. The cover, or the expand button, opens the full-screen
+    player.
+*@
 @if (Player.Queue.Count > 0)
 {
     var now = Player.Now;
@@ -9,32 +13,14 @@
     <div class="player">
         @if (_showQueue)
         {
-            <div class="player-queue card">
-                <div class="section-head" style="margin: 0 0 .25rem;">
-                    <h3>Queue</h3>
-                    <span class="spacer"></span>
-                    <button class="link small" @onclick="Player.ClearAsync">Clear</button>
-                </div>
-                <ol>
-                    @for (var i = 0; i < Player.Queue.Count; i++)
-                    {
-                        var index = i;
-                        var entry = Player.Queue[i];
-                        <li class="@(index == Player.Current ? "now" : "") @(entry.Unplayable ? "dim" : "")">
-                            <button class="link queue-title" @onclick="() => Player.JumpAsync(index)">
-                                <span class="ellipsis">@entry.Title</span>
-                                <span class="muted small ellipsis">@entry.ArtistCredit</span>
-                            </button>
-                            <span class="small muted nowrap">@EntryState(entry)</span>
-                            <button class="link small" title="Remove from the queue" @onclick="() => Player.RemoveAsync(index)">✕</button>
-                        </li>
-                    }
-                </ol>
-            </div>
+            <div class="player-queue card"><PlayerQueue /></div>
         }
         <div class="player-bar">
             <div class="player-track">
-                <Cover Url="@now?.CoverUrl" />
+                <button class="player-art" title="Open the full-screen player" @onclick="() => Player.Expand()">
+                    <Cover Url="@now?.CoverUrl" />
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                </button>
                 <div class="player-text">
                     @if (now is null)
                     {
@@ -78,8 +64,9 @@
                     }
                 </div>
             </div>
+            <div class="player-centre">
             <div class="player-controls">
-                <button class="icon" title="Previous" disabled="@(now is null)" @onclick="Player.PreviousAsync">
+                <button class="icon hide-narrow" title="Previous" disabled="@(now is null)" @onclick="Player.PreviousAsync">
                     <svg viewBox="0 0 24 24"><path d="M6 5v14M18 5 8 12l10 7z" /></svg>
                 </button>
                 <button class="icon play" title="@(Player.Playing ? "Pause" : "Play")" disabled="@(now is null)" @onclick="Player.ToggleAsync">
@@ -106,16 +93,28 @@
                        disabled="@(now is null || now.Waiting)" aria-label="Position" @onchange="SeekAsync" />
                 <span class="small muted time">@Format.Duration(Player.Duration)</span>
             </div>
+            </div>
             <div class="player-end">
+                <button class="icon hide-narrow" title="Lyrics" @onclick="() => Player.Expand(PlayerPanel.Lyrics)">
+                    <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M8 9h8M8 12h5" /></svg>
+                </button>
                 <button class="icon @(_showQueue ? "on" : "")" title="Queue (@Player.Queue.Count)" @onclick="() => _showQueue = !_showQueue">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h10M17 15v6l4-3z" /></svg>
                 </button>
-                <button class="icon" title="Stop and clear the queue" @onclick="Player.ClearAsync">
+                <VolumeControl Class="hide-narrow" />
+                <button class="icon" title="Open the full-screen player" @onclick="() => Player.Expand()">
+                    <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+                </button>
+                <button class="icon hide-narrow" title="Stop and clear the queue" @onclick="Player.ClearAsync">
                     <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
                 </button>
             </div>
         </div>
     </div>
+    @if (Player.Expanded)
+    {
+        <NowPlaying />
+    }
 }
 
 @code {
@@ -131,15 +130,6 @@
 
     private Task SeekAsync(ChangeEventArgs e) =>
         double.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, out var s) ? Player.SeekAsync(s) : Task.CompletedTask;
-
-    private static string EntryState(PlayerEntry entry) => entry switch
-    {
-        { Unplayable: true } => entry.Detail is { Length: < 40 } d ? d : "Can't play",
-        { Waiting: true } => "Fetching…",
-        { ListenState: ListenNowState.Playable } => "Listen now",
-        { ListenState: ListenNowState.Importing } => "Adding…",
-        _ => Format.Duration(entry.DurationSeconds),
-    };
 
     public void Dispose()
     {

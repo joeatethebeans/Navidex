@@ -77,6 +77,14 @@ public sealed class PlayerEntry
     }
 }
 
+/// <summary>What the full-screen player shows beside the cover.</summary>
+public enum PlayerPanel
+{
+    None,
+    Lyrics,
+    Queue,
+}
+
 /// <summary>
 /// The queue and the audio element behind the player bar. Tracks you have stream from the music folder; tracks you
 /// don't are fetched to listen to, and the queue waits at one until it's ready.
@@ -116,6 +124,71 @@ public sealed class Player : IAsyncDisposable
 
     /// <summary>Something went wrong starting playback, such as nothing to fetch the tracks from.</summary>
     public string? Error { get; private set; }
+
+    /// <summary>The full-screen player is open.</summary>
+    public bool Expanded { get; private set; }
+
+    /// <summary>What the full-screen player shows beside the cover.</summary>
+    public PlayerPanel Panel { get; private set; } = PlayerPanel.None;
+
+    /// <summary>Opens the full-screen player, showing a panel beside the cover if asked.</summary>
+    public void Expand(PlayerPanel? panel = null)
+    {
+        Expanded = true;
+        if (panel is { } p)
+            Panel = p;
+        Changed?.Invoke();
+    }
+
+    public void Collapse()
+    {
+        Expanded = false;
+        Changed?.Invoke();
+    }
+
+    /// <summary>Shows the panel, or hides it if it's showing.</summary>
+    public void TogglePanel(PlayerPanel panel)
+    {
+        Panel = Panel == panel ? PlayerPanel.None : panel;
+        Changed?.Invoke();
+    }
+
+    /// <summary>The audio element's script, for the full-screen player's visualiser and lyrics.</summary>
+    public Task<IJSObjectReference> ScriptAsync() => AudioAsync();
+
+    /// <summary>The volume, from 0 to 1, kept per browser.</summary>
+    public async Task<double> GetVolumeAsync() => await (await AudioAsync()).InvokeAsync<double>("getVolume");
+
+    public async Task SetVolumeAsync(double volume) => await (await AudioAsync()).InvokeVoidAsync("setVolume", volume);
+
+    // Each song's lyrics, once asked for.
+    private readonly Dictionary<(Guid TrackId, Guid? FileId), TrackLyrics> _lyrics = new();
+
+    /// <summary>
+    /// The lyrics of what's playing, as its file in the library has them; none for a song only fetched to listen to.
+    /// </summary>
+    public async Task<TrackLyrics> LyricsAsync(PlayerEntry entry, bool fresh = false)
+    {
+        var key = (entry.TrackId, entry.FileId);
+        if (!fresh && _lyrics.TryGetValue(key, out var known))
+            return known;
+        var none = new TrackLyrics(LyricsKind.None, [], null);
+        TrackLyrics lyrics;
+        try
+        {
+            lyrics = entry.FileId is { } file ? await _api.GetFileLyricsAsync(file)
+                : entry.ListenState is null or ListenNowState.InLibrary ? await _api.GetTrackLyricsAsync(entry.TrackId)
+                : none;
+        }
+        catch (HttpRequestException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            lyrics = none;
+        }
+        return _lyrics[key] = lyrics;
+    }
+
+    /// <summary>Remembers lyrics just found, so the player shows them.</summary>
+    public void SetLyrics(PlayerEntry entry, TrackLyrics lyrics) => _lyrics[(entry.TrackId, entry.FileId)] = lyrics;
 
     /// <summary>Whether this track is the one playing, or waiting to.</summary>
     public bool IsNow(Guid trackId) => Now?.TrackId == trackId;
