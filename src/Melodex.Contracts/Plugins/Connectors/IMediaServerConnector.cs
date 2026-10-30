@@ -1,7 +1,7 @@
 namespace Melodex.Contracts.Plugins.Connectors;
 
 /// <summary>
-/// Media-server connector contract (version 1.0): tells a media server about new music and confirms it's
+/// Media-server connector contract (version 1.1): tells a media server about new music and confirms it's
 /// there. Optional features are separate interfaces, each matched by a capability name in the manifest;
 /// the core and API only offer actions the active connector supports.
 /// </summary>
@@ -77,6 +77,56 @@ public interface IPlaylistManager
 /// <param name="TrackCount">Number of tracks.</param>
 public sealed record ServerPlaylist(string Id, string Name, int TrackCount);
 
+/// <summary>
+/// Optional: each user's own playlists, kept the same in Melodex and on the server. Capability
+/// <see cref="ConnectorCapabilities.UserPlaylists"/>; added in 1.1. Every call acts as the user whose login it's given,
+/// so they only ever see and change their own playlists.
+/// </summary>
+public interface IPlaylistSync
+{
+    /// <summary>Whether the connector's settings say to keep playlists in step: its "sync playlists" box.</summary>
+    bool SyncsPlaylists { get; }
+
+    /// <summary>Checks the login works, for linking it to a Melodex user.</summary>
+    Task<HealthReport> CheckLoginAsync(ServerLogin login, CancellationToken cancellationToken);
+
+    /// <summary>The playlists the user owns, without their songs.</summary>
+    Task<IReadOnlyList<UserPlaylist>> GetPlaylistsAsync(ServerLogin login, CancellationToken cancellationToken);
+
+    /// <summary>A playlist with its songs in order, or null if it's gone.</summary>
+    Task<UserPlaylistSongs?> GetPlaylistAsync(ServerLogin login, string playlistId, CancellationToken cancellationToken);
+
+    /// <summary>Makes a playlist and returns its server ID.</summary>
+    Task<string> CreatePlaylistAsync(ServerLogin login, PlaylistContent content, CancellationToken cancellationToken);
+
+    /// <summary>Gives a playlist this name, comment and these songs, in this order, replacing what it had.</summary>
+    Task UpdatePlaylistAsync(ServerLogin login, string playlistId, PlaylistContent content, CancellationToken cancellationToken);
+
+    /// <summary>Deletes a playlist. One that's already gone isn't an error.</summary>
+    Task DeletePlaylistAsync(ServerLogin login, string playlistId, CancellationToken cancellationToken);
+}
+
+/// <summary>A user's login on the media server.</summary>
+public sealed record ServerLogin(string Username, string Password)
+{
+    /// <summary>Keeps the password out of logs.</summary>
+    public override string ToString() => $"ServerLogin {{ Username = {Username} }}";
+}
+
+/// <summary>A user's playlist on the server.</summary>
+/// <param name="Id">Server ID.</param>
+/// <param name="Name">Name, folders and all: the server has no folders, so they're part of it.</param>
+/// <param name="Comment">Its description, if any.</param>
+/// <param name="SongCount">Number of songs.</param>
+/// <param name="Changed">When it last changed on the server, to tell whether it has since Melodex last looked.</param>
+public sealed record UserPlaylist(string Id, string Name, string? Comment, int SongCount, DateTimeOffset? Changed);
+
+/// <summary>A playlist with its songs.</summary>
+public sealed record UserPlaylistSongs(UserPlaylist Playlist, IReadOnlyList<ServerTrack> Songs);
+
+/// <summary>What a playlist should be: its name, comment, and server track IDs in order.</summary>
+public sealed record PlaylistContent(string Name, string? Comment, IReadOnlyList<string> TrackIds);
+
 /// <summary>Optional: favourites. Capability <see cref="ConnectorCapabilities.Favourites"/>.</summary>
 public interface IFavouritesManager
 {
@@ -122,6 +172,9 @@ public static class ConnectorCapabilities
 
     /// <summary>Implements <see cref="ILibraryReader"/>.</summary>
     public const string LibraryRead = "library-read";
+
+    /// <summary>Implements <see cref="IPlaylistSync"/>.</summary>
+    public const string UserPlaylists = "user-playlists";
 
     /// <summary><see cref="IMediaServerConnector.TriggerScanAsync"/> honours its paths.</summary>
     public const string SelectiveScan = "selective-scan";

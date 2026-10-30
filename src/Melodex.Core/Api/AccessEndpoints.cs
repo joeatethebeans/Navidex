@@ -137,6 +137,8 @@ public static class AccessEndpoints
                     return Results.ValidationProblem(new Dictionary<string, string[]> { ["appearance"] = ["That isn't a theme Melodex has."] });
                 if (body.KeepSearchMinutes is < 0 or > 120)
                     return Results.ValidationProblem(new Dictionary<string, string[]> { ["keepSearchMinutes"] = ["Keep a search for 0 to 120 minutes."] });
+                if (body.PlaylistFolders is null || body.PlaylistFolders.Length > 3 || body.PlaylistFolders.Any(char.IsWhiteSpace))
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["playlistFolders"] = ["Separate folders with up to 3 characters, not spaces, or none."] });
                 user.Appearance = JsonSerializer.Serialize(body, MelodexJson.Options);
                 await db.SaveChangesAsync(ct);
                 access.UsersChanged();
@@ -292,7 +294,8 @@ public static class AccessEndpoints
         new(key.Id, key.Name, key.Prefix, Scopes.Parse(key.Scopes).ToList(), key.CreatedAt, key.LastUsedAt, key.UserId, key.User?.Username);
 
     private static UserInfo Info(User user, int keys) =>
-        new(user.Id, user.Username, user.IsAdmin, Scopes.All.Where(AccessService.PermissionsOf(user).Contains).ToList(), user.CreatedAt, user.LastSignInAt, keys);
+        new(user.Id, user.Username, user.IsAdmin, Scopes.All.Where(AccessService.PermissionsOf(user).Contains).ToList(), user.CreatedAt, user.LastSignInAt, keys,
+            user.MediaServerUsername);
 
     // Nobody can give more than they have.
     private static Appearance AppearanceOf(User? user)

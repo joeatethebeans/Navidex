@@ -31,6 +31,14 @@ public sealed class NavidromeTests
     }
 
     [Fact]
+    public async Task A_title_with_brackets_is_looked_for_without_them_too()
+    {
+        var (connector, server) = Create();
+        Assert.Equal("a", await connector.ResolveTrackAsync(new TrackLookup(Title: "Glory Box (album version)", MusicBrainzRecordingId: "rec-glory"), default));
+        Assert.Equal(["Glory Box (album version)", "Glory Box"], server.Requests.Select(r => HttpUtility.ParseQueryString(r.Query)["query"]));
+    }
+
+    [Fact]
     public async Task Without_ids_the_tags_and_length_must_all_agree()
     {
         var (connector, _) = Create();
@@ -101,6 +109,34 @@ public sealed class NavidromeTests
         Assert.Null(NavidromeArtwork.Pick(albums[3..], Query(ArtworkSubject.Album)));
     }
 
+    [Fact]
+    public async Task Playlists_are_handled_as_their_owner_and_only_theirs_are_listed()
+    {
+        var (connector, server) = Create();
+        var login = new ServerLogin("someone", "their-secret");
+
+        var playlists = await connector.GetPlaylistsAsync(login, default);
+        var mine = Assert.Single(playlists);
+        Assert.Equal(("pl-1", "Moods/Calm", "Quiet ones", 2), (mine.Id, mine.Name, mine.Comment, mine.SongCount));
+        Assert.Equal(new DateTimeOffset(2026, 10, 30, 12, 0, 0, TimeSpan.Zero), mine.Changed);
+        var query = HttpUtility.ParseQueryString(server.Requests.Single().Query);
+        Assert.Equal("someone", query["u"]);
+        Assert.Equal(Convert.ToHexStringLower(System.Security.Cryptography.MD5.HashData(Encoding.UTF8.GetBytes("their-secret" + query["s"]))), query["t"]);
+
+        var songs = await connector.GetPlaylistAsync(login, "pl-1", default);
+        Assert.Equal(["a", "c"], songs!.Songs.Select(s => s.Id));
+        Assert.Null(await connector.GetPlaylistAsync(login, "gone", default));
+
+        // Replacing the songs goes through createPlaylist with the ID; the name and comment through updatePlaylist.
+        server.Requests.Clear();
+        await connector.UpdatePlaylistAsync(login, "pl-1", new PlaylistContent("Moods/Quiet", null, ["c", "a"]), default);
+        Assert.Equal(["/rest/createPlaylist", "/rest/updatePlaylist"], server.Requests.Select(r => r.AbsolutePath));
+        var replace = HttpUtility.ParseQueryString(server.Requests[0].Query);
+        Assert.Equal("pl-1", replace["playlistId"]);
+        Assert.Equal(["c", "a"], replace.GetValues("songId")!);
+        Assert.Equal("Moods/Quiet", HttpUtility.ParseQueryString(server.Requests[1].Query)["name"]);
+    }
+
     private (NavidromeConnector, FakeSubsonic) Create()
     {
         var server = new FakeSubsonic(Songs);
@@ -117,6 +153,9 @@ public sealed class NavidromeTests
 
     private sealed class FakeSubsonic(string songs) : HttpMessageHandler
     {
+        private static string SongsById(string songs, params string[] ids) => string.Join(", ",
+            JsonDocument.Parse(songs).RootElement.EnumerateArray().Where(s => ids.Contains(s.GetProperty("id").GetString())).Select(s => s.GetRawText()));
+
         public List<Uri> Requests { get; } = [];
         public bool WrongPassword { get; set; }
 
@@ -126,10 +165,20 @@ public sealed class NavidromeTests
             var query = HttpUtility.ParseQueryString(request.RequestUri!.Query);
             var body = WrongPassword
                 ? """ "status": "failed", "error": { "code": 40, "message": "Wrong username or password" } """
+                : request.RequestUri!.AbsolutePath == "/rest/getPlaylist" && query["id"] != "pl-1"
+                ? """ "status": "failed", "error": { "code": 70, "message": "Playlist not found" } """
                 : """ "status": "ok", """ + (request.RequestUri.AbsolutePath switch
                 {
                     "/rest/getScanStatus" => """ "scanStatus": { "scanning": true, "count": 1234, "lastScan": "2026-10-25T10:00:00Z" } """,
-                    "/rest/search3" => query["songOffset"] == "0" ? $$""" "searchResult3": { "song": {{songs}} } """ : """ "searchResult3": {} """,
+                    "/rest/search3" => query["songOffset"] == "0" && query["query"]?.Contains('(') != true ? $$""" "searchResult3": { "song": {{songs}} } """ : """ "searchResult3": {} """,
+                    "/rest/getPlaylists" => """
+                        "playlists": { "playlist": [
+                          { "id": "pl-1", "name": "Moods/Calm", "comment": "Quiet ones", "owner": "someone", "songCount": 2, "changed": "2026-10-30T12:00:00Z" },
+                          { "id": "pl-2", "name": "Theirs", "owner": "admin", "public": true, "songCount": 9 }
+                        ] }
+                        """,
+                    "/rest/getPlaylist" when query["id"] == "pl-1" => $$""" "playlist": { "id": "pl-1", "name": "Moods/Calm", "owner": "someone", "songCount": 2, "entry": [ {{SongsById(songs, "a", "c")}} ] } """,
+                    "/rest/getPlaylist" => """ "x": 0 """,
                     _ => """ "x": 0 """,
                 });
             var json = $$"""{ "subsonic-response": { "version": "1.16.1", "type": "navidrome", "serverVersion": "0.64.2", "openSubsonic": true, {{body}} } }""";

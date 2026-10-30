@@ -1,0 +1,284 @@
+@page "/playlists/{Id:guid}"
+@implements IDisposable
+@inject MelodexClient Api
+@inject AuthState Auth
+@inject Player Player
+@inject NavigationManager Nav
+
+<PageTitle>@(_playlist is null ? "Playlist" : PlaylistNames.Leaf(_playlist.Playlist.Name, Delimiter)) · Melodex</PageTitle>
+
+@if (_notFound)
+{
+    <div class="empty card">That playlist isn't yours, or it's been deleted.</div>
+}
+else if (_playlist is null)
+{
+    <Loading />
+}
+else
+{
+    var summary = _playlist.Playlist;
+    var folders = PlaylistNames.Folders(summary.Name, Delimiter);
+    var playable = PlaylistNames.Playable(_playlist.Songs);
+    <div class="page-head">
+        <PlaylistCover Covers="summary.Covers" />
+        <div>
+            <div class="muted small"><a href="playlists">Playlists</a>@foreach (var folder in folders) { <text> › @folder</text> }</div>
+            <h1>@PlaylistNames.Leaf(summary.Name, Delimiter)</h1>
+            @if (summary.Comment is not null) { <p class="muted">@summary.Comment</p> }
+            <div class="row muted small">
+                <span>@PlaylistNames.Length(summary.Count, summary.DurationSeconds)</span>
+                @switch (summary.Sync)
+                {
+                    case PlaylistSyncState.Synced:
+                        <span class="badge neutral" title="The same on the media server">Synced</span>
+                        break;
+                    case PlaylistSyncState.Waiting:
+                        <span class="badge neutral" title="Changed since the last sync, or has songs the media server hasn't found yet">Waiting to sync</span>
+                        break;
+                }
+            </div>
+            <div class="row album-actions" style="margin-top: .5rem;">
+                <IconButton Icon="play" Requires="@UserPermissions.Listen" Primary="true" Large="true" Label="Play" Title="Play the playlist" Disabled="playable.Count == 0"
+                            OnClick="() => Player.PlayAsync(playable)" />
+                <IconButton Icon="shuffle" Requires="@UserPermissions.Listen" Large="true" Title="Shuffle: play in a random order" Disabled="playable.Count == 0"
+                            OnClick="() => Player.PlayAsync(playable.OrderBy(_ => Random.Shared.Next()).ToList())" />
+                <IconButton Icon="queue" Requires="@UserPermissions.Listen" Large="true" Confirm="true" Title="Add to the queue" Disabled="playable.Count == 0"
+                            OnClick="() => Player.AddAsync(playable)" />
+                <IconButton Icon="rename" Large="true" Label="Rename" Title="Rename it, move it to another folder, or change its comment" OnClick="StartRename" />
+                <IconButton Icon="remove" Large="true" Title="Delete the playlist" OnClick="() => _deleting = true" />
+            </div>
+        </div>
+    </div>
+
+    @if (_error is not null) { <p class="error small">@_error</p> }
+
+    @if (_playlist.Songs.Count == 0)
+    {
+        <div class="empty card">Nothing in it yet. Add songs from a song's or album's page, or from the player.</div>
+    }
+    else
+    {
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="num">#</th>
+                        <th>Title</th>
+                        <th class="hide-narrow">Album</th>
+                        <th class="num hide-narrow">Length</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < _playlist.Songs.Count; i++)
+                    {
+                        var index = i;
+                        var song = _playlist.Songs[i];
+                        var canPlay = song.State is PlaylistSongState.Library or PlaylistSongState.Local;
+                        <tr class="@(canPlay ? "" : "dim") @(canPlay && Player.Now is { } now && now.TrackId == (song.TrackId ?? song.FileId) ? "playing" : "")">
+                            <td class="num muted">@(i + 1)</td>
+                            <td>
+                                @if (song.State == PlaylistSongState.Library) { <a href="tracks/@song.TrackId" class="plain">@song.Title</a> } else { @song.Title }
+                                <div class="muted small">
+                                    @if (song.ArtistId is { } artist) { <a class="muted" href="@(song.State == PlaylistSongState.Local ? "local/artists" : "artists")/@artist">@song.Artist</a> } else { @song.Artist }
+                                    @switch (song.State)
+                                    {
+                                        case PlaylistSongState.ServerOnly:
+                                            <span> · only on the media server</span>
+                                            break;
+                                        case PlaylistSongState.Gone:
+                                            <span> · no longer in your library</span>
+                                            break;
+                                    }
+                                </div>
+                            </td>
+                            <td class="hide-narrow muted small">
+                                @if (song.AlbumId is { } album) { <a class="muted" href="@(song.State == PlaylistSongState.Local ? "local/albums" : "albums")/@album">@song.AlbumTitle</a> } else { @song.AlbumTitle }
+                            </td>
+                            <td class="num hide-narrow muted">@Format.Duration(song.DurationSeconds)</td>
+                            <td class="num actions">
+                                @if (canPlay)
+                                {
+                                    <IconButton Icon="play" Requires="@UserPermissions.Listen" Title="Play the playlist from here" OnClick="() => PlayFromAsync(song)" />
+                                }
+                                <IconButton Icon="up" Title="Move up" Disabled="index == 0 || _busy" OnClick="() => MoveAsync(index, -1)" />
+                                <IconButton Icon="down" Title="Move down" Disabled="index == _playlist.Songs.Count - 1 || _busy" OnClick="() => MoveAsync(index, 1)" />
+                                <IconButton Icon="cancel" Title="Take it out of the playlist" Disabled="_busy" OnClick="() => RemoveAsync(index)" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@if (_renaming && _playlist is not null)
+{
+    <Dialog Title="Rename the playlist" OnClose="() => _renaming = false">
+        <div class="field">
+            <label class="field-label" for="playlist-rename">Name</label>
+            <input id="playlist-rename" type="text" @bind="_name" @bind:event="oninput" />
+            @if (Delimiter.Length > 0) { <span class="muted small">Folders are part of the name, split by @Delimiter, as in Moods@(Delimiter)Calm.</span> }
+        </div>
+        <div class="field">
+            <label class="field-label" for="playlist-comment">Comment</label>
+            <textarea id="playlist-comment" rows="3" @bind="_comment"></textarea>
+        </div>
+        @if (_renameError is not null) { <p class="error small">@_renameError</p> }
+        <div class="toolbar">
+            <span class="spacer"></span>
+            <button @onclick="() => _renaming = false">Cancel</button>
+            <button class="primary" disabled="@(_busy || _name.Trim().Length == 0)" @onclick="RenameAsync">Save</button>
+        </div>
+    </Dialog>
+}
+
+@if (_deleting && _playlist is not null)
+{
+    <Dialog Title="@($"Delete {PlaylistNames.Leaf(_playlist.Playlist.Name, Delimiter)}?")" Alert="true" OnClose="() => _deleting = false">
+        <p>
+            The songs stay in your library.
+            @if (_playlist.Playlist.Sync != PlaylistSyncState.Off) { <text>It's deleted from the media server too.</text> }
+        </p>
+        <div class="toolbar">
+            <span class="spacer"></span>
+            <button @onclick="() => _deleting = false">Keep it</button>
+            <button class="danger" disabled="@_busy" @onclick="DeleteAsync">Delete</button>
+        </div>
+    </Dialog>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private PlaylistDetail? _playlist;
+    private bool _notFound, _busy, _renaming, _deleting;
+    private string _name = "";
+    private string? _comment, _error, _renameError;
+
+    private string Delimiter => PlaylistNames.Delimiter(Auth);
+
+    // Looks again a few times while it waits to sync, which happens a few seconds after a change.
+    private Timer? _recheck;
+    private int _rechecks;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Player.Changed -= Redraw;
+        Player.Changed += Redraw;
+        ScanStatus.LibraryChanged -= Reload;
+        ScanStatus.LibraryChanged += Reload;
+        await LoadAsync();
+    }
+
+    private void Redraw() => InvokeAsync(StateHasChanged);
+
+    private void Reload() => InvokeAsync(async () => { await LoadAsync(); StateHasChanged(); });
+
+    public void Dispose()
+    {
+        Player.Changed -= Redraw;
+        ScanStatus.LibraryChanged -= Reload;
+        _recheck?.Dispose();
+    }
+
+    private async Task LoadAsync()
+    {
+        _playlist = await Api.GetPlaylistAsync(Id);
+        _notFound = _playlist is null;
+        WatchSync();
+    }
+
+    private void WatchSync()
+    {
+        _recheck?.Dispose();
+        _recheck = null;
+        if (_playlist?.Playlist.Sync != PlaylistSyncState.Waiting || _rechecks >= 4)
+            return;
+        _rechecks++;
+        _recheck = new Timer(_ => InvokeAsync(async () =>
+        {
+            if (await Api.GetPlaylistAsync(Id) is { } fresh && _playlist is not null)
+                _playlist = _playlist with { Playlist = fresh.Playlist };
+            WatchSync();
+            StateHasChanged();
+        }), null, TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
+    }
+
+    private Task PlayFromAsync(PlaylistSong from)
+    {
+        var playable = _playlist!.Songs.Where(s => s.State is PlaylistSongState.Library or PlaylistSongState.Local).ToList();
+        return Player.PlayAsync(PlaylistNames.Playable(playable), playable.IndexOf(from));
+    }
+
+    private Task MoveAsync(int index, int by)
+    {
+        var ids = _playlist!.Songs.Select(s => s.EntryId).ToList();
+        (ids[index], ids[index + by]) = (ids[index + by], ids[index]);
+        return ArrangeAsync(ids);
+    }
+
+    private Task RemoveAsync(int index) => ArrangeAsync(_playlist!.Songs.Where((_, i) => i != index).Select(s => s.EntryId).ToList());
+
+    private async Task ArrangeAsync(IReadOnlyList<Guid> ids)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            _playlist = await Api.ArrangePlaylistAsync(Id, new ArrangePlaylist(ids));
+            _rechecks = 0;
+            WatchSync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+        }
+        _busy = false;
+    }
+
+    private void StartRename()
+    {
+        _name = _playlist!.Playlist.Name;
+        _comment = _playlist.Playlist.Comment;
+        _renameError = null;
+        _renaming = true;
+    }
+
+    private async Task RenameAsync()
+    {
+        _busy = true;
+        _renameError = null;
+        try
+        {
+            var summary = await Api.UpdatePlaylistAsync(Id, new UpdatePlaylist(_name.Trim(), _comment ?? ""));
+            _playlist = _playlist! with { Playlist = summary };
+            _renaming = false;
+            _rechecks = 0;
+            WatchSync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _renameError = e.Message;
+        }
+        _busy = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        _busy = true;
+        try
+        {
+            await Api.DeletePlaylistAsync(Id);
+            Nav.NavigateTo("playlists");
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+            _deleting = false;
+        }
+        _busy = false;
+    }
+}

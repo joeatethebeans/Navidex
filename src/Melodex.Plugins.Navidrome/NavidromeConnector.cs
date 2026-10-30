@@ -14,11 +14,17 @@ namespace Melodex.Plugins.Navidrome;
 /// scan can't be limited to the new files, and its song paths are made up from tags unless configured otherwise, so
 /// tracks are found by MusicBrainz recording ID, then ISRC, then title, artist, album and length.
 /// </summary>
-public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlaylistManager, IFavouritesManager, ILibraryReader
+public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlaylistManager, IFavouritesManager, ILibraryReader, IPlaylistSync
 {
     private readonly SubsonicClient _client;
 
-    public NavidromeConnector(PluginContext context) => _client = new SubsonicClient(context);
+    public NavidromeConnector(PluginContext context)
+    {
+        _client = new SubsonicClient(context);
+        SyncsPlaylists = context.Settings.TryGetProperty("syncPlaylists", out var sync) && sync.ValueKind == JsonValueKind.True;
+    }
+
+    public bool SyncsPlaylists { get; }
 
     public async Task<HealthReport> CheckHealthAsync(CancellationToken cancellationToken)
     {
@@ -50,7 +56,20 @@ public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlay
         if (string.IsNullOrWhiteSpace(lookup.Title))
             return null;
         var songs = await SearchAsync(lookup.Title, 0, 50, cancellationToken);
-        return Pick(songs, lookup)?.Id;
+        if (Pick(songs, lookup) is { } found)
+            return found.Id;
+        // Navidrome searches the words in its own titles, so "Digital Love (album version)" doesn't find a song tagged
+        // "Digital Love". Without the brackets it can, and the IDs, or the shorter title with every other tag, pick it.
+        if (Bare(lookup.Title) is { } bare)
+            return Pick(await SearchAsync(bare, 0, 50, cancellationToken), lookup with { Title = bare })?.Id;
+        return null;
+    }
+
+    // A title without what's in brackets at its end.
+    private static string? Bare(string title)
+    {
+        var cut = title.IndexOfAny(['(', '[']);
+        return cut > 0 ? title[..cut].Trim() : null;
     }
 
     /// <summary>The best of the songs for the lookup, most certain evidence first; null if none fits.</summary>
@@ -90,6 +109,75 @@ public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlay
 
     public Task AddToPlaylistAsync(string playlistId, IReadOnlyList<string> trackIds, CancellationToken cancellationToken) =>
         CallAsync("updatePlaylist", [("playlistId", playlistId), .. trackIds.Select(id => ("songIdToAdd", id))], cancellationToken);
+
+    // ---- Each user's playlists, as that user ----
+
+    public async Task<HealthReport> CheckLoginAsync(ServerLogin login, CancellationToken cancellationToken) =>
+        (await _client.As(login.Username, login.Password).PingAsync(cancellationToken)).Report;
+
+    public async Task<IReadOnlyList<UserPlaylist>> GetPlaylistsAsync(ServerLogin login, CancellationToken cancellationToken)
+    {
+        var response = await _client.As(login.Username, login.Password).CallAsync("getPlaylists", [], cancellationToken);
+        // Other users' public playlists are listed too, but aren't theirs to change.
+        return Array(response.GetProperty("playlists"), "playlist")
+            .Where(p => string.Equals(Text(p, "owner"), login.Username, StringComparison.OrdinalIgnoreCase))
+            .Select(Playlist)
+            .ToList();
+    }
+
+    public async Task<UserPlaylistSongs?> GetPlaylistAsync(ServerLogin login, string playlistId, CancellationToken cancellationToken)
+    {
+        JsonElement response;
+        try
+        {
+            response = await _client.As(login.Username, login.Password).CallAsync("getPlaylist", [("id", playlistId)], cancellationToken);
+        }
+        catch (SubsonicException e) when (e.Code == 70)
+        {
+            return null;
+        }
+        var playlist = response.GetProperty("playlist");
+        var songs = Array(playlist, "entry").Select(Song.From)
+            .Select(s => new ServerTrack(s.Id, s.Path, s.Title, s.Artist, s.Album, s.Duration, s.MusicBrainzId)).ToList();
+        return new UserPlaylistSongs(Playlist(playlist), songs);
+    }
+
+    public async Task<string> CreatePlaylistAsync(ServerLogin login, PlaylistContent content, CancellationToken cancellationToken)
+    {
+        var client = _client.As(login.Username, login.Password);
+        var response = await client.CallAsync("createPlaylist", [("name", content.Name), .. content.TrackIds.Select(id => ("songId", id))], cancellationToken);
+        var id = Text(response.GetProperty("playlist"), "id")!;
+        if (!string.IsNullOrEmpty(content.Comment))
+            await client.CallAsync("updatePlaylist", [("playlistId", id), ("comment", content.Comment)], cancellationToken);
+        return id;
+    }
+
+    public async Task UpdatePlaylistAsync(ServerLogin login, string playlistId, PlaylistContent content, CancellationToken cancellationToken)
+    {
+        var client = _client.As(login.Username, login.Password);
+        // createPlaylist with an ID replaces the songs; updatePlaylist only adds and removes them by position.
+        await client.CallAsync("createPlaylist", [("playlistId", playlistId), .. content.TrackIds.Select(id => ("songId", id))], cancellationToken);
+        await client.CallAsync("updatePlaylist", [("playlistId", playlistId), ("name", content.Name), ("comment", content.Comment ?? "")], cancellationToken);
+    }
+
+    public async Task DeletePlaylistAsync(ServerLogin login, string playlistId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _client.As(login.Username, login.Password).CallAsync("deletePlaylist", [("id", playlistId)], cancellationToken);
+        }
+        catch (SubsonicException e) when (e.Code == 70)
+        {
+            // Gone already.
+        }
+    }
+
+    private static UserPlaylist Playlist(JsonElement p) => new(
+        Text(p, "id")!,
+        Text(p, "name") ?? "",
+        Text(p, "comment") is { Length: > 0 } comment ? comment : null,
+        p.TryGetProperty("songCount", out var c) && c.TryGetInt32(out var count) ? count : 0,
+        Text(p, "changed") is { } changed && DateTimeOffset.TryParse(changed, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var at) ? at : null);
 
     public Task SetFavouriteAsync(string trackId, bool favourite, CancellationToken cancellationToken) =>
         CallAsync(favourite ? "star" : "unstar", [("id", trackId)], cancellationToken);

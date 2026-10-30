@@ -63,12 +63,17 @@ else
                     <div class="muted small">
                         @(user.LastSignInAt is { } signedIn ? $"Signed in {Format.Ago(signedIn)}" : "Never signed in")
                         @if (user.Keys > 0) { <span> · @Format.Count(user.Keys, "API key", "API keys")</span> }
+                        @if (user.MediaServerUsername is { } server) { <span> · playlists synced as @server</span> }
                     </div>
                     <div class="plugin-actions">
                         <span class="spacer"></span>
                         @if (!user.IsAdmin || Auth.Status?.IsAdmin == true)
                         {
                             <button class="small" @onclick="() => StartEdit(user)">Edit</button>
+                            @if (_syncAvailable)
+                            {
+                                <button class="small" title="Link their media server login, to sync their playlists" @onclick="() => StartLink(user)">Playlists</button>
+                            }
                         }
                         @if (!user.IsAdmin && !you)
                         {
@@ -79,6 +84,34 @@ else
             }
         </div>
     </section>
+}
+
+@if (_linking is not null)
+{
+    <Dialog Title="@($"Sync {_linking.Username}'s playlists")" OnClose="() => _linking = null">
+        <p class="muted small">
+            @(_linking.MediaServerUsername is { } current ? $"Synced as {current}. A new login replaces it." : "Their playlists stay in Melodex until a media server login is linked.")
+            It's checked first, and kept encrypted.
+        </p>
+        <label class="field">
+            <span class="field-label">Media server username</span>
+            <input type="text" autocomplete="off" @bind="_serverUsername" @bind:event="oninput" />
+        </label>
+        <label class="field">
+            <span class="field-label">Media server password</span>
+            <input type="password" autocomplete="off" @bind="_serverPassword" @bind:event="oninput" />
+        </label>
+        @if (_error is not null) { <p class="error small">@_error</p> }
+        <div class="toolbar">
+            @if (_linking.MediaServerUsername is not null)
+            {
+                <button disabled="@_busy" @onclick="UnlinkAsync">Unlink</button>
+            }
+            <span class="spacer"></span>
+            <button @onclick="() => _linking = null">Cancel</button>
+            <button class="primary" disabled="@(_busy || _serverUsername.Trim().Length == 0 || _serverPassword.Length == 0)" @onclick="LinkAsync">Link</button>
+        </div>
+    </Dialog>
 }
 
 @if (_editing is not null)
@@ -149,10 +182,47 @@ else
     private bool _busy;
     private string? _error;
 
+    private UserInfo? _linking;
+    private string _serverUsername = "";
+    private string _serverPassword = "";
+    private bool _syncAvailable;
+
     protected override async Task OnInitializedAsync()
     {
-        if (Auth.May(UserPermissions.Users))
+        if (!Auth.May(UserPermissions.Users))
+            return;
+        _users = await Api.ListUsersAsync();
+        if (Auth.May(UserPermissions.Listen))
+            _syncAvailable = (await Api.GetPlaylistSyncAsync()).Available;
+    }
+
+    private void StartLink(UserInfo user)
+    {
+        _linking = user;
+        _serverUsername = user.MediaServerUsername ?? "";
+        _serverPassword = "";
+        _error = null;
+    }
+
+    private Task LinkAsync() => ChangeLinkAsync(() => Api.LinkMediaServerAsync(new LinkMediaServer(_serverUsername.Trim(), _serverPassword), _linking!.Id));
+
+    private Task UnlinkAsync() => ChangeLinkAsync(() => Api.UnlinkMediaServerAsync(_linking!.Id));
+
+    private async Task ChangeLinkAsync(Func<Task> action)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await action();
+            _linking = null;
             _users = await Api.ListUsersAsync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+        }
+        _busy = false;
     }
 
     private void StartNew() => Start(new UserInfo(Guid.Empty, "", false, [UserPermissions.Read, UserPermissions.Listen], DateTime.UtcNow, null));

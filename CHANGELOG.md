@@ -38,6 +38,10 @@ Everything on the way to 1.0.
 - **The full-screen player**: the cover large over a blur of itself, a visualiser that moves with the music, and the
   lyrics lit line by line as they're sung (click one to play from it), or the queue. The player bar is laid out as
   music apps have it, with a volume control.
+- **Playlists**: each user's own, of songs in the library and files of your own, in folders made by a separator in their
+  names (`/` by default, set on your account page). Add to them from a song's or album's page or the player. With
+  **Sync playlists** ticked in the Navidrome plugin, and each user's Navidrome login linked on their account page (kept
+  encrypted), they're kept the same in Navidrome both ways, and formatting that moves files doesn't break them there.
 - **Getting your library ready**: just after starting, the top bar and the Library page say the library's lists are
   being worked out, which takes a while the first time on a big library.
 
@@ -52,6 +56,9 @@ Everything on the way to 1.0.
   album. It used to behave as *keep it with the main album*.
 
 ### Changed
+
+- The media-server connector contract is 1.1, adding `IPlaylistSync` for each user's playlists. Connectors built for
+  1.0 still load.
 
 - The library's lists of artists, albums and tracks are kept on disk, so they show at once after a restart, and carry
   an ETag, so switching between them only downloads what changed. Views already loaded show at once.

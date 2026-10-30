@@ -27,6 +27,13 @@
                 @if (now.AlbumHref is { } href) { <a href="@href" @onclick="CloseAsync">@album</a> } else { <strong>@album</strong> }
             }
         </div>
+        @if (now is not null && Auth.May(UserPermissions.Listen))
+        {
+            <button class="icon" title="@(PlaylistNames.ItemOf(now) is null ? "Add it to your library to put it in a playlist" : "Add to a playlist")"
+                    disabled="@(PlaylistNames.ItemOf(now) is null)" @onclick="() => _adding = now">
+                <svg viewBox="0 0 24 24"><path d="M4 6h11M4 11h11M4 16h6" /><circle cx="16.5" cy="17.5" r="2.5" /><path d="M19 17.5V9l2.5 1" /></svg>
+            </button>
+        }
         <button class="icon @(Player.Panel == PlayerPanel.Lyrics ? "on" : "")" title="Lyrics" @onclick="() => Player.TogglePanel(PlayerPanel.Lyrics)">
             <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /><path d="M8 9h8M8 12h5" /></svg>
         </button>
@@ -151,10 +158,16 @@
             </aside>
         }
     </div>
+    @* Inside, so it shows in full screen too. *@
+    @if (_adding is { } adding && PlaylistNames.ItemOf(adding) is { } item)
+    {
+        <AddToPlaylistDialog Name="@adding.Title" Songs="[item]" OnClose="() => _adding = null" />
+    }
 </div>
 
 @code {
     private ElementReference _root, _canvas, _lyricsPanel;
+    private PlayerEntry? _adding;
     private IJSObjectReference? _script;
     private bool _visualiser = true, _visualising, _fullscreen;
     private TrackLyrics? _lyrics;

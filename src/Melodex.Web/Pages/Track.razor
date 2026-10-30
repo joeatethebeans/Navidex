@@ -39,6 +39,7 @@ else
                 {
                     <IconButton Icon="play" Requires="@UserPermissions.Listen" Primary="true" Large="true" Label="Play" Title="Play it" OnClick="() => Player.PlayAsync([Entry(track)])" />
                     <IconButton Icon="queue" Requires="@UserPermissions.Listen" Large="true" Confirm="true" Title="Add to the queue" OnClick="() => Player.AddAsync([Entry(track)])" />
+                    <IconButton Icon="playlist" Requires="@UserPermissions.Listen" Large="true" Title="Add to a playlist" OnClick="() => _adding = (track.Title, [new PlaylistItem(track.Id)])" />
                     <IconButton Icon="format" Requires="@UserPermissions.Format" Large="true" Label="Format" Title="Rewrite this song's files: their tags, cover and where they live" OnClick="() => _formatting = true" />
                     <IconButton Icon="image" Requires="@UserPermissions.Format" Large="true" Label="Cover" Title="Choose this song's cover, from any release it's on or a picture of your own" OnClick="() => _choosingCover = true" />
                 }
@@ -166,6 +167,11 @@ else
                  OnChosen="url => _track = _track with { CoverUrl = url }" />
 }
 
+@if (_adding is { } adding)
+{
+    <AddToPlaylistDialog Name="@adding.Name" Songs="adding.Songs" OnClose="() => _adding = null" />
+}
+
 @if (_formatting && _track is not null)
 {
     <FormatDialog Scope="new FormatScope(FormatScopeKind.Track, _track.Id)" Name="@_track.Title" OnClose="() => _formatting = false" />
@@ -178,6 +184,7 @@ else
     private bool _notFound;
     private bool _formatting;
     private bool _choosingCover;
+    private (string Name, IReadOnlyList<PlaylistItem> Songs)? _adding;
     private bool _findingLyrics;
     private TrackLyrics? _lyrics;
     private string? _lyricsError;

@@ -1,0 +1,245 @@
+@page "/playlists"
+@implements IDisposable
+@inject MelodexClient Api
+@inject AuthState Auth
+@inject Player Player
+@inject Preferences Preferences
+
+<PageTitle>Playlists · Melodex</PageTitle>
+
+@* Your playlists, in their folders, and whether they're synced with the media server. *@
+<div class="toolbar">
+    <h1>Playlists</h1>
+    <span class="spacer"></span>
+    @if (_sync is { Available: true, Linked: true })
+    {
+        <span class="muted small" title="@(_sync.Error ?? "")">
+            @if (_sync.Error is not null) { <span class="error">Not synced: @_sync.Error</span> }
+            else if (_sync.SyncedAt is { } at) { <text>Synced with @_sync.Server @Format.Ago(at)</text> }
+            else { <text>Syncing with @_sync.Server…</text> }
+        </span>
+        <IconButton Icon="retry" Title="@($"Sync with {_sync.Server} now")" OnClick="SyncAsync" />
+    }
+    <IconButton Icon="plus" Primary="true" Label="New playlist" Title="Make a playlist" OnClick="() => StartNew(null)" />
+</div>
+
+@if (_sync is { Available: true, Linked: false })
+{
+    <p class="muted small">
+        Link your @_sync.Server login on <a href="account">your account</a> to have your playlists there too, and theirs here.
+    </p>
+}
+
+@if (_error is not null)
+{
+    <div class="empty card error">@_error</div>
+}
+else if (_playlists is null)
+{
+    <Loading />
+}
+else if (_playlists.Count == 0)
+{
+    <div class="empty card">
+        No playlists yet. Make one here, or add songs to one from a song's or album's page or the player.
+    </div>
+}
+else
+{
+    <div class="card playlist-tree">
+        @Folder(Tree())
+    </div>
+}
+
+@if (_naming)
+{
+    <Dialog Title="@(_renamingFolder is null ? "New playlist" : $"Rename the folder {_renamingFolder.Split(Delimiter)[^1]}")" OnClose="() => _naming = false">
+        <div class="field">
+            <label class="field-label" for="playlist-name">@(_renamingFolder is null ? "Name" : "Folder")</label>
+            <input id="playlist-name" type="text" @bind="_name" @bind:event="oninput" @onkeydown="EnterAsync" />
+            @if (Delimiter.Length > 0)
+            {
+                <span class="muted small">
+                    @(_renamingFolder is null ? $"Put it in folders with {Delimiter}, as in Moods{Delimiter}Calm." : $"Move it into another folder with {Delimiter}, or leave it empty to take everything out of it.")
+                </span>
+            }
+        </div>
+        @if (_nameError is not null) { <p class="error small">@_nameError</p> }
+        <div class="toolbar">
+            <span class="spacer"></span>
+            <button @onclick="() => _naming = false">Cancel</button>
+            <button class="primary" disabled="@(_busy || _renamingFolder is null && _name.Trim().Length == 0)" @onclick="SaveNameAsync">
+                @(_renamingFolder is null ? "Make it" : "Rename")
+            </button>
+        </div>
+    </Dialog>
+}
+
+@code {
+    private IReadOnlyList<PlaylistSummary>? _playlists;
+    private PlaylistSyncStatus? _sync;
+    private string? _error;
+    private HashSet<string> _closed = [];
+    private bool _naming, _busy;
+    private string _name = "";
+    private string? _renamingFolder, _nameError;
+
+    private string Delimiter => PlaylistNames.Delimiter(Auth);
+
+    private sealed record Node(string Path, string Name, List<Node> Folders, List<PlaylistSummary> Playlists)
+    {
+        public int Count => Playlists.Count + Folders.Sum(f => f.Count);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ScanStatus.LibraryChanged += Reload;
+        _closed = (await Preferences.GetAsync<string[]>("playlists.closed", [])).ToHashSet();
+        await LoadAsync();
+    }
+
+    private void Reload() => InvokeAsync(async () => { await LoadAsync(); StateHasChanged(); });
+
+    public void Dispose() => ScanStatus.LibraryChanged -= Reload;
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _playlists = await Api.ListPlaylistsAsync();
+            _sync = await Api.GetPlaylistSyncAsync();
+            _error = null;
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+        }
+    }
+
+    private async Task SyncAsync()
+    {
+        _sync = await Api.SyncPlaylistsAsync();
+        await LoadAsync();
+    }
+
+    // The playlists in folders, each folder before the playlists beside it.
+    private Node Tree()
+    {
+        var root = new Node("", "", [], []);
+        foreach (var playlist in _playlists!)
+        {
+            var node = root;
+            foreach (var folder in PlaylistNames.Folders(playlist.Name, Delimiter))
+            {
+                var path = node.Path.Length == 0 ? folder : node.Path + Delimiter + folder;
+                var next = node.Folders.FirstOrDefault(f => f.Path == path);
+                if (next is null)
+                    node.Folders.Add(next = new Node(path, folder, [], []));
+                node = next;
+            }
+            node.Playlists.Add(playlist);
+        }
+        return root;
+    }
+
+    private RenderFragment Folder(Node node) => @<ul class="playlist-list">
+        @foreach (var folder in node.Folders.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            var open = !_closed.Contains(folder.Path);
+            <li class="playlist-folder">
+                <div class="playlist-row">
+                    <button class="plain folder-toggle" aria-expanded="@(open ? "true" : "false")" @onclick="() => ToggleAsync(folder.Path)">
+                        <svg viewBox="0 0 24 24" class="chevron @(open ? "open" : "")" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                        <svg viewBox="0 0 24 24" class="folder-icon" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z" /></svg>
+                        <strong>@folder.Name</strong>
+                        <span class="muted small">@folder.Count</span>
+                    </button>
+                    <span class="spacer"></span>
+                    <IconButton Icon="plus" Class="small" Title="@($"Make a playlist in {folder.Name}")" OnClick="() => StartNew(folder.Path)" />
+                    <IconButton Icon="rename" Class="small" Title="@($"Rename {folder.Name}")" OnClick="() => StartRename(folder.Path)" />
+                </div>
+                @if (open)
+                {
+                    @Folder(folder)
+                }
+            </li>
+        }
+        @foreach (var playlist in node.Playlists)
+        {
+            <li>
+                <div class="playlist-row">
+                    <a class="plain playlist-link" href="playlists/@playlist.Id">
+                        <PlaylistCover Covers="playlist.Covers" Class="small" />
+                        <span class="playlist-text">
+                            <span class="ellipsis">@PlaylistNames.Leaf(playlist.Name, Delimiter)</span>
+                            <span class="muted small">
+                                @PlaylistNames.Length(playlist.Count, playlist.DurationSeconds)
+                                @if (playlist.Sync == PlaylistSyncState.Waiting) { <span title="Changed since the last sync, or has songs the media server hasn't found yet"> · waiting to sync</span> }
+                            </span>
+                        </span>
+                    </a>
+                    <IconButton Icon="play" Requires="@UserPermissions.Listen" Class="small" Title="Play" Disabled="playlist.Count == 0" OnClick="() => PlayAsync(playlist.Id)" />
+                </div>
+            </li>
+        }
+    </ul>;
+
+    private async Task ToggleAsync(string path)
+    {
+        if (!_closed.Add(path))
+            _closed.Remove(path);
+        await Preferences.SetAsync("playlists.closed", _closed.ToArray());
+    }
+
+    private async Task PlayAsync(Guid id)
+    {
+        if (await Api.GetPlaylistAsync(id) is { } playlist)
+            await Player.PlayAsync(PlaylistNames.Playable(playlist.Songs));
+    }
+
+    private void StartNew(string? folder)
+    {
+        _renamingFolder = null;
+        _name = folder is null ? "" : folder + Delimiter;
+        _nameError = null;
+        _naming = true;
+    }
+
+    private void StartRename(string folder)
+    {
+        _renamingFolder = folder;
+        _name = folder;
+        _nameError = null;
+        _naming = true;
+    }
+
+    private Task EnterAsync(KeyboardEventArgs e) => e.Key == "Enter" ? SaveNameAsync() : Task.CompletedTask;
+
+    private async Task SaveNameAsync()
+    {
+        _busy = true;
+        _nameError = null;
+        try
+        {
+            if (_renamingFolder is { } folder)
+            {
+                await Api.RenamePlaylistFolderAsync(new RenamePlaylistFolder(folder, _name.Trim(), Delimiter));
+                if (_closed.Remove(folder))
+                    _closed.Add(_name.Trim());
+            }
+            else
+            {
+                var made = await Api.CreatePlaylistAsync(new CreatePlaylist(_name.Trim()));
+                foreach (var parent in PlaylistNames.Folders(made.Playlist.Name, Delimiter))
+                    _closed.RemoveWhere(c => c.EndsWith(parent, StringComparison.Ordinal));
+            }
+            _naming = false;
+            await LoadAsync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _nameError = e.Message;
+        }
+        _busy = false;
+    }
+}

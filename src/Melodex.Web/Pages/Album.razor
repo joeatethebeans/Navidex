@@ -39,6 +39,11 @@ else
                     <IconButton Icon="play" Requires="@UserPermissions.Listen" Primary="true" Large="true" Label="@playLabel" Title="@playHint" OnClick="() => Player.PlayAlbumAsync(_album!)" />
                     <IconButton Icon="queue" Requires="@UserPermissions.Listen" Large="true" Confirm="true" Title="@(missing ? "Add to the queue, fetching the tracks you don't have to listen to" : "Add to the queue")"
                                 OnClick="() => Player.QueueAlbumAsync(_album!)" />
+                    @if (_album.Tracks.Any(Owned))
+                    {
+                        <IconButton Icon="playlist" Requires="@UserPermissions.Listen" Large="true" Title="Add the songs you have to a playlist"
+                                    OnClick="() => _adding = (_album!.Album.Title, _album.Tracks.Where(Owned).Select(t => new PlaylistItem(t.TrackId)).ToList())" />
+                    }
                 </text>;
                 <div class="row album-actions" style="margin-top: .5rem;">
                     @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
@@ -116,6 +121,8 @@ else
                                     <IconButton Icon="play" Requires="@UserPermissions.Listen" Title="Play the tracks you have from here" OnClick="() => PlayOwnedFromAsync(track)" />
                                     <IconButton Icon="queue" Requires="@UserPermissions.Listen" Title="Add to the queue" Confirm="true"
                                                 OnClick="() => Player.AddAsync([PlayerEntry.Owned(track, album, _album.ShownEditionId)])" />
+                                    <IconButton Icon="playlist" Requires="@UserPermissions.Listen" Class="hide-narrow" Title="Add to a playlist"
+                                                OnClick="() => _adding = (track.Title, [new PlaylistItem(track.TrackId)])" />
                                 }
                                 else if (track.Status is TrackStatus.Missing or TrackStatus.Elsewhere && Tracker.Find(RequestKind.Album, album.Id) is not { Active: true })
                                 {
@@ -150,6 +157,11 @@ else
                  OnChosen="url => _album = _album with { Album = _album.Album with { CoverUrl = url } }" />
 }
 
+@if (_adding is { } adding)
+{
+    <AddToPlaylistDialog Name="@adding.Name" Songs="adding.Songs" OnClose="() => _adding = null" />
+}
+
 @if (_formatting && _album is not null)
 {
     <FormatDialog Scope="new FormatScope(FormatScopeKind.Album, _album.Album.Id)" Name="@_album.Album.Title" OnClose="() => _formatting = false" />
@@ -162,6 +174,9 @@ else
     private bool _notFound;
     private bool _formatting;
     private bool _choosingCover;
+    private (string Name, IReadOnlyList<PlaylistItem> Songs)? _adding;
+
+    private static bool Owned(TrackRow track) => track.Status is TrackStatus.Owned or TrackStatus.OwnedElsewhere;
 
     private bool MultiDisc => _album!.Tracks.Select(t => t.Disc).Distinct().Count() > 1;
 

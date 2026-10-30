@@ -506,6 +506,78 @@ public sealed class MelodexClient(HttpClient http)
     public async Task<IReadOnlyList<WebhookDeliveryInfo>> ListWebhookDeliveriesAsync(Guid id, int limit = 50, CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<WebhookDeliveryInfo>>($"{Api}/webhooks/{id}/deliveries?limit={limit}", MelodexJson.Options, ct) ?? [];
 
+    // ---- Playlists ----
+
+    public async Task<IReadOnlyList<PlaylistSummary>> ListPlaylistsAsync(CancellationToken ct = default) =>
+        await http.GetFromJsonAsync<List<PlaylistSummary>>($"{Api}/playlists", MelodexJson.Options, ct) ?? [];
+
+    public Task<PlaylistDetail?> GetPlaylistAsync(Guid id, CancellationToken ct = default) => GetOrNullAsync<PlaylistDetail>($"{Api}/playlists/{id}", ct);
+
+    public async Task<PlaylistDetail> CreatePlaylistAsync(CreatePlaylist playlist, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/playlists", playlist, MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<PlaylistDetail>(MelodexJson.Options, ct))!;
+    }
+
+    public async Task<PlaylistSummary> UpdatePlaylistAsync(Guid id, UpdatePlaylist update, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/playlists/{id}", update, MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<PlaylistSummary>(MelodexJson.Options, ct))!;
+    }
+
+    public async Task<PlaylistAdded> AddToPlaylistAsync(Guid id, AddToPlaylist songs, CancellationToken ct = default)
+    {
+        using var response = await http.PostAsJsonAsync($"{Api}/playlists/{id}/songs", songs, MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<PlaylistAdded>(MelodexJson.Options, ct))!;
+    }
+
+    public async Task<PlaylistDetail> ArrangePlaylistAsync(Guid id, ArrangePlaylist arrangement, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/playlists/{id}/songs", arrangement, MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<PlaylistDetail>(MelodexJson.Options, ct))!;
+    }
+
+    public async Task DeletePlaylistAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await http.DeleteAsync($"{Api}/playlists/{id}", ct);
+        await EnsureAsync(response, ct);
+    }
+
+    public async Task RenamePlaylistFolderAsync(RenamePlaylistFolder rename, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync($"{Api}/playlists/folders", rename, MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+    }
+
+    public async Task<PlaylistSyncStatus> GetPlaylistSyncAsync(CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<PlaylistSyncStatus>($"{Api}/playlists/sync", MelodexJson.Options, ct))!;
+
+    /// <summary>Syncs your playlists with the media server now, and says how it went.</summary>
+    public async Task<PlaylistSyncStatus> SyncPlaylistsAsync(CancellationToken ct = default)
+    {
+        using var response = await http.PostAsync($"{Api}/playlists/sync", null, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<PlaylistSyncStatus>(MelodexJson.Options, ct))!;
+    }
+
+    /// <summary>Links your media server login, or someone else's with <paramref name="userId"/>, after checking it works.</summary>
+    public async Task<PlaylistSyncStatus> LinkMediaServerAsync(LinkMediaServer login, Guid? userId = null, CancellationToken ct = default)
+    {
+        using var response = await http.PutAsJsonAsync(userId is { } id ? $"{Api}/users/{id}/media-server" : $"{Api}/auth/media-server", login, MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<PlaylistSyncStatus>(MelodexJson.Options, ct))!;
+    }
+
+    public async Task UnlinkMediaServerAsync(Guid? userId = null, CancellationToken ct = default)
+    {
+        using var response = await http.DeleteAsync(userId is { } id ? $"{Api}/users/{id}/media-server" : $"{Api}/auth/media-server", ct);
+        await EnsureAsync(response, ct);
+    }
+
     /// <summary>Throws <see cref="MelodexApiException"/> with the server's own explanation for anything but success.</summary>
     private static async Task EnsureAsync(HttpResponseMessage response, CancellationToken ct)
     {

@@ -48,4 +48,6 @@ blur of itself, with a visualiser that moves with the music, and beside it, eith
 The visualiser can be turned off, and the browser's own full screen turned on, from the buttons at the top. Escape
 closes it. The volume and whether the visualiser shows are kept in this browser.
 
-Next: [Your library](library.md).
+The playlist button in the bar, or at the top of the full-screen player, adds what's playing to a playlist.
+
+Next: [Playlists](playlists.md).

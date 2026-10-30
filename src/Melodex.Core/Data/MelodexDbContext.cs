@@ -30,6 +30,8 @@ public class MelodexDbContext(DbContextOptions<MelodexDbContext> options) : DbCo
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<Webhook> Webhooks => Set<Webhook>();
     public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
+    public DbSet<Playlist> Playlists => Set<Playlist>();
+    public DbSet<PlaylistEntry> PlaylistEntries => Set<PlaylistEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,6 +129,20 @@ public class MelodexDbContext(DbContextOptions<MelodexDbContext> options) : DbCo
         modelBuilder.Entity<BackgroundTask>(e =>
         {
             e.HasIndex(t => new { t.Status, t.CreatedAt });
+        });
+
+        modelBuilder.Entity<Playlist>(e =>
+        {
+            e.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(p => p.UserId);
+        });
+
+        modelBuilder.Entity<PlaylistEntry>(e =>
+        {
+            e.HasOne(pe => pe.Playlist).WithMany(p => p.Entries).HasForeignKey(pe => pe.PlaylistId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(pe => new { pe.PlaylistId, pe.Position });
+            e.HasIndex(pe => pe.TrackId);
+            e.HasIndex(pe => pe.FileId);
         });
 
         modelBuilder.Entity<ApiKey>(e =>

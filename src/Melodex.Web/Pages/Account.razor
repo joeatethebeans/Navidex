@@ -4,7 +4,7 @@
 
 <PageTitle>Your account · Melodex</PageTitle>
 
-@* Your own username and password, what you may do, and signing out. *@
+@* Your own username and password, what you may do, your playlists' folders and media server login, and signing out. *@
 <h1>Your account</h1>
 @if (Auth.Status is { } status)
 {
@@ -49,6 +49,74 @@
             </div>
         </div>
     </section>
+
+    @if (Auth.May(UserPermissions.Listen))
+    {
+        <section class="panel" aria-label="Playlists">
+            <header class="panel-head">
+                <div class="panel-title"><h2>Playlists</h2></div>
+            </header>
+            <div class="panel-body">
+                <div class="field">
+                    <label class="field-label" for="account-folders">Folder separator</label>
+                    <div class="row">
+                        <input id="account-folders" type="text" maxlength="3" style="width: 5rem;" @bind="_folders" @bind:event="oninput" />
+                        <button disabled="@(_folders == (status.Appearance?.PlaylistFolders ?? "/"))" @onclick="SaveFoldersAsync">Save</button>
+                        @if (_foldersSaved) { <span class="muted small">Saved.</span> }
+                    </div>
+                    <span class="muted small">
+                        Media servers have no folders, so they're part of a playlist's name: with /, Moods/Calm is a playlist Calm in a folder Moods.
+                        Leave it empty for no folders.
+                    </span>
+                    @if (_foldersError is not null) { <span class="error small">@_foldersError</span> }
+                </div>
+
+                @if (_sync is null)
+                {
+                    <Loading Inline="true" />
+                }
+                else if (!_sync.Available)
+                {
+                    <p class="muted small">
+                        Playlists stay in Melodex: the media server doesn't sync them.
+                        @if (Auth.May(UserPermissions.Settings)) { <text>Tick <em>Sync playlists</em> in its plugin's settings under <a href="settings/plugins">Plugins</a> to sync them.</text> }
+                    </p>
+                }
+                else if (_sync.Linked)
+                {
+                    <p>
+                        Synced with @_sync.Server as <strong>@_sync.Username</strong>@(_sync.SyncedAt is { } at ? $", last synced {Format.Ago(at)}" : "").
+                    </p>
+                    @if (_sync.Error is not null) { <p class="error small">The last sync failed: @_sync.Error</p> }
+                    <div class="toolbar">
+                        <button disabled="@_linking" @onclick="SyncNowAsync">Sync now</button>
+                        <button disabled="@_linking" @onclick="UnlinkAsync">Unlink</button>
+                    </div>
+                }
+                else
+                {
+                    <p class="muted small">
+                        Link your @_sync.Server login to have your playlists there too, and the ones you make there here. It's checked first, and kept encrypted.
+                    </p>
+                    <div class="field">
+                        <label class="field-label" for="server-username">@_sync.Server username</label>
+                        <input id="server-username" type="text" autocomplete="off" @bind="_serverUsername" @bind:event="oninput" />
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="server-password">@_sync.Server password</label>
+                        <input id="server-password" type="password" autocomplete="off" @bind="_serverPassword" @bind:event="oninput" />
+                    </div>
+                    <div class="toolbar">
+                        <button class="primary" disabled="@(_linking || _serverUsername.Trim().Length == 0 || _serverPassword.Length == 0)" @onclick="LinkAsync">
+                            @if (_linking) { <span class="spinner"></span> }
+                            Link
+                        </button>
+                    </div>
+                }
+                @if (_linkError is not null) { <p class="error small">@_linkError</p> }
+            </div>
+        </section>
+    }
 }
 
 @code {
@@ -59,7 +127,76 @@
     private string? _error;
     private bool _busy;
 
-    protected override void OnInitialized() => _username = Auth.Status?.Username ?? "";
+    private string _folders = "/";
+    private bool _foldersSaved;
+    private string? _foldersError;
+    private PlaylistSyncStatus? _sync;
+    private string _serverUsername = "";
+    private string _serverPassword = "";
+    private bool _linking;
+    private string? _linkError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _username = Auth.Status?.Username ?? "";
+        _folders = Auth.Status?.Appearance?.PlaylistFolders ?? "/";
+        if (Auth.May(UserPermissions.Listen))
+        {
+            try
+            {
+                _sync = await Api.GetPlaylistSyncAsync();
+            }
+            catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+            {
+                _linkError = e.Message;
+            }
+        }
+    }
+
+    private async Task SaveFoldersAsync()
+    {
+        _foldersError = null;
+        try
+        {
+            var appearance = (Auth.Status?.Appearance ?? new Appearance()) with { PlaylistFolders = _folders.Trim() };
+            await Api.SetAppearanceAsync(appearance);
+            Auth.Set(await Api.GetAuthStatusAsync());
+            _foldersSaved = true;
+        }
+        catch (MelodexApiException e)
+        {
+            _foldersError = e.Message;
+        }
+    }
+
+    private Task LinkAsync() => LinkingAsync(async () =>
+    {
+        _sync = await Api.LinkMediaServerAsync(new LinkMediaServer(_serverUsername.Trim(), _serverPassword));
+        _serverPassword = "";
+    });
+
+    private Task UnlinkAsync() => LinkingAsync(async () =>
+    {
+        await Api.UnlinkMediaServerAsync();
+        _sync = await Api.GetPlaylistSyncAsync();
+    });
+
+    private Task SyncNowAsync() => LinkingAsync(async () => _sync = await Api.SyncPlaylistsAsync());
+
+    private async Task LinkingAsync(Func<Task> action)
+    {
+        _linking = true;
+        _linkError = null;
+        try
+        {
+            await action();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _linkError = e.Message;
+        }
+        _linking = false;
+    }
 
     private async Task SaveAsync()
     {

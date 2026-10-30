@@ -493,6 +493,99 @@ namespace Melodex.Core.Data.Migrations
                     b.ToTable("ListenNowItems");
                 });
 
+            modelBuilder.Entity("Melodex.Core.Data.Playlist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("NeedsPush")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ServerChangedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ServerId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ServerInstanceId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("SyncedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Playlists");
+                });
+
+            modelBuilder.Entity("Melodex.Core.Data.PlaylistEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Album")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Artist")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<double?>("DurationSeconds")
+                        .HasColumnType("REAL");
+
+                    b.Property<Guid?>("FileId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PlaylistId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ServerTrackId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("TrackId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("TrackId");
+
+                    b.HasIndex("PlaylistId", "Position");
+
+                    b.ToTable("PlaylistEntries");
+                });
+
             modelBuilder.Entity("Melodex.Core.Data.PluginInstance", b =>
                 {
                     b.Property<Guid>("Id")
@@ -722,6 +815,12 @@ namespace Melodex.Core.Data.Migrations
                     b.Property<DateTime?>("LastSignInAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("MediaServerPassword")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MediaServerUsername")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("NormalizedUsername")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -732,6 +831,12 @@ namespace Melodex.Core.Data.Migrations
 
                     b.Property<string>("Permissions")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PlaylistSyncError")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PlaylistsSyncedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Stamp")
@@ -936,6 +1041,28 @@ namespace Melodex.Core.Data.Migrations
                     b.Navigation("Track");
                 });
 
+            modelBuilder.Entity("Melodex.Core.Data.Playlist", b =>
+                {
+                    b.HasOne("Melodex.Core.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Melodex.Core.Data.PlaylistEntry", b =>
+                {
+                    b.HasOne("Melodex.Core.Data.Playlist", "Playlist")
+                        .WithMany("Entries")
+                        .HasForeignKey("PlaylistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Playlist");
+                });
+
             modelBuilder.Entity("Melodex.Core.Data.Request", b =>
                 {
                     b.HasOne("Melodex.Core.Data.Request", null)
@@ -979,6 +1106,11 @@ namespace Melodex.Core.Data.Migrations
             modelBuilder.Entity("Melodex.Core.Data.Edition", b =>
                 {
                     b.Navigation("Tracks");
+                });
+
+            modelBuilder.Entity("Melodex.Core.Data.Playlist", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("Melodex.Core.Data.Request", b =>

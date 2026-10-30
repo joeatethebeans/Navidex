@@ -1,0 +1,132 @@
+@inject MelodexClient Api
+@inject AuthState Auth
+
+@* Adds songs to one of your playlists, or to a new one. *@
+<Dialog Title="@($"Add {Name} to a playlist")" OnClose="OnClose" Class="playlist-picker">
+    @if (_done is not null)
+    {
+        <p>@_done</p>
+        <div class="toolbar">
+            <span class="spacer"></span>
+            @if (_doneId is { } id) { <a class="button" href="playlists/@id" @onclick="OnClose">Open it</a> }
+            <button class="primary" @onclick="OnClose">Done</button>
+        </div>
+    }
+    else
+    {
+        <div class="field">
+            <label class="field-label" for="playlist-new">New playlist</label>
+            <div class="row">
+                <input id="playlist-new" type="text" placeholder="@($"Name, or Folder{Delimiter}Name")" @bind="_newName" @bind:event="oninput"
+                       @onkeydown="EnterAsync" />
+                <button class="primary" disabled="@(_busy || _newName.Trim().Length == 0)" @onclick="CreateAsync">Make it</button>
+            </div>
+        </div>
+        @if (_playlists is null)
+        {
+            <Loading Inline="true" />
+        }
+        else if (_playlists.Count > 0)
+        {
+            <div class="field">
+                <label class="field-label" for="playlist-filter">Or add to</label>
+                @if (_playlists.Count > 8)
+                {
+                    <input id="playlist-filter" type="search" placeholder="Find a playlist" @bind="_filter" @bind:event="oninput" />
+                }
+                <ul class="picker-list">
+                    @foreach (var playlist in Shown)
+                    {
+                        var folders = PlaylistNames.Folders(playlist.Name, Delimiter);
+                        <li>
+                            <button class="plain" disabled="@_busy" @onclick="() => AddAsync(playlist)">
+                                <span>@PlaylistNames.Leaf(playlist.Name, Delimiter)</span>
+                                @if (folders.Count > 0) { <span class="muted small"> in @string.Join(" › ", folders)</span> }
+                                <span class="muted small spacer-left">@PlaylistNames.Length(playlist.Count, playlist.DurationSeconds)</span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        @if (_error is not null) { <p class="error small">@_error</p> }
+    }
+</Dialog>
+
+@code {
+    /// <summary>What's being added, as the title says it: a song's or album's name.</summary>
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+    [Parameter, EditorRequired] public IReadOnlyList<PlaylistItem> Songs { get; set; } = [];
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private IReadOnlyList<PlaylistSummary>? _playlists;
+    private string _newName = "";
+    private string _filter = "";
+    private bool _busy;
+    private string? _error, _done;
+    private Guid? _doneId;
+
+    private string Delimiter => PlaylistNames.Delimiter(Auth);
+
+    // Most recently changed first: the one you're building is usually it.
+    private IEnumerable<PlaylistSummary> Shown => _playlists!
+        .Where(p => _filter.Length == 0 || p.Name.Contains(_filter, StringComparison.CurrentCultureIgnoreCase))
+        .OrderByDescending(p => p.UpdatedAt);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _playlists = await Api.ListPlaylistsAsync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+            _playlists = [];
+        }
+    }
+
+    private async Task AddAsync(PlaylistSummary playlist)
+    {
+        await RunAsync(async () =>
+        {
+            var added = await Api.AddToPlaylistAsync(playlist.Id, new AddToPlaylist(Songs));
+            var name = PlaylistNames.Leaf(playlist.Name, Delimiter);
+            _done = added.Added > 0
+                ? $"Added {Count(added.Added)} to {name}{(added.AlreadyThere > 0 ? $"; {Count(added.AlreadyThere)} {(added.AlreadyThere == 1 ? "was" : "were")} in it already" : "")}."
+                : added.AlreadyThere > 0 ? $"{(Songs.Count == 1 ? "It's" : "They're")} in {name} already." : $"{(Songs.Count == 1 ? "It isn't" : "They aren't")} in your library.";
+            _doneId = playlist.Id;
+        });
+    }
+
+    private Task EnterAsync(KeyboardEventArgs e) => e.Key == "Enter" ? CreateAsync() : Task.CompletedTask;
+
+    private async Task CreateAsync()
+    {
+        if (_newName.Trim().Length == 0)
+            return;
+        await RunAsync(async () =>
+        {
+            var made = await Api.CreatePlaylistAsync(new CreatePlaylist(_newName.Trim(), Songs: Songs));
+            _done = $"Made {PlaylistNames.Leaf(made.Playlist.Name, Delimiter)}, with {Count(made.Playlist.Count)}.";
+            _doneId = made.Playlist.Id;
+        });
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await action();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+        }
+        _busy = false;
+    }
+
+    private static string Count(int songs) => $"{songs} {(songs == 1 ? "song" : "songs")}";
+}

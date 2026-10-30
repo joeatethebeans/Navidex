@@ -15,6 +15,10 @@
         {
             <NavLink href="review">Review</NavLink>
         }
+        @if (Auth.May(UserPermissions.Listen))
+        {
+            <NavLink href="playlists" Match="NavLinkMatch.Prefix">Playlists</NavLink>
+        }
         <NavLink href="search">Search</NavLink>
         <NavLink href="@SettingsHref" Match="NavLinkMatch.Prefix">Settings</NavLink>
     </nav>

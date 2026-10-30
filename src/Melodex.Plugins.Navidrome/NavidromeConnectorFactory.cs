@@ -16,9 +16,10 @@ public sealed class NavidromeConnectorFactory : IPluginFactory
         Version = "0.1.0",
         Type = PluginType.Connector,
         ContractVersion = ContractVersions.Connector.ToString(),
-        Description = "Tells Navidrome to scan when new music is filed, and finds it there.",
+        Description = "Tells Navidrome to scan when new music is filed, finds it there, and can keep each user's playlists the same in both.",
         Homepage = "https://www.navidrome.org",
-        Capabilities = [ConnectorCapabilities.FullScan, ConnectorCapabilities.Playlists, ConnectorCapabilities.Favourites, ConnectorCapabilities.LibraryRead],
+        Capabilities = [ConnectorCapabilities.FullScan, ConnectorCapabilities.Playlists, ConnectorCapabilities.Favourites, ConnectorCapabilities.LibraryRead,
+            ConnectorCapabilities.UserPlaylists],
         Access = new PluginAccess { Network = ["Your Navidrome server"] },
         SettingsSchema = JsonDocument.Parse("""
             {
@@ -41,6 +42,12 @@ public sealed class NavidromeConnectorFactory : IPluginFactory
                   "type": "string",
                   "title": "Password",
                   "writeOnly": true
+                },
+                "syncPlaylists": {
+                  "type": "boolean",
+                  "title": "Sync playlists",
+                  "description": "Keep each user's playlists the same in Melodex and Navidrome, both ways. Each user links their own Navidrome login on their account page.",
+                  "default": false
                 }
               }
             }

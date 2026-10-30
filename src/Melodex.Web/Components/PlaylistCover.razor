@@ -1,0 +1,19 @@
+@* A playlist's picture: its first album's cover, or four of them in a square once it has that many. *@
+@if (Covers.Count >= 4)
+{
+    <div class="cover playlist-mosaic @Class" aria-hidden="true">
+        @foreach (var url in Covers.Take(4))
+        {
+            <img src="@url" alt="" loading="lazy" />
+        }
+    </div>
+}
+else
+{
+    <Cover Url="@Covers.FirstOrDefault()" Class="@Class" />
+}
+
+@code {
+    [Parameter] public IReadOnlyList<string> Covers { get; set; } = [];
+    [Parameter] public string? Class { get; set; }
+}

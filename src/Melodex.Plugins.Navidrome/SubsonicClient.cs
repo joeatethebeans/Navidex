@@ -24,6 +24,17 @@ internal sealed class SubsonicClient
         _password = settings.TryGetProperty("password", out var p) ? p.GetString() ?? "" : "";
     }
 
+    /// <summary>The same server, as another user.</summary>
+    private SubsonicClient(HttpClient http, Uri server, string user, string password)
+    {
+        _http = http;
+        Server = server;
+        User = user;
+        _password = password;
+    }
+
+    public SubsonicClient As(string user, string password) => new(_http, Server, user, password);
+
     public Uri Server { get; }
 
     public string User { get; }

@@ -13,6 +13,7 @@ using Melodex.Core.Events;
 using Melodex.Core.Import;
 using Melodex.Core.Library;
 using Melodex.Core.Listening;
+using Melodex.Core.Playlists;
 using Melodex.Core.Plugins;
 using Melodex.Core.Requests;
 using Melodex.Core.Tasks;
@@ -73,6 +74,10 @@ builder.Services.AddScoped<LibraryRemover>();
 builder.Services.AddScoped<LibraryFormatter>();
 builder.Services.AddScoped<CoverChooser>();
 builder.Services.AddScoped<LyricsFinder>();
+builder.Services.AddScoped<PlaylistService>();
+builder.Services.AddScoped<PlaylistSync>();
+builder.Services.AddSingleton<PlaylistSyncer>();
+builder.Services.AddHostedService(services => services.GetRequiredService<PlaylistSyncer>());
 builder.Services.AddScoped<CatalogueSearch>();
 
 // Background work
@@ -170,6 +175,7 @@ api.MapListenEndpoints();
 api.MapPluginEndpoints();
 api.MapAccessEndpoints();
 api.MapWebhookEndpoints();
+api.MapPlaylistEndpoints();
 
 // The web app: Blazor WebAssembly, served from the same origin and talking only to the public API.
 app.MapStaticAssets();

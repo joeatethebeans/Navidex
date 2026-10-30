@@ -1,7 +1,7 @@
 @* A dialog over the page, closed by its buttons, Escape, or a click outside it. *@
 <div class="dialog-backdrop" @onclick="CloseAsync">
     <div class="dialog @Class" role="@(Alert ? "alertdialog" : "dialog")" aria-modal="true" aria-labelledby="@_titleId" @onclick:stopPropagation="true"
-         @onkeydown="KeyAsync" tabindex="-1" @ref="_dialog">
+         @onkeydown="KeyAsync" @onkeydown:stopPropagation="true" tabindex="-1" @ref="_dialog">
         <h2 id="@_titleId">@Title</h2>
         @ChildContent
     </div>

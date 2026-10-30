@@ -6,7 +6,7 @@ Melodex is pluggable in five ways. Manage them under **Settings → Plugins**, w
 | Kind | Does | Comes with Melodex |
 | --- | --- | --- |
 | **Catalogue** | Where artists, albums and songs come from | MusicBrainz (its public server, or your own mirror) |
-| **Media server** | Told to scan when music arrives; also lends its covers | Navidrome |
+| **Media server** | Told to scan when music arrives; also lends its covers, and can sync playlists | Navidrome |
 | **Retrieval** | Fetches music | YouTube Music (yt-dlp) and the inbox folder, as containers in the compose file |
 | **Artwork** | Covers and artist pictures | Cover Art Archive, Wikimedia Commons, Deezer, fanart.tv (with your own key) |
 | **Lyrics** | The words of songs, synced where they can be | LRCLIB |

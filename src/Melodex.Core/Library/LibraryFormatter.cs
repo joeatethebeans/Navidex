@@ -7,6 +7,7 @@ using Melodex.Contracts.Plugins;
 using Melodex.Core.Artwork;
 using Melodex.Core.Data;
 using Melodex.Core.Import;
+using Melodex.Core.Playlists;
 using Melodex.Core.Plugins;
 using Melodex.Core.Tasks;
 
@@ -83,6 +84,7 @@ public sealed class FormatTask(
     ArtworkCache artwork,
     SettingsService settings,
     ConnectorPlugins connectors,
+    PlaylistSyncer playlists,
     IOptions<MelodexOptions> options,
     ILogger<FormatTask> logger) : ITaskHandler
 {
@@ -121,6 +123,7 @@ public sealed class FormatTask(
         var template = job.Options.Move ? (await settings.GetFetchAsync(ct)).PathTemplate : null;
         var root = Path.GetFullPath(options.Value.LibraryPath);
         var touched = new List<string>();
+        var moved = new List<Guid>();
         var failures = new List<string>();
         progress.Report($"Formatting: {done} of {total} files");
 
@@ -153,6 +156,8 @@ public sealed class FormatTask(
                     continue;
                 }
                 touched.Add(file.Path);
+                if (file.Path != formatted.NewPath)
+                    moved.Add(file.Id);
                 file.Path = formatted.NewPath;
                 touched.Add(file.Path);
                 Reread(file, root, logger);
@@ -165,6 +170,9 @@ public sealed class FormatTask(
         }
 
         await TellMediaServerAsync(connectors, touched.Distinct().ToList(), logger, ct);
+        // Moved files may have new IDs on the media server, so the playlists they're in find them there again.
+        foreach (var user in await PlaylistSync.FilesMovedAsync(db, moved, CancellationToken.None))
+            playlists.Changed(user);
         var summary = $"Formatted {LibraryMatcher.Plural(total - failures.Count, "file", "files")}";
         progress.Report(failures.Count == 0 ? summary : $"{summary}; {failures.Count} couldn't be: {failures[0]}");
         logger.LogInformation("{Summary} for {Title}", summary, job.Title);

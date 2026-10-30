@@ -27,6 +27,17 @@ public class User
 
     /// <summary>How the web app looks to them, as JSON: see <c>Appearance</c>. Empty for the default.</summary>
     public string? Appearance { get; set; }
+
+    /// <summary>Their own login on the media server, for syncing their playlists.</summary>
+    public string? MediaServerUsername { get; set; }
+
+    /// <summary>The media server password, encrypted with the data protection keys: it has to be sent, so it can't be hashed.</summary>
+    public string? MediaServerPassword { get; set; }
+
+    /// <summary>Why their playlists last failed to sync, if they did.</summary>
+    public string? PlaylistSyncError { get; set; }
+
+    public DateTime? PlaylistsSyncedAt { get; set; }
 }
 
 /// <summary>

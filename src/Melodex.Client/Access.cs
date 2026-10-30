@@ -27,7 +27,12 @@ public enum ThemeMode { Auto, Light, Dark, Black }
 /// How long the Search page keeps the last search, its results and where it was scrolled to after you leave it, from 0
 /// (not at all) to 120 minutes.
 /// </param>
-public sealed record Appearance(ThemeColor Color = ThemeColor.Pink, ThemeMode Mode = ThemeMode.Auto, bool HighContrast = false, int KeepSearchMinutes = 5);
+/// <param name="PlaylistFolders">
+/// What separates folders in playlist names, such as <c>/</c> making <c>Moods/Calm</c> a playlist Calm in a folder
+/// Moods. Empty for no folders.
+/// </param>
+public sealed record Appearance(ThemeColor Color = ThemeColor.Pink, ThemeMode Mode = ThemeMode.Auto, bool HighContrast = false, int KeepSearchMinutes = 5,
+    string PlaylistFolders = "/");
 
 /// <summary>Body of <c>POST /auth/setup</c>: the admin account, made the first time Melodex runs.</summary>
 public sealed record SetUpLogin(string Username, string Password);
@@ -77,7 +82,9 @@ public static class UserPermissions
 /// <param name="IsAdmin">The admin, made at setup: may do everything, and only they can change their account.</param>
 /// <param name="Permissions">See <see cref="UserPermissions"/>; every one for the admin.</param>
 /// <param name="Keys">How many API keys they've made.</param>
-public sealed record UserInfo(Guid Id, string Username, bool IsAdmin, IReadOnlyList<string> Permissions, DateTime CreatedAt, DateTime? LastSignInAt, int Keys = 0);
+/// <param name="MediaServerUsername">Their login on the media server, for syncing their playlists, once linked.</param>
+public sealed record UserInfo(Guid Id, string Username, bool IsAdmin, IReadOnlyList<string> Permissions, DateTime CreatedAt, DateTime? LastSignInAt, int Keys = 0,
+    string? MediaServerUsername = null);
 
 /// <summary>Body of <c>POST /users</c>.</summary>
 public sealed record CreateUser(string Username, string Password, IReadOnlyList<string> Permissions);
