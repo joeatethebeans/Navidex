@@ -54,19 +54,105 @@ public enum TrackStatus
 
     /// <summary>Not in the library, and ignored: it doesn't count against the album.</summary>
     Ignored,
+
+    /// <summary>
+    /// Not in the library, on a kind of release the settings show for new songs only (<see cref="ReleaseShowing.NewSongsOnly"/>),
+    /// and the song is on a release shown in full or one you have. It doesn't count against the album.
+    /// </summary>
+    Elsewhere,
 }
 
-/// <summary>How to treat a song that appears on more than one album, for example on an album and on a single.</summary>
+/// <summary>
+/// How to treat a song that's on more than one release: an album and a single, a studio album and a compilation or a
+/// live album, a standard and a deluxe edition, and so on.
+/// </summary>
 public enum DuplicateTracks
 {
-    /// <summary>Fetch it for each album and keep a copy in each. Every album is judged on its own files.</summary>
+    /// <summary>Fetch it for each release and keep a copy in each. Every release is judged on its own files.</summary>
     KeepBoth,
 
-    /// <summary>Fetch it once and keep it in the album proper. Owning it anywhere counts as owning it everywhere.</summary>
+    /// <summary>
+    /// Fetch it once. Owning it on any release counts for every release it's on, and a song fetched on its own is kept
+    /// with the artist's main release that has it: an album before an EP or a single, a studio release before a
+    /// compilation or a live one.
+    /// </summary>
     KeepInAlbum,
 
-    /// <summary>Fetch it once and keep it in the single's folder. Owning it anywhere counts as owning it everywhere.</summary>
+    /// <summary>
+    /// Fetch it once, as <see cref="KeepInAlbum"/>, but a song fetched on its own is kept with the smallest release that
+    /// has it: a single before an EP or an album.
+    /// </summary>
     KeepInSingle,
+}
+
+/// <summary>
+/// A kind of release the missing view can show or hide: the catalogue's main types, its secondary types (live,
+/// compilation, remix...), and bootlegs, which have no official release at all. A release can be several at once, such
+/// as a live compilation, and is shown as the strictest of them says.
+/// </summary>
+public enum ReleaseKind
+{
+    Album, Ep, Single, Broadcast, Other,
+    Live, Compilation, Remix, Demo, Soundtrack, DjMix, Mixtape, Spokenword, Interview, Audiobook, AudioDrama, FieldRecording,
+    Bootleg,
+}
+
+/// <summary>How the missing view treats a kind of release you don't have. In order from the least to the most strict.</summary>
+public enum ReleaseShowing
+{
+    /// <summary>Listed, with every song on it.</summary>
+    Show,
+
+    /// <summary>
+    /// Listed only for songs that aren't on a release shown in full or one you have (the same recording, or a song of
+    /// the same title by the same artist, leaving aside notes on the version such as "(Live)"); only those count as missing.
+    /// </summary>
+    NewSongsOnly,
+
+    /// <summary>Not listed.</summary>
+    Hide,
+}
+
+public static class ReleaseKinds
+{
+    public static ReleaseKind Of(AlbumType type) => type switch
+    {
+        AlbumType.Album => ReleaseKind.Album,
+        AlbumType.Ep => ReleaseKind.Ep,
+        AlbumType.Single => ReleaseKind.Single,
+        AlbumType.Broadcast => ReleaseKind.Broadcast,
+        _ => ReleaseKind.Other,
+    };
+
+    public static ReleaseKind Of(AlbumSecondaryType type) => type switch
+    {
+        AlbumSecondaryType.Compilation => ReleaseKind.Compilation,
+        AlbumSecondaryType.Soundtrack => ReleaseKind.Soundtrack,
+        AlbumSecondaryType.Spokenword => ReleaseKind.Spokenword,
+        AlbumSecondaryType.Interview => ReleaseKind.Interview,
+        AlbumSecondaryType.Audiobook => ReleaseKind.Audiobook,
+        AlbumSecondaryType.AudioDrama => ReleaseKind.AudioDrama,
+        AlbumSecondaryType.Live => ReleaseKind.Live,
+        AlbumSecondaryType.Remix => ReleaseKind.Remix,
+        AlbumSecondaryType.DjMix => ReleaseKind.DjMix,
+        AlbumSecondaryType.Mixtape => ReleaseKind.Mixtape,
+        AlbumSecondaryType.Demo => ReleaseKind.Demo,
+        _ => ReleaseKind.FieldRecording,
+    };
+
+    /// <summary>Every kind a release is: its main type, each secondary type, and a bootleg if it has no official release.</summary>
+    public static IEnumerable<ReleaseKind> Of(AlbumType type, IEnumerable<AlbumSecondaryType> secondary, bool? official)
+    {
+        yield return Of(type);
+        foreach (var kind in secondary)
+            yield return Of(kind);
+        if (official == false)
+            yield return ReleaseKind.Bootleg;
+    }
+
+    /// <summary>What the missing view does with a kind until it's set: albums, EPs and singles in full, nothing else.</summary>
+    public static ReleaseShowing Default(ReleaseKind kind) =>
+        kind is ReleaseKind.Album or ReleaseKind.Ep or ReleaseKind.Single ? ReleaseShowing.Show : ReleaseShowing.Hide;
 }
 
 /// <summary>Library-wide settings for matching and the missing view.</summary>
@@ -83,20 +169,67 @@ public sealed record LibrarySettings
     /// </summary>
     public int AttemptsWhenBusy { get; init; } = 3;
 
-    /// <summary>Album types the missing view shows by default.</summary>
-    public IReadOnlyList<AlbumType> ShownTypes { get; init; } = [AlbumType.Album, AlbumType.Ep, AlbumType.Single];
-
-    /// <summary>Hide albums with any secondary type: live, compilation, remix, demo, soundtrack, interview, mixtape...</summary>
-    public bool HideSecondaryTypes { get; init; } = true;
-
-    /// <summary>Hide albums with no official release, such as bootleg-only albums.</summary>
-    public bool HideUnofficial { get; init; } = true;
+    /// <summary>
+    /// How the missing view treats each kind of release you don't have; a kind left out is as <see cref="ReleaseKinds.Default"/>
+    /// says. A release that's several kinds is treated as the strictest of them says.
+    /// </summary>
+    public IReadOnlyDictionary<ReleaseKind, ReleaseShowing> Showing { get; init; } = new Dictionary<ReleaseKind, ReleaseShowing>();
 
     /// <summary>
-    /// Show the music you have as its files' own tags and covers say, rather than as the catalogue names it, wherever a
-    /// file has them. Matching and what counts as missing still go by the catalogue.
+    /// Show song titles, artists and albums as your files' tags have them, rather than as the catalogue names them,
+    /// wherever a file has them. Matching and what counts as missing still go by the catalogue.
     /// </summary>
-    public bool PreferFileMetadata { get; init; }
+    public bool PreferFileTags { get; init; }
+
+    /// <summary>Show covers from your files (an embedded picture, or one like folder.jpg beside them) rather than the catalogue's, wherever there's one.</summary>
+    public bool PreferFileCovers { get; init; }
+
+    // Settings saved before each kind had its own choice, and tags and covers their own switch, are read into the above.
+    private IReadOnlyList<AlbumType>? _oldShownTypes;
+    private bool? _oldHideSecondary;
+    private bool? _oldHideUnofficial;
+
+    /// <summary>Read from older settings only: the main types shown, before <see cref="Showing"/>.</summary>
+    [JsonPropertyName("shownTypes")]
+    public IReadOnlyList<AlbumType>? OldShownTypes { get => null; init => _oldShownTypes = value; }
+
+    /// <summary>Read from older settings only: hide every secondary type, before <see cref="Showing"/>.</summary>
+    [JsonPropertyName("hideSecondaryTypes")]
+    public bool? OldHideSecondaryTypes { get => null; init => _oldHideSecondary = value; }
+
+    /// <summary>Read from older settings only: hide bootlegs, before <see cref="Showing"/>.</summary>
+    [JsonPropertyName("hideUnofficial")]
+    public bool? OldHideUnofficial { get => null; init => _oldHideUnofficial = value; }
+
+    /// <summary>Read from older settings only: both <see cref="PreferFileTags"/> and <see cref="PreferFileCovers"/>.</summary>
+    [JsonPropertyName("preferFileMetadata")]
+    public bool? OldPreferFileMetadata
+    {
+        get => null;
+        init
+        {
+            if (value is true)
+                PreferFileTags = PreferFileCovers = true;
+        }
+    }
+
+    /// <summary>How the missing view treats a kind of release.</summary>
+    public ReleaseShowing ShowingOf(ReleaseKind kind)
+    {
+        if (Showing.TryGetValue(kind, out var showing))
+            return showing;
+        var hidden = kind switch
+        {
+            ReleaseKind.Album or ReleaseKind.Ep or ReleaseKind.Single or ReleaseKind.Broadcast or ReleaseKind.Other =>
+                _oldShownTypes is { } shown ? !shown.Any(t => ReleaseKinds.Of(t) == kind) : (bool?)null,
+            ReleaseKind.Bootleg => _oldHideUnofficial,
+            _ => _oldHideSecondary,
+        };
+        return hidden is { } old ? (old ? ReleaseShowing.Hide : ReleaseShowing.Show) : ReleaseKinds.Default(kind);
+    }
+
+    /// <summary>How the missing view treats a release that's all these kinds: as the strictest says.</summary>
+    public ReleaseShowing ShowingOf(IEnumerable<ReleaseKind> kinds) => kinds.Select(ShowingOf).DefaultIfEmpty().Max();
 
     /// <summary>Whether owning a recording on any album counts for every album it appears on.</summary>
     [JsonIgnore]
@@ -136,7 +269,7 @@ public sealed record ArtistDetail(
     IReadOnlyList<AlbumSummary> Albums,
     string? ImageUrl = null);
 
-/// <param name="HiddenByDefault">The missing view's filters hide it when it isn't owned.</param>
+/// <param name="HiddenByDefault">The missing view's settings hide it when it isn't owned: its kind is hidden, or shown for new songs only and it has none.</param>
 /// <param name="OwnedTracks">Tracks owned (here or elsewhere) on the owned edition, or the best-covered edition.</param>
 /// <param name="TotalTracks">Tracks on that edition, less ignored ones you don't have; null until the album's editions have been fetched.</param>
 /// <param name="Ignored">The album is ignored, or every track you don't have on it is.</param>
@@ -345,8 +478,12 @@ public sealed record TaskInfo(Guid Id, string Kind, TaskState State, string? Pro
 /// <param name="Excluded">Files excluded from matching; they're counted in <paramref name="Files"/> but not under review.</param>
 /// <param name="Deferred">Files put off, which each scan tries again; counted in <paramref name="Files"/> but not under review.</param>
 /// <param name="Hidden">Files hidden from the library, not counted in <paramref name="Files"/>.</param>
+/// <param name="Preparing">
+/// Melodex has just started and is working out the library's lists of artists, albums and tracks for the first time;
+/// they take a while on a big library, and come back once they're ready.
+/// </param>
 public sealed record LibraryStatus(int Files, int Matched, int Review, int Pending, DateTime? LastScanAt, TaskInfo? CurrentTask, TaskInfo? LastScan = null,
-    bool Reading = false, int Excluded = 0, int Deferred = 0, int Hidden = 0);
+    bool Reading = false, int Excluded = 0, int Deferred = 0, int Hidden = 0, bool Preparing = false);
 
 public enum LogEntryLevel
 {

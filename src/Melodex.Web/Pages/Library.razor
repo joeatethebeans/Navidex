@@ -58,7 +58,7 @@
 @switch (_view)
 {
     case "albums":
-        @if (Store.Albums is null) { <Loading /> }
+        @if (Store.Albums is null) { <Loading Text="@LoadingText" /> }
         else if (Store.Albums.Count == 0) { <div class="empty card">No albums yet. Scan the library to read your music folder.</div> }
         else
         {
@@ -92,7 +92,7 @@
         break;
 
     case "tracks":
-        @if (Store.Tracks is null) { <Loading /> }
+        @if (Store.Tracks is null) { <Loading Text="@LoadingText" /> }
         else if (Store.Tracks.Count == 0) { <div class="empty card">No tracks yet. Scan the library to read your music folder.</div> }
         else if (!VisibleTracks.Any()) { <div class="empty card">No tracks match that filter.</div> }
         else
@@ -135,7 +135,7 @@
         break;
 
     default:
-        @if (Store.Artists is null) { <Loading /> }
+        @if (Store.Artists is null) { <Loading Text="@LoadingText" /> }
         else if (Store.Artists.Count == 0) { <div class="empty card">No artists yet. Scan the library to read your music folder.</div> }
         else
         {
@@ -250,6 +250,10 @@
     private int _limit = Page;
     private (LibraryItemKind Kind, Guid Id, string Name)? _removing;
 
+    private static string LoadingText => ScanStatus.Preparing
+        ? "Melodex has just started and is getting your library ready. The first time takes a while on a big library; after that it's quick."
+        : "Loading…";
+
     private string Intro => _view switch
     {
         "albums" => "Every album you have some or all of.",
@@ -334,6 +338,7 @@
     protected override async Task OnInitializedAsync()
     {
         ScanStatus.LibraryChanged += Reload;
+        ScanStatus.PreparingChanged += Redraw;
         await Prefs.LoadAsync();
     }
 
@@ -353,11 +358,21 @@
             _sort = await Prefs.GetAsync<SortChoice?>(SortKey(view), null) is { } saved && SortOptions.Any(o => o.Key == saved.Key)
                 ? saved
                 : new SortChoice(SortOptions[0].Key, false);
-            // What was loaded last shows straight away, while a fresh copy loads.
-            await LoadAsync();
+            // What was loaded last shows straight away, while a fresh copy loads behind it.
+            if (Loaded(view))
+                Reload();
+            else
+                await LoadAsync();
         }
         _switching = false;
     }
+
+    private bool Loaded(string view) => view switch
+    {
+        "albums" => Store.Albums is not null,
+        "tracks" => Store.Tracks is not null,
+        _ => Store.Artists is not null,
+    };
 
     private async Task ShowAsync(string view)
     {
@@ -411,5 +426,11 @@
         _removing = null;
     }
 
-    public void Dispose() => ScanStatus.LibraryChanged -= Reload;
+    private void Redraw() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        ScanStatus.PreparingChanged -= Redraw;
+    }
 }

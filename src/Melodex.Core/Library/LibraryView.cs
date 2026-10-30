@@ -10,7 +10,7 @@ namespace Melodex.Core.Library;
 /// it's all derived from the catalogue, the files' matches and the settings. Music of your own that no catalogue knows
 /// (<see cref="LocalMusic"/>) joins the library's lists as its tags say.
 /// </summary>
-public sealed class LibraryView(MelodexDbContext db, SettingsService settingsService, LocalMusic local)
+public sealed partial class LibraryView(MelodexDbContext db, SettingsService settingsService, LocalMusic local)
 {
     private sealed record Listing(Guid EditionId, int Disc, int Position, string Number, string Title, Guid TrackId, string ArtistCredit, TimeSpan? Duration);
 
@@ -33,6 +33,17 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
         public required HashSet<Guid> Ignored { get; init; }
 
         public required ILookup<Guid, ProviderId> AlbumIds { get; init; }
+
+        /// <summary>How the missing view treats each album, by its kinds.</summary>
+        public required Dictionary<Guid, ReleaseShowing> Showing { get; init; }
+
+        /// <summary>
+        /// The releases shown in full, or that you have, each song is on: by recording, and by artist and title. Only
+        /// worked out when some kind is shown for new songs only.
+        /// </summary>
+        public required ILookup<Guid, Guid> FullReleasesByTrack { get; init; }
+
+        public required ILookup<(Guid ArtistId, string Title), Guid> FullReleasesByTitle { get; init; }
     }
 
     private async Task<Snapshot> LoadAsync(IReadOnlyCollection<Guid> artistIds, CancellationToken ct)
@@ -72,6 +83,18 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
         var providerIds = await db.Crosswalk.Where(m => m.EntityKind == EntityKind.Album && albumIds.Contains(m.EntityId))
             .Select(m => new { m.EntityId, m.Provider, m.Value }).ToListAsync(ct);
 
+        var showing = albums.ToDictionary(a => a.Id, a => settings.ShowingOf(a));
+        var full = new List<(Listing Listing, Album Album)>();
+        if (showing.ContainsValue(ReleaseShowing.NewSongsOnly))
+        {
+            var albumsById = albums.ToDictionary(a => a.Id);
+            var albumOfEdition = editions.ToDictionary(e => e.Id, e => albumsById[e.AlbumId]);
+            var ownedAlbums = files.Where(f => f.EditionId is { } e && albumOfEdition.ContainsKey(e))
+                .Select(f => albumOfEdition[f.EditionId!.Value].Id).ToHashSet();
+            full = listings.Select(l => (Listing: l, Album: albumOfEdition[l.EditionId]))
+                .Where(x => showing[x.Album.Id] == ReleaseShowing.Show || ownedAlbums.Contains(x.Album.Id)).ToList();
+        }
+
         return new Snapshot
         {
             Settings = settings,
@@ -83,12 +106,49 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
             OwnedAnywhere = owned,
             Ignored = ignored,
             AlbumIds = providerIds.ToLookup(p => p.EntityId, p => new ProviderId(p.Provider, p.Value)),
+            Showing = showing,
+            FullReleasesByTrack = full.Select(x => (x.Listing.TrackId, x.Album.Id)).Distinct().ToLookup(x => x.TrackId, x => x.Id),
+            FullReleasesByTitle = full.Select(x => (Key: (x.Album.ArtistId, SongKey(x.Listing.Title)), x.Album.Id)).Distinct().ToLookup(x => x.Key, x => x.Id),
         };
     }
 
+    /// <summary>
+    /// A song's title as a person would compare them: case, spacing, curly quotes and "&" for "and" aside, without notes on the
+    /// version at the end, such as "(Live)", "[2011 remaster]" or " - Radio Edit". Empty for the catalogue's
+    /// placeholders, such as "[untitled]", which aren't songs.
+    /// </summary>
+    public static string SongKey(string title)
+    {
+        var key = string.Join(' ', title.Normalize(System.Text.NormalizationForm.FormKC).ToLowerInvariant()
+            .Replace('\u2019', '\'').Replace('\u2018', '\'').Replace("&", " and ").Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        string before;
+        do
+        {
+            before = key;
+            key = VersionNote().Replace(key, "").Trim();
+        }
+        while (key != before && key.Length > 0);
+        return key;
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"(\s*\([^()]*\)|\s*\[[^\[\]]*\]|\s+[-\u2013\u2014]\s+[^-\u2013\u2014]*)$")]
+    private static partial System.Text.RegularExpressions.Regex VersionNote();
+
+    /// <summary>
+    /// A song on a release shown for new songs only that you have, or that's on another release shown in full or one you
+    /// have, by recording or by title. It doesn't count against this release.
+    /// </summary>
+    private static bool Elsewhere(Snapshot s, Album album, Listing listing) =>
+        s.Showing[album.Id] == ReleaseShowing.NewSongsOnly
+        && (s.OwnedAnywhere.Contains(listing.TrackId)
+            || s.FullReleasesByTrack[listing.TrackId].Any(a => a != album.Id)
+            || SongKey(listing.Title) is not { Length: > 0 } key
+            || s.FullReleasesByTitle[(album.ArtistId, key)].Any(a => a != album.Id));
+
     /// <param name="AllIgnored">Every track not owned on the shown edition is ignored, so there's nothing to fetch.</param>
+    /// <param name="NothingNew">Shown for new songs only, and every song on it is elsewhere, ignored or yours.</param>
     private sealed record Evaluation(Album Album, AlbumStatus Status, Edition? OwnedEdition, Edition? ShownEdition, int? OwnedTracks, int? TotalTracks,
-        bool AllIgnored = false);
+        bool AllIgnored = false, bool NothingNew = false);
 
     private static Evaluation Evaluate(Snapshot s, Album album)
     {
@@ -103,18 +163,19 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
         if (ownedEdition is not null)
         {
             var listings = s.ListingsByEdition[ownedEdition.Id].ToList();
-            var statuses = listings.Select(l => TrackStatusOf(s, l, editionIds)).ToList();
+            var statuses = listings.Select(l => TrackStatusOf(s, album, l, editionIds)).ToList();
             var missing = statuses.Count(t => t == TrackStatus.Missing);
-            var counted = statuses.Count(t => t != TrackStatus.Ignored);
+            var counted = statuses.Count(t => t is not (TrackStatus.Ignored or TrackStatus.Elsewhere));
             return new Evaluation(album, missing == 0 ? AlbumStatus.Complete : AlbumStatus.Partial, ownedEdition, ownedEdition,
                 counted - missing, counted);
         }
 
+        // Until its songs are known, a release shown for new songs only can't be said to have any.
         if (album.EditionsRefreshedAt is null || editions.Count == 0)
-            return new Evaluation(album, AlbumStatus.Missing, null, null, null, null);
+            return new Evaluation(album, AlbumStatus.Missing, null, null, null, null, NothingNew: s.Showing[album.Id] == ReleaseShowing.NewSongsOnly);
 
         // Not owned: find the edition most covered by recordings owned elsewhere, preferring official editions.
-        // Ignored tracks don't count, owned or not.
+        // Ignored tracks don't count, owned or not, and nor do songs elsewhere on a release shown for new songs only.
         var counts = s.Settings.CountsOwnedAnywhere;
         var official = editions.Where(e => string.Equals(e.Status, "Official", StringComparison.OrdinalIgnoreCase)).ToList();
         var best = (official.Count > 0 ? official : editions)
@@ -122,38 +183,42 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
             {
                 var tracks = s.ListingsByEdition[e.Id].ToList();
                 var owned = counts ? tracks.Count(t => s.OwnedAnywhere.Contains(t.TrackId)) : 0;
-                var ignored = tracks.Count(t => s.Ignored.Contains(t.TrackId) && !(counts && s.OwnedAnywhere.Contains(t.TrackId)));
-                return (Edition: e, Listed: tracks.Count, Total: tracks.Count - ignored, Owned: owned);
+                var skipped = tracks.Count(t => !(counts && s.OwnedAnywhere.Contains(t.TrackId)) && (s.Ignored.Contains(t.TrackId) || Elsewhere(s, album, t)));
+                var fresh = tracks.Count(t => !s.Ignored.Contains(t.TrackId) && !Elsewhere(s, album, t));
+                return (Edition: e, Listed: tracks.Count, Total: tracks.Count - skipped, Owned: owned, New: fresh);
             })
             .Where(x => x.Listed > 0)
             .OrderByDescending(x => x.Owned == x.Total).ThenByDescending(x => x.Owned).ThenByDescending(x => x.Total)
             .FirstOrDefault();
         if (best.Edition is null)
-            return new Evaluation(album, AlbumStatus.Missing, null, null, null, null);
+            return new Evaluation(album, AlbumStatus.Missing, null, null, null, null, NothingNew: s.Showing[album.Id] == ReleaseShowing.NewSongsOnly);
 
         var covered = counts && best.Owned > 0 && best.Owned == best.Total;
+        var nothingNew = s.Showing[album.Id] == ReleaseShowing.NewSongsOnly && best.New == 0;
         return new Evaluation(album, covered ? AlbumStatus.Covered : AlbumStatus.Missing, null, best.Edition,
-            best.Owned, best.Total, AllIgnored: best.Owned == best.Total && !covered);
+            best.Owned, best.Total, AllIgnored: best.Owned == best.Total && !covered && !nothingNew, NothingNew: nothingNew);
     }
 
-    private static TrackStatus TrackStatusOf(Snapshot s, Listing listing, HashSet<Guid> albumEditions)
+    private static TrackStatus TrackStatusOf(Snapshot s, Album album, Listing listing, HashSet<Guid> albumEditions)
     {
         // Owned here if a file for this recording sits on any edition of this album.
         if (s.FilesByTrack[listing.TrackId].Any(f => f.EditionId is { } e && albumEditions.Contains(e)))
             return TrackStatus.Owned;
         if (s.Settings.CountsOwnedAnywhere && s.OwnedAnywhere.Contains(listing.TrackId))
             return TrackStatus.OwnedElsewhere;
-        return s.Ignored.Contains(listing.TrackId) ? TrackStatus.Ignored : TrackStatus.Missing;
+        if (s.Ignored.Contains(listing.TrackId))
+            return TrackStatus.Ignored;
+        return Elsewhere(s, album, listing) ? TrackStatus.Elsewhere : TrackStatus.Missing;
     }
 
     private static AlbumSummary Summarise(Snapshot s, Evaluation e) => new(
         e.Album.Id, e.Album.ArtistId, e.Album.Title, e.Album.ArtistCredit, e.Album.Type, e.Album.SecondaryTypes, e.Album.FirstReleaseDate,
-        e.Status, !s.Settings.Shows(e.Album), e.Album.Ignored || e.AllIgnored, e.OwnedTracks, e.TotalTracks, s.AlbumIds[e.Album.Id].ToList(),
+        e.Status, HiddenByDefault(s, e), e.Album.Ignored || e.AllIgnored, e.OwnedTracks, e.TotalTracks, s.AlbumIds[e.Album.Id].ToList(),
         AlbumCover(s, e));
 
     // The owned files' own cover when the settings prefer it (falling back to the catalogue's), else the catalogue's.
     private static string AlbumCover(Snapshot s, Evaluation e) =>
-        s.Settings.PreferFileMetadata && e.OwnedEdition is { } owned && s.FilesByEdition[owned.Id].OrderBy(f => f.Path, StringComparer.Ordinal).FirstOrDefault() is { } file
+        s.Settings.PreferFileCovers && e.OwnedEdition is { } owned && s.FilesByEdition[owned.Id].OrderBy(f => f.Path, StringComparer.Ordinal).FirstOrDefault() is { } file
             ? LocalMusic.CoverUrl(file.Id)
             : CoverUrl(e.Album.Id, e.OwnedEdition?.Id);
 
@@ -167,8 +232,10 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
     /// <summary>The artist's picture, served by the core like covers.</summary>
     public static string ArtistImageUrl(Guid artistId) => $"api/v1/artwork/artist/{artistId}";
 
+    private static bool HiddenByDefault(Snapshot s, Evaluation e) => s.Showing[e.Album.Id] == ReleaseShowing.Hide || e.NothingNew;
+
     private static bool IsListedMissing(Snapshot s, Evaluation e) =>
-        e.Status == AlbumStatus.Missing && s.Settings.Shows(e.Album) && !e.Album.Ignored && !e.AllIgnored;
+        e.Status == AlbumStatus.Missing && !HiddenByDefault(s, e) && !e.Album.Ignored && !e.AllIgnored;
 
     private static IEnumerable<Evaluation> Ordered(IEnumerable<Evaluation> evaluations) =>
         evaluations.OrderBy(e => e.Album.FirstReleaseDate ?? "9999").ThenBy(e => e.Album.Title);
@@ -196,7 +263,7 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
                 return new LibraryArtist(a.Id, a.Name, a.SortName, a.Disambiguation, idLookup[a.Id].ToList(),
                     albums.Count(e => e.Status is AlbumStatus.Complete or AlbumStatus.Partial) + ownAlbums[a.Id].Count(),
                     albums.Count(e => IsListedMissing(s, e)),
-                    albums.Count(e => e.Status == AlbumStatus.Covered && s.Settings.Shows(e.Album)),
+                    albums.Count(e => e.Status == AlbumStatus.Covered && !HiddenByDefault(s, e)),
                     files.GetValueOrDefault(a.Id) + ownAlbums[a.Id].Sum(x => x.Songs.Count),
                     ArtistImageUrl(a.Id),
                     PartialAlbums: albums.Count(e => e.Status == AlbumStatus.Partial && !e.Album.Ignored));
@@ -223,7 +290,7 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
 
     public async Task<IReadOnlyList<LibraryTrack>> GetLibraryTracksAsync(CancellationToken ct)
     {
-        var prefer = (await settingsService.GetLibraryAsync(ct)).PreferFileMetadata;
+        var settings = await settingsService.GetLibraryAsync(ct);
         var rows = await db.LibraryFiles.Where(f => f.TrackId != null)
             .Select(f => new
             {
@@ -238,10 +305,10 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
         return rows
             .Select(r =>
             {
-                var tags = prefer ? FileTags.Parse(r.TagsJson) : null;
+                var tags = settings.PreferFileTags ? FileTags.Parse(r.TagsJson) : null;
                 return new LibraryTrack(r.Id, r.TrackId, tags?.Title ?? r.Title, tags?.Artist ?? r.ArtistCredit, r.ArtistId, r.AlbumId, tags?.Album ?? r.AlbumTitle,
                     r.Listing?.Disc, r.Listing?.Number, (r.Duration ?? r.TrackDuration)?.TotalSeconds, r.Path, r.Format,
-                    prefer ? LocalMusic.CoverUrl(r.Id) : r.AlbumId is { } album ? CoverUrl(album, r.EditionId) : null);
+                    settings.PreferFileCovers ? LocalMusic.CoverUrl(r.Id) : r.AlbumId is { } album ? CoverUrl(album, r.EditionId) : null);
             })
             .Concat(own.Albums.SelectMany(a => a.Songs.Select(song => new LibraryTrack(song.File.Id, song.File.Id, song.Title, song.Artist,
                 a.ArtistLocal ? null : a.ArtistId, a.Id, a.Title, song.Tags.Disc, song.Tags.Track?.ToString(), song.File.Duration?.TotalSeconds,
@@ -284,7 +351,7 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
             e.Formats, e.TrackCount, s.FilesByEdition[e.Id].Count(), editionProviderIds[e.Id].ToList())).ToList();
 
         var tracks = new List<TrackRow>();
-        var tagged = s.Settings.PreferFileMetadata && shown is not null
+        var tagged = s.Settings.PreferFileTags && shown is not null
             ? (await db.LibraryFiles.Where(f => f.EditionId != null && editionIds.Contains(f.EditionId.Value)).Select(f => new { f.Id, f.TagsJson }).ToListAsync(ct))
                 .ToDictionary(f => f.Id, f => FileTags.Parse(f.TagsJson).Title)
             : null;
@@ -296,7 +363,7 @@ public sealed class LibraryView(MelodexDbContext db, SettingsService settingsSer
                 .Select(m => new { m.EntityId, m.Provider, m.Value }).ToListAsync(ct)).ToLookup(m => m.EntityId, m => new ProviderId(m.Provider, m.Value));
             foreach (var listing in listings)
             {
-                var status = TrackStatusOf(s, listing, editionIds);
+                var status = TrackStatusOf(s, evaluation.Album, listing, editionIds);
                 var file = s.FilesByTrack[listing.TrackId].FirstOrDefault(f => f.EditionId is { } e && editionIds.Contains(e));
                 var title = file is not null && tagged?.GetValueOrDefault(file.Id) is { Length: > 0 } own ? own : listing.Title;
                 tracks.Add(new TrackRow(listing.TrackId, listing.Disc, listing.Position, listing.Number, title, listing.ArtistCredit,

@@ -40,7 +40,7 @@ public static class LibraryEndpoints
     {
         var library = api.MapGroup("/library").WithTags("Library");
 
-        library.MapGet("", async (MelodexDbContext db, LibraryReading reading, CancellationToken ct) =>
+        library.MapGet("", async (MelodexDbContext db, LibraryReading reading, LibraryCache cache, CancellationToken ct) =>
             {
                 var hidden = await db.LibraryFiles.CountAsync(f => f.HiddenAt != null, ct);
                 var files = await db.LibraryFiles.CountAsync(ct) - hidden;
@@ -57,7 +57,8 @@ public static class LibraryEndpoints
                     .OrderByDescending(t => t.FinishedAt).FirstOrDefaultAsync(ct);
                 var titled = await TitledAsync(db, new[] { current, lastFinished }.OfType<BackgroundTask>().ToList(), ct);
                 return new LibraryStatus(files, matched, files - matched - pending - excluded - deferred, pending, lastScan,
-                    current is null ? null : titled[0], lastFinished is null ? null : titled[^1], await reading.IsBusyAsync(db, ct), excluded, deferred, hidden);
+                    current is null ? null : titled[0], lastFinished is null ? null : titled[^1], await reading.IsBusyAsync(db, ct), excluded, deferred, hidden,
+                    cache.Preparing);
             })
             .WithName("GetLibraryStatus").WithSummary("File counts, the last scan, and any task in progress.");
 
@@ -71,14 +72,18 @@ public static class LibraryEndpoints
                          + "matched or under review again too. The body can be left out. Returns the queued task.")
             .Produces<TaskInfo>(StatusCodes.Status202Accepted);
 
-        library.MapGet("/artists", (LibraryCache cache, CancellationToken ct) => cache.GetArtistsAsync(ct))
-            .WithName("GetLibraryArtists").WithSummary("Artists in the library, with owned, missing and covered album counts. May lag a scan by a few seconds.");
+        // Big lists, so each carries an ETag: send it back as If-None-Match and an unchanged list is a 304 with no body.
+        library.MapGet("/artists", (LibraryCache cache, HttpContext http, CancellationToken ct) => cache.SendAsync(LibraryCache.Artists, http, ct))
+            .WithName("GetLibraryArtists").Produces<List<LibraryArtist>>().Produces(StatusCodes.Status304NotModified)
+            .WithSummary("Artists in the library, with owned, missing and covered album counts. May lag a scan by a few seconds. Supports If-None-Match.");
 
-        library.MapGet("/albums", (LibraryCache cache, CancellationToken ct) => cache.GetAlbumsAsync(ct))
-            .WithName("GetLibraryAlbums").WithSummary("Albums you have some or all of, by artist. May lag a scan by a few seconds.");
+        library.MapGet("/albums", (LibraryCache cache, HttpContext http, CancellationToken ct) => cache.SendAsync(LibraryCache.Albums, http, ct))
+            .WithName("GetLibraryAlbums").Produces<List<LibraryAlbum>>().Produces(StatusCodes.Status304NotModified)
+            .WithSummary("Albums you have some or all of, by artist. May lag a scan by a few seconds. Supports If-None-Match.");
 
-        library.MapGet("/tracks", (LibraryCache cache, CancellationToken ct) => cache.GetTracksAsync(ct))
-            .WithName("GetLibraryTracks").WithSummary("Every matched file, by artist and album. May lag a scan by a few seconds.");
+        library.MapGet("/tracks", (LibraryCache cache, HttpContext http, CancellationToken ct) => cache.SendAsync(LibraryCache.Tracks, http, ct))
+            .WithName("GetLibraryTracks").Produces<List<LibraryTrack>>().Produces(StatusCodes.Status304NotModified)
+            .WithSummary("Every matched file, by artist and album. May lag a scan by a few seconds. Supports If-None-Match.");
 
         library.MapGet("/missing", (LibraryView view, CancellationToken ct) => view.GetMissingAsync(ct))
             .WithName("GetMissing").WithSummary("Missing albums across the library, after the default filters and ignores.");

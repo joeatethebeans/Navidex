@@ -1,5 +1,5 @@
 @* Shows an album or track status as a coloured label. *@
-<span class="badge @CssClass">@Label</span>
+<span class="badge @CssClass" title="@Hint">@Label</span>
 
 @code {
     [Parameter] public AlbumStatus? Album { get; set; }
@@ -11,6 +11,10 @@
         { } t => t.ToString().ToLowerInvariant(),
         null => "neutral",
     };
+
+    private string? Hint => Track == TrackStatus.Elsewhere
+        ? "On a release shown in full, or one you have. This kind of release is shown for new songs only (Settings → General), so it doesn't count here."
+        : null;
 
     private string Label => Album switch
     {
@@ -24,6 +28,7 @@
             TrackStatus.OwnedElsewhere => "On another album",
             TrackStatus.Missing => "Missing",
             TrackStatus.Ignored => "Ignored",
+            TrackStatus.Elsewhere => "Elsewhere",
             _ => "",
         },
     };

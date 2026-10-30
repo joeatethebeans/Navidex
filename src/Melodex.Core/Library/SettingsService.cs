@@ -6,11 +6,9 @@ namespace Melodex.Core.Library;
 
 public static class LibrarySettingsExtensions
 {
-    /// <summary>Whether the missing view shows this album when it isn't owned.</summary>
-    public static bool Shows(this LibrarySettings settings, Album album) =>
-        settings.ShownTypes.Contains(album.Type)
-        && !(settings.HideSecondaryTypes && album.SecondaryTypes.Count > 0)
-        && !(settings.HideUnofficial && album.HasOfficialRelease == false);
+    /// <summary>How the missing view treats this album when it isn't owned, by the strictest of its kinds.</summary>
+    public static ReleaseShowing ShowingOf(this LibrarySettings settings, Album album) =>
+        settings.ShowingOf(ReleaseKinds.Of(album.Type, album.SecondaryTypes, album.HasOfficialRelease));
 }
 
 public sealed class SettingsService(MelodexDbContext db)

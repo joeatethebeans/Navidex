@@ -11,71 +11,92 @@
 }
 else
 {
-    <h2>Songs on more than one album</h2>
-    <p class="muted small">A song can be on an album and on a single, or on a deluxe edition and a compilation. This decides whether it's fetched once or for each, and so whether owning it on one album counts for the others.</p>
-    <div class="card" style="padding: .75rem 1rem;">
+    <h2>Songs on more than one release</h2>
+    <p class="muted small">
+        A song is often on several releases: an album and its singles, a standard and a deluxe edition, an EP, a compilation, a soundtrack.
+        This decides whether it's fetched once or for each, and whether owning it on any one of them counts for all the others.
+    </p>
+    <div class="card settings-card">
         @foreach (var (value, label, help) in DuplicateOptions)
         {
-            <div style="margin: .35rem 0;">
-                <label>
-                    <input type="radio" name="duplicates" checked="@(_settings.DuplicateTracks == value)" @onchange="() => _settings = _settings with { DuplicateTracks = value }" />
-                    <strong>@label</strong>
-                </label>
-                <div class="muted small" style="margin-left: 1.6rem;">@help</div>
-            </div>
+            <label class="dialog-choice">
+                <input type="radio" name="duplicates" checked="@(_settings.DuplicateTracks == value)" @onchange="() => _settings = _settings with { DuplicateTracks = value }" />
+                <span><strong>@label</strong><span class="muted small">@help</span></span>
+            </label>
         }
     </div>
 
     <h2>Missing view</h2>
-    <div class="card" style="padding: .75rem 1rem;">
-        <div class="row" style="margin: .35rem 0;">
-            <span>Show</span>
-            @foreach (var type in new[] { AlbumType.Album, AlbumType.Ep, AlbumType.Single, AlbumType.Broadcast, AlbumType.Other })
-            {
-                <label><input type="checkbox" checked="@_settings.ShownTypes.Contains(type)" @onchange="e => ToggleType(type, (bool)e.Value!)" /> @Format.TypeName(type)</label>
-            }
-        </div>
-        <div style="margin: .35rem 0;">
-            <label><input type="checkbox" checked="@_settings.HideSecondaryTypes" @onchange="e => _settings = _settings with { HideSecondaryTypes = (bool)e.Value! }" /> Hide live albums, compilations, remixes, demos, soundtracks and other secondary types</label>
-        </div>
-        <div style="margin: .35rem 0;">
-            <label><input type="checkbox" checked="@_settings.HideUnofficial" @onchange="e => _settings = _settings with { HideUnofficial = (bool)e.Value! }" /> Hide albums that only exist as bootlegs</label>
-        </div>
+    <p class="muted small">
+        Which releases you don't have are listed as missing. A release can be more than one kind, such as a live compilation, and then
+        follows the strictest. <strong>New songs only</strong> lists a release just for the songs that aren't on a release shown in full or
+        one you have (the same recording, or the same title leaving aside notes like "(Live)"), and only those count as missing. Their songs are
+        looked up at the next scan, so they show from then.
+    </p>
+    <div class="card settings-card release-kinds">
+        @foreach (var (heading, note, kinds) in KindGroups)
+        {
+            <div class="release-group">
+                <div class="release-group-head">
+                    <h3>@heading</h3>
+                    <span class="muted small">@note</span>
+                </div>
+                @foreach (var (kind, name, hint) in kinds)
+                {
+                    var showing = _settings.ShowingOf(kind);
+                    <div class="release-row">
+                        <span class="release-name">@name@if (hint is not null) { <span class="muted small">@hint</span> }</span>
+                        <Segmented T="ReleaseShowing" Value="showing" Options="ShowingOptions" Label="@name" Class="@($"showing {showing.ToString().ToLowerInvariant()}")"
+                                   OnChange="value => SetShowing(kind, value)" />
+                    </div>
+                }
+            </div>
+        }
+        @if (!IsDefaultShowing)
+        {
+            <button class="link small" @onclick="ResetShowing">Back to the defaults: albums, EPs and singles in full, nothing else</button>
+        }
     </div>
 
     <h2>Matching</h2>
-    <div class="card" style="padding: .75rem 1rem;">
-        <label>
+    <div class="card settings-card">
+        <div class="setting-line">
             Send fuzzy matches under
-            <input type="number" min="50" max="100" step="1" style="width: 5rem;" value="@((int)Math.Round(_settings.MatchThreshold * 100))"
-                   @onchange="e => _settings = _settings with { MatchThreshold = int.Parse(e.Value!.ToString()!) / 100.0 }" />
+            <NumberField Min="50" Max="100" Label="Confidence, in percent" Value="(int)Math.Round(_settings.MatchThreshold * 100)"
+                         ValueChanged="n => _settings = _settings with { MatchThreshold = n / 100.0 }" />
             % confidence to review
-        </label>
+        </div>
         <div class="muted small">Applies from the next scan.</div>
-        <label style="display: block; margin-top: .75rem;">
+        <div class="setting-line">
             When MusicBrainz is busy, try each album
-            <input type="number" min="1" max="10" step="1" style="width: 4rem;" value="@_settings.AttemptsWhenBusy"
-                   @onchange="e => _settings = _settings with { AttemptsWhenBusy = int.TryParse(e.Value?.ToString(), out var n) ? Math.Clamp(n, 1, 10) : _settings.AttemptsWhenBusy }" />
+            <NumberField Min="1" Max="10" Label="Attempts" Value="_settings.AttemptsWhenBusy" ValueChanged="n => _settings = _settings with { AttemptsWhenBusy = n }" />
             @(_settings.AttemptsWhenBusy == 1 ? "time" : "times") before leaving it for the next scan
-        </label>
+        </div>
         <div class="muted small">A busy album goes to the back of the queue, so MusicBrainz gets time to recover before it's tried again.</div>
     </div>
 
-    <h2>Showing your music</h2>
-    <div class="card" style="padding: .75rem 1rem;">
-        <label>
-            <input type="checkbox" checked="@_settings.PreferFileMetadata" @onchange="e => _settings = _settings with { PreferFileMetadata = (bool)e.Value! }" />
-            Prefer your files' own tags and covers
+    <h2>File metadata</h2>
+    <p class="muted small">How the music you have is shown. Matching, and what counts as missing, go by the catalogue either way.</p>
+    <div class="card settings-card">
+        <label class="dialog-choice">
+            <input type="checkbox" checked="@_settings.PreferFileTags" @onchange="e => _settings = _settings with { PreferFileTags = (bool)e.Value! }" />
+            <span>
+                <strong>Use your files' tags</strong>
+                <span class="muted small">Song titles, artists and albums as your files' tags have them, wherever a file has them; the catalogue fills in the rest.</span>
+            </span>
         </label>
-        <div class="muted small">
-            Song titles, artists and albums show as your files' tags have them, and covers come from the files (an embedded picture, or
-            one like folder.jpg beside them), wherever a file has them; the catalogue fills in the rest. Matching and what counts as missing
-            still go by the catalogue. Files you exclude from matching always show as their own tags say.
-        </div>
+        <label class="dialog-choice">
+            <input type="checkbox" checked="@_settings.PreferFileCovers" @onchange="e => _settings = _settings with { PreferFileCovers = (bool)e.Value! }" />
+            <span>
+                <strong>Use your files' cover art</strong>
+                <span class="muted small">A picture embedded in the files, or one like folder.jpg beside them, wherever there's one; otherwise the catalogue's.</span>
+            </span>
+        </label>
+        <div class="muted small">Files you exclude from matching always show as their own tags and pictures say.</div>
     </div>
 
     <h2>Fetching</h2>
-    <div class="card" style="padding: .75rem 1rem;">
+    <div class="card settings-card">
         <div class="field">
             <label class="field-label" for="path-template">Folder layout for new albums</label>
             <input id="path-template" type="text" style="width: 100%; max-width: 32rem;" @bind="_fetchTemplate" />
@@ -89,64 +110,45 @@ else
                 }
             </div>
         </div>
-        <div class="field">
-            <label>
-                Fetch
-                <input type="number" min="1" max="8" style="width: 4rem;" value="@_fetch.ParallelFetches"
-                       @onchange="e => _fetch = _fetch with { ParallelFetches = Clamp(e, 1, 8, _fetch.ParallelFetches) }" />
-                at once
-            </label>
+        <div class="setting-line">
+            Fetch
+            <NumberField Min="1" Max="8" Label="Fetches at once" Value="_fetch.ParallelFetches" ValueChanged="n => _fetch = _fetch with { ParallelFetches = n }" />
+            at once
         </div>
-        <div class="field">
-            <label>
-                Accept a file within
-                <input type="number" min="0" max="120" style="width: 4rem;" value="@_fetch.DurationToleranceSeconds"
-                       @onchange="e => _fetch = _fetch with { DurationToleranceSeconds = Clamp(e, 0, 120, _fetch.DurationToleranceSeconds) }" />
-                seconds or
-                <input type="number" min="0" max="50" style="width: 4rem;" value="@_fetch.DurationTolerancePercent"
-                       @onchange="e => _fetch = _fetch with { DurationTolerancePercent = Clamp(e, 0, 50, _fetch.DurationTolerancePercent) }" />
-                % of the song's length, whichever is more
-            </label>
-            <div class="muted small">A file further off is probably a different version, such as a live take or a radio edit.</div>
+        <div class="setting-line">
+            Accept a file within
+            <NumberField Min="0" Max="120" Label="Seconds" Value="_fetch.DurationToleranceSeconds" ValueChanged="n => _fetch = _fetch with { DurationToleranceSeconds = n }" />
+            seconds or
+            <NumberField Min="0" Max="50" Label="Percent" Value="_fetch.DurationTolerancePercent" ValueChanged="n => _fetch = _fetch with { DurationTolerancePercent = n }" />
+            % of the song's length, whichever is more
         </div>
-        <div class="field">
-            <label>
-                Try
-                <input type="number" min="1" max="5" style="width: 4rem;" value="@_fetch.CandidatesPerPlugin"
-                       @onchange="e => _fetch = _fetch with { CandidatesPerPlugin = Clamp(e, 1, 5, _fetch.CandidatesPerPlugin) }" />
-                of each source's results before moving to the next source
-            </label>
+        <div class="muted small">A file further off is probably a different version, such as a live take or a radio edit.</div>
+        <div class="setting-line">
+            Try
+            <NumberField Min="1" Max="5" Label="Results per source" Value="_fetch.CandidatesPerPlugin" ValueChanged="n => _fetch = _fetch with { CandidatesPerPlugin = n }" />
+            of each source's results before moving to the next source
         </div>
-        <div class="field">
-            <label>
-                Keep listen-now tracks for
-                <input type="number" min="5" max="10080" style="width: 5rem;" value="@_fetch.ListenNowExpiryMinutes"
-                       @onchange="e => _fetch = _fetch with { ListenNowExpiryMinutes = Clamp(e, 5, 10080, _fetch.ListenNowExpiryMinutes) }" />
-                minutes after they were last played
-            </label>
-            <div class="muted small">A track fetched to listen to, and not added to the library, is deleted after this.</div>
+        <div class="setting-line">
+            Keep listen-now tracks for
+            <NumberField Min="5" Max="10080" Step="5" Label="Minutes" Value="_fetch.ListenNowExpiryMinutes" ValueChanged="n => _fetch = _fetch with { ListenNowExpiryMinutes = n }" />
+            minutes after they were last played
         </div>
+        <div class="muted small">A track fetched to listen to, and not added to the library, is deleted after this.</div>
     </div>
 
     <h2>Log</h2>
-    <div class="card" style="padding: .75rem 1rem;">
-        <div class="field">
-            <label>
-                Show the last
-                <input type="number" min="1" max="90" style="width: 4.5rem;" value="@_log!.MemoryDays"
-                       @onchange="e => _log = _log with { MemoryDays = Clamp(e, 1, 90, _log.MemoryDays) }" />
-                days on the Log page
-            </label>
+    <div class="card settings-card">
+        <div class="setting-line">
+            Show the last
+            <NumberField Min="1" Max="90" Label="Days" Value="_log!.MemoryDays" ValueChanged="n => _log = _log with { MemoryDays = n }" />
+            days on the Log page
         </div>
-        <div class="field">
-            <label>
-                Keep backup files for
-                <input type="number" min="1" max="3650" style="width: 5rem;" value="@_log.FileDays"
-                       @onchange="e => _log = _log with { FileDays = Clamp(e, 1, 3650, _log.FileDays) }" />
-                days
-            </label>
-            <div class="muted small">Every entry is written to a file per day under <code>data/logs</code> as it happens, so a restart loses nothing. Older files are deleted.</div>
+        <div class="setting-line">
+            Keep backup files for
+            <NumberField Min="1" Max="3650" Label="Days" Value="_log.FileDays" ValueChanged="n => _log = _log with { FileDays = n }" />
+            days
         </div>
+        <div class="muted small">Every entry is written to a file per day under <code>data/logs</code> as it happens, so a restart loses nothing. Older files are deleted.</div>
     </div>
 
     <div class="toolbar">
@@ -168,9 +170,12 @@ else
 
     private static readonly (DuplicateTracks, string, string)[] DuplicateOptions =
     [
-        (DuplicateTracks.KeepInAlbum, "Fetch once, keep in the album", "Owning a song anywhere counts for every album it's on. A single whose songs you have on an album shows as covered, not missing."),
-        (DuplicateTracks.KeepInSingle, "Fetch once, keep in the single", "As above, but the file lives in the single's folder."),
-        (DuplicateTracks.KeepBoth, "Fetch for each, keep both", "Every album is judged on its own files, so singles show as missing until you have them as singles."),
+        (DuplicateTracks.KeepInAlbum, "Fetch once, keep it with the main album",
+            "Owning a song on any release counts for every release it's on, so a single, EP, compilation or deluxe edition whose songs you already have shows as covered, not missing. A song fetched on its own goes with the artist's main album that has it."),
+        (DuplicateTracks.KeepInSingle, "Fetch once, keep it with the smallest release",
+            "As above, but a song fetched on its own goes with the smallest release that has it: a single before an EP, an EP before an album."),
+        (DuplicateTracks.KeepBoth, "Fetch for every release, keep a copy in each",
+            "Every release is judged on its own files: a single, EP, compilation or deluxe edition shows as missing until you have it as that release, even if you have its songs on another."),
     ];
 
     protected override async Task OnInitializedAsync()
@@ -181,16 +186,52 @@ else
         _fetchTemplate = _fetch.PathTemplate;
     }
 
-    private static int Clamp(ChangeEventArgs e, int min, int max, int current) =>
-        int.TryParse(e.Value?.ToString(), out var n) ? Math.Clamp(n, min, max) : current;
+    private static readonly IReadOnlyList<(ReleaseShowing, string, string?)> ShowingOptions =
+    [
+        (ReleaseShowing.Show, "Show", "List it, with every song on it"),
+        (ReleaseShowing.NewSongsOnly, "New songs only", "List it only for songs that aren't on a release shown in full or one you have"),
+        (ReleaseShowing.Hide, "Hide", "Don't list it"),
+    ];
 
-    private void ToggleType(AlbumType type, bool on)
-    {
-        var types = _settings!.ShownTypes.Where(t => t != type).ToList();
-        if (on)
-            types.Add(type);
-        _settings = _settings with { ShownTypes = types };
-    }
+    private static readonly (string Heading, string Note, (ReleaseKind Kind, string Name, string? Hint)[] Kinds)[] KindGroups =
+    [
+        ("Main types", "Every release is one of these.",
+        [
+            (ReleaseKind.Album, "Albums", null),
+            (ReleaseKind.Ep, "EPs", null),
+            (ReleaseKind.Single, "Singles", null),
+            (ReleaseKind.Broadcast, "Broadcasts", "Radio sessions and the like"),
+            (ReleaseKind.Other, "Other", "Anything the catalogue gives no main type"),
+        ]),
+        ("Kinds of release", "A release can also be any of these.",
+        [
+            (ReleaseKind.Live, "Live", null),
+            (ReleaseKind.Compilation, "Compilations", "Best-ofs, collections, anthologies"),
+            (ReleaseKind.Remix, "Remixes", null),
+            (ReleaseKind.Demo, "Demos", null),
+            (ReleaseKind.Soundtrack, "Soundtracks", null),
+            (ReleaseKind.DjMix, "DJ mixes", null),
+            (ReleaseKind.Mixtape, "Mixtapes", "And street albums"),
+            (ReleaseKind.Spokenword, "Spoken word", null),
+            (ReleaseKind.Interview, "Interviews", null),
+            (ReleaseKind.Audiobook, "Audiobooks", null),
+            (ReleaseKind.AudioDrama, "Audio dramas", null),
+            (ReleaseKind.FieldRecording, "Field recordings", null),
+        ]),
+        ("Unofficial", "Releases that never came out officially.",
+        [
+            (ReleaseKind.Bootleg, "Bootlegs", "Releases with no official edition at all"),
+        ]),
+    ];
+
+    private bool IsDefaultShowing => Enum.GetValues<ReleaseKind>().All(k => _settings!.ShowingOf(k) == ReleaseKinds.Default(k));
+
+    // Every kind is written out, so what was read from older settings is kept as it shows.
+    private void SetShowing(ReleaseKind kind, ReleaseShowing showing) =>
+        _settings = _settings! with { Showing = Enum.GetValues<ReleaseKind>().ToDictionary(k => k, k => k == kind ? showing : _settings.ShowingOf(k)) };
+
+    private void ResetShowing() =>
+        _settings = _settings! with { Showing = Enum.GetValues<ReleaseKind>().ToDictionary(k => k, ReleaseKinds.Default) };
 
     private async Task SaveAsync()
     {

@@ -13,7 +13,7 @@ namespace Melodex.Core.Requests;
 /// and a retrieval plugin can fetch albums) or becomes one track request per wanted track. A track request settles on
 /// an edition too, so its file lands with the rest of that album.
 /// </summary>
-public sealed class RequestPlanner(MelodexDbContext db, CatalogueService catalogue, LibraryView view)
+public sealed class RequestPlanner(MelodexDbContext db, CatalogueService catalogue, LibraryView view, SettingsService settings)
 {
     /// <summary>The outcome of planning one request.</summary>
     /// <param name="Fetch">The request itself fetches files: a track, or a whole album.</param>
@@ -109,7 +109,8 @@ public sealed class RequestPlanner(MelodexDbContext db, CatalogueService catalog
 
     /// <summary>
     /// The edition a track request files under: one you already own part of, so it joins those files; otherwise one
-    /// from the artist's own albums before EPs and singles, official first, earliest first.
+    /// from the artist's own albums before EPs and singles (or singles first, when the settings keep songs with the
+    /// smallest release), studio releases before compilations and live ones, official first, earliest first.
     /// </summary>
     public async Task<Guid?> ChooseEditionForTrackAsync(Guid trackId, CancellationToken ct)
     {
@@ -118,13 +119,14 @@ public sealed class RequestPlanner(MelodexDbContext db, CatalogueService catalog
             .ToListAsync(ct);
         if (appearances.Count == 0)
             return null;
+        var smallestFirst = (await settings.GetLibraryAsync(ct)).DuplicateTracks == DuplicateTracks.KeepInSingle;
         var editionIds = appearances.Select(a => a.EditionId).ToList();
         var owned = await db.LibraryFiles.Where(f => f.EditionId != null && editionIds.Contains(f.EditionId.Value))
             .Select(f => f.EditionId!.Value).Distinct().ToListAsync(ct);
         return appearances
             .OrderByDescending(a => owned.Contains(a.EditionId))
             .ThenBy(a => a.Secondary.Count > 0)
-            .ThenBy(a => a.Type switch { AlbumType.Album => 0, AlbumType.Ep => 1, AlbumType.Single => 2, _ => 3 })
+            .ThenBy(a => a.Type switch { AlbumType.Album => smallestFirst ? 2 : 0, AlbumType.Ep => 1, AlbumType.Single => smallestFirst ? 0 : 2, _ => 3 })
             .ThenByDescending(a => string.Equals(a.Status, "Official", StringComparison.OrdinalIgnoreCase))
             .ThenBy(a => a.Disambiguation is { Length: > 0 })
             .ThenBy(a => DateKey(a.ReleaseDate))

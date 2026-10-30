@@ -179,7 +179,7 @@ label { display: inline-flex; align-items: center; gap: .4rem; }
 .badge.partial { color: var(--partial); background: var(--partial-bg); }
 .badge.covered, .badge.ownedElsewhere { color: var(--covered); background: var(--covered-bg); }
 .badge.missing { color: var(--missing); background: var(--missing-bg); }
-.badge.neutral, .badge.ignored { color: var(--muted); background: var(--bg); border: 1px solid var(--border); }
+.badge.neutral, .badge.ignored, .badge.elsewhere { color: var(--muted); background: var(--bg); border: 1px solid var(--border); }
 
 .meter { height: 6px; background: var(--missing-fill); border-radius: 999px; overflow: hidden; min-width: 80px; }
 .meter > span { display: block; height: 100%; background: var(--owned-fill); }
@@ -869,3 +869,52 @@ svg.flip { transform: scaleY(-1); }
 .about-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.2rem; }
 .about h3 { font-size: 1rem; margin: 0 0 .3rem; }
 @media (max-width: 520px) { .about-facts { grid-template-columns: 1fr; gap: .1rem; } .about-facts dd { margin-bottom: .5rem; } }
+
+/* General settings: cards of evenly spaced lines, each the same height whether or not it holds a number. */
+.settings-card { padding: .75rem 1rem; display: flex; flex-direction: column; gap: .5rem; }
+.settings-card > .muted.small { margin-top: -.35rem; }
+.settings-card > .dialog-choice { margin: 0; }
+.setting-line { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; min-height: 2.25rem; }
+
+/* A whole number with − and + either side, a little shorter than a line, without the browser's own arrows. */
+.stepper {
+    display: inline-flex; align-items: stretch; height: 1.9rem; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--surface); overflow: hidden; vertical-align: middle;
+}
+.stepper:focus-within { border-color: var(--accent); }
+.stepper button {
+    font: inherit; border: none; background: none; color: var(--muted); width: 1.75rem; padding: 0; cursor: pointer; line-height: 1;
+}
+.stepper button:hover:not(:disabled) { color: var(--text); background: var(--bg); }
+.stepper button:disabled { opacity: .35; cursor: default; }
+.stepper input[type=number] {
+    border: none; border-radius: 0; padding: 0; background: none; text-align: center; font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield; appearance: textfield;
+}
+.stepper input[type=number]:focus { outline: none; }
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* The missing view's kinds of release: a row each, grouped, with a choice of Show, New songs only or Hide. */
+.release-kinds { gap: 1rem; }
+.release-group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .6rem; padding-bottom: .35rem; border-bottom: 1px solid var(--border); }
+.release-group-head h3 { margin: 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.release-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem 1rem; padding: .35rem 0; }
+.release-row + .release-row { border-top: 1px solid var(--border); }
+.release-name { display: flex; flex-direction: column; gap: .05rem; font-weight: 500; }
+.release-row .segmented { flex: none; font-size: .85rem; }
+.release-row .segmented button { padding: .25rem .75rem; }
+.segmented.showing.show .thumb { background: var(--owned-bg); }
+.segmented.showing.show button.selected { color: var(--owned); }
+.segmented.showing.newsongsonly .thumb { background: var(--covered-bg); }
+.segmented.showing.newsongsonly button.selected { color: var(--covered); }
+.segmented.showing.hide .thumb { background: var(--bg); }
+.release-kinds > .link { align-self: flex-start; }
+@media (max-width: 640px) {
+    .release-row { flex-direction: column; align-items: stretch; }
+    .release-row .segmented { align-self: stretch; }
+}
+
+/* While the server works out the library's lists for the first time after starting. */
+.loading > span:last-child { max-width: 36rem; text-align: center; }
+.preparing { display: inline-flex; align-items: center; gap: .4rem; }
+.preparing .spinner { width: .9rem; height: .9rem; color: var(--accent); }

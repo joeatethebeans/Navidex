@@ -11,6 +11,12 @@
     {
         <a class="muted" href="activity" title="See what it's doing">@(task.Progress ?? "Starting…")</a>
     }
+    else if (_status?.Preparing == true)
+    {
+        <span class="muted preparing" title="Melodex has just started and is working out your library's artists, albums and tracks. The first time takes a while on a big library; after that they're kept, so it's quick.">
+            <span class="spinner" aria-hidden="true"></span> Getting your library ready…
+        </span>
+    }
     else if (_status?.LastScan is { State: TaskState.Failed } failed)
     {
         <a class="error" href="settings/log" title="@failed.Error">Scan failed: @failed.Error</a>
@@ -113,6 +119,12 @@ else if (_confirm == Confirm.Format)
     /// <summary>Raised when <see cref="Reading"/> changes.</summary>
     public static event Action? ReadingChanged;
 
+    /// <summary>The server has just started and is working out the library's lists for the first time.</summary>
+    public static bool Preparing { get; private set; }
+
+    /// <summary>Raised when <see cref="Preparing"/> changes.</summary>
+    public static event Action? PreparingChanged;
+
     /// <summary>For other things that change the library, such as a request being filed.</summary>
     public static void RaiseLibraryChanged() => LibraryChanged?.Invoke();
 
@@ -136,6 +148,13 @@ else if (_confirm == Confirm.Format)
         {
             Reading = _status.Reading;
             ReadingChanged?.Invoke();
+        }
+        if (_status is not null && _status.Preparing != Preparing)
+        {
+            Preparing = _status.Preparing;
+            PreparingChanged?.Invoke();
+            if (!Preparing)
+                LibraryChanged?.Invoke();
         }
         var running = _status?.CurrentTask is not null;
         if (_wasRunning && !running || running && ++_polls % 5 == 0)

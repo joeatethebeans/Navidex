@@ -11,14 +11,37 @@ public sealed class MelodexClient(HttpClient http)
     public Task<LibraryStatus?> GetLibraryStatusAsync(CancellationToken ct = default) =>
         http.GetFromJsonAsync<LibraryStatus>($"{Api}/library", MelodexJson.Options, ct);
 
-    public async Task<IReadOnlyList<LibraryArtist>> GetLibraryArtistsAsync(CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<List<LibraryArtist>>($"{Api}/library/artists", MelodexJson.Options, ct) ?? [];
+    public Task<IReadOnlyList<LibraryArtist>> GetLibraryArtistsAsync(CancellationToken ct = default) =>
+        GetListAsync<LibraryArtist>($"{Api}/library/artists", ct);
 
-    public async Task<IReadOnlyList<LibraryAlbum>> GetLibraryAlbumsAsync(CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<List<LibraryAlbum>>($"{Api}/library/albums", MelodexJson.Options, ct) ?? [];
+    public Task<IReadOnlyList<LibraryAlbum>> GetLibraryAlbumsAsync(CancellationToken ct = default) =>
+        GetListAsync<LibraryAlbum>($"{Api}/library/albums", ct);
 
-    public async Task<IReadOnlyList<LibraryTrack>> GetLibraryTracksAsync(CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<List<LibraryTrack>>($"{Api}/library/tracks", MelodexJson.Options, ct) ?? [];
+    public Task<IReadOnlyList<LibraryTrack>> GetLibraryTracksAsync(CancellationToken ct = default) =>
+        GetListAsync<LibraryTrack>($"{Api}/library/tracks", ct);
+
+    // The library's big lists as last sent, by their ETags, so asking again for one that hasn't changed is a 304 with
+    // nothing to download or read.
+    private readonly Dictionary<string, (string ETag, object List)> _lists = [];
+
+    private async Task<IReadOnlyList<T>> GetListAsync<T>(string path, CancellationToken ct)
+    {
+        (string? ETag, object? List) known;
+        lock (_lists)
+            known = _lists.TryGetValue(path, out var held) ? held : default;
+        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        if (known.ETag is not null)
+            request.Headers.TryAddWithoutValidation("If-None-Match", known.ETag);
+        using var response = await http.SendAsync(request, ct);
+        if (response.StatusCode == HttpStatusCode.NotModified && known.List is IReadOnlyList<T> same)
+            return same;
+        response.EnsureSuccessStatusCode();
+        var list = await response.Content.ReadFromJsonAsync<List<T>>(MelodexJson.Options, ct) ?? [];
+        if (response.Headers.ETag is { } tag)
+            lock (_lists)
+                _lists[path] = (tag.ToString(), list);
+        return list;
+    }
 
     public async Task<IReadOnlyList<MissingAlbum>> GetMissingAsync(CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<MissingAlbum>>($"{Api}/library/missing", MelodexJson.Options, ct) ?? [];

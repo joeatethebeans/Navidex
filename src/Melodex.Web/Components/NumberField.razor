@@ -1,0 +1,27 @@
+@* A whole number in a sentence, with − and + either side: the same height as a line of text, so settings stay evenly spaced. *@
+<span class="stepper">
+    <button type="button" tabindex="-1" aria-label="Less" disabled="@(Value <= Min)" @onclick="() => SetAsync(Value - Step)">−</button>
+    <input type="number" inputmode="numeric" min="@Min" max="@Max" step="@Step" aria-label="@Label" value="@Value" style="width: @(Digits + 1.2)ch"
+           @onchange="e => SetAsync(int.TryParse(e.Value?.ToString(), out var n) ? n : Value)" />
+    <button type="button" tabindex="-1" aria-label="More" disabled="@(Value >= Max)" @onclick="() => SetAsync(Value + Step)">+</button>
+</span>
+
+@code {
+    [Parameter, EditorRequired] public int Value { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public int Min { get; set; }
+    [Parameter] public int Max { get; set; } = int.MaxValue;
+    [Parameter] public int Step { get; set; } = 1;
+
+    /// <summary>What the number is, for screen readers.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    // Wide enough for the largest it can be.
+    private int Digits => Math.Max(Min.ToString().Length, Max.ToString().Length);
+
+    private async Task SetAsync(int value)
+    {
+        Value = Math.Clamp(value, Min, Max);
+        await ValueChanged.InvokeAsync(Value);
+    }
+}

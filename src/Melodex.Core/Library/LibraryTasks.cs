@@ -154,7 +154,7 @@ public sealed class CatalogueRefresher(
 
             var stale = DateTime.UtcNow - CatalogueService.EditionsTtl;
             var albums = await db.Albums.Where(a => a.ArtistId == next.Id && (a.EditionsRefreshedAt == null || a.EditionsRefreshedAt < stale)).ToListAsync(ct);
-            var wanted = new Queue<(Guid Id, int Attempt)>(albums.Where(library.Shows).Select(a => (a.Id, 1)));
+            var wanted = new Queue<(Guid Id, int Attempt)>(albums.Where(a => library.ShowingOf(a) != ReleaseShowing.Hide).Select(a => (a.Id, 1)));
             int checkedAlbums = 0, albumFailures = 0, total = wanted.Count;
             while (wanted.TryDequeue(out var albumItem))
             {

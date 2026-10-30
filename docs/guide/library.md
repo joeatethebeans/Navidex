@@ -33,8 +33,29 @@ Excluded files with a title and an artist are listed as their tags say: under th
 that name, or one of their own, with the picture embedded in the file or beside it (such as `folder.jpg`). Excluded
 files without them are listed under *Incomplete metadata* on Review.
 
-**Settings → General → Prefer your files' own tags and covers** shows matched music that way too, wherever its files
-have them.
+**Settings → General → File metadata** shows matched music that way too, wherever its files have them: **Use your
+files' tags** for titles, artists and albums, and **Use your files' cover art** for covers. Each is on its own.
+
+## What counts as missing
+
+**Settings → General → Missing view** has a choice for each kind of release: the main types (albums, EPs, singles,
+broadcasts, other), the kinds a release can also be (live, compilations, remixes, demos, soundtracks, DJ mixes,
+mixtapes, spoken word, interviews, audiobooks, audio dramas, field recordings), and bootlegs. Each can be:
+
+- **Show**: listed as missing, with every song on it.
+- **New songs only**: listed just for the songs that aren't on a release shown in full or one you have (the same
+  recording, or a song of the same title by the same artist, leaving aside notes such as "(Live)" or "- 2011
+  Remaster"), and only those count as missing. A live album shows for
+  the songs never released in the studio; a compilation for its unreleased tracks. On the album page, the other songs
+  are marked *Elsewhere*, and fetching the album leaves them out. A kind's songs are looked up at the next scan, so its
+  releases show from then.
+- **Hide**: not listed.
+
+A release can be more than one kind, such as a live compilation, and then follows the strictest. By default albums,
+EPs and singles are shown in full and nothing else is.
+
+**Songs on more than one release** decides whether a song that's on several (an album and its singles, a standard and
+a deluxe edition, a compilation) is fetched once or for each, and whether owning it on one counts for the rest.
 
 ## Formatting
 
