@@ -313,6 +313,9 @@ public class ArtworkRecord
     /// <summary>The artwork plugin it came from.</summary>
     public Guid? PluginInstanceId { get; set; }
 
+    /// <summary>Chosen by someone rather than found by the plugins, so it's kept when the artwork is fetched afresh.</summary>
+    public bool Chosen { get; set; }
+
     public DateTime CheckedAt { get; set; } = DateTime.UtcNow;
 }
 

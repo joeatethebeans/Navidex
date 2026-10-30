@@ -29,6 +29,9 @@ Everything on the way to 1.0.
 - **File metadata**: your files' tags and their cover art can each be preferred on their own.
 - **Search remembers**: the last search, its results and where you'd scrolled stay for a while after you leave the
   Search page (5 minutes by default; each user sets their own under Settings → Appearance).
+- **Choosing a cover**: an album's or song's cover can be picked from every release it's on, its files' own, or a picture
+  you upload. It's written into the files straight away (and an album's folder gets it as `cover.jpg`), and Melodex
+  shows it from then on.
 - **Getting your library ready**: just after starting, the top bar and the Library page say the library's lists are
   being worked out, which takes a while the first time on a big library.
 

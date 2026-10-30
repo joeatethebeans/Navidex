@@ -61,10 +61,12 @@ def write_tags(full: Path, tags: dict[str, str], artwork: bytes | None, remove_a
 
 
 def format_files(library: Path, files: list[FormatFile], artwork: dict[str, bytes],
-                 destination: Callable[[Path], Path] | None) -> list[dict[str, Any]]:
+                 destination: Callable[[Path], Path] | None, folder_artwork: bytes | None = None) -> list[dict[str, Any]]:
     """Formats each file, moving it to <destination> of it (library-relative) when that's given. A file that can't be
-    formatted is reported with why and the rest carry on."""
+    formatted is reported with why and the rest carry on. With folder artwork, each formatted file's folder gets it as
+    its cover image too."""
     results = []
+    folders: set[Path] = set()
     moved_from: dict[Path, list[Path]] = defaultdict(list)
     for file in files:
         try:
@@ -82,6 +84,7 @@ def format_files(library: Path, files: list[FormatFile], artwork: dict[str, byte
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.move(full, target)
                     moved_from[full.parent].append(target.parent)
+            folders.add(target.parent)
             stat = target.stat()
             results.append({"path": file.path, "newPath": target.relative_to(library).as_posix(), "size": stat.st_size})
         except (FormatFailed, OSError, ValueError) as e:
@@ -90,7 +93,24 @@ def format_files(library: Path, files: list[FormatFile], artwork: dict[str, byte
             results.append({"path": file.path, "error": f"{type(e).__name__}: {e}"})
     for folder, targets in moved_from.items():
         tidy(folder, Counter(targets).most_common(1)[0][0], library)
+    if folder_artwork is not None:
+        for folder in folders:
+            write_folder_cover(folder, folder_artwork)
     return results
+
+
+FOLDER_COVERS = ("cover", "folder", "front")
+IMAGE_TYPES = (".jpg", ".jpeg", ".png", ".webp", ".gif")
+
+
+def write_folder_cover(folder: Path, data: bytes) -> None:
+    """Writes the folder's cover image: in place of one with a cover's usual name, else as cover.jpg (or .png)."""
+    extension = ".png" if data[:4] == b"\x89PNG" else ".jpg"
+    existing = [p for p in folder.iterdir() if p.is_file() and p.stem.lower() in FOLDER_COVERS and p.suffix.lower() in IMAGE_TYPES]
+    for old in existing:
+        old.unlink()
+    target = folder / f"{existing[0].stem if existing else 'cover'}{extension}"
+    target.write_bytes(data)
 
 
 def tidy(folder: Path, moved_to: Path, library: Path) -> None:

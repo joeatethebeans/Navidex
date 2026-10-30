@@ -83,3 +83,37 @@ public sealed record FormatPlan(
 
 /// <summary>Body of <c>POST /library/format</c>.</summary>
 public sealed record StartFormat(FormatScope Scope, FormatOptions Options);
+
+/// <summary>What a cover is chosen for.</summary>
+public enum CoverSubject
+{
+    Album,
+    Track,
+}
+
+/// <summary>A picture that could be chosen as the cover.</summary>
+/// <param name="Source">What to send back to choose it: <c>album:{id}</c>, <c>edition:{id}</c> or <c>file:{id}</c>.</param>
+/// <param name="Group">The release it's from, for showing them together.</param>
+/// <param name="Title">This picture's own name: the release's usual cover, an edition, or the files' own.</param>
+/// <param name="Detail">When and where an edition came out, and its kind.</param>
+/// <param name="Url">The picture. Like other covers, it can be 503 while it's still being fetched, or 404 when there's none.</param>
+/// <param name="Current">The one shown now.</param>
+public sealed record CoverOption(string Source, string Group, string Title, string? Detail, string Url, bool Current);
+
+/// <summary>The covers to choose from for an album or song, from every release it's on, and what choosing writes.</summary>
+/// <param name="Title">The album or song.</param>
+/// <param name="Files">Files of it in the library, each of which gets the cover embedded.</param>
+/// <param name="WorkerReady">Whether the beets worker, which writes the files, is reachable.</param>
+/// <param name="WorkerProblem">Why not, when it isn't.</param>
+public sealed record CoverChoices(string Title, string? CurrentUrl, IReadOnlyList<CoverOption> Options, int Files, bool WorkerReady, string? WorkerProblem);
+
+/// <summary>A cover to use: one of the <see cref="CoverChoices"/>, or a picture of your own.</summary>
+/// <param name="Source">A <see cref="CoverOption.Source"/>.</param>
+/// <param name="Upload">Instead, a JPEG, PNG, WebP or GIF, base64, up to 10 MB.</param>
+public sealed record ChooseCover(string? Source = null, string? Upload = null);
+
+/// <summary>What choosing a cover did.</summary>
+/// <param name="Written">Files it was embedded in. An album's folders get it as their folder image too.</param>
+/// <param name="Failed">Files it couldn't be written to, with why.</param>
+/// <param name="CoverUrl">The cover as Melodex now shows it.</param>
+public sealed record CoverChosen(int Written, IReadOnlyList<string> Failed, string CoverUrl);

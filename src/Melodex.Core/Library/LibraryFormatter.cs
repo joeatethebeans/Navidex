@@ -155,7 +155,7 @@ public sealed class FormatTask(
                 touched.Add(file.Path);
                 file.Path = formatted.NewPath;
                 touched.Add(file.Path);
-                Reread(file, root);
+                Reread(file, root, logger);
                 file.FormattedAt = now;
             }
             // Saved even if it's cancelled now: the files have been written.
@@ -164,14 +164,14 @@ public sealed class FormatTask(
             progress.Report($"Formatting: {done} of {total} files");
         }
 
-        await TellMediaServerAsync(touched.Distinct().ToList(), ct);
+        await TellMediaServerAsync(connectors, touched.Distinct().ToList(), logger, ct);
         var summary = $"Formatted {LibraryMatcher.Plural(total - failures.Count, "file", "files")}";
         progress.Report(failures.Count == 0 ? summary : $"{summary}; {failures.Count} couldn't be: {failures[0]}");
         logger.LogInformation("{Summary} for {Title}", summary, job.Title);
     }
 
-    // The file as it is now, so the next scan sees it unchanged and doesn't match it again.
-    private void Reread(LibraryFile file, string root)
+    /// <summary>The file as it is now, so the next scan sees it unchanged and doesn't match it again.</summary>
+    public static void Reread(LibraryFile file, string root, ILogger logger)
     {
         var full = Path.Combine(root, file.Path);
         if (!File.Exists(full))
@@ -188,7 +188,7 @@ public sealed class FormatTask(
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
-            logger.LogWarning("Couldn't read the formatted file {Path}: {Reason}", file.Path, e.Message);
+            logger.LogWarning("Couldn't read the rewritten file {Path}: {Reason}", file.Path, e.Message);
         }
     }
 
@@ -221,7 +221,8 @@ public sealed class FormatTask(
         return null;
     }
 
-    private async Task TellMediaServerAsync(IReadOnlyCollection<string> paths, CancellationToken ct)
+    /// <summary>Asks the media server to pick up files that have been written, if there is one.</summary>
+    public static async Task TellMediaServerAsync(ConnectorPlugins connectors, IReadOnlyCollection<string> paths, ILogger logger, CancellationToken ct)
     {
         if (paths.Count == 0 || await connectors.GetActiveAsync(ct) is not { } active)
             return;
@@ -231,7 +232,7 @@ public sealed class FormatTask(
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
-            logger.LogWarning("Couldn't ask {Server} to pick up the formatted files: {Reason}", active.Instance.Name, e.Message);
+            logger.LogWarning("Couldn't ask {Server} to pick up the rewritten files: {Reason}", active.Instance.Name, e.Message);
         }
     }
 }

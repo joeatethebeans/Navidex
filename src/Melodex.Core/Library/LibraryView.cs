@@ -388,7 +388,10 @@ public sealed partial class LibraryView(MelodexDbContext db, SettingsService set
             .Select(et => new TrackAppearance(et.Edition.AlbumId, et.Edition.Album.Title, et.Edition.Album.Type, et.EditionId, et.Edition.Title,
                 et.Edition.ReleaseDate, et.Edition.Country, et.Disc, et.Number, et.Title, filed.Contains(et.EditionId)))
             .ToList();
-        var cover = files.FirstOrDefault(f => f.Edition is not null) is { Edition: { } edition }
+        // A cover chosen for the song itself, else its edition's.
+        var cover = await db.Artwork.AnyAsync(a => a.EntityKind == EntityKind.Track && a.EntityId == id && a.Chosen, ct)
+            ? $"api/v1/artwork/track/{id}"
+            : files.FirstOrDefault(f => f.Edition is not null) is { Edition: { } edition }
             ? CoverUrl(edition.AlbumId, edition.Id)
             : appearances.FirstOrDefault() is { } first ? CoverUrl(first.AlbumId, null) : null;
         return new TrackDetail(track.Id, track.Title, track.ArtistCredit, track.ArtistId, track.Artist.Name, track.Duration?.TotalSeconds, track.Ignored,

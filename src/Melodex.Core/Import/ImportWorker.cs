@@ -56,7 +56,9 @@ public sealed record DeleteFailure(string Path, string Error);
 /// <summary>Body of <c>POST /v1/format</c>.</summary>
 /// <param name="Artwork">Images the files name, by key, so a cover shared by an album is sent once.</param>
 /// <param name="PathTemplate">Move each file to where this beets path format puts it, by its new tags; null to leave it.</param>
-public sealed record FormatRequest(IReadOnlyList<FormatFile> Files, IReadOnlyDictionary<string, FormatArtwork> Artwork, string? PathTemplate);
+/// <param name="FolderArtwork">The key of an image in <paramref name="Artwork"/> to write as each file's folder image too.</param>
+public sealed record FormatRequest(IReadOnlyList<FormatFile> Files, IReadOnlyDictionary<string, FormatArtwork> Artwork, string? PathTemplate,
+    string? FolderArtwork = null);
 
 /// <param name="Path">Relative to the library root.</param>
 /// <param name="Tags">Tags to write, by beets field name; the rest stay as they are. An empty value clears one.</param>

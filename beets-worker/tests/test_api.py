@@ -154,6 +154,25 @@ def test_formatting_without_a_template_leaves_files_where_they_are(client, roots
     assert not media.isrc
 
 
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
+def test_a_chosen_cover_is_embedded_and_replaces_the_folder_image(client, roots):
+    library = roots[1]
+    silent_flac(library / "Dummy" / "01 Mysterons.flac", title="Mysterons")
+    silent_flac(library / "Dummy" / "02 Sour Times.flac", title="Sour Times")
+    (library / "Dummy" / "Folder.jpg").write_bytes(b"old")
+    body = {"files": [{"path": "Dummy/01 Mysterons.flac", "artwork": "chosen"}, {"path": "Dummy/02 Sour Times.flac", "artwork": "chosen"}],
+            "artwork": {"chosen": {"data": PIXEL}}, "folderArtwork": "chosen"}
+    response = client.post("/v1/format", json=body)
+    assert response.status_code == 200, response.json()
+    assert [f["newPath"] for f in response.json()["files"]] == ["Dummy/01 Mysterons.flac", "Dummy/02 Sour Times.flac"]
+    assert MediaFile(library / "Dummy" / "02 Sour Times.flac").images[0].data == base64.b64decode(PIXEL)
+    # Under the name it had, as the PNG it now is.
+    assert sorted(p.name for p in (library / "Dummy").iterdir() if p.suffix != ".flac") == ["Folder.png"]
+
+    missing = client.post("/v1/format", json={**body, "folderArtwork": "other"})
+    assert missing.status_code == 400
+
+
 def test_formatting_refuses_files_outside_the_library_and_unknown_tags(client, roots):
     library = roots[1]
     (library / "song.flac").write_bytes(b"x")

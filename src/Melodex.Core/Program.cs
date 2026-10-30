@@ -70,6 +70,7 @@ builder.Services.AddScoped<LibraryView>();
 builder.Services.AddScoped<LocalMusic>();
 builder.Services.AddScoped<LibraryRemover>();
 builder.Services.AddScoped<LibraryFormatter>();
+builder.Services.AddScoped<CoverChooser>();
 builder.Services.AddScoped<CatalogueSearch>();
 
 // Background work

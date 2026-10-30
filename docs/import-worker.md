@@ -115,6 +115,7 @@ out every value from its catalogue; the worker only writes them.
 | `files[].removeArtwork` | Take the embedded art out. |
 | `artwork` | Images by key, base64, so an album's files share one copy. |
 | `pathTemplate` | Move each file to where this path format puts it, going by its new tags, as an import would. Omit it to leave files where they are. |
+| `folderArtwork` | The key of an image in `artwork` to write as each formatted file's folder image too, for an album's chosen cover. It replaces a `cover`, `folder` or `front` image already there, under that name, or else goes in as `cover.jpg` (`.png` for a PNG). |
 
 A moved file never overwrites another: `.1`, `.2` and so on go before the extension. Once a folder holds no music,
 its artwork and the like follow the music to its new folder, and the folder goes, then any parent left empty.

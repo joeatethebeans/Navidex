@@ -74,20 +74,57 @@ public sealed class ArtworkCache(IServiceScopeFactory scopes, IOptions<MelodexOp
         }
     }
 
+    private const string ChosenFolder = "chosen";
+
+    /// <summary>
+    /// Shows a picture someone chose for each of the subjects in place of what the plugins found, until another is
+    /// chosen. Fetching the artwork afresh keeps it.
+    /// </summary>
+    public async Task<CachedArtwork> ChooseAsync(IReadOnlyCollection<(EntityKind Kind, Guid Id)> subjects, byte[] data, string contentType, CancellationToken ct)
+    {
+        var file = Path.Combine(ChosenFolder, Guid.NewGuid().ToString("N") + Extension(contentType));
+        Directory.CreateDirectory(Path.Combine(Root, ChosenFolder));
+        await File.WriteAllBytesAsync(Path.Combine(Root, file), data, ct);
+
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MelodexDbContext>();
+        var replaced = new List<string>();
+        var now = DateTime.UtcNow;
+        foreach (var (kind, id) in subjects.Distinct())
+        {
+            var record = await db.Artwork.FindAsync([kind, id], ct);
+            if (record is null)
+                db.Artwork.Add(record = new ArtworkRecord { EntityKind = kind, EntityId = id });
+            else if (record is { Chosen: true, File: { } old })
+                replaced.Add(old);
+            (record.File, record.ContentType, record.PluginInstanceId, record.Chosen, record.CheckedAt) = (file, contentType, null, true, now);
+        }
+        await db.SaveChangesAsync(ct);
+
+        // Pictures chosen before that nothing shows any more.
+        var still = await db.Artwork.Where(a => a.Chosen && a.File != null && replaced.Contains(a.File)).Select(a => a.File!).ToListAsync(ct);
+        foreach (var old in replaced.Except(still).Distinct())
+            File.Delete(Path.Combine(Root, old));
+        return new CachedArtwork(Path.Combine(Root, file), contentType, now);
+    }
+
     /// <summary>Raised after <see cref="ResetAsync"/>, so pictures can be fetched again.</summary>
     public event Action? Reset;
 
-    /// <summary>Forgets every picture, so the next look uses the artwork plugins as they now are.</summary>
+    /// <summary>
+    /// Forgets every picture the plugins found, so the next look uses them as they now are. Chosen ones stay.
+    /// </summary>
     public async Task ResetAsync(CancellationToken ct)
     {
         using var scope = scopes.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MelodexDbContext>();
-        await db.Artwork.ExecuteDeleteAsync(ct);
+        await db.Artwork.Where(a => !a.Chosen).ExecuteDeleteAsync(ct);
         if (Directory.Exists(Root))
         {
             try
             {
-                Directory.Delete(Root, recursive: true);
+                foreach (var folder in Directory.EnumerateDirectories(Root).Where(d => Path.GetFileName(d) != ChosenFolder))
+                    Directory.Delete(folder, recursive: true);
             }
             catch (IOException e)
             {

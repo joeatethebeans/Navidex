@@ -58,6 +58,8 @@ else
                         <IconButton Icon="format" Requires="@UserPermissions.Format" Large="true" Label="Format" Title="Rewrite this album's files: their tags, cover and where they live"
                                     OnClick="() => _formatting = true" />
                     }
+                    <IconButton Icon="image" Requires="@UserPermissions.Format" Large="true" Label="Cover" Title="Choose the album's cover, from any of its editions or a picture of your own"
+                                OnClick="() => _choosingCover = true" />
                 </div>
             }
         </div>
@@ -142,6 +144,12 @@ else
     }
 }
 
+@if (_choosingCover && _album is not null)
+{
+    <CoverDialog Subject="CoverSubject.Album" Id="_album.Album.Id" Name="@_album.Album.Title" OnClose="() => _choosingCover = false"
+                 OnChosen="url => _album = _album with { Album = _album.Album with { CoverUrl = url } }" />
+}
+
 @if (_formatting && _album is not null)
 {
     <FormatDialog Scope="new FormatScope(FormatScopeKind.Album, _album.Album.Id)" Name="@_album.Album.Title" OnClose="() => _formatting = false" />
@@ -153,6 +161,7 @@ else
     private AlbumDetail? _album;
     private bool _notFound;
     private bool _formatting;
+    private bool _choosingCover;
 
     private bool MultiDisc => _album!.Tracks.Select(t => t.Disc).Distinct().Count() > 1;
 

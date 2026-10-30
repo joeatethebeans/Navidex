@@ -69,6 +69,7 @@ class FormatRequest(Model):
     files: list[FormatFileModel]
     artwork: dict[str, FormatArtwork] = {}
     path_template: str | None = None
+    folder_artwork: str | None = None
 
 
 class DeleteRequest(Model):
@@ -123,8 +124,11 @@ async def run_format(body: FormatRequest) -> dict[str, Any]:
         artwork = {key: base64.b64decode(image.data, validate=True) for key, image in body.artwork.items()}
     except binascii.Error:
         raise HTTPException(400, {"error": "Artwork must be base64.", "code": "invalid-request"})
+    if body.folder_artwork is not None and body.folder_artwork not in artwork:
+        raise HTTPException(400, {"error": f"There's no artwork {body.folder_artwork} in the request.", "code": "invalid-request"})
     files = [FormatFile(f.path, f.tags, f.artwork, f.remove_artwork) for f in body.files]
-    results = await run_in_threadpool(get_importer().format, files, artwork, body.path_template)
+    folder = artwork[body.folder_artwork] if body.folder_artwork is not None else None
+    results = await run_in_threadpool(get_importer().format, files, artwork, body.path_template, folder)
     return {"files": results}
 
 

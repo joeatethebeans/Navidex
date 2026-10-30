@@ -78,6 +78,20 @@ public sealed class MelodexClient(HttpClient http)
         return (await response.Content.ReadFromJsonAsync<TaskInfo>(MelodexJson.Options, ct))!;
     }
 
+    private static string CoverPath(CoverSubject subject, Guid id) => $"{Api}/library/{(subject == CoverSubject.Album ? "albums" : "tracks")}/{id}/cover";
+
+    /// <summary>The covers an album or song could have, from every release it's on.</summary>
+    public async Task<CoverChoices> GetCoverChoicesAsync(CoverSubject subject, Guid id, CancellationToken ct = default) =>
+        (await http.GetFromJsonAsync<CoverChoices>(CoverPath(subject, id), MelodexJson.Options, ct))!;
+
+    /// <summary>Sets an album's or song's cover, writing it into its files straight away.</summary>
+    public async Task<CoverChosen> ChooseCoverAsync(CoverSubject subject, Guid id, ChooseCover body, CancellationToken ct = default)
+    {
+        var response = await http.PutAsJsonAsync(CoverPath(subject, id), body, MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<CoverChosen>(MelodexJson.Options, ct))!;
+    }
+
     public async Task<IReadOnlyList<TaskInfo>> ListTasksAsync(bool? active = null, int? limit = null, CancellationToken ct = default)
     {
         var query = string.Join('&', new[] { active is { } a ? $"active={a.ToString().ToLowerInvariant()}" : null, limit is { } l ? $"limit={l}" : null }.OfType<string>());

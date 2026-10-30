@@ -54,7 +54,7 @@ public sealed class FakeImporter(string stagingRoot, string libraryRoot) : IImpo
 
     public ConcurrentQueue<FormatRequest> Formats { get; } = new();
 
-    // Tags aren't written; moving goes to Artist/Album/title, as the tags say.
+    // Tags and embedded covers aren't written, but folder images are; moving goes to Artist/Album/title, as the tags say.
     public Task<FormatResult> FormatAsync(FormatRequest request, CancellationToken ct)
     {
         Formats.Enqueue(request);
@@ -76,6 +76,9 @@ public sealed class FakeImporter(string stagingRoot, string libraryRoot) : IImpo
                 File.Move(full, Path.Combine(libraryRoot, path), overwrite: true);
             }
             results.Add(new FormattedFile(file.Path, path, new FileInfo(Path.Combine(libraryRoot, path)).Length, null));
+            if (request.FolderArtwork is { } folderArt)
+                File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(Path.Combine(libraryRoot, path))!, "cover.jpg"),
+                    Convert.FromBase64String(request.Artwork[folderArt].Data));
         }
         return Task.FromResult(new FormatResult(results));
     }

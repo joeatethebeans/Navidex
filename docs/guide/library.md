@@ -63,6 +63,17 @@ a deluxe edition, a compilation) is fetched once or for each, and whether owning
 each artist, album and track page, and for the whole library in the Scan menu. It shows what will change first, and
 nothing is written until you confirm. Set the folder layout under **Settings → General**.
 
+## Choosing a cover
+
+**Cover**, on an album or track page, picks the picture for it. The choices are the usual cover and each edition's
+cover for every release it's on (for a song, that includes its singles, EPs and compilations), the picture your files
+already have, or one you upload (JPEG, PNG, WebP or GIF, up to 10 MB).
+
+The cover you choose is written into the files straight away, replacing what they had. An album's folder gets it as its
+cover image too: it replaces a `cover`, `folder` or `front` image already there, or goes in as `cover.jpg`. Melodex then
+shows it in place of what the artwork plugins found, and keeps it when artwork is fetched afresh. A song's own cover goes
+only into that song's files, so the rest of the album keeps the album's cover. Choosing needs the **Format** permission.
+
 ## Removing music
 
 The Library page can remove an artist, album or track. Either the files are deleted (with any folder left holding

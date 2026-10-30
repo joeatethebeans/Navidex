@@ -153,6 +153,9 @@ namespace Melodex.Core.Data.Migrations
                     b.Property<DateTime>("CheckedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Chosen")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ContentType")
                         .HasColumnType("TEXT");
 

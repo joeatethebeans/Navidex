@@ -1,0 +1,155 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject MelodexClient Api
+
+@*
+    Chooses an album's or song's cover: the usual cover or an edition's, of every release it's on, the files' own, or
+    a picture of your own. Says plainly that it writes the music files, as choosing puts the cover in them straight away.
+*@
+<Dialog Title="@($"Choose a cover for {_choices?.Title ?? Name}")" Class="wide cover-dialog" OnClose="CloseAsync">
+    @if (_choices is null)
+    {
+        @if (_error is not null) { <p class="error">@_error</p> } else { <Loading Inline="true" /> }
+    }
+    else
+    {
+        @if (_choices.Files > 0)
+        {
+            <p class="notice warning">
+                The cover you choose is written into @Format.Count(_choices.Files, "file", "files") in your music folder straight away@(Subject == CoverSubject.Album ? ", and into the album's folder as its cover image" : "").
+                What's there now is replaced.
+            </p>
+        }
+        else
+        {
+            <p class="muted small">There are no files of it in the library, so the cover is only what Melodex shows.</p>
+        }
+
+        <div class="cover-upload row">
+            <label class="button">
+                <InputFile OnChange="UploadAsync" accept="image/jpeg,image/png,image/webp,image/gif" />
+                Upload a picture…
+            </label>
+            <span class="muted small">A JPEG, PNG, WebP or GIF, up to 10 MB. Square pictures suit best.</span>
+        </div>
+
+        <div class="cover-choices">
+            @if (_upload is not null)
+            {
+                <h3>Your picture</h3>
+                <div class="cover-grid">
+                    <button class="cover-choice @(_source is null ? "selected" : "")" @onclick="() => _source = null">
+                        <span class="cover album loaded"><img src="@_uploadUrl" alt="" /></span>
+                        <span class="cover-choice-title">@_uploadName</span>
+                    </button>
+                </div>
+            }
+            @foreach (var group in _choices.Options.GroupBy(o => o.Group))
+            {
+                <h3>@group.Key</h3>
+                <div class="cover-grid">
+                    @foreach (var option in group)
+                    {
+                        <button class="cover-choice @(_source == option.Source ? "selected" : "")" title="@option.Detail" @onclick="() => _source = option.Source">
+                            <Cover Url="@option.Url" />
+                            <span class="cover-choice-title">
+                                @option.Title
+                                @if (option.Current) { <span class="badge neutral">Now</span> }
+                            </span>
+                            @if (option.Detail is not null) { <span class="muted small">@option.Detail</span> }
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (_choices.Files > 0 && !_choices.WorkerReady)
+        {
+            <p class="error small">Can't write the files now: @(_choices.WorkerProblem?.TrimEnd('.') ?? "the beets worker, which writes the music folder, isn't working").</p>
+        }
+        @if (_error is not null) { <p class="error small">@_error</p> }
+        <div class="toolbar dialog-buttons">
+            <button @onclick="CloseAsync" disabled="@_busy">Cancel</button>
+            <button class="@(_choices.Files > 0 ? "danger" : "primary")" @onclick="ChooseAsync"
+                    disabled="@(_busy || (_source is null && _upload is null) || (_choices.Files > 0 && !_choices.WorkerReady))">
+                @if (_busy) { <span class="spinner"></span> }
+                @(_choices.Files > 0 ? $"Use it and write {Format.Count(_choices.Files, "file", "files")}" : "Use it")
+            </button>
+        </div>
+    }
+</Dialog>
+
+@code {
+    [Parameter, EditorRequired] public CoverSubject Subject { get; set; }
+    [Parameter, EditorRequired] public Guid Id { get; set; }
+
+    /// <summary>What it's for, until the choices say.</summary>
+    [Parameter] public string Name { get; set; } = "";
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    /// <summary>The cover was chosen; with the address to show it from.</summary>
+    [Parameter] public EventCallback<string> OnChosen { get; set; }
+
+    private const long MaxUpload = 10 * 1024 * 1024;
+
+    private CoverChoices? _choices;
+    private string? _source;
+    private string? _upload, _uploadUrl, _uploadName;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _choices = await Api.GetCoverChoicesAsync(Subject, Id);
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = $"Couldn't find the covers: {e.Message}";
+        }
+    }
+
+    private async Task UploadAsync(InputFileChangeEventArgs e)
+    {
+        _error = null;
+        if (e.File.Size > MaxUpload)
+        {
+            _error = "That picture is bigger than 10 MB.";
+            return;
+        }
+        using var stream = e.File.OpenReadStream(MaxUpload);
+        using var copy = new MemoryStream();
+        await stream.CopyToAsync(copy);
+        _upload = Convert.ToBase64String(copy.ToArray());
+        _uploadUrl = $"data:{e.File.ContentType};base64,{_upload}";
+        _uploadName = e.File.Name;
+        _source = null;
+    }
+
+    private Task CloseAsync() => _busy ? Task.CompletedTask : OnClose.InvokeAsync();
+
+    private async Task ChooseAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var chosen = await Api.ChooseCoverAsync(Subject, Id, _source is not null ? new ChooseCover(_source) : new ChooseCover(Upload: _upload));
+            _busy = false;
+            if (chosen.Failed.Count > 0)
+            {
+                _error = $"Written into {Format.Count(chosen.Written, "file", "files")}, but {chosen.Failed.Count} couldn't be: {chosen.Failed[0]}";
+                await OnChosen.InvokeAsync(chosen.CoverUrl);
+                return;
+            }
+            await OnChosen.InvokeAsync(chosen.CoverUrl);
+            await OnClose.InvokeAsync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+        }
+        _busy = false;
+    }
+}

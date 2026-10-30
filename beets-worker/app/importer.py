@@ -159,7 +159,8 @@ class Importer:
                 for item in self._lib.items():
                     item.remove(delete=False)
 
-    def format(self, files: list[FormatFile], artwork: dict[str, bytes], template: str | None) -> list[dict[str, Any]]:
+    def format(self, files: list[FormatFile], artwork: dict[str, bytes], template: str | None,
+               folder_artwork: bytes | None = None) -> list[dict[str, Any]]:
         """Rewrites files in the library: see formatter.py. With a template, moves each one to where beets would file
         it now, going by its new tags."""
         with self._lock:
@@ -176,7 +177,7 @@ class Importer:
                     finally:
                         item.remove(delete=False)
 
-            return format_files(self.library, files, artwork, destination)
+            return format_files(self.library, files, artwork, destination, folder_artwork)
 
     def _file(self, session: PinnedSession, source: Path, destination: str | None,
               by_name: dict[str, StagedFile]) -> list[dict[str, Any]]:

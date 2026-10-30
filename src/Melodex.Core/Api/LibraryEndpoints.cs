@@ -33,8 +33,10 @@ public static class LibraryEndpoints
         return await action(task) ? Results.Ok((await TitledAsync(db, [task], ct))[0]) : Results.Conflict();
     }
 
+    private static CoverSubject CoverSubjectOf(string subject) => subject == "albums" ? CoverSubject.Album : CoverSubject.Track;
+
     private static EntityKind? ArtworkKind(string kind) =>
-        kind switch { "artist" => EntityKind.Artist, "album" => EntityKind.Album, "edition" => EntityKind.Edition, _ => null };
+        kind switch { "artist" => EntityKind.Artist, "album" => EntityKind.Album, "edition" => EntityKind.Edition, "track" => EntityKind.Track, _ => null };
 
     public static RouteGroupBuilder MapLibraryEndpoints(this RouteGroupBuilder api)
     {
@@ -134,6 +136,36 @@ public static class LibraryEndpoints
                          + "where they live, by the path template. Each part can keep the file's own instead. It runs in the background "
                          + "like a scan; only matched files are formatted. This writes your music files.")
             .Produces<TaskInfo>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound);
+
+        library.MapGet("/{subject:regex(^(albums|tracks)$)}/{id:guid}/cover", async (string subject, Guid id, CoverChooser covers, CancellationToken ct) =>
+                await covers.ChoicesAsync(CoverSubjectOf(subject), id, ct) is { } choices ? Results.Ok(choices) : Results.NotFound())
+            .RequireScope(Scopes.Format).WithName("GetCoverChoices")
+            .WithSummary("The covers an album or song could have: the usual cover and every edition's, of every release it's on (for a song, its "
+                         + "singles, EPs and compilations too), and its files' own picture. Pictures not fetched yet load like other covers.")
+            .Produces<CoverChoices>().Produces(StatusCodes.Status404NotFound);
+
+        library.MapPut("/{subject:regex(^(albums|tracks)$)}/{id:guid}/cover", async (string subject, Guid id, ChooseCover body, CoverChooser covers, CancellationToken ct) =>
+            {
+                try
+                {
+                    return await covers.ChooseAsync(CoverSubjectOf(subject), id, body, ct) is { } chosen ? Results.Ok(chosen) : Results.NotFound();
+                }
+                catch (CoverRefusedException e)
+                {
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { [e.Field] = [e.Message] });
+                }
+                catch (HttpRequestException e)
+                {
+                    return Results.Problem($"The beets worker, which writes the music folder, couldn't be reached: {e.Message}",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+            })
+            .RequireScope(Scopes.Format).WithName("ChooseCover")
+            .WithSummary("Set an album's or song's cover, from one of its cover choices or an uploaded picture (base64, up to 10 MB). It's embedded in "
+                         + "the files straight away, an album's folders get it as their folder image, and Melodex shows it from then on. "
+                         + "This writes your music files.")
+            .Produces<CoverChosen>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status503ServiceUnavailable);
 
         library.MapGet("/review", (LibraryView view, ReviewList? list, bool? excluded, CancellationToken ct) =>
                 excluded == true && list is null ? view.GetExcludedAsync(ct) : view.GetReviewAsync(list ?? ReviewList.Review, ct))
@@ -292,7 +324,8 @@ public static class LibraryEndpoints
                     entityTag: new Microsoft.Net.Http.Headers.EntityTagHeaderValue($"\"{found.UpdatedAt.Ticks:x}\""));
             })
             .WithTags("Library").AllowAnyone().WithName("GetArtwork")
-            .WithSummary("The picture of an artist, album or edition (kind is artist, album or edition), from the artwork plugins. 404 when there's none; "
+            .WithSummary("The picture of an artist, album or edition (kind is artist, album or edition), from the artwork plugins, or of a song (track) "
+                         + "that has had one chosen. 404 when there's none; "
                          + "503 with Retry-After while it's still being fetched. Open to anyone, so image elements can show it.")
             .Produces(StatusCodes.Status200OK, contentType: "image/jpeg").Produces(StatusCodes.Status404NotFound).Produces(StatusCodes.Status503ServiceUnavailable);
 
