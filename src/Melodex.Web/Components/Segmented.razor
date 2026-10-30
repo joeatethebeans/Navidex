@@ -1,12 +1,12 @@
 @typeparam T
 
 @* A row of choices, one picked, with a highlight that slides to it. *@
-<div class="segmented slider @Class" role="radiogroup" aria-label="@Label" style="--count: @Options.Count; --index: @Index">
+<div class="segmented slider @Class @(Disabled ? "disabled" : "")" role="radiogroup" aria-disabled="@(Disabled ? "true" : null)" aria-label="@Label" style="--count: @Options.Count; --index: @Index">
     <span class="thumb" aria-hidden="true"></span>
     @foreach (var (value, label, hint) in Options)
     {
         var selected = EqualityComparer<T>.Default.Equals(value, Value);
-        <button role="radio" aria-checked="@(selected ? "true" : "false")" class="@(selected ? "selected" : "")" title="@hint"
+        <button role="radio" aria-checked="@(selected ? "true" : "false")" class="@(selected ? "selected" : "")" title="@hint" disabled="@Disabled"
                 @onclick="() => OnChange.InvokeAsync(value)"><span class="segment-label" data-label="@label">@label</span></button>
     }
 </div>
@@ -20,6 +20,9 @@
     [Parameter] public EventCallback<T> OnChange { get; set; }
     [Parameter] public string? Label { get; set; }
     [Parameter] public string? Class { get; set; }
+
+    /// <summary>Shown, but can't be changed, such as while the page loads.</summary>
+    [Parameter] public bool Disabled { get; set; }
 
     private int Index => Math.Max(0, Options.ToList().FindIndex(o => EqualityComparer<T>.Default.Equals(o.Value, Value)));
 }

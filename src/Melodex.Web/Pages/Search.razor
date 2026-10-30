@@ -1,9 +1,12 @@
 @page "/search"
+@using Microsoft.JSInterop
 @inject MelodexClient Api
 @inject AuthState Auth
 @inject NavigationManager Navigation
 @inject Player Player
 @inject Preferences Prefs
+@inject SearchMemory Memory
+@inject IJSRuntime JS
 @implements IDisposable
 
 <PageTitle>Search · Melodex</PageTitle>
@@ -285,14 +288,65 @@ else
 
     private List<SearchTrack> Tracks => _results is null ? [] : Sort(_results.Tracks.Where(t => Shows(t.Owned)), t => t.Title, _ => null).ToList();
 
+    private IDisposable? _leaving;
+    private double _scrollY;
+    private double? _restoreScroll;
+    private bool _restored;
+
     protected override async Task OnInitializedAsync()
     {
         _recent = await Prefs.GetAsync<List<string>>(RecentKey, []);
         _recentArtists = await Prefs.GetAsync<List<RecentArtist>>(RecentArtistsKey, []);
+        // Where it was scrolled to is read on the way out, while the page is still there to read.
+        _leaving = Navigation.RegisterLocationChangingHandler(async _ =>
+        {
+            try
+            {
+                _scrollY = await JS.InvokeAsync<double>("melodexScroll.get");
+            }
+            catch (JSException)
+            {
+            }
+        });
+        if (Recall() is { } kept)
+        {
+            // Back to the last search, as it was left: the address is put back to say so.
+            _query = kept.Query;
+            _kind = kept.Kind;
+            _owned = kept.Owned;
+            _sort = kept.Sort;
+            _descending = kept.Descending;
+            _results = kept.Results;
+            _shown = kept.Query;
+            _restoreScroll = kept.ScrollY;
+            _restored = true;
+            if (kept.FileId is { } fileId && Auth.May(UserPermissions.Review))
+                _file = await FindFileAsync(fileId);
+            if ((Query ?? "").Trim() != kept.Query)
+                Navigation.NavigateTo(SearchLink(kept.Query), replace: true);
+            if (kept.Busy)
+                _ = InvokeAsync(async () =>
+                {
+                    await SearchAsync(kept.Query, remember: false);
+                    StateHasChanged();
+                });
+        }
     }
+
+    // The search left last, when coming back to the bare Search page or to that same search, for the same file.
+    private SearchMemory.Kept? Recall() => Memory.Recall() is { } kept && ((Query ?? "").Trim() is var asked && (asked.Length == 0 || asked == kept.Query))
+                                           && kept.FileId == FileId
+        ? kept
+        : null;
 
     protected override async Task OnParametersSetAsync()
     {
+        // Just put back as it was left, so there's nothing to search for.
+        if (_restored)
+        {
+            _restored = false;
+            return;
+        }
         // The address followed what's being typed; what's typed may have moved on since, so leave it be.
         if (_shown is not null && (Query ?? "").Trim() == _shown)
             return;
@@ -448,6 +502,17 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_restoreScroll is { } y)
+        {
+            _restoreScroll = null;
+            try
+            {
+                await JS.InvokeVoidAsync("melodexScroll.to", y);
+            }
+            catch (JSException)
+            {
+            }
+        }
         if (_focusSearch)
         {
             _focusSearch = false;
@@ -525,7 +590,15 @@ else
         return Task.CompletedTask;
     }
 
-    public void Dispose() => _typing?.Cancel();
+    public void Dispose()
+    {
+        _typing?.Cancel();
+        _leaving?.Dispose();
+        if (_results is not null && _query.Trim().Length > 0)
+            Memory.Keep(new SearchMemory.Kept(_query.Trim(), _file?.FileId, _kind, _owned, _sort, _descending, _results, _remoteBusy, _scrollY));
+        else
+            Memory.Forget();
+    }
 
     /// <summary>
     /// Tracks as the library lists them, with their album's cover and what can be done with each; and whether you have

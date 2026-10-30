@@ -135,6 +135,8 @@ public static class AccessEndpoints
                     return Results.NotFound();
                 if (!Enum.IsDefined(body.Color) || !Enum.IsDefined(body.Mode))
                     return Results.ValidationProblem(new Dictionary<string, string[]> { ["appearance"] = ["That isn't a theme Melodex has."] });
+                if (body.KeepSearchMinutes is < 0 or > 120)
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["keepSearchMinutes"] = ["Keep a search for 0 to 120 minutes."] });
                 user.Appearance = JsonSerializer.Serialize(body, MelodexJson.Options);
                 await db.SaveChangesAsync(ct);
                 access.UsersChanged();
@@ -142,7 +144,7 @@ public static class AccessEndpoints
             })
             .RequireScope(Scopes.SignedIn)
             .WithName("SetAppearance")
-            .WithSummary("Choose how the web app looks to you: its colour, light or dark, and high contrast. Kept with your account, so it follows you.");
+            .WithSummary("Choose how the web app looks to you (its colour, light or dark, and high contrast) and how long the Search page keeps your last search. Kept with your account, so it follows you.");
 
         MapUsers(api);
         MapKeys(api);

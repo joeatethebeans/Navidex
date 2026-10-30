@@ -21,9 +21,13 @@ public enum ThemeColor { Pink, Green, Blue, Grey, Purple, Amber }
 /// <summary>Light or dark. Auto follows the device; black is dark with pure black behind, for OLED screens.</summary>
 public enum ThemeMode { Auto, Light, Dark, Black }
 
-/// <summary>How the web app looks to someone, kept with their account: <c>PUT /auth/appearance</c>.</summary>
+/// <summary>How the web app looks and behaves for someone, kept with their account: <c>PUT /auth/appearance</c>.</summary>
 /// <param name="HighContrast">Stronger text and borders, and status colours that colour-blind people can tell apart.</param>
-public sealed record Appearance(ThemeColor Color = ThemeColor.Pink, ThemeMode Mode = ThemeMode.Auto, bool HighContrast = false);
+/// <param name="KeepSearchMinutes">
+/// How long the Search page keeps the last search, its results and where it was scrolled to after you leave it, from 0
+/// (not at all) to 120 minutes.
+/// </param>
+public sealed record Appearance(ThemeColor Color = ThemeColor.Pink, ThemeMode Mode = ThemeMode.Auto, bool HighContrast = false, int KeepSearchMinutes = 5);
 
 /// <summary>Body of <c>POST /auth/setup</c>: the admin account, made the first time Melodex runs.</summary>
 public sealed record SetUpLogin(string Username, string Password);

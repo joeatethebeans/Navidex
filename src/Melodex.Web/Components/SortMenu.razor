@@ -2,7 +2,7 @@
     How a list is sorted, as two small buttons: one opens the list of ways to sort, the other reverses the order.
 *@
 <div class="sort-menu">
-    <button class="icon-button @(_open ? "on" : "")" type="button" title="Sort by: @Current" aria-label="Sort by: @Current" aria-haspopup="menu"
+    <button class="icon-button @(_open ? "on" : "")" type="button" disabled="@Disabled" title="Sort by: @Current" aria-label="Sort by: @Current" aria-haspopup="menu"
             aria-expanded="@(_open ? "true" : "false")" @onclick="() => _open = !_open">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
     </button>
@@ -17,7 +17,7 @@
             }
         </div>
     }
-    <button class="icon-button" type="button" disabled="@(!CanReverse)" title="@DirectionHint" aria-label="@DirectionHint" @onclick="OnReverse">
+    <button class="icon-button" type="button" disabled="@(!CanReverse || Disabled)" title="@DirectionHint" aria-label="@DirectionHint" @onclick="OnReverse">
         <svg viewBox="0 0 24 24" aria-hidden="true" class="@(Descending ? "flip" : "")"><path d="M7 4v16M3 16l4 4 4-4" /><path d="M14 5h7M14 10h5M14 15h3" /></svg>
     </button>
 </div>
@@ -33,6 +33,9 @@
     [Parameter] public string DirectionHint { get; set; } = "Reverse the order";
 
     [Parameter] public bool CanReverse { get; set; } = true;
+
+    /// <summary>Can't be changed for now, such as while the page loads.</summary>
+    [Parameter] public bool Disabled { get; set; }
 
     [Parameter] public EventCallback<string> OnChange { get; set; }
 

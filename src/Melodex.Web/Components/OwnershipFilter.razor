@@ -5,7 +5,7 @@
     Owned, all or missing, for the library and artist pages. The highlight slides between them, and the page changes as a
     view transition, so the tiles that stay move into place rather than the page jumping.
 *@
-<Segmented T="OwnershipView" Value="Prefs.Ownership" Options="Options" OnChange="ChooseAsync" Class="@($"ownership {Prefs.Ownership.ToString().ToLowerInvariant()}")" Label="Show" />
+<Segmented T="OwnershipView" Value="Prefs.Ownership" Options="Options" OnChange="ChooseAsync" Disabled="_busy || Busy" Class="@($"ownership {Prefs.Ownership.ToString().ToLowerInvariant()}")" Label="Show" />
 @* Shown only if the change takes more than a moment. *@
 <span class="spinner ownership-busy @(_busy || Busy ? "on" : "")" role="status" aria-label="@(_busy || Busy ? "Updating" : null)"></span>
 
@@ -13,7 +13,7 @@
     /// <summary>Called once the choice is saved, to show it.</summary>
     [Parameter] public EventCallback OnChange { get; set; }
 
-    /// <summary>Shows the spinner for something else the page is doing, such as drawing another view.</summary>
+    /// <summary>Shows the spinner, and holds the choice, for something else the page is doing, such as drawing another view.</summary>
     [Parameter] public bool Busy { get; set; }
 
     [Parameter] public string OwnedHint { get; set; } = "Only what you have all of";

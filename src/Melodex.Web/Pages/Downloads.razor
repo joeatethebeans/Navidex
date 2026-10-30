@@ -57,7 +57,7 @@ else
                         @if (item.ArtistId is { } artist) { <a class="muted" href="artists/@artist">@item.ArtistCredit</a> } else { @item.ArtistCredit }
                         @if (item.AlbumId is { } album) { <span> · </span><a class="muted" href="albums/@album">@item.AlbumTitle</a> }
                     </div>
-                    <div class="row small" style="gap: .5rem;">
+                    <div class="row small listen-status">
                         <span class="badge @(item.Paused && item.Pending ? "neutral" : Badge(item.State))" title="@item.Detail">@Label(item)</span>
                         @if (item.State == ListenNowState.Playable && item.ExpiresAt is { } expires)
                         {

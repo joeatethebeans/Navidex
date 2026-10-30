@@ -27,6 +27,8 @@ Everything on the way to 1.0.
 - **Missing view**: each kind of release (live, compilations, remixes, demos, soundtracks, bootlegs and the rest) has
   its own choice of Show, Hide or **New songs only**, which lists a release just for the songs found nowhere else.
 - **File metadata**: your files' tags and their cover art can each be preferred on their own.
+- **Search remembers**: the last search, its results and where you'd scrolled stay for a while after you leave the
+  Search page (5 minutes by default; each user sets their own under Settings → Appearance).
 - **Getting your library ready**: just after starting, the top bar and the Library page say the library's lists are
   being worked out, which takes a while the first time on a big library.
 
@@ -35,6 +37,8 @@ Everything on the way to 1.0.
 - Browsers could keep an old copy of the web app's page, showing *Loading Navidex* and failing to change the theme.
 - The ownership meters and legend use brighter colours in light themes.
 - The Log page's Info, Warnings and Errors toggles have tick boxes in their own colours, not black.
+- Status pills on Downloads, Activity and elsewhere have room to breathe.
+- The Library page's controls wait while a view loads, so changes don't pile up behind it.
 - *Fetch once, keep it with the smallest release* now does that: a song fetched on its own goes with a single before an
   album. It used to behave as *keep it with the main album*.
 

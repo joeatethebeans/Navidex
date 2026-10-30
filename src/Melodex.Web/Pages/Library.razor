@@ -15,22 +15,23 @@
 @* One line where there's room: the filter box gives way first, to a button that opens it below. *@
 <div class="library-bar">
     <div class="toolbar one-line">
-        <Segmented T="string" Value="_picked" Options="Views" OnChange="ShowAsync" Label="View" />
-        <input class="filter" type="search" placeholder="@FilterHint" aria-label="@FilterHint" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
-        <button class="icon-button filter-toggle @(_filterOpen || _filter.Length > 0 ? "on" : "")" type="button" title="@FilterHint" aria-label="@FilterHint"
+        @* Held while a view loads or is drawn, so a second change doesn't pile up behind the first. *@
+        <Segmented T="string" Value="_picked" Options="Views" OnChange="ShowAsync" Label="View" Disabled="Busy" />
+        <input class="filter" type="search" placeholder="@FilterHint" aria-label="@FilterHint" disabled="@Busy" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
+        <button class="icon-button filter-toggle @(_filterOpen || _filter.Length > 0 ? "on" : "")" type="button" disabled="@Busy" title="@FilterHint" aria-label="@FilterHint"
                 aria-expanded="@(_filterOpen ? "true" : "false")" @onclick="ToggleFilter">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
         </button>
-        <SortMenu Options="SortMenuOptions" Value="@_sort.Key" Descending="_sort.Descending" DirectionHint="@DirectionHint"
+        <SortMenu Options="SortMenuOptions" Value="@_sort.Key" Descending="_sort.Descending" DirectionHint="@DirectionHint" Disabled="Busy"
                   OnChange="key => SortAsync(key, null)" OnReverse="() => SortAsync(_sort.Key, !_sort.Descending)" />
         @if (_view != "tracks")
         {
-            <OwnershipFilter OnChange="ResetLimit" Busy="_switching" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
+            <OwnershipFilter OnChange="ResetLimit" Busy="Busy" OwnedHint="@(_view == "albums" ? "Only albums you have every track of" : "Only artists with nothing missing")"
                              MissingHint="@(_view == "albums" ? "Only albums with tracks missing" : "Only artists with something missing")" />
         }
         else
         {
-            <span class="spinner ownership-busy @(_switching ? "on" : "")" role="status" aria-label="@(_switching ? "Loading" : null)"></span>
+            <span class="spinner ownership-busy @(Busy ? "on" : "")" role="status" aria-label="@(Busy ? "Loading" : null)"></span>
             @if (Store.Tracks is { Count: > 0 } tracks)
             {
                 <span class="muted small count">@VisibleTracks.Count() of @tracks.Count</span>
@@ -40,7 +41,7 @@
     @if (_filterOpen)
     {
         <div class="filter-drop">
-            <input type="search" placeholder="@FilterHint" aria-label="@FilterHint" @ref="_filterDrop" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
+            <input type="search" placeholder="@FilterHint" aria-label="@FilterHint" disabled="@Busy" @ref="_filterDrop" @bind="_filter" @bind:event="oninput" @bind:after="ResetLimit" />
         </div>
     }
 </div>
@@ -366,6 +367,9 @@
         }
         _switching = false;
     }
+
+    // Loading the view for the first time, or switching to another.
+    private bool Busy => _switching || !Loaded(_view);
 
     private bool Loaded(string view) => view switch
     {
