@@ -876,6 +876,23 @@ svg.flip { transform: scaleY(-1); }
 }
 .search-note { margin-bottom: .5rem; }
 
+/* Review's toolbar has more buttons: its filter box becomes a button sooner, then the buttons drop their names and keep
+   to their icons, and only on the narrowest screens does the row wrap. */
+.review-bar .toolbar.one-line .filter { max-width: 360px; }
+@container (max-width: 860px) {
+    .review-bar .toolbar.one-line .filter { display: none; }
+    .review-bar .toolbar.one-line .filter-toggle { display: inline-flex; }
+    .review-bar .filter-drop { display: block; }
+}
+@container (max-width: 620px) {
+    .review-bar .toolbar.one-line { flex-wrap: nowrap; gap: .5rem; }
+    .review-bar .icon-button > span:not(.spinner) { display: none; }
+    .review-bar .icon-button:has(span:not(.spinner)) { padding: 0; }
+}
+@container (max-width: 330px) {
+    .review-bar .toolbar.one-line { flex-wrap: wrap; }
+}
+
 /* Settings: its sections down the left, or across the top on narrow screens. */
 .settings-page { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 .settings-nav { display: flex; flex-direction: column; gap: .15rem; position: sticky; top: 4.5rem; }

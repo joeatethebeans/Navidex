@@ -23,7 +23,11 @@ Scans and other long jobs show on **Activity**, where they can be paused, cancel
 
 Files Melodex couldn't match confidently wait on **Review**. They don't count as owned until they're matched. Each file
 has a button for each of these; hover over one to see what it does. The buttons at the top, with their names, do the
-same for every file the filter shows.
+same for every file the filter shows. On a narrow screen the filter becomes a button that opens it, and the buttons
+keep only their icons.
+
+Each file shows its own picture, from its tags or its folder, beside the song suggested for it. Sort the list by how
+sure the match is, the files' names, their paths or when they last changed; the sort is remembered in that browser.
 
 - **Approve** the suggested match, or **Search** for the right one.
 - **Exclude** it: it's never matched, and the library shows it as its own tags say. Use this for music no catalogue

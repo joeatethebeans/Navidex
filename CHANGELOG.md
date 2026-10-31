@@ -17,7 +17,8 @@ Everything on the way to 1.0.
 - **Users**: accounts for everyone, with permissions to browse, request, listen, review, format, remove, scan, change
   settings, make API keys and manage users. Everyone signs in; Remember me keeps a browser signed in for 30 days.
 - **API keys** belong to the user who made them and can do no more than they may.
-- **Review**: exclude, defer or hide files, and put them back from the lists at the bottom.
+- **Review**: exclude, defer or hide files, and put them back from the lists at the bottom. Sort the list by how sure
+  the match is, name, path or date changed; each file shows its own picture.
 - **Your own music**: excluded files show as their tags say, with their own artist and album pages and covers.
 - **Formatting**: rewrite files' tags, covers and folders from the catalogue, for a track, album, artist or the whole
   library.

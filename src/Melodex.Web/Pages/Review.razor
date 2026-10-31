@@ -4,6 +4,7 @@
 @inject RequestTracker Tracker
 @inject AuthState Auth
 @inject NavigationManager Nav
+@inject Preferences Preferences
 
 <PageTitle>Review · Melodex</PageTitle>
 
@@ -66,18 +67,34 @@ else
 {
     var approvable = Visible.Count(i => i.Suggestion is not null);
     var some = _filter.Length > 0;
-    <div class="toolbar">
-        <input type="search" placeholder="Filter, for example a title, artist or folder" @bind="_filter" @bind:event="oninput" />
-        <span class="spacer"></span>
-        @* The buttons for every file carry their names, which teaches the icons each file has below. *@
-        <IconButton Icon="approve" Primary="true" Label="@(some ? "Approve these" : "Approve all")" Disabled="@(_busy || approvable == 0)"
-                    Title="@(some ? "Accept the suggestion for every file the filter shows" : "Accept the suggestion for every file that has one")"
-                    OnClick="@(() => _confirm = "approve")" />
-        @foreach (var (aside, verb, icon) in Asides)
+    @* One line where there's room: the filter box gives way first, to a button that opens it below, then the buttons
+       lose their names. *@
+    <div class="library-bar review-bar">
+        <div class="toolbar one-line">
+            <input class="filter" type="search" placeholder="@FilterHint" aria-label="@FilterHint" @bind="_filter" @bind:event="oninput" />
+            <button class="icon-button filter-toggle @(_filterOpen || some ? "on" : "")" type="button" title="@FilterHint" aria-label="@FilterHint"
+                    aria-expanded="@(_filterOpen ? "true" : "false")" @onclick="ToggleFilter">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
+            </button>
+            <SortMenu Options="Sorts" Value="@_sort" Descending="_descending" DirectionHint="@DirectionHint"
+                      OnChange="SortAsync" OnReverse="ReverseAsync" />
+            <span class="spacer"></span>
+            @* The buttons for every file carry their names where there's room, which teaches the icons each file has below. *@
+            <IconButton Icon="approve" Primary="true" Label="@(some ? "Approve these" : "Approve all")" Disabled="@(_busy || approvable == 0)"
+                        Title="@(some ? "Accept the suggestion for every file the filter shows" : "Accept the suggestion for every file that has one")"
+                        OnClick="@(() => _confirm = "approve")" />
+            @foreach (var (aside, verb, icon) in Asides)
+            {
+                <IconButton Icon="@icon" Label="@($"{verb} {(some ? "these" : "all")}")" Disabled="@(_busy || !Visible.Any())"
+                            Title="@($"{verb} every file {(some ? "the filter shows" : "waiting for review")}. {AsideHint(aside)}")"
+                            OnClick="() => _confirm = aside.ToString()" />
+            }
+        </div>
+        @if (_filterOpen)
         {
-            <IconButton Icon="@icon" Label="@($"{verb} {(some ? "these" : "all")}")" Disabled="@(_busy || !Visible.Any())"
-                        Title="@($"{verb} every file {(some ? "the filter shows" : "waiting for review")}. {AsideHint(aside)}")"
-                        OnClick="() => _confirm = aside.ToString()" />
+            <div class="filter-drop">
+                <input type="search" placeholder="@FilterHint" aria-label="@FilterHint" @ref="_filterDrop" @bind="_filter" @bind:event="oninput" />
+            </div>
         }
     </div>
     @if (_confirm == "approve")
@@ -120,9 +137,17 @@ else
         <div class="card review-item">
             <div>
                 <div class="label">File</div>
-                <div>@(item.Title ?? "(no title)") <span class="muted">· @(item.Artist ?? "unknown artist")</span></div>
-                <div class="muted small path">@item.Path · @Format.Duration(item.DurationSeconds)</div>
-                @if (item.Reason is not null) { <div class="muted small">@item.Reason</div> }
+                <div class="suggestion-row">
+                    <Cover Url="@item.CoverUrl" />
+                    <div class="suggestion-text">
+                        <div>@(item.Title ?? "(no title)") <span class="muted">· @(item.Artist ?? "unknown artist")</span></div>
+                        <div class="muted small path">
+                            @item.Path · @Format.Duration(item.DurationSeconds)
+                            @if (item.ModifiedAt is { } modified) { <span title="When the file last changed"> · @Changed(modified)</span> }
+                        </div>
+                        @if (item.Reason is not null) { <div class="muted small">@item.Reason</div> }
+                    </div>
+                </div>
             </div>
             <div>
                 <div class="label">Suggestion</div>
@@ -228,13 +253,90 @@ else
     };
     private string _filter = "";
     private bool _busy;
+    private bool _filterOpen, _focusFilter;
+    private ElementReference _filterDrop;
+
+    private const string FilterHint = "Filter, for example a title, artist or folder";
+
+    private static readonly IReadOnlyList<(string Key, string Label)> Sorts =
+        [("match", "How sure the match is"), ("name", "Name"), ("path", "Path"), ("date", "Date changed")];
+
+    // How each sort starts out: the surest matches and the newest files first, names and paths from A.
+    private static bool StartsDescending(string sort) => sort is "match" or "date";
+
+    private string _sort = "path";
+    private bool _descending;
+
+    private string DirectionHint => _sort switch
+    {
+        "match" => $"{(_descending ? "Surest" : "Least sure")} first; click to reverse",
+        "date" => $"{(_descending ? "Newest" : "Oldest")} first; click to reverse",
+        _ => $"Sorted {(_descending ? "Z to A" : "A to Z")}; click to reverse",
+    };
 
     // The bulk action waiting to be confirmed: approve or exclude.
     private string? _confirm;
 
-    private IEnumerable<ReviewItem> Visible => _items!.Where(i => _filter.Length == 0
+    private IEnumerable<ReviewItem> Visible => Sorted(_items!.Where(i => _filter.Length == 0
         || new[] { i.Path, i.Title, i.Artist, i.Album, i.Suggestion?.Title, i.Suggestion?.AlbumTitle }
-            .Any(text => text?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true));
+            .Any(text => text?.Contains(_filter, StringComparison.OrdinalIgnoreCase) == true)));
+
+    // Files without a match % go last either way; the path settles ties.
+    private IEnumerable<ReviewItem> Sorted(IEnumerable<ReviewItem> items)
+    {
+        var text = StringComparer.CurrentCultureIgnoreCase;
+        var sorted = (_sort, _descending) switch
+        {
+            ("match", true) => items.OrderBy(i => i.Confidence is null).ThenByDescending(i => i.Confidence),
+            ("match", false) => items.OrderBy(i => i.Confidence is null).ThenBy(i => i.Confidence),
+            ("date", true) => items.OrderByDescending(i => i.ModifiedAt),
+            ("date", false) => items.OrderBy(i => i.ModifiedAt),
+            ("name", true) => items.OrderByDescending(NameOf, text),
+            ("name", false) => items.OrderBy(NameOf, text),
+            (_, true) => items.OrderByDescending(i => i.Path, text),
+            _ => items.OrderBy(i => i.Path, text),
+        };
+        return sorted.ThenBy(i => i.Path, StringComparer.Ordinal);
+    }
+
+    private static string NameOf(ReviewItem item) => item.Title ?? Path.GetFileNameWithoutExtension(item.Path);
+
+    private static string Changed(DateTime modified) =>
+        DateTime.SpecifyKind(modified, DateTimeKind.Utc).ToLocalTime().ToString("d MMM yyyy");
+
+    private async Task SortAsync(string sort)
+    {
+        _sort = sort;
+        _descending = StartsDescending(sort);
+        await KeepSortAsync();
+    }
+
+    private async Task ReverseAsync()
+    {
+        _descending = !_descending;
+        await KeepSortAsync();
+    }
+
+    private async Task KeepSortAsync()
+    {
+        await Preferences.SetAsync("review.sort", _sort);
+        await Preferences.SetAsync("review.descending", _descending);
+    }
+
+    private void ToggleFilter()
+    {
+        _filterOpen = !_filterOpen;
+        _focusFilter = _filterOpen;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusFilter)
+        {
+            _focusFilter = false;
+            await _filterDrop.FocusAsync();
+        }
+    }
 
     // Requests that stopped short, or have parts that did.
     private IEnumerable<RequestInfo> Stuck => Tracker.Requests.Where(r =>
@@ -244,6 +346,10 @@ else
     protected override async Task OnInitializedAsync()
     {
         Tracker.Changed += Refresh;
+        _sort = await Preferences.GetAsync("review.sort", "path");
+        if (Sorts.All(s => s.Key != _sort))
+            _sort = "path";
+        _descending = await Preferences.GetAsync("review.descending", StartsDescending(_sort));
         await Tracker.EnsureLoadedAsync();
         await LoadAsync();
     }

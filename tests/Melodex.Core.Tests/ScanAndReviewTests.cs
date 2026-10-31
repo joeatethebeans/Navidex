@@ -15,6 +15,9 @@ public sealed class ScanAndReviewTests(RequestFixture fixture)
         // A scan only reads files that changed, so change one that matches and one that doesn't.
         var dummy = Directory.GetFiles(Path.Combine(fixture.Music, "Portishead"), "*.*", SearchOption.AllDirectories).First(f => f.Contains("Dummy"));
         var review = (await Api.GetReviewAsync()).Last();
+        // Each file on the list brings its own picture and when it last changed, to show and sort by.
+        Assert.Equal($"api/v1/library/files/{review.FileId}/cover", review.CoverUrl);
+        Assert.NotNull(review.ModifiedAt);
         foreach (var file in new[] { dummy, Path.Combine(fixture.Music, review.Path) })
             File.SetLastWriteTimeUtc(file, DateTime.UtcNow);
         await ScanAsync();

@@ -380,7 +380,9 @@ public sealed record ReviewItem(
     double? DurationSeconds,
     SuggestedTrack? Suggestion,
     bool Excluded = false,
-    SetAside SetAside = SetAside.None);
+    SetAside SetAside = SetAside.None,
+    string? CoverUrl = null,
+    DateTime? ModifiedAt = null);
 
 /// <summary>Body of <c>PUT /library/files/{id}/excluded</c>.</summary>
 public sealed record ExcludeFile(bool Excluded);

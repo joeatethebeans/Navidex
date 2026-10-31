@@ -470,7 +470,7 @@ public sealed partial class LibraryView(MelodexDbContext db, SettingsService set
                     edition is null ? null : CoverUrl(edition.AlbumId, edition.Id), track.ArtistId);
             }
             return new ReviewItem(f.Id, f.Path, f.ReviewReason, f.MatchConfidence, tags.Title, tags.Artist ?? tags.AlbumArtist, tags.Album,
-                f.Duration?.TotalSeconds, suggestion, f.ExcludedAt is not null, SetAsides.Of(f));
+                f.Duration?.TotalSeconds, suggestion, f.ExcludedAt is not null, SetAsides.Of(f), LocalMusic.CoverUrl(f.Id), f.ModifiedAt);
         }).ToList();
     }
 }
