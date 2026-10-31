@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 using Microsoft.Extensions.Options;
 using Melodex.Client;
 using Melodex.Contracts.Plugins;
@@ -53,19 +54,24 @@ public sealed class CoverChooser(
         }
 
         var choices = new List<CoverOption>();
+        // The same picture is offered once: every song on an album has its cover, as does nearly every edition of it.
+        var seen = new HashSet<string>();
         var files = await Files(subject, id).OrderBy(f => f.Path).ToListAsync(ct);
-        if (files.FirstOrDefault(f => FileArt.Find(FullPath(f)) is not null) is { } pictured)
-            choices.Add(Option($"file:{pictured.Id}", "In your library", "Your files' own", null, LocalMusic.CoverUrl(pictured.Id)));
-
-        // Albums by when they came out, each with its usual cover then its editions'.
-        foreach (var release in editions.GroupBy(e => e.Album).OrderBy(g => g.Key.FirstReleaseDate ?? "9999").ThenBy(g => g.Key.Title))
+        if (files.Select(f => (File: f, Art: FileArt.Find(FullPath(f)))).FirstOrDefault(x => x.Art is not null) is { Art: { } art } pictured)
         {
-            var album = release.Key;
-            var kind = string.Join(", ", [album.Type.ToString(), .. album.SecondaryTypes.Select(t => t.ToString())]);
-            choices.Add(Option($"album:{album.Id}", album.Title, "Usual cover", Join(kind, Year(album.FirstReleaseDate)), LibraryView.CoverUrl(album.Id, null)));
-            foreach (var edition in release.OrderBy(e => e.ReleaseDate ?? "9999").ThenBy(e => e.Country))
-                choices.Add(Option($"edition:{edition.Id}", album.Title, edition.Title == album.Title ? "Edition" : edition.Title,
-                    Join(edition.ReleaseDate, edition.Country, edition.Formats, edition.Disambiguation), LibraryView.CoverUrl(album.Id, edition.Id)));
+            seen.Add(Convert.ToHexString(SHA256.HashData(art.Data)));
+            choices.Add(Option($"file:{pictured.File.Id}", "In your library", "Your files' own", null, LocalMusic.CoverUrl(pictured.File.Id)));
+        }
+
+        // One cover for each album, EP or single it's on, by when they came out.
+        var releases = editions.Select(e => e.Album).DistinctBy(a => a.Id).OrderBy(a => a.FirstReleaseDate ?? "9999").ThenBy(a => a.Title).ToList();
+        var cached = await artwork.CachedAsync(EntityKind.Album, releases.Select(a => a.Id).ToList(), ct);
+        foreach (var album in releases)
+        {
+            if (cached.TryGetValue(album.Id, out var path) && !seen.Add(Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(path, ct)))))
+                continue;
+            var secondary = album.SecondaryTypes.Count > 0 ? string.Join(", ", album.SecondaryTypes) : null;
+            choices.Add(Option($"album:{album.Id}", album.Title, Format(album.Type), Join(secondary, Year(album.FirstReleaseDate)), LibraryView.CoverUrl(album.Id, null)));
         }
 
         var health = await worker.CheckHealthAsync(ct);
@@ -182,6 +188,14 @@ public sealed class CoverChooser(
         [0x47, 0x49, 0x46, 0x38, ..] => "image/gif",
         [0x52, 0x49, 0x46, 0x46, _, _, _, _, 0x57, 0x45, 0x42, 0x50, ..] => "image/webp",
         _ => null,
+    };
+
+    private static string Format(Melodex.Contracts.Catalogue.AlbumType type) => type switch
+    {
+        Melodex.Contracts.Catalogue.AlbumType.Album => "Album",
+        Melodex.Contracts.Catalogue.AlbumType.Ep => "EP",
+        Melodex.Contracts.Catalogue.AlbumType.Single => "Single",
+        _ => "Cover",
     };
 
     private static string? Year(string? date) => date is { Length: >= 4 } ? date[..4] : null;

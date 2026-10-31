@@ -273,7 +273,8 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 .toggle:has(input:checked) { border-color: var(--missing); color: var(--missing); background: var(--missing-bg); }
 
 /* Artist and album pages: artwork beside the title. */
-.page-head { display: flex; gap: 1rem; align-items: center; }
+/* The cover's foot level with the buttons' under the title. */
+.page-head { display: flex; gap: 1rem; align-items: flex-end; }
 .page-head > .cover { width: 96px; flex: none; }
 @media (max-width: 640px) { .page-head > .cover { width: 64px; } }
 
@@ -526,8 +527,11 @@ button.icon.play svg { fill: currentColor; }
     background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 35%, transparent), color-mix(in srgb, var(--bg) 80%, transparent));
 }
 .np-head, .np-body { position: relative; }
-.np-head { display: flex; align-items: center; gap: .25rem; padding: .75rem 1rem; }
-.np-from { flex: 1; min-width: 0; text-align: center; font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Three columns, the outer two equal, so where it's playing from is in the middle of the page whatever the buttons. */
+.np-head { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: .5rem; padding: .75rem 1rem; }
+.np-head-start, .np-head-end { display: flex; align-items: center; gap: .25rem; min-width: 0; }
+.np-head-end { justify-content: flex-end; }
+.np-from { max-width: min(36rem, 50vw); min-width: 0; text-align: center; font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .np-from .muted { text-transform: uppercase; letter-spacing: .06em; font-size: .72rem; margin-right: .4rem; }
 .np-from a { color: var(--text); font-weight: 600; }
 .now-playing button.icon:hover:not(:disabled), .now-playing button.icon.on { background: color-mix(in srgb, var(--text) 12%, transparent); }
@@ -536,7 +540,9 @@ button.icon.play svg { fill: currentColor; }
     flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem;
     padding: 0 2.5rem 2rem; max-width: 90rem; width: 100%; margin: 0 auto; box-sizing: border-box;
 }
-.np-body.with-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+/* Beside the panel, the row is as tall as the cover and controls, and the panel fills it: its top level with the cover's, its foot with the volume's. */
+.np-body.with-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-content: center; }
+.np-body.with-panel .np-panel { contain: size; }
 .np-main { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .9rem; min-height: 0; }
 .np-art { width: min(28rem, 100%, 48vh); }
 .np-art .cover { border: none; border-radius: 10px; box-shadow: 0 24px 60px rgb(0 0 0 / .45); }
@@ -555,6 +561,9 @@ button.icon.play svg { fill: currentColor; }
     background: color-mix(in srgb, var(--surface) 45%, transparent); backdrop-filter: blur(12px);
 }
 .np-queue .queue-list li.now { background: color-mix(in srgb, var(--text) 10%, transparent); }
+/* Lyrics sit flush beside the cover, with no box, fading out at the top and bottom. */
+.np-panel.np-lyrics { background: none; backdrop-filter: none; border-radius: 0; padding-left: 0; padding-right: 0;
+    mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent); }
 .np-lyrics { padding: 30vh 2rem; font-size: clamp(1.25rem, 2.2vw, 2rem); font-weight: 700; line-height: 1.35; scrollbar-width: none; }
 .np-lyrics::-webkit-scrollbar { display: none; }
 .np-lyrics .line { margin: .45em 0; opacity: .4; cursor: pointer; transition: opacity .35s, color .35s, transform .35s; transform-origin: left center; }
@@ -569,8 +578,11 @@ button.icon.play svg { fill: currentColor; }
 .np-lyrics:has(.np-note:only-child), .np-lyrics:has(> .loading) { padding: 2rem; display: grid; place-items: center; text-align: center; }
 @media (max-width: 860px) {
     /* On a phone: the panel takes the cover's place, above the controls. */
+    /* No room to centre it on the page: it takes what's between the buttons. */
+    .np-head { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .np-from { max-width: none; }
     .np-body { padding: 0 1rem 1.25rem; gap: 1rem; }
-    .np-body.with-panel { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+    .np-body.with-panel { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; align-content: stretch; }
     .np-body.with-panel .np-panel { order: -1; }
     .np-body.with-panel .np-art, .np-body.with-panel .np-visualiser { display: none; }
     .np-art { width: min(100%, 45vh); }

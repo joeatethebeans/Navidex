@@ -13,7 +13,7 @@ After the admin account, Melodex walks through what it needs. Each step can be s
 1. **Your music folder.** Melodex checks it can read the folder and counts what's there. If it finds nothing, check
    `MUSIC_PATH` and the folder's permissions.
 2. **Navidrome.** Melodex tells Navidrome to scan when music arrives, and shows the covers from your own files. Give it
-   Navidrome's address and a Navidrome user.
+   Navidrome's address and a Navidrome **admin** username and password (only admins can start scans).
 3. **Fetching.** Choose where music comes from: YouTube Music (yt-dlp), and an inbox folder you drop files into.
    Without a retrieval plugin you can still browse and see what's missing.
 4. **The first scan.** Melodex reads every file and matches it against MusicBrainz.

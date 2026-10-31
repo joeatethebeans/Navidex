@@ -45,7 +45,7 @@ else
                 }
                 else if (!track.Ignored)
                 {
-                    <FetchButton Kind="RequestKind.Track" Id="track.Id" EditionId="edition?.EditionId" Primary="true" Label="Get track" Hint="Get it into your library">
+                    <FetchButton Kind="RequestKind.Track" Id="track.Id" EditionId="edition?.EditionId" Large="true" Label="Get track" Hint="Get it into your library">
                         <IconButton Icon="listen" Requires="@UserPermissions.Listen" Large="true" Label="Listen now" Title="Fetch it to play now, without adding it to your library"
                                     OnClick="() => Player.ListenAsync(track.Id, edition?.EditionId)" />
                     </FetchButton>
@@ -90,7 +90,7 @@ else
                             </td>
                             <td class="num muted nowrap">@(on.Disc > 1 ? $"{on.Disc}-" : "")@on.Number</td>
                             <td class="hide-narrow muted">@album.Select(a => a.ReleaseDate).Where(d => d is not null).Order().FirstOrDefault()</td>
-                            <td>@if (album.Any(a => a.InLibrary)) { <span class="badge owned">In library</span> }</td>
+                            <td><StatusBadge Album="on.AlbumStatus" /></td>
                         </tr>
                     }
                 </tbody>
@@ -135,7 +135,7 @@ else
             <p class="muted">@LyricsHint(kind)</p>
         }
 
-        <h2 class="section">@(track.Files.Count == 1 ? "Its file" : $"Its {track.Files.Count} files")</h2>
+        <h2 class="section">@(track.Files.Count == 1 ? "File" : $"{track.Files.Count} files")</h2>
         @foreach (var file in track.Files)
         {
             <div class="card track-file">

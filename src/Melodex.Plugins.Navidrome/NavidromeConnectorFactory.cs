@@ -35,12 +35,13 @@ public sealed class NavidromeConnectorFactory : IPluginFactory
                 },
                 "username": {
                   "type": "string",
-                  "title": "Username",
-                  "description": "An admin user: only admins can start scans."
+                  "title": "Admin username",
+                  "description": "The username of a Navidrome ADMIN, not an ordinary user: Melodex starts scans with it, and only admins can. Each user's own login, for their playlists, is linked on their account page."
                 },
                 "password": {
                   "type": "string",
-                  "title": "Password",
+                  "title": "Admin password",
+                  "description": "That admin's Navidrome password.",
                   "writeOnly": true
                 },
                 "syncPlaylists": {

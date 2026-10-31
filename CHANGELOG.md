@@ -52,6 +52,13 @@ Everything on the way to 1.0.
 - The Log page's Info, Warnings and Errors toggles have tick boxes in their own colours, not black.
 - Status pills on Downloads, Activity and elsewhere have room to breathe.
 - The Library page's controls wait while a view loads, so changes don't pile up behind it.
+- Choosing a cover offers each album, EP or single once, not every edition of it, and no picture twice.
+- In the full-screen player, where it's playing from is in the middle of the page, and the lyrics sit beside the cover
+  with no box, fading at the top and bottom, as tall as the cover and controls.
+- The Navidrome plugin asks plainly for an admin's username and password; the account page only mentions Navidrome
+  when it can sync playlists.
+- Album, song and playlist pages line the cover up with the buttons, and an album's Get button is the size of the rest.
+  A song's page shows each album it's on with its status, as the artist's page does.
 - *Fetch once, keep it with the smallest release* now does that: a song fetched on its own goes with a single before an
   album. It used to behave as *keep it with the main album*.
 

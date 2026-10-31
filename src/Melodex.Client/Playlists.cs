@@ -87,7 +87,7 @@ public sealed record RenamePlaylistFolder(string From, string To, string Delimit
 
 /// <summary>Whether your playlists are synced with the media server, and how it went.</summary>
 /// <param name="Available">The media server's connector keeps playlists in step: its "sync playlists" box is ticked.</param>
-/// <param name="Server">The connector's name.</param>
+/// <param name="Server">The connector's name, if it can sync playlists at all.</param>
 /// <param name="Username">Your login there, once linked.</param>
 /// <param name="SyncedAt">When they were last synced.</param>
 /// <param name="Error">Why the last sync failed, if it did.</param>

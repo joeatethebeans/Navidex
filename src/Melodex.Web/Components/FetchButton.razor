@@ -11,7 +11,7 @@
     <a class="badge @Format.RequestBadge(request)" href="activity?open=@request.Id" title="@request.Detail">@Format.RequestLabel(request)</a>
     @if (!request.Active && Auth.May(UserPermissions.Request))
     {
-        <IconButton Icon="retry" Title="@(ScanStatus.Reading ? WaitHint : "Try again")" Disabled="@(_busy || ScanStatus.Reading)" OnClick="GetAsync" />
+        <IconButton Icon="retry" Large="Large" Title="@(ScanStatus.Reading ? WaitHint : "Try again")" Disabled="@(_busy || ScanStatus.Reading)" OnClick="GetAsync" />
     }
 }
 else
@@ -26,7 +26,7 @@ else
     }
     else
     {
-        <IconButton Icon="get" Title="@(ScanStatus.Reading ? WaitHint : Hint ?? Label)" Disabled="@(_busy || ScanStatus.Reading)" OnClick="GetAsync" />
+        <IconButton Icon="get" Large="Large" Label="@(Large ? Label : null)" Title="@(ScanStatus.Reading ? WaitHint : Hint ?? Label)" Disabled="@(_busy || ScanStatus.Reading)" OnClick="GetAsync" />
     }
 }
 @if (_error is not null)
@@ -41,6 +41,9 @@ else
     [Parameter] public string Label { get; set; } = "Get";
     [Parameter] public string? Hint { get; set; }
     [Parameter] public bool Primary { get; set; }
+
+    /// <summary>As big as a page head's other buttons, with its label.</summary>
+    [Parameter] public bool Large { get; set; }
 
     /// <summary>The other actions, shown until it's asked for.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }

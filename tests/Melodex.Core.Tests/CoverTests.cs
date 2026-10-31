@@ -29,8 +29,9 @@ public sealed class CoverTests(RequestFixture fixture)
         var choices = await Api.GetCoverChoicesAsync(CoverSubject.Album, album.Album.Id);
         Assert.Equal("Discovery", choices.Title);
         Assert.True(choices.Files > 0);
-        Assert.Contains(choices.Options, o => o.Source == $"album:{album.Album.Id}" && o.Title == "Usual cover");
-        Assert.Contains(choices.Options, o => o.Source.StartsWith("edition:"));
+        // One for the album, not one for each of its editions.
+        Assert.Single(choices.Options, o => o.Source == $"album:{album.Album.Id}" && o.Title == "Album");
+        Assert.DoesNotContain(choices.Options, o => o.Source.StartsWith("edition:"));
 
         var chosen = await Api.ChooseCoverAsync(CoverSubject.Album, album.Album.Id, new ChooseCover(Upload: Convert.ToBase64String(Pixel)));
         Assert.Equal(choices.Files, chosen.Written);

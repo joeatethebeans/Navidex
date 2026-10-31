@@ -39,6 +39,18 @@ public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connector
         }
     }
 
+    private async Task<string?> CouldSyncAsync(CancellationToken ct)
+    {
+        try
+        {
+            return await connectors.GetActiveAsync(ct) is { Connector: IPlaylistSync } active ? active.Instance.Name : null;
+        }
+        catch (Exception e) when (e is InvalidOperationException or KeyNotFoundException)
+        {
+            return null;
+        }
+    }
+
     public string Protect(string password) => Protector.Protect(password);
 
     public ServerLogin? LoginOf(User user)
@@ -59,7 +71,10 @@ public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connector
     public async Task<PlaylistSyncStatus> StatusAsync(User user, CancellationToken ct)
     {
         var server = await ServerAsync(ct);
-        return new PlaylistSyncStatus(server is not null, server?.Instance.Name, user.MediaServerUsername, user.PlaylistsSyncedAt, user.PlaylistSyncError);
+        // A server that could sync playlists but hasn't been asked to is named, so its plugin's setting can be pointed to;
+        // with no such server, there's nothing to say.
+        var name = server?.Instance.Name ?? await CouldSyncAsync(ct);
+        return new PlaylistSyncStatus(server is not null, name, user.MediaServerUsername, user.PlaylistsSyncedAt, user.PlaylistSyncError);
     }
 
     /// <summary>Syncs the user's playlists now, if they're synced, and says how it went.</summary>

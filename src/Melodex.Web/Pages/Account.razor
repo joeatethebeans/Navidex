@@ -77,10 +77,13 @@
                 }
                 else if (!_sync.Available)
                 {
-                    <p class="muted small">
-                        Playlists stay in Melodex: the media server doesn't sync them.
-                        @if (Auth.May(UserPermissions.Settings)) { <text>Tick <em>Sync playlists</em> in its plugin's settings under <a href="settings/plugins">Plugins</a> to sync them.</text> }
-                    </p>
+                    @if (_sync.Server is not null && Auth.May(UserPermissions.Settings))
+                    {
+                        <p class="muted small">
+                            Playlists stay in Melodex for now. Tick <em>Sync playlists</em> in the @_sync.Server plugin's settings under
+                            <a href="settings/plugins">Plugins</a> to keep them in @_sync.Server too.
+                        </p>
+                    }
                 }
                 else if (_sync.Linked)
                 {
@@ -96,14 +99,14 @@
                 else
                 {
                     <p class="muted small">
-                        Link your @_sync.Server login to have your playlists there too, and the ones you make there here. It's checked first, and kept encrypted.
+                        Link your own @_sync.Server login, the one you sign in to @_sync.Server with, to have your playlists there too, and the ones you make there here. It's checked first, and kept encrypted.
                     </p>
                     <div class="field">
-                        <label class="field-label" for="server-username">@_sync.Server username</label>
+                        <label class="field-label" for="server-username">Your @_sync.Server username</label>
                         <input id="server-username" type="text" autocomplete="off" @bind="_serverUsername" @bind:event="oninput" />
                     </div>
                     <div class="field">
-                        <label class="field-label" for="server-password">@_sync.Server password</label>
+                        <label class="field-label" for="server-password">Your @_sync.Server password</label>
                         <input id="server-password" type="password" autocomplete="off" @bind="_serverPassword" @bind:event="oninput" />
                     </div>
                     <div class="toolbar">

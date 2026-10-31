@@ -24,6 +24,16 @@ public sealed class ArtworkCache(IServiceScopeFactory scopes, IOptions<MelodexOp
 
     private string Root => Path.Combine(options.Value.DataPath, "artwork");
 
+    /// <summary>The pictures already cached for the subjects, without looking for any that aren't.</summary>
+    public async Task<IReadOnlyDictionary<Guid, string>> CachedAsync(EntityKind kind, IReadOnlyCollection<Guid> ids, CancellationToken ct)
+    {
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MelodexDbContext>();
+        var records = await db.Artwork.AsNoTracking().Where(a => a.EntityKind == kind && ids.Contains(a.EntityId) && a.File != null)
+            .Select(a => new { a.EntityId, a.File }).ToListAsync(ct);
+        return records.Select(r => (r.EntityId, Path: Path.Combine(Root, r.File!))).Where(r => File.Exists(r.Path)).ToDictionary(r => r.EntityId, r => r.Path);
+    }
+
     public async Task<CachedArtwork?> GetAsync(EntityKind kind, Guid id, CancellationToken ct)
     {
         using (var scope = scopes.CreateScope())

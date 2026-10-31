@@ -43,19 +43,19 @@
                     </button>
                 </div>
             }
-            @foreach (var group in _choices.Options.GroupBy(o => o.Group))
+            @if (_choices.Options.Count > 0)
             {
-                <h3>@group.Key</h3>
+                @* One for each album, EP or single, and the files' own; the same picture isn't offered twice. *@
                 <div class="cover-grid">
-                    @foreach (var option in group)
+                    @foreach (var option in _choices.Options)
                     {
-                        <button class="cover-choice @(_source == option.Source ? "selected" : "")" title="@option.Detail" @onclick="() => _source = option.Source">
+                        <button class="cover-choice @(_source == option.Source ? "selected" : "")" title="@option.Group" @onclick="() => _source = option.Source">
                             <Cover Url="@option.Url" />
                             <span class="cover-choice-title">
-                                @option.Title
+                                @option.Group
                                 @if (option.Current) { <span class="badge neutral">Now</span> }
                             </span>
-                            @if (option.Detail is not null) { <span class="muted small">@option.Detail</span> }
+                            <span class="muted small">@option.Title@(option.Detail is null ? "" : $" · {option.Detail}")</span>
                         </button>
                     }
                 </div>

@@ -48,7 +48,7 @@ else
                 <div class="row album-actions" style="margin-top: .5rem;">
                     @if (album.Status is AlbumStatus.Missing or AlbumStatus.Partial)
                     {
-                        <FetchButton Kind="RequestKind.Album" Id="album.Id" EditionId="_album.ShownEditionId"
+                        <FetchButton Kind="RequestKind.Album" Id="album.Id" EditionId="_album.ShownEditionId" Large="true"
                                      Label="@(album.Status == AlbumStatus.Partial ? "Get missing tracks" : "Get album")"
                                      Hint="@(album.Status == AlbumStatus.Partial ? "Get the missing tracks into your library, as the edition shown below" : "Get the album into your library, as the edition shown below")">
                             @play

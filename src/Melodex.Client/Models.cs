@@ -618,6 +618,7 @@ public sealed record TrackDetail(
 /// <summary>An edition the song is on, and where on it.</summary>
 /// <param name="Title">The song's title on this edition, which can differ from the recording's.</param>
 /// <param name="InLibrary">A file of the song is filed under this edition.</param>
+/// <param name="AlbumStatus">How much of the album you have, as its artist's page shows it.</param>
 public sealed record TrackAppearance(
     Guid AlbumId,
     string AlbumTitle,
@@ -629,7 +630,8 @@ public sealed record TrackAppearance(
     int Disc,
     string Number,
     string Title,
-    bool InLibrary);
+    bool InLibrary,
+    AlbumStatus AlbumStatus);
 
 /// <summary>A file of the song in the library, and the tags it has.</summary>
 /// <param name="Path">Relative to the music folder.</param>
