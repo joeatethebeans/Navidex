@@ -695,7 +695,20 @@ public sealed record LyricLine(double? Seconds, string Text);
 /// <summary>A song's lyrics, as its file in the library has them.</summary>
 /// <param name="Lines">Synced lyrics in the order they're sung, or plain ones in order. Empty when there are none.</param>
 /// <param name="Source">Where they were read from: <c>sidecar</c> (an .lrc file) or <c>embedded</c> (the file's tags).</param>
-public sealed record TrackLyrics(LyricsKind Kind, IReadOnlyList<LyricLine> Lines, string? Source);
+/// <param name="Text">The lyrics as they're stored, LRC or plain text, to edit.</param>
+/// <param name="Excluded">Whether the song is excluded from lyrics matching, so no scan looks for its lyrics.</param>
+/// <param name="CheckedAt">When the lyrics sources were last asked and had none.</param>
+/// <param name="Instrumental">Whether a lyrics source said it has no words.</param>
+public sealed record TrackLyrics(LyricsKind Kind, IReadOnlyList<LyricLine> Lines, string? Source, string? Text = null, bool Excluded = false,
+    DateTime? CheckedAt = null, bool Instrumental = false);
+
+/// <summary>Body of <c>PUT /library/tracks/{id}/lyrics</c>: the lyrics to write, LRC or plain text.</summary>
+public sealed record SaveLyrics(string Text);
+
+/// <summary>Lyrics a lyrics plugin found for someone choosing a song's lyrics by hand.</summary>
+/// <param name="Source">The plugin's name.</param>
+/// <param name="Text">The lyrics, synced (LRC) where the source has them, else plain.</param>
+public sealed record LyricsChoice(string Source, string Title, string Artist, string? Album, double? DurationSeconds, LyricsKind Kind, string Text);
 
 /// <summary>A tag as read from a file, with a name to show.</summary>
 public sealed record FileTag(string Name, string Value);

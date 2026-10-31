@@ -89,8 +89,19 @@ only into that song's files, so the rest of the album keeps the album's cover. C
 
 After each scan, Melodex looks for lyrics for every song you have that has none, through the lyrics plugins (LRCLIB
 out of the box). Each song's page says whether it has synced lyrics (each line with when it's sung, so the player can
-follow along), plain lyrics, or none, shows them, and has **Find lyrics** to look again now, which needs the **Format**
-permission.
+follow along), plain lyrics, or none, and where they're read from: an `.lrc` file beside the song, or its lyrics tag.
+**View** shows them line by line. With the **Format** permission, the page can also:
+
+- **Edit** them, from View: change any line or its time, add and remove lines, or edit them as text, for example to
+  paste lyrics in. Tick **Timed** for synced lyrics; times are minutes and seconds, such as `1:02.50`. A song without
+  lyrics has **Write** instead.
+- **Search** the lyrics plugins, for the song's own title and artist or words you type, and choose the lyrics yourself.
+  Those the length of your file come first, and each can be previewed before you use it.
+- **Find again**: look now, taking the best match, as scans do.
+- **Delete** them: the `.lrc` file and the lyrics tag go.
+- **Exclude** the song from lyrics matching, so scans never look for its lyrics. **Include it again** undoes it.
+
+Whatever you save is written where the settings below say, replacing what was there.
 
 Set it up under **Settings → General → Lyrics**: whether scans look for lyrics, and where they go.
 

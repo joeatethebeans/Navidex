@@ -1,0 +1,228 @@
+@inject MelodexClient Api
+@inject AuthState Auth
+
+@*
+    A song's lyrics line by line, with when each is sung. Someone who may format files can edit them here, line by line
+    or as text, and save them to the song's files.
+*@
+<Dialog Title="@($"Lyrics for {Title}")" Class="lyrics-dialog" OnClose="CloseAsync">
+    @if (!_editing)
+    {
+        <div class="lyrics-lines lyrics-view">
+            @foreach (var line in Lyrics.Lines)
+            {
+                <div class="lyrics-line @(line.Text.Length == 0 ? "gap" : "")">
+                    @if (line.Seconds is { } at) { <span class="muted small lyrics-time">@LyricsText.Time(at)</span> }
+                    <span>@line.Text</span>
+                </div>
+            }
+        </div>
+        <div class="toolbar dialog-buttons">
+            <span class="muted small">@(Lyrics.Source == "sidecar" ? "From an .lrc file beside the song." : "From the song's lyrics tag.")</span>
+            <span class="spacer"></span>
+            @if (Auth.May(UserPermissions.Format))
+            {
+                <IconButton Icon="rename" Label="Edit" Title="Edit the lyrics" OnClick="Edit" />
+            }
+            <button @onclick="CloseAsync">Close</button>
+        </div>
+    }
+    else
+    {
+        <div class="toolbar lyrics-edit-bar">
+            <label class="check" title="Each line with when it's sung, so the player can follow along">
+                <input type="checkbox" checked="@_timed" disabled="@_asText" @onchange="e => SetTimed((bool)e.Value!)" /> Timed
+            </label>
+            <span class="spacer"></span>
+            <button class="link small" @onclick="ToggleText">@(_asText ? "Edit line by line" : "Edit as text")</button>
+        </div>
+        @if (_asText)
+        {
+            <textarea class="lyrics-text" spellcheck="false" aria-label="The lyrics, as LRC or plain text" @bind="_raw" @bind:event="oninput"
+                      placeholder="@TextHint"></textarea>
+        }
+        else
+        {
+            <div class="lyrics-rows @(_timed ? "timed" : "")">
+                @for (var i = 0; i < _rows.Count; i++)
+                {
+                    var row = _rows[i];
+                    var at = i;
+                    <div class="lyrics-row" @key="row">
+                        @if (_timed)
+                        {
+                            <input type="text" class="lyrics-row-time @(row.Bad ? "invalid" : "")" aria-label="When it's sung" placeholder="0:00.00" @bind="row.Time" @bind:after="() => Check(row)" />
+                        }
+                        <input type="text" class="lyrics-row-text" aria-label="The line" placeholder="@(_timed ? "A pause" : "A blank line between verses")" @bind="row.Text" />
+                        <button class="icon-button small" type="button" title="Add a line after this one" aria-label="Add a line after this one" @onclick="() => Insert(at)">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                        </button>
+                        <button class="icon-button small" type="button" title="Remove this line" aria-label="Remove this line" @onclick="() => _rows.RemoveAt(at)">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                        </button>
+                    </div>
+                }
+                @if (_rows.Count == 0)
+                {
+                    <button class="link" @onclick="() => Insert(-1)">Add a line</button>
+                }
+            </div>
+        }
+        @if (_error is not null) { <p class="error small">@_error</p> }
+        <div class="toolbar dialog-buttons">
+            <span class="muted small">Saved to the song's files as Settings say. Times are in minutes and seconds, such as 1:02.50.</span>
+            <span class="spacer"></span>
+            <button disabled="@_busy" @onclick="Cancel">Cancel</button>
+            <button class="primary" disabled="@_busy" @onclick="SaveAsync">@if (_busy) { <span class="spinner"></span> }Save</button>
+        </div>
+    }
+</Dialog>
+
+@code {
+    [Parameter, EditorRequired] public Guid TrackId { get; set; }
+    [Parameter, EditorRequired] public TrackLyrics Lyrics { get; set; } = null!;
+    [Parameter] public string Title { get; set; } = "";
+
+    /// <summary>Open straight into editing, as for writing lyrics a song doesn't have.</summary>
+    [Parameter] public bool Editing { get; set; }
+
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<TrackLyrics> OnSaved { get; set; }
+
+    private const string TextHint = "[00:12.50] A line, with when it's sung\nor plain lines, one each";
+
+    private sealed class Row
+    {
+        public string Time { get; set; } = "";
+        public string Text { get; set; } = "";
+        public bool Bad { get; set; }
+    }
+
+    private bool _editing, _timed, _asText, _busy;
+    private List<Row> _rows = [];
+    private string _raw = "";
+    private string? _error;
+
+    protected override void OnInitialized()
+    {
+        if (Editing)
+            Edit();
+    }
+
+    private void Edit()
+    {
+        _editing = true;
+        _error = null;
+        _timed = Lyrics.Kind == LyricsKind.Synced;
+        _rows = Rows(Lyrics.Lines);
+        if (_rows.Count == 0)
+            _rows.Add(new Row());
+    }
+
+    private static List<Row> Rows(IEnumerable<LyricLine> lines) =>
+        lines.Select(l => new Row { Time = l.Seconds is { } s ? LyricsText.Time(s) : "", Text = l.Text }).ToList();
+
+    private void SetTimed(bool timed)
+    {
+        _timed = timed;
+        if (!timed)
+            return;
+        // Lines without a time take the one before's, to be set as they should be.
+        var last = "0:00.00";
+        foreach (var row in _rows)
+        {
+            if (row.Time.Length == 0)
+                row.Time = last;
+            last = row.Time;
+        }
+    }
+
+    private void Insert(int after)
+    {
+        var time = after >= 0 && _timed ? _rows[after].Time : _timed ? "0:00.00" : "";
+        _rows.Insert(after + 1, new Row { Time = time });
+    }
+
+    private static void Check(Row row) => row.Bad = !LyricsText.TryParseTime(row.Time, out _);
+
+    private void ToggleText()
+    {
+        _error = null;
+        if (_asText)
+        {
+            var lines = LyricsText.Lines(_raw);
+            _timed = LyricsText.KindOf(_raw) == LyricsKind.Synced;
+            _rows = Rows(lines);
+            _asText = false;
+        }
+        else if (Build() is { } text)
+        {
+            _raw = text;
+            _asText = true;
+        }
+    }
+
+    // The lyrics as they'll be saved; null, with the reason shown, when a time can't be read.
+    private string? Build()
+    {
+        var lines = new List<LyricLine>();
+        foreach (var row in _rows)
+        {
+            double? at = null;
+            if (_timed)
+            {
+                Check(row);
+                if (row.Bad)
+                {
+                    _error = $"\"{row.Time}\" isn't a time. Write it in minutes and seconds, such as 1:02.50.";
+                    return null;
+                }
+                LyricsText.TryParseTime(row.Time, out var seconds);
+                at = seconds;
+            }
+            lines.Add(new LyricLine(at, row.Text));
+        }
+        // Blank lines at the end of plain lyrics are nothing.
+        while (!_timed && lines.Count > 0 && lines[^1].Text.Trim().Length == 0)
+            lines.RemoveAt(lines.Count - 1);
+        return lines.Count == 0 ? "" : LyricsText.Write(lines);
+    }
+
+    private void Cancel()
+    {
+        if (Editing)
+        {
+            _ = CloseAsync();
+            return;
+        }
+        _editing = false;
+        _asText = false;
+        _error = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        _error = null;
+        if ((_asText ? _raw : Build()) is not { } text)
+            return;
+        if (text.Trim().Length == 0)
+        {
+            _error = "There are no lyrics to save. To take them away, use Delete.";
+            return;
+        }
+        _busy = true;
+        try
+        {
+            var saved = await Api.SaveTrackLyricsAsync(TrackId, text);
+            await OnSaved.InvokeAsync(saved);
+            await CloseAsync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+        }
+        _busy = false;
+    }
+
+    private Task CloseAsync() => OnClose.InvokeAsync();
+}

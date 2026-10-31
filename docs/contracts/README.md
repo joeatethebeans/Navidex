@@ -9,7 +9,7 @@ go with the catalogue and the words of the songs. Each has its own contract:
 | [Retrieval plugin](retrieval-plugins.md) | How music is fetched | Own container, over HTTP | [`retrieval-v1.openapi.yaml`](retrieval-v1.openapi.yaml) v1.0 | yt-dlp |
 | [Media-server connector](media-server-connectors.md) | Where music ends up | In process (.NET assembly) | `IMediaServerConnector` v1.2 | Navidrome (Subsonic API) |
 | [Artwork plugin](artwork-plugins.md) | What it looks like | In process (.NET assembly) | `IArtworkPlugin` v1.0 | Cover Art Archive, Wikimedia Commons, Deezer |
-| [Lyrics plugin](lyrics-plugins.md) | What the words are | In process (.NET assembly) | `ILyricsPlugin` v1.0 | LRCLIB |
+| [Lyrics plugin](lyrics-plugins.md) | What the words are | In process (.NET assembly) | `ILyricsPlugin` v1.1 | LRCLIB |
 
 The .NET types live in the `Melodex.Contracts` package (`src/Melodex.Contracts`). The XML docs on those types
 are normative; these pages explain the intent and the rules around them.

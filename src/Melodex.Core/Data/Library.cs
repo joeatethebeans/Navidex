@@ -45,6 +45,9 @@ public class LibraryFile
     /// <summary>When the lyrics plugins were last asked and had none, so they aren't asked again for a while.</summary>
     public DateTime? LyricsCheckedAt { get; set; }
 
+    /// <summary>When the user excluded its song from lyrics matching: no scan looks for its lyrics.</summary>
+    public DateTime? LyricsExcludedAt { get; set; }
+
     public Guid? EditionId { get; set; }
 
     public Edition? Edition { get; set; }

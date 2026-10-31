@@ -38,7 +38,7 @@ public static class ContractVersions
     public static readonly ContractVersion Artwork = new(1, 0);
 
     /// <summary>Lyrics plugins: the words of songs.</summary>
-    public static readonly ContractVersion Lyrics = new(1, 0);
+    public static readonly ContractVersion Lyrics = new(1, 1);
 
     /// <summary>The version the core supports for a given plugin type.</summary>
     public static ContractVersion For(PluginType type) => type switch

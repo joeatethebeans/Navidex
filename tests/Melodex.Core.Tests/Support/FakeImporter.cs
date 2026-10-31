@@ -67,7 +67,9 @@ public sealed class FakeImporter(string stagingRoot, string libraryRoot) : IImpo
                 results.Add(new FormattedFile(file.Path, null, null, "It isn't in the music folder any more."));
                 continue;
             }
-            if (file.Lrc is not null)
+            if (file.Lrc == "")
+                File.Delete(Path.ChangeExtension(full, ".lrc"));
+            else if (file.Lrc is not null)
                 File.WriteAllText(Path.ChangeExtension(full, ".lrc"), file.Lrc);
             var path = file.Path;
             if (request.PathTemplate is not null && file.Tags.TryGetValue("albumartist", out var artist) && file.Tags.TryGetValue("album", out var album)

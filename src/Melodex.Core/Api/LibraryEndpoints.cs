@@ -43,6 +43,61 @@ public static class LibraryEndpoints
                ?? new TrackLyrics(LyricsKind.None, [], null);
     }
 
+    // A song's lyrics as its files have them, with what's been decided about them.
+    private static TrackLyrics LyricsOf(IReadOnlyList<LibraryFile> files, string libraryPath)
+    {
+        var root = Path.GetFullPath(libraryPath);
+        var lyrics = files.Select(f => LyricsFiles.Read(Path.Combine(root, f.Path))).FirstOrDefault(l => l is not null) is { } found
+            ? new TrackLyrics(LyricsFiles.KindOfText(found.Text), LyricsFiles.Parse(found.Text), found.Source, found.Text)
+            : new TrackLyrics(LyricsKind.None, [], null);
+        return lyrics with
+        {
+            Excluded = files.Any(f => f.LyricsExcludedAt != null),
+            CheckedAt = files.Max(f => f.LyricsCheckedAt),
+            Instrumental = lyrics.Kind == LyricsKind.None && files.Any(f => f.Lyrics == LyricsKind.Instrumental),
+        };
+    }
+
+    private static Task<List<LibraryFile>> SongFilesAsync(MelodexDbContext db, Guid trackId, CancellationToken ct) =>
+        db.LibraryFiles.Where(f => f.TrackId == trackId && f.ExcludedAt == null).OrderBy(f => f.Path).ToListAsync(ct);
+
+    private static IResult WorkerDown(HttpRequestException e) =>
+        Results.Problem($"The beets worker, which writes the music folder, couldn't be reached: {e.Message}", statusCode: StatusCodes.Status503ServiceUnavailable);
+
+    // Far longer than any song's lyrics.
+    private const int MaxLyrics = 200_000;
+
+    private static async Task<IResult> SaveLyricsAsync(Guid id, string? text, LyricsFinder finder, MelodexDbContext db, IOptions<MelodexOptions> options,
+        CancellationToken ct)
+    {
+        var files = await SongFilesAsync(db, id, ct);
+        if (files.Count == 0)
+            return Results.NotFound();
+        string? problem;
+        try
+        {
+            problem = await finder.SaveAsync(files, text, ct);
+        }
+        catch (HttpRequestException e)
+        {
+            return WorkerDown(e);
+        }
+        return problem is null
+            ? Results.Ok(LyricsOf(await SongFilesAsync(db, id, ct), options.Value.LibraryPath))
+            : Results.Problem($"Couldn't write the lyrics: {problem}", statusCode: StatusCodes.Status502BadGateway);
+    }
+
+    private static async Task<IResult> ExcludeLyricsAsync(Guid id, bool excluded, MelodexDbContext db, IOptions<MelodexOptions> options, CancellationToken ct)
+    {
+        var files = await SongFilesAsync(db, id, ct);
+        if (files.Count == 0)
+            return Results.NotFound();
+        foreach (var file in files)
+            file.LyricsExcludedAt = excluded ? file.LyricsExcludedAt ?? DateTime.UtcNow : null;
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(LyricsOf(files, options.Value.LibraryPath));
+    }
+
     private static CoverSubject CoverSubjectOf(string subject) => subject == "albums" ? CoverSubject.Album : CoverSubject.Track;
 
     private static EntityKind? ArtworkKind(string kind) =>
@@ -178,12 +233,13 @@ public static class LibraryEndpoints
             .Produces(StatusCodes.Status503ServiceUnavailable);
 
         library.MapGet("/tracks/{id:guid}/lyrics", async (Guid id, MelodexDbContext db, IOptions<MelodexOptions> options, CancellationToken ct) =>
-                await db.LibraryFiles.Where(f => f.TrackId == id && f.ExcludedAt == null).OrderBy(f => f.Path).Select(f => f.Path).ToListAsync(ct) is { Count: > 0 } paths
-                    ? Results.Ok(LyricsOf(paths, options.Value.LibraryPath))
+                await SongFilesAsync(db, id, ct) is { Count: > 0 } files
+                    ? Results.Ok(LyricsOf(files, options.Value.LibraryPath))
                     : Results.NotFound())
             .RequireScope(Scopes.Read).WithName("GetTrackLyrics")
             .WithSummary("A song's lyrics, as its files in the library have them: from an .lrc file beside one, or its lyrics tag. Synced lyrics come "
-                         + "line by line with when each is sung. 404 when the song has no files.")
+                         + "line by line with when each is sung, and as the text stored. Says too whether the song is excluded from lyrics matching, "
+                         + "and when the lyrics sources last had none. 404 when the song has no files.")
             .Produces<TrackLyrics>().Produces(StatusCodes.Status404NotFound);
 
         library.MapGet("/files/{id:guid}/lyrics", async (Guid id, MelodexDbContext db, IOptions<MelodexOptions> options, CancellationToken ct) =>
@@ -209,12 +265,11 @@ public static class LibraryEndpoints
                 }
                 catch (HttpRequestException e)
                 {
-                    return Results.Problem($"The beets worker, which writes the music folder, couldn't be reached: {e.Message}",
-                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                    return WorkerDown(e);
                 }
                 if (outcome is { Found: 0, Failed: > 0 })
                     return Results.Problem($"Couldn't get the lyrics: {outcome.Problem}", statusCode: StatusCodes.Status502BadGateway);
-                return Results.Ok(LyricsOf(files.Select(f => f.Path).ToList(), options.Value.LibraryPath));
+                return Results.Ok(LyricsOf(await SongFilesAsync(db, id, ct), options.Value.LibraryPath));
             })
             .RequireScope(Scopes.Format).WithName("FindTrackLyrics")
             .WithSummary("Look for a song's lyrics now through the lyrics plugins, replacing any it has, and write them where the settings say: an .lrc "
@@ -222,6 +277,57 @@ public static class LibraryEndpoints
                          + "any. This writes your music files.")
             .Produces<TrackLyrics>().Produces(StatusCodes.Status404NotFound).Produces(StatusCodes.Status409Conflict)
             .Produces(StatusCodes.Status502BadGateway).Produces(StatusCodes.Status503ServiceUnavailable);
+
+        library.MapPut("/tracks/{id:guid}/lyrics", async (Guid id, SaveLyrics body, LyricsFinder finder, MelodexDbContext db,
+                IOptions<MelodexOptions> options, CancellationToken ct) =>
+            {
+                if (body.Text.Length > MaxLyrics)
+                    return Results.Problem("Those lyrics are too long.", statusCode: StatusCodes.Status400BadRequest);
+                return await SaveLyricsAsync(id, string.IsNullOrWhiteSpace(body.Text) ? null : body.Text, finder, db, options, ct);
+            })
+            .RequireScope(Scopes.Format).WithName("SaveTrackLyrics")
+            .WithSummary("Write a song's lyrics, LRC or plain text, to its files where the settings say, replacing any they have: an .lrc file "
+                         + "beside each, their lyrics tag, or both. Empty text takes them away. This writes your music files.")
+            .Produces<TrackLyrics>().Produces(StatusCodes.Status400BadRequest).Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status502BadGateway).Produces(StatusCodes.Status503ServiceUnavailable);
+
+        library.MapDelete("/tracks/{id:guid}/lyrics", (Guid id, LyricsFinder finder, MelodexDbContext db, IOptions<MelodexOptions> options,
+                CancellationToken ct) => SaveLyricsAsync(id, null, finder, db, options, ct))
+            .RequireScope(Scopes.Format).WithName("DeleteTrackLyrics")
+            .WithSummary("Take a song's lyrics away: the .lrc file beside each of its files, and their lyrics tag. Scans look for them again "
+                         + "unless the song is excluded from lyrics matching. This writes your music files.")
+            .Produces<TrackLyrics>().Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status502BadGateway).Produces(StatusCodes.Status503ServiceUnavailable);
+
+        library.MapGet("/tracks/{id:guid}/lyrics/search", async (Guid id, string? q, LyricsFinder finder, MelodexDbContext db, CancellationToken ct) =>
+            {
+                if (await SongFilesAsync(db, id, ct) is not [var file, ..])
+                    return Results.NotFound();
+                try
+                {
+                    return Results.Ok(await finder.SearchAsync(file, q, ct));
+                }
+                catch (HttpRequestException e)
+                {
+                    return Results.Problem(e.Message, statusCode: StatusCodes.Status502BadGateway);
+                }
+            })
+            .RequireScope(Scopes.Format).WithName("SearchTrackLyrics")
+            .WithSummary("Lyrics the lyrics plugins that can search have that might be the song's, to choose from: for q, or else the song's title "
+                         + "and artist. Those of the song's length come first. Choosing one is saving its text.")
+            .Produces<IReadOnlyList<LyricsChoice>>().Produces(StatusCodes.Status404NotFound).Produces(StatusCodes.Status502BadGateway);
+
+        library.MapPut("/tracks/{id:guid}/lyrics/excluded", (Guid id, MelodexDbContext db, IOptions<MelodexOptions> options, CancellationToken ct) =>
+                ExcludeLyricsAsync(id, true, db, options, ct))
+            .RequireScope(Scopes.Format).WithName("ExcludeTrackLyrics")
+            .WithSummary("Exclude a song from lyrics matching: no scan looks for its lyrics. What it has stays.")
+            .Produces<TrackLyrics>().Produces(StatusCodes.Status404NotFound);
+
+        library.MapDelete("/tracks/{id:guid}/lyrics/excluded", (Guid id, MelodexDbContext db, IOptions<MelodexOptions> options, CancellationToken ct) =>
+                ExcludeLyricsAsync(id, false, db, options, ct))
+            .RequireScope(Scopes.Format).WithName("IncludeTrackLyrics")
+            .WithSummary("Include a song in lyrics matching again, so scans look for its lyrics if it has none.")
+            .Produces<TrackLyrics>().Produces(StatusCodes.Status404NotFound);
 
         library.MapGet("/review", (LibraryView view, ReviewList? list, bool? excluded, CancellationToken ct) =>
                 excluded == true && list is null ? view.GetExcludedAsync(ct) : view.GetReviewAsync(list ?? ReviewList.Review, ct))

@@ -79,7 +79,10 @@ def format_files(library: Path, files: list[FormatFile], artwork: dict[str, byte
             if file.artwork is not None and file.artwork not in artwork:
                 raise FormatFailed(f"There's no artwork {file.artwork} in the request.")
             write_tags(full, file.tags, artwork.get(file.artwork) if file.artwork else None, file.remove_artwork)
-            if file.lrc is not None:
+            if file.lrc == "":
+                # Empty lyrics: the .lrc beside it goes.
+                full.with_suffix(".lrc").unlink(missing_ok=True)
+            elif file.lrc is not None:
                 full.with_suffix(".lrc").write_text(file.lrc if file.lrc.endswith("\n") else file.lrc + "\n", encoding="utf-8")
             target = full
             if destination is not None:

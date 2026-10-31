@@ -225,6 +225,8 @@ details > summary { cursor: pointer; color: var(--muted); margin: 1.5rem 0 .5rem
 /* A failed scan's reason in the top bar; the full text is in the tooltip. */
 .error { color: var(--missing); max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 640px) { .error { max-width: 18ch; } }
+/* A sentence of its own says all of itself; only short errors in a row are cut off. */
+p.error { max-width: none; white-space: normal; }
 
 /* The activity log: one line per event, warnings and errors marked by colour and a left rule. */
 .log { padding: .25rem 0; font-size: .875rem; }
@@ -1123,3 +1125,43 @@ input[type=search]:disabled { opacity: .6; }
 .tiles .playlist-mosaic, .tiles .cover { width: 100%; }
 .playlist-cover-preview { width: min(14rem, 100%); margin: 0 auto 1rem; }
 .playlist-cover-preview img.cover { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+
+/* A song's lyrics tools: a line saying what it has, and dialogs to view, edit and choose them. */
+.lyrics-actions { flex-wrap: wrap; gap: .5rem; margin-left: auto; }
+.lyrics-status { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin: .6rem 0 0; }
+.lyrics-status + .lyrics-status { margin-top: .3rem; }
+.dialog.lyrics-dialog { width: min(42rem, 100%); }
+.lyrics-view { max-height: min(60vh, 34rem); overflow: auto; margin: 0; padding-right: .5rem; }
+.dialog label.check { display: flex; align-items: center; gap: .45rem; margin: .5rem 0; cursor: pointer; }
+.lyrics-edit-bar { margin: 0 0 .6rem; }
+.lyrics-edit-bar label.check { margin: 0; }
+.lyrics-rows { display: grid; gap: .3rem; max-height: min(55vh, 30rem); overflow: auto; padding: .1rem .3rem .1rem .1rem; }
+.lyrics-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .35rem; align-items: center; }
+.lyrics-rows.timed .lyrics-row { grid-template-columns: 5.5rem minmax(0, 1fr) auto auto; }
+.lyrics-row input[type=text] { width: 100%; min-width: 0; box-sizing: border-box; }
+.lyrics-row-time { font-variant-numeric: tabular-nums; }
+.lyrics-row-time.invalid { border-color: var(--missing); background: var(--missing-bg); }
+.lyrics-row .icon-button.small { width: 1.9rem; height: 1.9rem; min-width: 1.9rem; padding: 0; }
+.lyrics-text {
+    width: 100%; box-sizing: border-box; min-height: min(50vh, 26rem); resize: vertical; padding: .6rem .7rem;
+    font: .9rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 6px;
+}
+.lyrics-search { gap: .5rem; flex-wrap: nowrap; margin-bottom: .75rem; }
+.lyrics-search input[type=search] { max-width: none; flex: 1; }
+.lyrics-choices { display: grid; gap: .4rem; max-height: min(60vh, 34rem); overflow: auto; }
+.lyrics-choice { border: 1px solid var(--border); border-radius: 8px; }
+.lyrics-choice.open { border-color: var(--accent); }
+.lyrics-choice-head {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .75rem; align-items: center; width: 100%;
+    padding: .5rem .7rem; border: none; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit;
+}
+.lyrics-choice-title { display: flex; flex-direction: column; min-width: 0; }
+.lyrics-choice-title > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lyrics-choice .dialog-buttons { margin: 0; padding: .5rem .7rem; border-top: 1px solid var(--border); align-items: center; }
+.lyrics-preview { max-height: 14rem; overflow: auto; margin: 0; padding: .5rem .7rem; border-top: 1px solid var(--border); }
+@media (max-width: 640px) {
+    .lyrics-rows.timed .lyrics-row { grid-template-columns: 4.6rem minmax(0, 1fr) auto auto; }
+    .lyrics-actions .icon-button > span:not(.spinner) { display: none; }
+    .lyrics-actions .icon-button:has(span:not(.spinner)) { padding: 0; }
+}

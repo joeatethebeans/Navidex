@@ -94,6 +94,34 @@ public sealed class MelodexClient(HttpClient http)
         return (await response.Content.ReadFromJsonAsync<TrackLyrics>(MelodexJson.Options, ct))!;
     }
 
+    /// <summary>Writes a song's lyrics to its files, replacing any it has; with no text, takes them away.</summary>
+    public async Task<TrackLyrics> SaveTrackLyricsAsync(Guid trackId, string? text, CancellationToken ct = default)
+    {
+        using var response = text is null
+            ? await http.DeleteAsync($"{Api}/library/tracks/{trackId}/lyrics", ct)
+            : await http.PutAsJsonAsync($"{Api}/library/tracks/{trackId}/lyrics", new SaveLyrics(text), MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<TrackLyrics>(MelodexJson.Options, ct))!;
+    }
+
+    /// <summary>Lyrics the lyrics plugins have that might be the song's: for what's typed, or else its title and artist.</summary>
+    public async Task<IReadOnlyList<LyricsChoice>> SearchTrackLyricsAsync(Guid trackId, string? text, CancellationToken ct = default)
+    {
+        using var response = await http.GetAsync($"{Api}/library/tracks/{trackId}/lyrics/search?q={Uri.EscapeDataString(text ?? "")}", ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<IReadOnlyList<LyricsChoice>>(MelodexJson.Options, ct))!;
+    }
+
+    /// <summary>Excludes a song from lyrics matching, so no scan looks for its lyrics, or includes it again.</summary>
+    public async Task<TrackLyrics> ExcludeTrackLyricsAsync(Guid trackId, bool excluded, CancellationToken ct = default)
+    {
+        using var response = excluded
+            ? await http.PutAsync($"{Api}/library/tracks/{trackId}/lyrics/excluded", null, ct)
+            : await http.DeleteAsync($"{Api}/library/tracks/{trackId}/lyrics/excluded", ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<TrackLyrics>(MelodexJson.Options, ct))!;
+    }
+
     private static string CoverPath(CoverSubject subject, Guid id) => $"{Api}/library/{(subject == CoverSubject.Album ? "albums" : "tracks")}/{id}/cover";
 
     /// <summary>The covers an album or song could have, from every release it's on.</summary>

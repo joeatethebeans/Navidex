@@ -48,7 +48,7 @@ public sealed class LyricsFinder(
     {
         var since = DateTime.UtcNow - NoneFor;
         return db.LibraryFiles.Where(f => f.TrackId != null && f.ExcludedAt == null && f.HiddenAt == null && f.Lyrics == LyricsKind.None
-                                          && (f.LyricsCheckedAt == null || f.LyricsCheckedAt < since));
+                                          && f.LyricsExcludedAt == null && (f.LyricsCheckedAt == null || f.LyricsCheckedAt < since));
     }
 
     public Task<bool> HaveSourcesAsync(CancellationToken ct) => db.PluginInstances.AnyAsync(p => p.Type == Contracts.Plugins.PluginType.Lyrics && p.Enabled, ct);
@@ -71,7 +71,7 @@ public sealed class LyricsFinder(
 
         // One question per song, however many files it has.
         var answers = new Dictionary<Guid, (FoundLyrics? Lyrics, bool Failed)>();
-        var writes = new List<(LibraryFile File, FormatFile Request, FoundLyrics Lyrics)>();
+        var writes = new List<(LibraryFile File, FormatFile Request, LyricsKind Kind)>();
         var found = 0;
         foreach (var file in files)
         {
@@ -100,38 +100,113 @@ public sealed class LyricsFinder(
                     break;
                 case { Lyrics: { } lyrics }:
                     var text = lyrics.Synced ?? lyrics.Plain!;
-                    var tags = storage == LyricsStorage.Sidecar ? new Dictionary<string, string>() : new Dictionary<string, string> { ["lyrics"] = text };
-                    writes.Add((file, new FormatFile(file.Path, tags, null, false, storage == LyricsStorage.Embedded ? null : text), lyrics));
+                    writes.Add((file, Write(file, text, storage), LyricsFiles.KindOfText(text)));
                     break;
             }
         }
 
-        if (writes.Count > 0)
-        {
-            var result = await worker.FormatAsync(new FormatRequest(writes.Select(w => w.Request).ToList(), new Dictionary<string, FormatArtwork>(), null), ct);
-            var written = new List<string>();
-            foreach (var formatted in result.Files)
-            {
-                if (writes.FirstOrDefault(w => w.File.Path == formatted.Path) is not { File: { } file, Lyrics: { } lyrics })
-                    continue;
-                if (formatted.NewPath is null)
-                {
-                    failed++;
-                    problem ??= formatted.Error;
-                    logger.LogWarning("Couldn't write lyrics for {Path}: {Reason}", formatted.Path, formatted.Error);
-                    continue;
-                }
-                FormatTask.Reread(file, root, logger);
-                file.Lyrics = lyrics.Synced is not null ? LyricsKind.Synced : LyricsKind.Plain;
-                file.LyricsCheckedAt = null;
-                written.Add(file.Path);
-                found++;
-            }
-            await FormatTask.TellMediaServerAsync(connectors, written, logger, CancellationToken.None);
-        }
+        var (written, unwritten, why) = await WriteAsync(writes, root, ct);
         // Saved even if it's cancelled now: the files have been written.
         await db.SaveChangesAsync(CancellationToken.None);
-        return new Outcome(found, already, none, failed, problem);
+        return new Outcome(found + written, already, none, failed + unwritten, problem ?? why);
+    }
+
+    /// <summary>
+    /// Writes the lyrics to the files where the settings say, replacing any they have; with null, takes their lyrics
+    /// away, from beside them and from their tags.
+    /// </summary>
+    /// <returns>Why some couldn't be written, or null when every one was.</returns>
+    /// <exception cref="HttpRequestException">The beets worker couldn't be reached.</exception>
+    public async Task<string?> SaveAsync(IReadOnlyCollection<LibraryFile> files, string? text, CancellationToken ct)
+    {
+        var storage = (await settings.GetLibraryAsync(ct)).LyricsStorage;
+        var root = Path.GetFullPath(options.Value.LibraryPath);
+        var writes = files.Select(f => text is null
+            ? (f, new FormatFile(f.Path, new Dictionary<string, string> { ["lyrics"] = "" }, null, false, ""), LyricsKind.None)
+            : (f, Write(f, text, storage), LyricsFiles.KindOfText(text))).ToList();
+        var (_, failed, problem) = await WriteAsync(writes, root, ct);
+        await db.SaveChangesAsync(CancellationToken.None);
+        return failed > 0 ? problem ?? "the beets worker couldn't write them" : null;
+    }
+
+    /// <summary>
+    /// What the lyrics plugins that can search have that might be the song: for what's typed, or else its title and
+    /// artist. Those of the song's length come first.
+    /// </summary>
+    public async Task<IReadOnlyList<LyricsChoice>> SearchAsync(LibraryFile file, string? text, CancellationToken ct)
+    {
+        await db.Entry(file).Reference(f => f.Track).LoadAsync(ct);
+        await db.Entry(file).Reference(f => f.Edition).LoadAsync(ct);
+        if (file.Edition is not null)
+            await db.Entry(file.Edition).Reference(e => e.Album).LoadAsync(ct);
+        var song = await QueryAsync(file, ct);
+        var choices = new List<LyricsChoice>();
+        string? problem = null;
+        foreach (var (instance, plugin) in await plugins.GetAsync(ct))
+        {
+            try
+            {
+                foreach (var result in await plugin.SearchAsync(new LyricsSearch(text ?? "", song), ct))
+                {
+                    var lyrics = result.Lyrics.Synced ?? result.Lyrics.Plain;
+                    if (lyrics is not null)
+                        choices.Add(new LyricsChoice(instance.Name, result.Title, result.Artist, result.Album, result.Duration?.TotalSeconds,
+                            LyricsFiles.KindOfText(lyrics), lyrics));
+                }
+            }
+            catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested)
+            {
+                logger.LogWarning("{Plugin} couldn't search for lyrics: {Message}", instance.Name, e.Message);
+                problem ??= $"{instance.Name} isn't answering: {e.Message}";
+            }
+        }
+        if (choices.Count == 0 && problem is not null)
+            throw new HttpRequestException(problem);
+        return choices;
+    }
+
+    private static FormatFile Write(LibraryFile file, string text, LyricsStorage storage)
+    {
+        var tags = storage == LyricsStorage.Sidecar ? new Dictionary<string, string>() : new Dictionary<string, string> { ["lyrics"] = text };
+        return new FormatFile(file.Path, tags, null, false, storage == LyricsStorage.Embedded ? null : text);
+    }
+
+    // Has the worker write each, and notes what each file has now.
+    private async Task<(int Written, int Failed, string? Problem)> WriteAsync(List<(LibraryFile File, FormatFile Request, LyricsKind Kind)> writes, string root,
+        CancellationToken ct)
+    {
+        if (writes.Count == 0)
+            return (0, 0, null);
+        var result = await worker.FormatAsync(new FormatRequest(writes.Select(w => w.Request).ToList(), new Dictionary<string, FormatArtwork>(), null), ct);
+        var written = new List<string>();
+        var failed = 0;
+        string? problem = null;
+        foreach (var formatted in result.Files)
+        {
+            if (writes.FirstOrDefault(w => w.File.Path == formatted.Path) is not { File: { } file } write)
+                continue;
+            if (formatted.NewPath is null)
+            {
+                failed++;
+                problem ??= formatted.Error;
+                logger.LogWarning("Couldn't write lyrics for {Path}: {Reason}", formatted.Path, formatted.Error);
+                continue;
+            }
+            FormatTask.Reread(file, root, logger);
+            file.Lyrics = write.Kind;
+            file.LyricsCheckedAt = null;
+            written.Add(file.Path);
+        }
+        await FormatTask.TellMediaServerAsync(connectors, written, logger, CancellationToken.None);
+        return (written.Count, failed, problem);
+    }
+
+    private async Task<LyricsQuery> QueryAsync(LibraryFile file, CancellationToken ct)
+    {
+        var track = file.Track!;
+        var ids = await db.Crosswalk.Where(m => m.EntityKind == EntityKind.Track && m.EntityId == track.Id)
+            .Select(m => new ProviderId(m.Provider, m.Value)).ToListAsync(ct);
+        return new LyricsQuery(track.Title, track.ArtistCredit, file.Edition?.Album.Title, file.Duration ?? track.Duration, ids);
     }
 
     // The first lyrics a source has, in the user's order. A failure is only reported if no source had any.
@@ -139,9 +214,7 @@ public sealed class LyricsFinder(
         LibraryFile file, CancellationToken ct)
     {
         var track = file.Track!;
-        var ids = await db.Crosswalk.Where(m => m.EntityKind == EntityKind.Track && m.EntityId == track.Id)
-            .Select(m => new ProviderId(m.Provider, m.Value)).ToListAsync(ct);
-        var query = new LyricsQuery(track.Title, track.ArtistCredit, file.Edition?.Album.Title, file.Duration ?? track.Duration, ids);
+        var query = await QueryAsync(file, ct);
         var failed = false;
         foreach (var (instance, plugin) in sources)
         {

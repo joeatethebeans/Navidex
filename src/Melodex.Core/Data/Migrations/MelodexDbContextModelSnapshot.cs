@@ -384,6 +384,9 @@ namespace Melodex.Core.Data.Migrations
                     b.Property<DateTime?>("LyricsCheckedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("LyricsExcludedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<double?>("MatchConfidence")
                         .HasColumnType("REAL");
 

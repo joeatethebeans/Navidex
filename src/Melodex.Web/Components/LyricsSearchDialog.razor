@@ -1,0 +1,106 @@
+@inject MelodexClient Api
+
+@*
+    Searches the lyrics sources for a song's lyrics, the song's own title and artist to begin with, and writes the
+    ones chosen to its files.
+*@
+<Dialog Title="@($"Lyrics for {Title}")" Class="lyrics-dialog" OnClose="OnClose">
+    <form class="row lyrics-search" @onsubmit="SearchAsync" @onsubmit:preventDefault>
+        <input type="search" placeholder="Search for a title and artist" aria-label="Search for a title and artist" @bind="_text" />
+        <button type="submit" disabled="@_busy">Search</button>
+    </form>
+    @if (_error is not null) { <p class="error small">@_error</p> }
+    @if (_choices is null)
+    {
+        <Loading Inline="true" />
+    }
+    else if (_choices.Count == 0)
+    {
+        <p class="muted">Nothing found. Try other words.</p>
+    }
+    else
+    {
+        <div class="lyrics-choices">
+            @foreach (var choice in _choices)
+            {
+                var open = _open == choice;
+                <div class="lyrics-choice @(open ? "open" : "")">
+                    <button class="lyrics-choice-head" type="button" aria-expanded="@(open ? "true" : "false")" @onclick="() => _open = open ? null : choice">
+                        <span class="lyrics-choice-title">
+                            <span>@choice.Title</span>
+                            <span class="muted small">@choice.Artist@(choice.Album is { } album ? $" · {album}" : "")</span>
+                        </span>
+                        <span class="muted small">@Format.Duration(choice.DurationSeconds)</span>
+                        <span class="badge @(choice.Kind == LyricsKind.Synced ? "owned" : "neutral")">@(choice.Kind == LyricsKind.Synced ? "Synced" : "Plain")</span>
+                    </button>
+                    @if (open)
+                    {
+                        <div class="lyrics-lines lyrics-preview">
+                            @foreach (var line in LyricsText.Lines(choice.Text))
+                            {
+                                <div class="lyrics-line @(line.Text.Length == 0 ? "gap" : "")">
+                                    @if (line.Seconds is { } at) { <span class="muted small lyrics-time">@Format.Duration(at)</span> }
+                                    <span>@line.Text</span>
+                                </div>
+                            }
+                        </div>
+                        <div class="toolbar dialog-buttons">
+                            <span class="muted small">From @choice.Source</span>
+                            <span class="spacer"></span>
+                            <button class="primary" disabled="@_busy" @onclick="() => UseAsync(choice)">@if (_busy) { <span class="spinner"></span> }Use these</button>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</Dialog>
+
+@code {
+    [Parameter, EditorRequired] public Guid TrackId { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<TrackLyrics> OnSaved { get; set; }
+
+    private string _text = "";
+    private IReadOnlyList<LyricsChoice>? _choices;
+    private LyricsChoice? _open;
+    private bool _busy;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => SearchAsync();
+
+    private async Task SearchAsync()
+    {
+        _busy = true;
+        _error = null;
+        _choices = null;
+        _open = null;
+        try
+        {
+            _choices = await Api.SearchTrackLyricsAsync(TrackId, _text);
+            _open = _choices.FirstOrDefault();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+            _choices = [];
+        }
+        _busy = false;
+    }
+
+    private async Task UseAsync(LyricsChoice choice)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await OnSaved.InvokeAsync(await Api.SaveTrackLyricsAsync(TrackId, choice.Text));
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+        }
+        _busy = false;
+    }
+}

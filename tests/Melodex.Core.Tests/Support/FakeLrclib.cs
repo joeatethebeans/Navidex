@@ -17,7 +17,8 @@ public sealed class FakeLrclib(HttpMessageHandler inner, IReadOnlyDictionary<str
         if (request.RequestUri!.Host != "lrclib.net")
             return base.SendAsync(request, cancellationToken);
         var query = HttpUtility.ParseQueryString(request.RequestUri.Query);
-        var title = query["track_name"] ?? "";
+        // A search for words finds a song whose title is among them.
+        var title = query["track_name"] ?? Songs.Keys.FirstOrDefault(k => query["q"]?.Contains(k, StringComparison.OrdinalIgnoreCase) == true) ?? "";
         object? record = Songs.TryGetValue(title, out var lyrics)
             ? new { trackName = title, artistName = query["artist_name"], duration = 0, instrumental = false, syncedLyrics = lyrics, plainLyrics = (string?)null }
             : null;

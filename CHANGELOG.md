@@ -36,8 +36,9 @@ Everything on the way to 1.0.
   you upload. It's written into the files straight away (and an album's folder gets it as `cover.jpg`), and Melodex
   shows it from then on.
 - **Lyrics**: a new kind of plugin, with LRCLIB set up out of the box. Scans find lyrics for songs without them and
-  write them as `.lrc` files beside each song, into its tags, or both. Each song's page says whether it has synced
-  lyrics, shows them, and can look for them again.
+  write them as `.lrc` files beside each song, into its tags, or both. Each song's page says what lyrics it has and
+  where from, and can look for them again, search LRCLIB and choose, edit them line by line with their times or as
+  text, delete them, or exclude the song from lyrics matching. The lyrics plugin contract is 1.1, adding search.
 - **The full-screen player**: the cover large over a blur of itself, a visualiser that moves with the music, and the
   lyrics lit line by line as they're sung (click one to play from it), or the queue. The player bar is laid out as
   music apps have it, with a volume control.

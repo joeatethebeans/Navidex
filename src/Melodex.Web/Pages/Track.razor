@@ -101,40 +101,7 @@ else
 
     @if (owned)
     {
-        var kind = Lyrics(track);
-        <div class="section-head">
-            <h2>Lyrics</h2>
-            <IconButton Icon="search" Requires="@UserPermissions.Format" Disabled="_findingLyrics" Label="@(_findingLyrics ? "Finding…" : kind is LyricsKind.None ? "Find lyrics" : "Find again")"
-                        Title="Look for the lyrics now through the lyrics plugins, and write them to the files as Settings say" OnClick="FindLyricsAsync" />
-        </div>
-        @if (_lyricsError is not null) { <p class="error small">@_lyricsError</p> }
-        @if (kind is LyricsKind.Synced or LyricsKind.Plain)
-        {
-            <details class="card lyrics" @ontoggle="ShowLyricsAsync">
-                <summary>@(kind == LyricsKind.Synced ? "Synced lyrics, each line with when it's sung" : "Lyrics")</summary>
-                @if (_lyrics is null)
-                {
-                    <Loading Inline="true" />
-                }
-                else
-                {
-                    <div class="lyrics-lines">
-                        @foreach (var line in _lyrics.Lines)
-                        {
-                            <div class="lyrics-line @(line.Text.Length == 0 ? "gap" : "")">
-                                @if (line.Seconds is { } at) { <span class="muted small lyrics-time">@Format.Duration(at)</span> }
-                                <span>@line.Text</span>
-                            </div>
-                        }
-                    </div>
-                    <div class="muted small">From @(_lyrics.Source == "sidecar" ? "an .lrc file beside the song" : "the file's lyrics tag").</div>
-                }
-            </details>
-        }
-        else
-        {
-            <p class="muted">@LyricsHint(kind)</p>
-        }
+        <TrackLyricsPanel TrackId="track.Id" Title="@track.Title" OnChanged="LoadAsync" />
 
         <h2 class="section">@(track.Files.Count == 1 ? "File" : $"{track.Files.Count} files")</h2>
         @foreach (var file in track.Files)
@@ -186,10 +153,6 @@ else
     private bool _formatting;
     private bool _choosingCover;
     private (string Name, IReadOnlyList<PlaylistItem> Songs)? _adding;
-    private bool _findingLyrics;
-    private TrackLyrics? _lyrics;
-    private string? _lyricsError;
-
     // The best any of its files has.
     private static LyricsKind Lyrics(TrackDetail track) =>
         track.Files.Select(f => f.Lyrics).OrderBy(k => k switch { LyricsKind.Synced => 0, LyricsKind.Plain => 1, LyricsKind.Instrumental => 2, _ => 3 })
@@ -211,36 +174,6 @@ else
         _ => "No lyrics yet. Scans look for them through the lyrics plugins, when Settings say to.",
     };
 
-    private async Task ShowLyricsAsync()
-    {
-        if (_lyrics is null && _track is not null)
-        {
-            _lyrics = await Api.GetTrackLyricsAsync(_track.Id);
-            StateHasChanged();
-        }
-    }
-
-    private async Task FindLyricsAsync()
-    {
-        if (_track is null)
-            return;
-        _findingLyrics = true;
-        _lyricsError = null;
-        try
-        {
-            var found = await Api.FindTrackLyricsAsync(_track.Id);
-            if (found.Kind == LyricsKind.None)
-                _lyricsError = "None of the lyrics sources has lyrics for it.";
-            _lyrics = found.Kind == LyricsKind.None ? null : found;
-            await LoadAsync();
-        }
-        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
-        {
-            _lyricsError = e.Message;
-        }
-        _findingLyrics = false;
-    }
-
     protected override async Task OnParametersSetAsync()
     {
         ScanStatus.LibraryChanged -= Reload;
@@ -254,7 +187,6 @@ else
     {
         if (_track?.Id != Id)
         {
-            _lyrics = null;
             // Seen already this session: shown as it was while it's asked for again.
             _track = Pages.Get<TrackDetail>(Key);
             _notFound = false;

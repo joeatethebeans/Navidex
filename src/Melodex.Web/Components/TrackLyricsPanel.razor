@@ -1,0 +1,197 @@
+@inject MelodexClient Api
+@inject AuthState Auth
+
+@*
+    A song's lyrics on its page: a line saying what it has and where they're read from, and buttons to view and edit
+    them, find them again, choose them from a search, delete them, or exclude the song from lyrics matching.
+*@
+<div class="section-head">
+    <h2>Lyrics</h2>
+    @if (_lyrics is { } shown)
+    {
+        <div class="row lyrics-actions">
+            @if (shown.Kind != LyricsKind.None)
+            {
+                <IconButton Icon="show" Label="View" Title="@(Auth.May(UserPermissions.Format) ? "See the lyrics line by line, and edit them" : "See the lyrics line by line")"
+                            OnClick="() => _viewing = true" />
+            }
+            <IconButton Icon="search" Requires="@UserPermissions.Format" Label="Search" Disabled="_busy"
+                        Title="Search the lyrics sources and choose the lyrics yourself" OnClick="() => _searching = true" />
+            <IconButton Icon="retry" Requires="@UserPermissions.Format" Disabled="_busy" Label="@(_finding ? "Finding…" : shown.Kind == LyricsKind.None ? "Find" : "Find again")"
+                        Title="Look for the lyrics now through the lyrics plugins, taking the best match, and write them to the files as Settings say"
+                        OnClick="FindAsync" />
+            @if (shown.Kind == LyricsKind.None && Auth.May(UserPermissions.Format))
+            {
+                <IconButton Icon="rename" Label="Write" Title="Write the lyrics yourself" Disabled="_busy" OnClick="WriteOwn" />
+            }
+            @if (shown.Kind != LyricsKind.None)
+            {
+                <IconButton Icon="remove" Requires="@UserPermissions.Format" Label="Delete" Disabled="_busy"
+                            Title="Take the lyrics away: the .lrc file beside the song and its lyrics tag" OnClick="() => _deleting = true" />
+            }
+            @if (!shown.Excluded)
+            {
+                <IconButton Icon="exclude" Requires="@UserPermissions.Format" Label="Exclude" Disabled="_busy"
+                            Title="Exclude it from lyrics matching: no scan looks for its lyrics. What it has stays." OnClick="() => ExcludeAsync(true)" />
+            }
+        </div>
+    }
+</div>
+
+@if (_lyrics is null)
+{
+    <Loading Inline="true" />
+}
+else
+{
+    var lyrics = _lyrics;
+    <p class="lyrics-status">
+        <span class="badge @(lyrics.Kind is LyricsKind.Synced or LyricsKind.Plain ? "owned" : "neutral")">@Label(lyrics)</span>
+        <span class="muted">@Status(lyrics)</span>
+    </p>
+    @if (lyrics.Excluded)
+    {
+        <p class="lyrics-status muted small">
+            Excluded from lyrics matching, so scans don't look for its lyrics.
+            @if (Auth.May(UserPermissions.Format))
+            {
+                <button class="link" disabled="@_busy" @onclick="() => ExcludeAsync(false)">Include it again</button>
+            }
+        </p>
+    }
+}
+@if (_error is not null) { <p class="error small">@_error</p> }
+
+@if (_viewing && _lyrics is not null)
+{
+    <LyricsDialog TrackId="TrackId" Title="@Title" Lyrics="_lyrics" Editing="_writing" OnClose="() => { _viewing = false; _writing = false; }" OnSaved="SavedAsync" />
+}
+@if (_searching)
+{
+    <LyricsSearchDialog TrackId="TrackId" Title="@Title" OnClose="() => _searching = false" OnSaved="SavedAsync" />
+}
+@if (_deleting)
+{
+    <Dialog Title="Delete the lyrics?" Alert="true" OnClose="() => _deleting = false">
+        <p>The .lrc file beside the song and its lyrics tag go, from each of its files.</p>
+        @if (_lyrics?.Excluded != true)
+        {
+            <label class="check">
+                <input type="checkbox" @bind="_excludeToo" />
+                Exclude it from lyrics matching too, so scans don't find them again
+            </label>
+        }
+        <div class="toolbar dialog-buttons">
+            <button @onclick="() => _deleting = false">Cancel</button>
+            <button class="danger" disabled="@_busy" @onclick="DeleteAsync">@if (_busy) { <span class="spinner"></span> }Delete</button>
+        </div>
+    </Dialog>
+}
+
+@code {
+    [Parameter, EditorRequired] public Guid TrackId { get; set; }
+
+    /// <summary>The song's title, for the dialogs.</summary>
+    [Parameter] public string Title { get; set; } = "";
+
+    /// <summary>Its files' lyrics changed, so the page can show them as they are now.</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private TrackLyrics? _lyrics;
+    private Guid _loaded;
+    private bool _busy, _finding, _viewing, _writing, _searching, _deleting, _excludeToo;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loaded == TrackId)
+            return;
+        _loaded = TrackId;
+        _lyrics = null;
+        _error = null;
+        try
+        {
+            _lyrics = await Api.GetTrackLyricsAsync(TrackId);
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = $"Couldn't read the lyrics: {e.Message}";
+        }
+    }
+
+    private static string Label(TrackLyrics lyrics) => lyrics switch
+    {
+        { Kind: LyricsKind.Synced } => "Synced lyrics",
+        { Kind: LyricsKind.Plain } => "Plain lyrics",
+        { Instrumental: true } => "Instrumental",
+        _ => "No lyrics",
+    };
+
+    private static string Status(TrackLyrics lyrics)
+    {
+        var from = lyrics.Source == "sidecar" ? "from an .lrc file beside the song" : "from the song's lyrics tag";
+        return lyrics switch
+        {
+            { Kind: LyricsKind.Synced } => $"Each line with when it's sung, {from}. The player follows along.",
+            { Kind: LyricsKind.Plain } => $"Without timings, {from}.",
+            { Instrumental: true } => "A lyrics source says it has no words.",
+            { CheckedAt: { } at } => $"The lyrics sources had none {Format.Ago(at)}; scans ask again a month after that.",
+            { Excluded: true } => "Scans won't look for them.",
+            _ => "Scans look for them through the lyrics plugins, when Settings say to.",
+        };
+    }
+
+    private void WriteOwn()
+    {
+        _writing = true;
+        _viewing = true;
+    }
+
+    private Task FindAsync() => RunAsync(async () =>
+    {
+        _finding = true;
+        var found = await Api.FindTrackLyricsAsync(TrackId);
+        if (found.Kind == LyricsKind.None && !found.Instrumental)
+            _error = "None of the lyrics sources has lyrics for it.";
+        return found;
+    });
+
+    private Task ExcludeAsync(bool excluded) => RunAsync(() => Api.ExcludeTrackLyricsAsync(TrackId, excluded));
+
+    private Task DeleteAsync() => RunAsync(async () =>
+    {
+        var lyrics = await Api.SaveTrackLyricsAsync(TrackId, null);
+        if (_excludeToo && !lyrics.Excluded)
+            lyrics = await Api.ExcludeTrackLyricsAsync(TrackId, true);
+        _deleting = false;
+        return lyrics;
+    });
+
+    private async Task SavedAsync(TrackLyrics lyrics)
+    {
+        _lyrics = lyrics;
+        _searching = false;
+        _writing = false;
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task RunAsync(Func<Task<TrackLyrics>> action)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            _lyrics = await action();
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception e) when (e is HttpRequestException or MelodexApiException)
+        {
+            _error = e.Message;
+        }
+        finally
+        {
+            _busy = false;
+            _finding = false;
+        }
+    }
+}

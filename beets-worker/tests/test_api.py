@@ -190,6 +190,12 @@ def test_lyrics_go_beside_the_song_and_into_it_and_move_and_go_with_it(client, r
     assert (library / "Portishead" / "Dummy" / "Roads.lrc").exists()
     assert not (library / "in").exists()
 
+    # Empty, they're taken away: the .lrc goes and the tag is cleared.
+    cleared = {"files": [{"path": "Portishead/Dummy/Roads.flac", "lrc": "", "tags": {"lyrics": ""}}]}
+    assert client.post("/v1/format", json=cleared).json()["files"][0]["newPath"] == "Portishead/Dummy/Roads.flac"
+    assert not (library / "Portishead" / "Dummy" / "Roads.lrc").exists()
+    assert not MediaFile(library / "Portishead" / "Dummy" / "Roads.flac").lyrics
+
     # Deleted, they go with it, and so does the folder.
     client.post("/v1/delete", json={"paths": ["Portishead/Dummy/Roads.flac"]})
     assert not (library / "Portishead").exists()

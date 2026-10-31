@@ -15,12 +15,12 @@ public sealed class LrclibFactory : IPluginFactory
     {
         Id = PluginId,
         Name = "LRCLIB",
-        Version = "0.1.0",
+        Version = "0.2.0",
         Type = PluginType.Lyrics,
         ContractVersion = ContractVersions.Lyrics.ToString(),
         Description = "Time-synced and plain lyrics from LRCLIB, an open, community-made lyrics database. No account needed.",
         Homepage = "https://lrclib.net",
-        Capabilities = [LyricsCapabilities.Synced, LyricsCapabilities.Plain],
+        Capabilities = [LyricsCapabilities.Synced, LyricsCapabilities.Plain, LyricsCapabilities.Search],
         Access = new PluginAccess { Network = ["lrclib.net"] },
         MaxRequestsPerSecond = 5,
         SettingsSchema = JsonDocument.Parse("""
@@ -68,6 +68,31 @@ public sealed class Lrclib(PluginContext context) : ILyricsPlugin
         var results = await GetAsync<JsonElement?>($"api/search?track_name={Escape(query.Title)}&artist_name={Escape(query.Artist)}", cancellationToken);
         return results is { ValueKind: JsonValueKind.Array } list ? Pick(list, query.Duration) : null;
     }
+
+    public async Task<IReadOnlyList<LyricsResult>> SearchAsync(LyricsSearch query, CancellationToken cancellationToken)
+    {
+        var path = query.Text.Trim() is { Length: > 0 } text ? $"api/search?q={Escape(text)}"
+            : query.Song is { } song ? $"api/search?track_name={Escape(song.Title)}&artist_name={Escape(song.Artist)}"
+            : null;
+        if (path is null || await GetAsync<JsonElement?>(path, cancellationToken) is not { ValueKind: JsonValueKind.Array } results)
+            return [];
+        var duration = query.Song?.Duration;
+        return results.EnumerateArray()
+            .Select(r => (Record: r, Lyrics: Read(r)))
+            .Where(r => r.Lyrics is not null)
+            .Select(r => new LyricsResult(Text(r.Record, "trackName") ?? "", Text(r.Record, "artistName") ?? "", Text(r.Record, "albumName"),
+                r.Record.TryGetProperty("duration", out var length) && length.ValueKind == JsonValueKind.Number ? TimeSpan.FromSeconds(length.GetDouble()) : null,
+                r.Lyrics!))
+            // Those the length of the song first, synced before plain; otherwise LRCLIB's own order.
+            .Select((r, i) => (Result: r, Order: i, Close: duration is { } d && r.Duration is { } l && (l - d).Duration() <= Tolerance))
+            .OrderBy(r => r.Close ? 0 : 1).ThenBy(r => r.Result.Lyrics.Synced is null ? 1 : 0).ThenBy(r => r.Order)
+            .Select(r => r.Result)
+            .Take(30)
+            .ToList();
+    }
+
+    private static string? Text(JsonElement record, string name) =>
+        record.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } text ? text : null;
 
     /// <summary>
     /// The best of a search's results: those close enough in length (when it's known), synced before plain, then the
