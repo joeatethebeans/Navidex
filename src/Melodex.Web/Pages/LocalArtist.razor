@@ -1,5 +1,6 @@
 @page "/local/artists/{Id:guid}"
 @implements IDisposable
+@inject PageCache Pages
 @inject MelodexClient Api
 
 <PageTitle>@(_artist?.Name ?? "Artist") · Melodex</PageTitle>
@@ -43,7 +44,13 @@ else
 
     private async Task LoadAsync()
     {
-        _artist = await Api.GetLocalArtistAsync(Id);
+        if (_artist?.Id != Id)
+        {
+            // Seen already this session: shown as it was while it's asked for again.
+            _artist = Pages.Get<LocalArtistDetail>($"local-artist/{Id}");
+            _notFound = false;
+        }
+        _artist = Pages.Keep($"local-artist/{Id}", await Api.GetLocalArtistAsync(Id));
         _notFound = _artist is null;
     }
 

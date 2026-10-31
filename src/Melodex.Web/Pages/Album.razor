@@ -1,5 +1,6 @@
 @page "/albums/{Id:guid}"
 @implements IDisposable
+@inject PageCache Pages
 @inject MelodexClient Api
 @inject RequestTracker Tracker
 @inject Player Player
@@ -219,10 +220,21 @@ else
 
     private async Task LoadAsync(Guid? editionId)
     {
-        _album = await Api.GetAlbumAsync(Id, editionId, quick: true);
+        // Seen already this session: shown as it was while it's asked for again. Only as it first opens, with no edition chosen.
+        if (editionId is null && Pages.Get<AlbumDetail>(Key(Id)) is { } seen)
+        {
+            _album = seen;
+            _notFound = false;
+        }
+        else if (_album?.Album.Id != Id)
+            _album = null;
+        var album = await Api.GetAlbumAsync(Id, editionId, quick: true);
+        _album = editionId is null ? Pages.Keep(Key(Id), album) : album;
         _notFound = _album is null;
         Follow();
     }
+
+    private static string Key(Guid id) => $"album/{id}";
 
     // While its editions are fetched, look again every moment; the page shows what's known meanwhile.
     private CancellationTokenSource? _following;
@@ -244,6 +256,8 @@ else
                     if (await Api.GetAlbumAsync(id, _album?.ShownEditionId, quick: true, following.Token) is { } album && !following.IsCancellationRequested)
                     {
                         _album = album;
+                        if (album.ShownEditionId == album.OwnedEditionId)
+                            Pages.Keep(Key(id), album);
                         StateHasChanged();
                     }
                 }

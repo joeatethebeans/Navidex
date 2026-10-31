@@ -1,5 +1,6 @@
 @page "/artists/{Id:guid}"
 @implements IDisposable
+@inject PageCache Pages
 @inject MelodexClient Api
 @inject Preferences Prefs
 
@@ -124,16 +125,21 @@ else
     {
         ScanStatus.LibraryChanged -= Reload;
         ScanStatus.LibraryChanged += Reload;
+        // Seen already this session: shown as it was while it's asked for again.
+        _artist = Pages.Get<ArtistDetail>(Key) ?? (_artist?.Id == Id ? _artist : null);
+        _notFound = false;
         await Prefs.LoadAsync();
         _sections = await Prefs.GetAsync<Dictionary<AlbumType, bool>>(SectionsKey, []);
-        _artist = await Api.GetArtistAsync(Id, quick: true);
+        _artist = Pages.Keep(Key, await Api.GetArtistAsync(Id, quick: true));
         _notFound = _artist is null;
         Follow();
     }
 
+    private string Key => $"artist/{Id}";
+
     private void Reload() => InvokeAsync(async () =>
     {
-        _artist = await Api.GetArtistAsync(Id, quick: true);
+        _artist = Pages.Keep(Key, await Api.GetArtistAsync(Id, quick: true));
         StateHasChanged();
         Follow();
     });
@@ -157,7 +163,7 @@ else
                     await Task.Delay(1500, following.Token);
                     if (await Api.GetArtistAsync(id, quick: true, following.Token) is { } artist && !following.IsCancellationRequested)
                     {
-                        _artist = artist;
+                        _artist = Pages.Keep($"artist/{id}", artist);
                         StateHasChanged();
                     }
                 }
@@ -179,7 +185,7 @@ else
     private async Task ToggleIgnoreAsync(AlbumSummary album)
     {
         await Api.SetAlbumIgnoredAsync(album.Id, !album.Ignored);
-        _artist = await Api.GetArtistAsync(Id, quick: true);
+        _artist = Pages.Keep(Key, await Api.GetArtistAsync(Id, quick: true));
     }
 
     public void Dispose()

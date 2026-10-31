@@ -1,5 +1,6 @@
 @page "/tracks/{Id:guid}"
 @implements IDisposable
+@inject PageCache Pages
 @inject MelodexClient Api
 @inject RequestTracker Tracker
 @inject Player Player
@@ -252,10 +253,17 @@ else
     private async Task LoadAsync()
     {
         if (_track?.Id != Id)
+        {
             _lyrics = null;
-        _track = await Api.GetTrackAsync(Id);
+            // Seen already this session: shown as it was while it's asked for again.
+            _track = Pages.Get<TrackDetail>(Key);
+            _notFound = false;
+        }
+        _track = Pages.Keep(Key, await Api.GetTrackAsync(Id));
         _notFound = _track is null;
     }
+
+    private string Key => $"track/{Id}";
 
     private void Reload() => InvokeAsync(async () =>
     {

@@ -27,8 +27,10 @@ Everything on the way to 1.0.
 - **Missing view**: each kind of release (live, compilations, remixes, demos, soundtracks, bootlegs and the rest) has
   its own choice of Show, Hide or **New songs only**, which lists a release just for the songs found nowhere else.
 - **File metadata**: your files' tags and their cover art can each be preferred on their own.
-- **Search remembers**: the last search, its results and where you'd scrolled stay for a while after you leave the
-  Search page (5 minutes by default; each user sets their own under Settings → Appearance).
+- **Library and Search remember where you were**, until you close the tab. Their links in the top bar take you back
+  to the artist, album or song you were last on there; click again for the Library or your search as you left it, and
+  again for a fresh search. Back and forward show pages you've seen at once, scrolled to where you were, and bring them
+  up to date behind.
 - **Choosing a cover**: an album's or song's cover can be picked from every release it's on, its files' own, or a picture
   you upload. It's written into the files straight away (and an album's folder gets it as `cover.jpg`), and Melodex
   shows it from then on.
@@ -79,3 +81,5 @@ Everything on the way to 1.0.
 - API keys start `mdx_`; `ndx_` keys still work.
 - Webhook headers are `Melodex-Signature`, `Melodex-Event` and `Melodex-Delivery`.
 - The local network is no longer let in without signing in.
+- The Appearance setting for how long a search is kept has gone, with `keepSearchMinutes` in `Appearance`: it's kept for
+  the session now.

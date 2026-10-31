@@ -12,3 +12,30 @@ window.melodexScroll = {
         go();
     },
 };
+
+// Back and forward put each page where it was scrolled to this session. Where a page was is noted as it's left, by a
+// link or by back and forward; the browser's own attempt comes before the page is drawn, so it's left to this.
+(() => {
+    const positions = new Map();
+    let here = location.href;
+    const leave = () => positions.set(here, window.scrollY);
+    history.scrollRestoration = 'manual';
+
+    const push = history.pushState.bind(history);
+    history.pushState = (...args) => {
+        leave();
+        push(...args);
+        here = location.href;
+    };
+    const replace = history.replaceState.bind(history);
+    history.replaceState = (...args) => {
+        replace(...args);
+        here = location.href;
+    };
+    addEventListener('popstate', () => {
+        leave();
+        here = location.href;
+        const y = positions.get(here) ?? 0;
+        setTimeout(() => window.melodexScroll.to(y), 0);
+    });
+})();

@@ -1,5 +1,6 @@
 @page "/local/albums/{Id:guid}"
 @implements IDisposable
+@inject PageCache Pages
 @inject MelodexClient Api
 @inject Player Player
 
@@ -102,7 +103,13 @@ else
 
     private async Task LoadAsync()
     {
-        _album = await Api.GetLocalAlbumAsync(Id);
+        if (_album?.Id != Id)
+        {
+            // Seen already this session: shown as it was while it's asked for again.
+            _album = Pages.Get<LocalAlbumDetail>($"local-album/{Id}");
+            _notFound = false;
+        }
+        _album = Pages.Keep($"local-album/{Id}", await Api.GetLocalAlbumAsync(Id));
         _notFound = _album is null;
     }
 

@@ -4,11 +4,12 @@
 @inject Theme Theme
 @inject MelodexClient Api
 @inject NavigationManager Nav
+@inject NavSections Sections
 
 <header class="topbar">
     <a class="brand" href=""><Logo />Melodex</a>
     <nav class="nav">
-        <NavLink href="" Match="NavLinkMatch.All">Library</NavLink>
+        @SectionLink(NavSection.Library, "Library")
         <NavLink href="activity">Activity</NavLink>
         <NavLink href="downloads">Downloads</NavLink>
         @if (Auth.May(UserPermissions.Review))
@@ -19,7 +20,7 @@
         {
             <NavLink href="playlists" Match="NavLinkMatch.Prefix">Playlists</NavLink>
         }
-        <NavLink href="search">Search</NavLink>
+        @SectionLink(NavSection.Search, "Search")
         <NavLink href="@SettingsHref" Match="NavLinkMatch.Prefix">Settings</NavLink>
     </nav>
     <span class="spacer"></span>
@@ -37,6 +38,11 @@
 }
 
 @code {
+    // Library and Search go back to where you were in them; see NavSections.
+    private RenderFragment SectionLink(NavSection section, string name) =>
+        @<a href="@Sections.Href(section)" class="@(Sections.Current == section ? "active" : null)" aria-current="@(Sections.Current == section ? "page" : null)"
+            @onclick="() => Sections.Go(section)" @onclick:preventDefault="true">@name</a>;
+
     // The first settings tab they may open.
     private string SettingsHref => Auth.May(UserPermissions.Settings) ? "settings"
         : Auth.May(UserPermissions.Users) ? "settings/users"
@@ -46,6 +52,7 @@
     protected override async Task OnInitializedAsync()
     {
         Auth.Changed += Redraw;
+        Sections.Changed += Moved;
         await ApplyThemeAsync();
         await OfferSetupAsync();
     }
@@ -79,5 +86,11 @@
         StateHasChanged();
     });
 
-    public void Dispose() => Auth.Changed -= Redraw;
+    private void Moved() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Auth.Changed -= Redraw;
+        Sections.Changed -= Moved;
+    }
 }

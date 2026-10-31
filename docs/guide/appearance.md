@@ -9,10 +9,6 @@ device you sign in on, and everyone chooses their own.
 - **High contrast**: stronger text and borders, and the owned, partial, covered and missing colours in a palette that
   people with the common kinds of colour blindness can tell apart.
 
-The same page has **Search**: how long the Search page keeps your last search after you leave it (5 minutes unless you
-change it, up to 2 hours). Coming back within that time shows the same results, scrolled to where you were, without
-searching MusicBrainz again.
-
 The sign-in page uses the last theme chosen in that browser.
 
 Next: [Plugins](plugins.md).

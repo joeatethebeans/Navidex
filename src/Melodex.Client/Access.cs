@@ -23,15 +23,11 @@ public enum ThemeMode { Auto, Light, Dark, Black }
 
 /// <summary>How the web app looks and behaves for someone, kept with their account: <c>PUT /auth/appearance</c>.</summary>
 /// <param name="HighContrast">Stronger text and borders, and status colours that colour-blind people can tell apart.</param>
-/// <param name="KeepSearchMinutes">
-/// How long the Search page keeps the last search, its results and where it was scrolled to after you leave it, from 0
-/// (not at all) to 120 minutes.
-/// </param>
 /// <param name="PlaylistFolders">
 /// What separates folders in playlist names, such as <c>/</c> making <c>Moods/Calm</c> a playlist Calm in a folder
 /// Moods. Empty for no folders.
 /// </param>
-public sealed record Appearance(ThemeColor Color = ThemeColor.Pink, ThemeMode Mode = ThemeMode.Auto, bool HighContrast = false, int KeepSearchMinutes = 5,
+public sealed record Appearance(ThemeColor Color = ThemeColor.Pink, ThemeMode Mode = ThemeMode.Auto, bool HighContrast = false,
     string PlaylistFolders = "/");
 
 /// <summary>Body of <c>POST /auth/setup</c>: the admin account, made the first time Melodex runs.</summary>

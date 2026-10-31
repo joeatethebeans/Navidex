@@ -46,14 +46,6 @@
                 <span class="muted small">Stronger text and borders, and owned, partial, covered and missing in colours that colour-blind people can tell apart</span>
             </span>
         </label>
-        <div class="field-label">Search</div>
-        <div class="setting-line">
-            Keep my last search for
-            <NumberField Min="0" Max="120" Label="Minutes" Value="_appearance.KeepSearchMinutes"
-                         ValueChanged="n => SaveAsync(_appearance with { KeepSearchMinutes = n })" />
-            @(_appearance.KeepSearchMinutes == 1 ? "minute" : "minutes") after I leave the Search page
-        </div>
-        <p class="muted small">Coming back within that time shows the same results, scrolled to where you were, without searching again. 0 forgets it straight away.</p>
         @if (_error is not null) { <p class="error small">@_error</p> }
     </div>
 </section>

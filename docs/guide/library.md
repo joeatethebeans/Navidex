@@ -1,5 +1,12 @@
 # Your library
 
+## Finding your way around
+
+**Library** and **Search**, in the top bar, remember where you were in them until you close the tab. Open an artist from
+your search, go to Activity, and **Search** takes you back to that artist; click it again for your search as you left
+it, and once more for a fresh one. **Library** works the same way. Going back and forward shows pages you've already
+seen at once, scrolled to where you were, while Melodex checks them for anything new.
+
 ## Scanning
 
 **Scan library**, at the top right, reads new and changed files and matches them. Its menu has more:
