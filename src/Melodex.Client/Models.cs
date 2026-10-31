@@ -273,7 +273,11 @@ public sealed record ArtistDetail(
     bool InLibrary,
     DateTime? DiscographyRefreshedAt,
     IReadOnlyList<AlbumSummary> Albums,
-    string? ImageUrl = null);
+    string? ImageUrl = null)
+{
+    /// <summary>Its discography is being fetched: look again shortly for the rest.</summary>
+    public bool Fetching { get; init; }
+}
 
 /// <param name="HiddenByDefault">The missing view's settings hide it when it isn't owned: its kind is hidden, or shown for new songs only and it has none.</param>
 /// <param name="OwnedTracks">Tracks owned (here or elsewhere) on the owned edition, or the best-covered edition.</param>
@@ -306,7 +310,11 @@ public sealed record AlbumDetail(
     Guid? OwnedEditionId,
     Guid? ShownEditionId,
     IReadOnlyList<EditionSummary> Editions,
-    IReadOnlyList<TrackRow> Tracks);
+    IReadOnlyList<TrackRow> Tracks)
+{
+    /// <summary>Its editions are being fetched: look again shortly for them.</summary>
+    public bool Fetching { get; init; }
+}
 
 public sealed record EditionSummary(
     Guid Id,

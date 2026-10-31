@@ -67,6 +67,9 @@ Everything on the way to 1.0.
 - The media-server connector contract is 1.1, adding `IPlaylistSync` for each user's playlists. Connectors built for
   1.0 still load.
 
+- Artist and album pages open at once with what Melodex knows, and fill in as MusicBrainz answers, rather than waiting
+  for it. What they fetch goes ahead of catalogue updates running in the background. `GET /artists/{id}` and
+  `GET /albums/{id}` take `quick=true` to answer this way, with `fetching` set while the rest is on its way.
 - The library's lists of artists, albums and tracks are kept on disk, so they show at once after a restart, and carry
   an ETag, so switching between them only downloads what changed. Views already loaded show at once.
 - Settings → General reads more easily: songs on more than one release are described for every kind of release, and

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Melodex.Client;
 using Melodex.Contracts.Catalogue;
 using Melodex.Contracts.Plugins.Index;
+using Melodex.Core.Plugins;
 using Melodex.Core.Artwork;
 using Melodex.Core.Catalogue;
 using Melodex.Core.Access;
@@ -468,35 +469,49 @@ public static class LibraryEndpoints
                          + "and tracks, which is quicker; local=true searches only what Melodex already holds, which answers at once.")
             .Produces<SearchResults>();
 
-        catalogue.MapGet("/artists/{id:guid}", async (Guid id, LibraryView view, MelodexDbContext db, CatalogueService service, TaskQueue queue, CancellationToken ct) =>
+        catalogue.MapGet("/artists/{id:guid}", async (Guid id, bool? quick, LibraryView view, MelodexDbContext db, CatalogueService service, TaskQueue queue,
+                OnDemandCatalogue fetcher, CancellationToken ct) =>
             {
                 var artist = await db.Artists.FindAsync([id], ct);
                 if (artist is null)
                     return Results.NotFound();
-                if (artist.AlbumsRefreshedAt is null)
+                // First visit: the discography is fetched now, or meanwhile when asked to be quick; the editions in a task.
+                if (artist.AlbumsRefreshedAt is null && quick == true)
+                    fetcher.FetchDiscography(id);
+                else if (artist.AlbumsRefreshedAt is null)
                 {
-                    // First visit: fetch the album list now, and the editions in the background.
+                    PluginHttp.Interactive.Value = true;
                     await service.RefreshDiscographyAsync(artist, false, ct);
                     await queue.EnqueueAsync(ArtistRefreshTask.TaskKind, ArtistRefreshTask.Payload(id), ct);
                 }
-                return Results.Ok(await view.GetArtistAsync(id, ct));
+                return Results.Ok(await view.GetArtistAsync(id, ct) is { } detail ? detail with { Fetching = fetcher.IsFetching(id) } : null);
             })
-            .WithName("GetArtist").WithSummary("An artist's full discography, each album with its owned or missing status.")
+            .WithName("GetArtist").WithSummary("An artist's full discography, each album with its owned or missing status. A first visit fetches it "
+                         + "first; with quick=true it answers at once with what's known, and fetching is true while the rest is fetched: ask again for it.")
             .Produces<ArtistDetail>().Produces(StatusCodes.Status404NotFound);
 
         catalogue.MapGet("/artists/{id:guid}/albums", async (Guid id, LibraryView view, CancellationToken ct) =>
                 await view.GetArtistAlbumsAsync(id, ct) is { } albums ? Results.Ok(albums) : Results.NotFound())
             .WithName("GetArtistAlbums").Produces<IReadOnlyList<AlbumSummary>>().Produces(StatusCodes.Status404NotFound);
 
-        catalogue.MapGet("/albums/{id:guid}", async (Guid id, Guid? edition, LibraryView view, MelodexDbContext db, CatalogueService service, CancellationToken ct) =>
+        catalogue.MapGet("/albums/{id:guid}", async (Guid id, Guid? edition, bool? quick, LibraryView view, MelodexDbContext db, CatalogueService service,
+                OnDemandCatalogue fetcher, CancellationToken ct) =>
             {
                 var album = await db.Albums.FindAsync([id], ct);
                 if (album is null)
                     return Results.NotFound();
-                await service.RefreshEditionsAsync(album, false, ct);
-                return Results.Ok(await view.GetAlbumAsync(id, edition, ct));
+                // Editions unknown or old are fetched now, or meanwhile when asked to be quick.
+                if (quick == true && !(album.EditionsRefreshedAt > DateTime.UtcNow - CatalogueService.EditionsTtl))
+                    fetcher.FetchEditions(id);
+                else if (quick != true)
+                {
+                    PluginHttp.Interactive.Value = true;
+                    await service.RefreshEditionsAsync(album, false, ct);
+                }
+                return Results.Ok(await view.GetAlbumAsync(id, edition, ct) is { } detail ? detail with { Fetching = fetcher.IsFetching(id) } : null);
             })
-            .WithName("GetAlbum").WithSummary("An album's editions, and the tracks of the owned (or requested) edition with their status.")
+            .WithName("GetAlbum").WithSummary("An album's editions, and the tracks of the owned (or requested) edition with their status. With quick=true it "
+                         + "answers at once with what's known, and fetching is true while its editions are fetched: ask again for them.")
             .Produces<AlbumDetail>().Produces(StatusCodes.Status404NotFound);
 
         catalogue.MapGet("/tracks/{id:guid}", async (Guid id, LibraryView view, CancellationToken ct) =>

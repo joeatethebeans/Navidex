@@ -64,6 +64,7 @@ builder.Services.AddHttpClient(RetrievalPlugins.HttpClientName, http => http.Tim
 
 // Catalogue and library
 builder.Services.AddScoped<CatalogueService>();
+builder.Services.AddSingleton<OnDemandCatalogue>();
 builder.Services.AddScoped<CatalogueRefresher>();
 builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<LibraryScanner>();

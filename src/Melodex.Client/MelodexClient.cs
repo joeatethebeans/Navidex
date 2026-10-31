@@ -117,16 +117,18 @@ public sealed class MelodexClient(HttpClient http)
     public Task<TaskInfo?> GetTaskAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<TaskInfo>($"{Api}/tasks/{id}", MelodexJson.Options, ct);
 
-    public Task<ArtistDetail?> GetArtistAsync(Guid id, CancellationToken ct = default) =>
-        GetOrNullAsync<ArtistDetail>($"{Api}/artists/{id}", ct);
+    /// <param name="quick">Answer at once with what's known, rather than fetching a discography first; see <see cref="ArtistDetail.Fetching"/>.</param>
+    public Task<ArtistDetail?> GetArtistAsync(Guid id, bool quick = false, CancellationToken ct = default) =>
+        GetOrNullAsync<ArtistDetail>(quick ? $"{Api}/artists/{id}?quick=true" : $"{Api}/artists/{id}", ct);
 
     public async Task<IReadOnlyList<AlbumSummary>> GetArtistAlbumsAsync(Guid id, CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<AlbumSummary>>($"{Api}/artists/{id}/albums", MelodexJson.Options, ct) ?? [];
 
     public Task<TrackDetail?> GetTrackAsync(Guid id, CancellationToken ct = default) => GetOrNullAsync<TrackDetail>($"{Api}/tracks/{id}", ct);
 
-    public Task<AlbumDetail?> GetAlbumAsync(Guid id, Guid? editionId = null, CancellationToken ct = default) =>
-        GetOrNullAsync<AlbumDetail>(editionId is null ? $"{Api}/albums/{id}" : $"{Api}/albums/{id}?edition={editionId}", ct);
+    /// <param name="quick">Answer at once with what's known, rather than fetching editions first; see <see cref="AlbumDetail.Fetching"/>.</param>
+    public Task<AlbumDetail?> GetAlbumAsync(Guid id, Guid? editionId = null, bool quick = false, CancellationToken ct = default) =>
+        GetOrNullAsync<AlbumDetail>($"{Api}/albums/{id}?quick={(quick ? "true" : "false")}{(editionId is null ? "" : $"&edition={editionId}")}", ct);
 
     public async Task SetAlbumIgnoredAsync(Guid id, bool ignored, CancellationToken ct = default)
     {

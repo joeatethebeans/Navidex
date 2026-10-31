@@ -158,8 +158,14 @@ public sealed class CatalogueService(MelodexDbContext db, IndexPlugins indexPlug
             return;
 
         var (_, plugin) = await IndexAsync(ct);
+        var imported = 0;
         foreach (var source in await plugin.GetArtistAlbumsAsync(providerId.Value, ct))
+        {
             await ImportAlbumAsync(source, artist, ct);
+            // Saved as it goes, so a page showing the artist meanwhile fills in.
+            if (++imported % 50 == 0)
+                await db.SaveChangesAsync(ct);
+        }
         artist.AlbumsRefreshedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
     }

@@ -41,7 +41,11 @@ else
         <OwnershipFilter OnChange="StateHasChanged" OwnedHint="Only albums you have" MissingHint="Only missing albums, and albums with tracks missing" />
     </div>
 
-    @if (_artist.Albums.Count == 0 || Catalogue.Count == 0 && Prefs.Ownership == OwnershipView.Missing)
+    @if (_artist.Fetching)
+    {
+        <Loading Inline="true" Text="@(_artist.Albums.Any(a => !a.Local) ? "Fetching the rest of the discography from MusicBrainz…" : "Fetching the discography from MusicBrainz…")" />
+    }
+    else if (_artist.Albums.Count == 0 || Catalogue.Count == 0 && Prefs.Ownership == OwnershipView.Missing)
     {
         <div class="empty card">No albums in the catalogue for this artist.</div>
     }
@@ -122,15 +126,47 @@ else
         ScanStatus.LibraryChanged += Reload;
         await Prefs.LoadAsync();
         _sections = await Prefs.GetAsync<Dictionary<AlbumType, bool>>(SectionsKey, []);
-        _artist = await Api.GetArtistAsync(Id);
+        _artist = await Api.GetArtistAsync(Id, quick: true);
         _notFound = _artist is null;
+        Follow();
     }
 
     private void Reload() => InvokeAsync(async () =>
     {
-        _artist = await Api.GetArtistAsync(Id);
+        _artist = await Api.GetArtistAsync(Id, quick: true);
         StateHasChanged();
+        Follow();
     });
+
+    // While the discography is fetched, look again every moment and show what's arrived.
+    private CancellationTokenSource? _following;
+
+    private void Follow()
+    {
+        _following?.Cancel();
+        if (_artist is not { Fetching: true })
+            return;
+        var following = _following = new CancellationTokenSource();
+        var id = Id;
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                while (_artist is { Fetching: true } && !following.IsCancellationRequested)
+                {
+                    await Task.Delay(1500, following.Token);
+                    if (await Api.GetArtistAsync(id, quick: true, following.Token) is { } artist && !following.IsCancellationRequested)
+                    {
+                        _artist = artist;
+                        StateHasChanged();
+                    }
+                }
+            }
+            catch (Exception e) when (e is OperationCanceledException or HttpRequestException)
+            {
+            }
+        });
+    }
 
     private bool IsOpen(AlbumType type) => _sections.TryGetValue(type, out var open) ? open : type == AlbumType.Album;
 
@@ -143,8 +179,12 @@ else
     private async Task ToggleIgnoreAsync(AlbumSummary album)
     {
         await Api.SetAlbumIgnoredAsync(album.Id, !album.Ignored);
-        _artist = await Api.GetArtistAsync(Id);
+        _artist = await Api.GetArtistAsync(Id, quick: true);
     }
 
-    public void Dispose() => ScanStatus.LibraryChanged -= Reload;
+    public void Dispose()
+    {
+        ScanStatus.LibraryChanged -= Reload;
+        _following?.Cancel();
+    }
 }

@@ -1085,3 +1085,8 @@ input[type=search]:disabled { opacity: .6; }
 .picker-list button:hover:not(:disabled) { background: var(--bg); }
 .picker-list .spacer-left { margin-left: auto; white-space: nowrap; }
 .playlist-picker .row input { flex: 1; min-width: 0; }
+
+/* Rows and results that arrive after the page has shown, as MusicBrainz answers, fade in rather than jump. */
+@keyframes arrive { from { opacity: 0; transform: translateY(4px); } }
+.arrives { animation: arrive .35s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .arrives { animation: none; } }

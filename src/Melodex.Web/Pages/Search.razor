@@ -135,7 +135,7 @@ else
         <div class="tiles">
             @foreach (var artist in Artists)
             {
-                <a class="tile" href="artists/@artist.Id" title="@(artist.Disambiguation is null ? artist.Name : $"{artist.Name} ({artist.Disambiguation})")"
+                <a class="tile arrives" href="artists/@artist.Id" title="@(artist.Disambiguation is null ? artist.Name : $"{artist.Name} ({artist.Disambiguation})")"
                    @onclick="() => RememberArtistAsync(new RecentArtist(artist.Id, artist.Name, artist.Disambiguation, artist.ImageUrl))">
                     <Cover Url="@artist.ImageUrl" Artist="true" />
                     <div class="tile-name">@artist.Name</div>
@@ -154,7 +154,7 @@ else
                 <tbody>
                     @foreach (var album in Albums)
                     {
-                        <tr>
+                        <tr class="arrives">
                             <td class="cover-col"><a href="albums/@album.Id" tabindex="-1"><Cover Url="@album.CoverUrl" /></a></td>
                             <td class="track-main">
                                 <div class="ellipsis"><a href="albums/@album.Id">@album.Title</a></div>
@@ -616,7 +616,7 @@ else
                 <tbody>
                     @foreach (var track in Tracks)
                     {
-                        <tr>
+                        <tr class="arrives">
                             <td class="cover-col">
                                 @if (track.AlbumId is { } albumId) { <a href="albums/@albumId" tabindex="-1"><Cover Url="@track.CoverUrl" /></a> }
                                 else { <Cover Url="@track.CoverUrl" /> }

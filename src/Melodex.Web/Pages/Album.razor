@@ -70,7 +70,11 @@ else
         </div>
     </div>
 
-    @if (_album.Editions.Count == 0)
+    @if (_album.Editions.Count == 0 && _album.Fetching)
+    {
+        <Loading Inline="true" Text="Fetching its editions and tracks from MusicBrainz…" />
+    }
+    else if (_album.Editions.Count == 0)
     {
         <div class="empty card">No editions in the catalogue yet.</div>
     }
@@ -201,6 +205,7 @@ else
 
     public void Dispose()
     {
+        _following?.Cancel();
         ScanStatus.LibraryChanged -= Reload;
         Tracker.Changed -= Redraw;
         Player.Changed -= Redraw;
@@ -214,8 +219,39 @@ else
 
     private async Task LoadAsync(Guid? editionId)
     {
-        _album = await Api.GetAlbumAsync(Id, editionId);
+        _album = await Api.GetAlbumAsync(Id, editionId, quick: true);
         _notFound = _album is null;
+        Follow();
+    }
+
+    // While its editions are fetched, look again every moment; the page shows what's known meanwhile.
+    private CancellationTokenSource? _following;
+
+    private void Follow()
+    {
+        _following?.Cancel();
+        if (_album is not { Fetching: true })
+            return;
+        var following = _following = new CancellationTokenSource();
+        var id = Id;
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                while (_album is { Fetching: true } && !following.IsCancellationRequested)
+                {
+                    await Task.Delay(1500, following.Token);
+                    if (await Api.GetAlbumAsync(id, _album?.ShownEditionId, quick: true, following.Token) is { } album && !following.IsCancellationRequested)
+                    {
+                        _album = album;
+                        StateHasChanged();
+                    }
+                }
+            }
+            catch (Exception e) when (e is OperationCanceledException or HttpRequestException)
+            {
+            }
+        });
     }
 
     private async Task ToggleTrackIgnoredAsync(TrackRow track)

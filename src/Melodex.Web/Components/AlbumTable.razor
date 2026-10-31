@@ -16,7 +16,7 @@
         <tbody>
             @foreach (var album in Albums)
             {
-                <tr class="@(album.Ignored ? "dim" : "")">
+                <tr @key="album.Id" class="arrives @(album.Ignored ? "dim" : "")">
                     <td class="cover-col"><a href="@Format.AlbumHref(album)" tabindex="-1"><Cover Url="@album.CoverUrl" /></a></td>
                     <td>
                         <a href="@Format.AlbumHref(album)">@album.Title</a>
