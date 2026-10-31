@@ -7,13 +7,20 @@
 
 <PageTitle>Playlists · Melodex</PageTitle>
 
-@* Your playlists, in their folders, and whether they're synced with the media server. *@
-<div class="toolbar">
-    <h1>Playlists</h1>
+@* Your playlists, pinned ones first, in their folders or as squares, and whether they're synced with the media server. *@
+<h1>Library</h1>
+<LibraryTabs Current="playlists" />
+
+<div class="toolbar one-line playlists-bar">
+    <Segmented T="string" Value="_view" Options="Views" OnChange="ViewAsync" Label="Show as" />
+    <input class="filter" type="search" placeholder="Find a playlist" aria-label="Find a playlist" @bind="_filter" @bind:event="oninput" />
+    <SortMenu Options="Sorts" Value="@_sort" Descending="_descending" DirectionHint="Reverse the order"
+              OnChange="key => SortAsync(key, null)" OnReverse="() => SortAsync(_sort, !_descending)" />
+    <IconButton Icon="pin" On="_showPinned" Title="@(_showPinned ? "Hide the pinned row" : "Show your pinned playlists in a row at the top")" OnClick="TogglePinnedAsync" />
     <span class="spacer"></span>
     @if (_sync is { Available: true, Linked: true })
     {
-        <span class="muted small" title="@(_sync.Error ?? "")">
+        <span class="muted small hide-narrow" title="@(_sync.Error ?? "")">
             @if (_sync.Error is not null) { <span class="error">Not synced: @_sync.Error</span> }
             else if (_sync.SyncedAt is { } at) { <text>Synced with @_sync.Server @Format.Ago(at)</text> }
             else { <text>Syncing with @_sync.Server…</text> }
@@ -46,9 +53,41 @@ else if (_playlists.Count == 0)
 }
 else
 {
-    <div class="card playlist-tree">
-        @Folder(Tree())
-    </div>
+    var shown = Shown().ToList();
+    var pinned = Sorted(_playlists.Where(p => p.Pinned)).ToList();
+    @if (_showPinned && pinned.Count > 0 && _filter.Trim().Length == 0)
+    {
+        <h2 class="section">Pinned <span class="muted small">@pinned.Count</span></h2>
+        <div class="tiles pinned-row">
+            @foreach (var playlist in pinned) { @Tile(playlist) }
+        </div>
+        <h2 class="section">All playlists <span class="muted small">@_playlists.Count</span></h2>
+    }
+    @if (shown.Count == 0)
+    {
+        <div class="empty card">No playlists called that.</div>
+    }
+    else if (_view == "squares")
+    {
+        <div class="tiles">
+            @foreach (var playlist in shown) { @Tile(playlist) }
+        </div>
+    }
+    else if (_filter.Trim().Length > 0)
+    {
+        @* Found by name: one list, each with its folders. *@
+        <div class="card playlist-tree">
+            <ul class="playlist-list">
+                @foreach (var playlist in shown) { @Row(playlist, withFolders: true) }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <div class="card playlist-tree">
+            @Folder(Tree(shown))
+        </div>
+    }
 }
 
 @if (_naming)
@@ -84,6 +123,16 @@ else
     private string _name = "";
     private string? _renamingFolder, _nameError;
 
+    // How they're shown, kept in this browser.
+    private string _view = "list", _sort = "name", _filter = "";
+    private bool _descending, _showPinned = true;
+
+    private static readonly IReadOnlyList<(string, string, string?)> Views =
+        [("list", "List", "In their folders"), ("squares", "Squares", "As squares, each with its picture")];
+
+    private static readonly IReadOnlyList<(string Key, string Label)> Sorts =
+        [("name", "Name"), ("changed", "Last changed"), ("songs", "Songs"), ("length", "Length")];
+
     private string Delimiter => PlaylistNames.Delimiter(Auth);
 
     private sealed record Node(string Path, string Name, List<Node> Folders, List<PlaylistSummary> Playlists)
@@ -95,6 +144,10 @@ else
     {
         ScanStatus.LibraryChanged += Reload;
         _closed = (await Preferences.GetAsync<string[]>("playlists.closed", [])).ToHashSet();
+        _view = await Preferences.GetAsync("playlists.view", "list");
+        _sort = await Preferences.GetAsync("playlists.sort", "name");
+        _descending = await Preferences.GetAsync("playlists.descending", false);
+        _showPinned = await Preferences.GetAsync("playlists.pinned", true);
         await LoadAsync();
     }
 
@@ -122,11 +175,55 @@ else
         await LoadAsync();
     }
 
-    // The playlists in folders, each folder before the playlists beside it.
-    private Node Tree()
+    private async Task ViewAsync(string view)
+    {
+        _view = view;
+        await Preferences.SetAsync("playlists.view", view);
+    }
+
+    private async Task SortAsync(string key, bool? descending)
+    {
+        // A new order starts the way people expect: names A to Z, the rest biggest or latest first.
+        _descending = descending ?? key != "name";
+        _sort = key;
+        await Preferences.SetAsync("playlists.sort", key);
+        await Preferences.SetAsync("playlists.descending", _descending);
+    }
+
+    private async Task TogglePinnedAsync()
+    {
+        _showPinned = !_showPinned;
+        await Preferences.SetAsync("playlists.pinned", _showPinned);
+    }
+
+    private async Task PinAsync(PlaylistSummary playlist)
+    {
+        var changed = await Api.PinPlaylistAsync(playlist.Id, !playlist.Pinned);
+        _playlists = _playlists!.Select(p => p.Id == changed.Id ? changed : p).ToList();
+    }
+
+    // Found by any part of the name, folders too.
+    private IEnumerable<PlaylistSummary> Shown() => Sorted(_playlists!.Where(p =>
+        _filter.Trim() is var find && (find.Length == 0 || p.Name.Contains(find, StringComparison.CurrentCultureIgnoreCase))));
+
+    private IEnumerable<PlaylistSummary> Sorted(IEnumerable<PlaylistSummary> playlists)
+    {
+        var byName = StringComparer.CurrentCultureIgnoreCase;
+        var sorted = _sort switch
+        {
+            "changed" => playlists.OrderBy(p => p.UpdatedAt),
+            "songs" => playlists.OrderBy(p => p.Count),
+            "length" => playlists.OrderBy(p => p.DurationSeconds),
+            _ => playlists.OrderBy(p => PlaylistNames.Leaf(p.Name, Delimiter), byName),
+        };
+        return _descending ? sorted.Reverse() : sorted.ThenBy(p => p.Name, byName);
+    }
+
+    // The playlists in folders, each folder before the playlists beside it, in the order chosen within each.
+    private Node Tree(IEnumerable<PlaylistSummary> playlists)
     {
         var root = new Node("", "", [], []);
-        foreach (var playlist in _playlists!)
+        foreach (var playlist in playlists)
         {
             var node = root;
             foreach (var folder in PlaylistNames.Folders(playlist.Name, Delimiter))
@@ -141,6 +238,36 @@ else
         }
         return root;
     }
+
+    private RenderFragment Tile(PlaylistSummary playlist) => @<div class="tile-wrap" @key="playlist.Id">
+        <a class="tile" href="playlists/@playlist.Id" title="@playlist.Name">
+            <PlaylistCover Covers="playlist.Covers" />
+            <div class="tile-name">@PlaylistNames.Leaf(playlist.Name, Delimiter)</div>
+            <div class="muted small tile-sub">
+                @(string.Join(" › ", PlaylistNames.Folders(playlist.Name, Delimiter)) is { Length: > 0 } folders ? $"{folders} · " : "")@PlaylistNames.Length(playlist.Count, playlist.DurationSeconds)
+            </div>
+        </a>
+        <IconButton Icon="pin" Class="@($"small tile-remove tile-pin {(playlist.Pinned ? "pinned" : "")}")" On="playlist.Pinned"
+                    Title="@(playlist.Pinned ? "Unpin it" : "Pin it, to show it first")" OnClick="() => PinAsync(playlist)" />
+    </div>;
+
+    private RenderFragment Row(PlaylistSummary playlist, bool withFolders) => @<li @key="playlist.Id">
+        <div class="playlist-row">
+            <a class="plain playlist-link" href="playlists/@playlist.Id">
+                <PlaylistCover Covers="playlist.Covers" Class="small" />
+                <span class="playlist-text">
+                    <span class="ellipsis">@(withFolders && Delimiter.Length > 0 ? playlist.Name.Replace(Delimiter, " › ") : PlaylistNames.Leaf(playlist.Name, Delimiter))</span>
+                    <span class="muted small">
+                        @PlaylistNames.Length(playlist.Count, playlist.DurationSeconds)
+                        @if (playlist.Sync == PlaylistSyncState.Waiting) { <span title="Changed since the last sync, or has songs the media server hasn't found yet"> · waiting to sync</span> }
+                    </span>
+                </span>
+            </a>
+            <IconButton Icon="pin" Class="@($"small row-pin {(playlist.Pinned ? "pinned" : "")}")" On="playlist.Pinned"
+                        Title="@(playlist.Pinned ? "Unpin it" : "Pin it, to show it first")" OnClick="() => PinAsync(playlist)" />
+            <IconButton Icon="play" Requires="@UserPermissions.Listen" Class="small" Title="Play" Disabled="playlist.Count == 0" OnClick="() => PlayAsync(playlist.Id)" />
+        </div>
+    </li>;
 
     private RenderFragment Folder(Node node) => @<ul class="playlist-list">
         @foreach (var folder in node.Folders.OrderBy(f => f.Name, StringComparer.CurrentCultureIgnoreCase))
@@ -166,21 +293,7 @@ else
         }
         @foreach (var playlist in node.Playlists)
         {
-            <li>
-                <div class="playlist-row">
-                    <a class="plain playlist-link" href="playlists/@playlist.Id">
-                        <PlaylistCover Covers="playlist.Covers" Class="small" />
-                        <span class="playlist-text">
-                            <span class="ellipsis">@PlaylistNames.Leaf(playlist.Name, Delimiter)</span>
-                            <span class="muted small">
-                                @PlaylistNames.Length(playlist.Count, playlist.DurationSeconds)
-                                @if (playlist.Sync == PlaylistSyncState.Waiting) { <span title="Changed since the last sync, or has songs the media server hasn't found yet"> · waiting to sync</span> }
-                            </span>
-                        </span>
-                    </a>
-                    <IconButton Icon="play" Requires="@UserPermissions.Listen" Class="small" Title="Play" Disabled="playlist.Count == 0" OnClick="() => PlayAsync(playlist.Id)" />
-                </div>
-            </li>
+            @Row(playlist, withFolders: false)
         }
     </ul>;
 

@@ -100,6 +100,50 @@ internal sealed class SubsonicClient
         return response;
     }
 
+    // ---- Navidrome's own API, for what Subsonic can't do, such as playlists' pictures ----
+
+    // Its sign-in tokens, by server and user, kept while they work.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> Tokens = new();
+
+    /// <summary>Calls Navidrome's own API as this user, signing in when there's no token yet or it's run out.</summary>
+    public async Task<HttpResponseMessage> NativeAsync(HttpMethod method, string path, Func<HttpContent?> content, CancellationToken ct)
+    {
+        var key = $"{Server}|{User}|{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(_password)))}";
+        for (var attempt = 0; ; attempt++)
+        {
+            if (!Tokens.TryGetValue(key, out var token))
+                Tokens[key] = token = await SignInAsync(ct);
+            using var request = new HttpRequestMessage(method, new Uri(Server, path)) { Content = content() };
+            request.Headers.Add("X-ND-Authorization", $"Bearer {token}");
+            var response = await _http.SendAsync(request, ct);
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && attempt == 0)
+            {
+                response.Dispose();
+                Tokens.TryRemove(key, out _);
+                continue;
+            }
+            if (!response.IsSuccessStatusCode)
+            {
+                response.Dispose();
+                throw new HttpRequestException($"{Server} answered {(int)response.StatusCode} {response.ReasonPhrase} to {method} {path}", null, response.StatusCode);
+            }
+            return response;
+        }
+    }
+
+    private async Task<string> SignInAsync(CancellationToken ct)
+    {
+        using var response = await _http.PostAsJsonAsync(new Uri(Server, "auth/login"), new { username = User, password = _password }, ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            throw new SubsonicException("Wrong username or password.", 40);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"{Server} answered {(int)response.StatusCode} {response.ReasonPhrase} to signing in", null, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+        return body.TryGetProperty("token", out var token) && token.GetString() is { } value
+            ? value
+            : throw new SubsonicException($"{Server} didn't give a token on signing in: it may not be Navidrome.");
+    }
+
     private JsonElement Reply(string endpoint, JsonElement body)
     {
         if (!body.TryGetProperty("subsonic-response", out var reply))

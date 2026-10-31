@@ -38,6 +38,29 @@ public class Playlist
     /// </summary>
     public bool NeedsPush { get; set; }
 
+    /// <summary>Pinned by its owner, to show first.</summary>
+    public DateTime? PinnedAt { get; set; }
+
+    /// <summary>Its own picture, if it has one, under the data folder's <c>playlist-covers</c>; otherwise its albums' covers stand in.</summary>
+    public string? CoverFile { get; set; }
+
+    public string? CoverType { get; set; }
+
+    /// <summary>The picture's SHA-256, to tell whether the server's is the same.</summary>
+    public string? CoverHash { get; set; }
+
+    /// <summary>When its picture was last set or taken away here.</summary>
+    public DateTime? CoverChangedAt { get; set; }
+
+    /// <summary>Its picture was changed here and the server's copy needs it.</summary>
+    public bool CoverNeedsPush { get; set; }
+
+    /// <summary>The server's picture at the last sync, by its hash: null for none. A different one means it's changed there.</summary>
+    public string? ServerCoverHash { get; set; }
+
+    /// <summary>When the server's picture was last looked at or sent: never, for playlists synced before pictures were.</summary>
+    public DateTime? CoverSyncedAt { get; set; }
+
     public List<PlaylistEntry> Entries { get; set; } = [];
 }
 

@@ -46,6 +46,8 @@ else
                 <IconButton Icon="queue" Requires="@UserPermissions.Listen" Large="true" Confirm="true" Title="Add to the queue" Disabled="playable.Count == 0"
                             OnClick="() => Player.AddAsync(playable)" />
                 <IconButton Icon="rename" Large="true" Label="Rename" Title="Rename it, move it to another folder, or change its comment" OnClick="StartRename" />
+                <IconButton Icon="image" Large="true" Label="Picture" Title="Give it a picture of its own, or take it away" OnClick="() => _choosingCover = true" />
+                <IconButton Icon="pin" Large="true" On="summary.Pinned" Title="@(summary.Pinned ? "Unpin it" : "Pin it, to show it first among your playlists")" OnClick="PinAsync" />
                 <IconButton Icon="remove" Large="true" Title="Delete the playlist" OnClick="() => _deleting = true" />
             </div>
         </div>
@@ -150,7 +152,21 @@ else
     </Dialog>
 }
 
+@if (_choosingCover && _playlist is not null)
+{
+    <PlaylistCoverDialog Playlist="_playlist.Playlist" Name="@PlaylistNames.Leaf(_playlist.Playlist.Name, Delimiter)" Synced="_playlist.Playlist.Sync != PlaylistSyncState.Off"
+                         OnClose="() => _choosingCover = false" OnChanged="p => _playlist = _playlist with { Playlist = p }" />
+}
+
 @code {
+    private bool _choosingCover;
+
+    private async Task PinAsync()
+    {
+        var changed = await Api.PinPlaylistAsync(_playlist!.Playlist.Id, !_playlist.Playlist.Pinned);
+        _playlist = _playlist with { Playlist = changed };
+    }
+
     [Parameter] public Guid Id { get; set; }
 
     private PlaylistDetail? _playlist;

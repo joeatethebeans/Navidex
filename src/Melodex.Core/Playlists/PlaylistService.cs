@@ -15,7 +15,7 @@ public sealed class PlaylistRefusedException(string field, string message) : Exc
 /// Each user's playlists: of songs in the library, files of their own, and songs only the media server has. Every change
 /// marks the playlist changed, and the syncer sends it to the media server when playlists are synced.
 /// </summary>
-public sealed class PlaylistService(MelodexDbContext db, SettingsService settings, LocalMusic local, PlaylistSyncer syncer)
+public sealed class PlaylistService(MelodexDbContext db, SettingsService settings, LocalMusic local, PlaylistSyncer syncer, PlaylistCovers covers)
 {
     public const int MaxName = 200;
 
@@ -24,10 +24,10 @@ public sealed class PlaylistService(MelodexDbContext db, SettingsService setting
         var playlists = await db.Playlists.AsNoTracking().Include(p => p.Entries)
             .Where(p => p.UserId == userId && p.DeletedAt == null).ToListAsync(ct);
         var syncing = await SyncingAsync(userId, ct);
-        var covers = await CoversAsync(playlists.SelectMany(p => p.Entries.OrderBy(e => e.Position)).ToList(), ct);
+        var albumCovers = await CoversAsync(playlists.SelectMany(p => p.Entries.OrderBy(e => e.Position)).ToList(), ct);
         return playlists
             .OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(p => Summary(p, syncing, p.Entries.OrderBy(e => e.Position).Select(e => covers.GetValueOrDefault(e.Id)).OfType<string>().Distinct().Take(4).ToList()))
+            .Select(p => Summary(p, syncing, p.Entries.OrderBy(e => e.Position).Select(e => albumCovers.GetValueOrDefault(e.Id)).OfType<string>().Distinct().Take(4).ToList()))
             .ToList();
     }
 
@@ -92,13 +92,63 @@ public sealed class PlaylistService(MelodexDbContext db, SettingsService setting
         return await GetAsync(userId, id, ct);
     }
 
+    /// <summary>Pins it to show first, or unpins it. It's only for its owner: the media server doesn't hear of it.</summary>
+    public async Task<PlaylistSummary?> PinAsync(Guid userId, Guid id, bool pinned, CancellationToken ct)
+    {
+        if (await FindAsync(userId, id, ct) is not { } playlist)
+            return null;
+        playlist.PinnedAt = pinned ? playlist.PinnedAt ?? DateTime.UtcNow : null;
+        await db.SaveChangesAsync(ct);
+        return (await GetAsync(userId, id, ct))!.Playlist;
+    }
+
+    /// <summary>The playlist's own picture, if it has one.</summary>
+    public async Task<(string Path, string ContentType)?> CoverAsync(Guid userId, Guid id, CancellationToken ct) =>
+        await db.Playlists.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId && p.DeletedAt == null, ct) is { } playlist
+        && covers.PathOf(playlist) is { } path && File.Exists(path)
+            ? (path, playlist.CoverType ?? "image/jpeg")
+            : null;
+
+    /// <summary>Gives the playlist a picture of its own (base64, up to 10 MB), or with null, takes it away.</summary>
+    public async Task<PlaylistSummary?> SetCoverAsync(Guid userId, Guid id, string? upload, CancellationToken ct)
+    {
+        if (await FindAsync(userId, id, ct) is not { } playlist)
+            return null;
+        if (upload is null)
+            covers.Remove(playlist);
+        else
+        {
+            byte[] data;
+            try
+            {
+                data = Convert.FromBase64String(upload);
+            }
+            catch (FormatException)
+            {
+                throw new PlaylistRefusedException("upload", "The picture must be base64.");
+            }
+            if (data.Length > CoverChooser.MaxUpload)
+                throw new PlaylistRefusedException("upload", "The picture is bigger than 10 MB.");
+            var type = CoverChooser.ImageType(data) ?? throw new PlaylistRefusedException("upload", "That isn't a JPEG, PNG, WebP or GIF picture.");
+            await covers.SetAsync(playlist, data, type, ct);
+        }
+        playlist.CoverChangedAt = DateTime.UtcNow;
+        playlist.CoverNeedsPush = true;
+        await db.SaveChangesAsync(ct);
+        syncer.Changed(userId);
+        return (await GetAsync(userId, id, ct))!.Playlist;
+    }
+
     /// <summary>Deletes a playlist. One on the media server is kept, marked deleted, until a sync deletes it there too.</summary>
     public async Task<bool> DeleteAsync(Guid userId, Guid id, CancellationToken ct)
     {
         if (await FindAsync(userId, id, ct) is not { } playlist)
             return false;
         if (playlist.ServerId is null)
+        {
+            covers.Remove(playlist);
             db.Playlists.Remove(playlist);
+        }
         else
             playlist.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
@@ -157,11 +207,14 @@ public sealed class PlaylistService(MelodexDbContext db, SettingsService setting
     private async Task<bool> SyncingAsync(Guid userId, CancellationToken ct) =>
         await db.Users.AnyAsync(u => u.Id == userId && u.MediaServerUsername != null, ct);
 
-    private static PlaylistSummary Summary(Playlist p, bool syncing, IReadOnlyList<string> covers) => new(
-        p.Id, p.Name, p.Comment, p.Entries.Count, p.Entries.Sum(e => e.DurationSeconds ?? 0), covers, p.UpdatedAt,
+    // Its own picture stands for it when it has one; otherwise its albums' covers do.
+    private static PlaylistSummary Summary(Playlist p, bool syncing, IReadOnlyList<string> albumCovers) => new(
+        p.Id, p.Name, p.Comment, p.Entries.Count, p.Entries.Sum(e => e.DurationSeconds ?? 0),
+        p.CoverHash is { } hash ? [$"api/v1/playlists/{p.Id}/cover?v={hash[..12]}"] : albumCovers, p.UpdatedAt,
         !syncing ? PlaylistSyncState.Off
-        : p.SyncedAt is { } synced && synced >= p.UpdatedAt && !p.NeedsPush && p.ServerId is not null ? PlaylistSyncState.Synced
-        : PlaylistSyncState.Waiting);
+        : p.SyncedAt is { } synced && synced >= p.UpdatedAt && !p.NeedsPush && !p.CoverNeedsPush && p.ServerId is not null ? PlaylistSyncState.Synced
+        : PlaylistSyncState.Waiting,
+        p.PinnedAt is not null, p.CoverHash is not null);
 
     // ---- Adding ----
 

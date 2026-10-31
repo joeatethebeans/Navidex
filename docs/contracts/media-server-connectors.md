@@ -1,4 +1,4 @@
-# Media-server connectors (contract v1.1)
+# Media-server connectors (contract v1.2)
 
 Connectors tell a media server about new music and confirm it's there. They are the last step of the import
 pipeline: once beets has filed a track, the connector triggers a scan, the core polls until the server has the
@@ -44,11 +44,19 @@ so each Melodex user syncs only their own playlists. The core keeps each login e
 | `CreatePlaylistAsync(login, content)` | Make a playlist; returns its ID | `content` has the name, comment and server track IDs in order. |
 | `UpdatePlaylistAsync(login, id, content)` | Replace a playlist's name, comment and songs | The whole list, in order, not a change to it. |
 | `DeletePlaylistAsync(login, id)` | Delete a playlist | One already gone isn't an error. |
+| `SyncsPlaylistCovers` | Whether playlists' own pictures sync too (1.2) | Defaults to false, so 1.1 connectors load unchanged. |
+| `GetPlaylistCoverAsync(login, id)` | The picture someone gave a playlist (1.2) | `null` when it has none of its own: a picture the server makes from its songs doesn't count. |
+| `SetPlaylistCoverAsync(login, id, cover)` | Give a playlist a picture, or with `null` take it away (1.2) | |
+
+`UserPlaylist.HasCover` (1.2) may say whether a playlist has a picture of its own without fetching it; `false` spares
+the core asking.
 
 The core decides what to sync. Changed on one side since the last sync, a playlist is copied to the other; changed on
 both, the later change wins; deleted on one side and unchanged on the other, it's deleted there too. Songs are sent as
 the server's track IDs, found with `ResolveTrackAsync`. Songs that come from the server and aren't in the library
-are kept, with their server IDs, so they go back unchanged. Folders are part of names, split by a delimiter each user
+are kept, with their server IDs, so they go back unchanged. A playlist's own picture follows the same rule, judged
+by the playlist's `Changed` time and the picture's content, so a server that stores a different copy of what it was
+sent doesn't send it back. Folders are part of names, split by a delimiter each user
 chooses, as servers have no folders.
 
 ## Reference connector: Navidrome
@@ -57,6 +65,11 @@ Through the Subsonic API: `startScan` and `getScanStatus` for scanning, `search3
 playlists and stars. Users' playlists use `getPlaylists` (keeping those the user owns), `getPlaylist`, and
 `createPlaylist` with a `playlistId` to replace a playlist's songs, as `updatePlaylist` only adds and removes them by
 position. Navidrome scans the whole library folder, so it doesn't declare `selective-scan`.
+
+Playlists' own pictures go through Navidrome's own API, signed in as the user: `uploadedImage` on
+`GET /api/playlist/{id}` says whether one was uploaded, `POST /api/playlist/{id}/image` uploads one as the `image`
+part of a form, and `DELETE` on the same path removes it. The picture itself comes from Subsonic's `getCoverArt` with
+the ID `pl-{id}`. Seen on Navidrome 0.64.2 in the sandbox.
 
 Navidrome's Subsonic responses don't report the real file path by default. `path` is synthesised from the tags,
 for example `Portishead/Dummy/01-01 - Mysterons.flac` for a file at `Portishead/Dummy (1994)/01 Mysterons.flac`.

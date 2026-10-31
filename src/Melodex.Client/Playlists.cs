@@ -17,7 +17,9 @@ public enum PlaylistSyncState
 }
 
 /// <summary>A playlist, as listed. Folders are part of its name, split by your folder delimiter.</summary>
-/// <param name="Covers">Up to four covers of the albums in it, for a mosaic.</param>
+/// <param name="Covers">Its own picture, or up to four covers of the albums in it, for a mosaic.</param>
+/// <param name="Pinned">Pinned by you, to show first.</param>
+/// <param name="OwnCover">It has a picture of its own, rather than its albums' covers.</param>
 public sealed record PlaylistSummary(
     Guid Id,
     string Name,
@@ -26,7 +28,12 @@ public sealed record PlaylistSummary(
     double DurationSeconds,
     IReadOnlyList<string> Covers,
     DateTime UpdatedAt,
-    PlaylistSyncState Sync);
+    PlaylistSyncState Sync,
+    bool Pinned = false,
+    bool OwnCover = false);
+
+/// <summary>Body of <c>PUT /playlists/{id}/cover</c>: a picture, base64, up to 10 MB: JPEG, PNG, WebP or GIF.</summary>
+public sealed record SetPlaylistCover(string Upload);
 
 /// <summary>Where a song in a playlist is.</summary>
 public enum PlaylistSongState

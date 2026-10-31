@@ -76,6 +76,7 @@ builder.Services.AddScoped<LibraryFormatter>();
 builder.Services.AddScoped<CoverChooser>();
 builder.Services.AddScoped<LyricsFinder>();
 builder.Services.AddScoped<PlaylistService>();
+builder.Services.AddSingleton<PlaylistCovers>();
 builder.Services.AddScoped<PlaylistSync>();
 builder.Services.AddSingleton<PlaylistSyncer>();
 builder.Services.AddHostedService(services => services.GetRequiredService<PlaylistSyncer>());

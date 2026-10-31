@@ -549,6 +549,26 @@ public sealed class MelodexClient(HttpClient http)
         await EnsureAsync(response, ct);
     }
 
+    /// <summary>Pins the playlist to show first, or unpins it.</summary>
+    public async Task<PlaylistSummary> PinPlaylistAsync(Guid id, bool pinned, CancellationToken ct = default)
+    {
+        using var response = pinned
+            ? await http.PutAsync($"{Api}/playlists/{id}/pin", null, ct)
+            : await http.DeleteAsync($"{Api}/playlists/{id}/pin", ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<PlaylistSummary>(MelodexJson.Options, ct))!;
+    }
+
+    /// <summary>Gives the playlist a picture of its own, or with null, takes it away.</summary>
+    public async Task<PlaylistSummary> SetPlaylistCoverAsync(Guid id, SetPlaylistCover? cover, CancellationToken ct = default)
+    {
+        using var response = cover is null
+            ? await http.DeleteAsync($"{Api}/playlists/{id}/cover", ct)
+            : await http.PutAsJsonAsync($"{Api}/playlists/{id}/cover", cover, MelodexJson.Options, ct);
+        await EnsureAsync(response, ct);
+        return (await response.Content.ReadFromJsonAsync<PlaylistSummary>(MelodexJson.Options, ct))!;
+    }
+
     public async Task RenamePlaylistFolderAsync(RenamePlaylistFolder rename, CancellationToken ct = default)
     {
         using var response = await http.PutAsJsonAsync($"{Api}/playlists/folders", rename, MelodexJson.Options, ct);

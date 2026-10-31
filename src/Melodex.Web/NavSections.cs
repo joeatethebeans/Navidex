@@ -51,6 +51,11 @@ public sealed class NavSections : IDisposable
         _nav.NavigateTo(href);
     }
 
+    /// <summary>The Library's Browse tab, as you left it: which view, and so on.</summary>
+    public string BrowseHref => _browse ?? "";
+
+    private string? _browse;
+
     private string Here => _nav.ToBaseRelativePath(_nav.Uri);
 
     private static string Root(NavSection section) => section == NavSection.Search ? "search" : "";
@@ -59,11 +64,12 @@ public sealed class NavSections : IDisposable
 
     // The pages that belong to whichever section they were opened from.
     private static bool IsDeep(string path) =>
-        Bare(path) is var bare && (bare.StartsWith("artists/") || bare.StartsWith("albums/") || bare.StartsWith("tracks/") || bare.StartsWith("local/"));
+        Bare(path) is var bare && (bare.StartsWith("artists/") || bare.StartsWith("albums/") || bare.StartsWith("tracks/") || bare.StartsWith("local/")
+                                   || bare.StartsWith("playlists/"));
 
     private static NavSection? SectionOf(string path) => Bare(path) switch
     {
-        "" => NavSection.Library,
+        "" or "playlists" => NavSection.Library,
         "search" => NavSection.Search,
         _ => null,
     };
@@ -81,6 +87,8 @@ public sealed class NavSections : IDisposable
         {
             Current = section;
             _home[section] = _last[section] = path;
+            if (Bare(path) == "")
+                _browse = path;
         }
         else if (IsDeep(path) && Current is { } within)
             _last[within] = path;

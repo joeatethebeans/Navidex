@@ -16,7 +16,8 @@ namespace Melodex.Core.Playlists;
 /// copied to the other; changed on both, the later change wins. Deleted on one side, it's deleted on the other, unless
 /// it's been changed on that side since.
 /// </summary>
-public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connectors, IDataProtectionProvider protection, ILogger<PlaylistSync> logger)
+public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connectors, IDataProtectionProvider protection, PlaylistCovers covers,
+    ILogger<PlaylistSync> logger)
 {
     // One sync at a time, so a sync asked for now and the syncer's don't both send the same playlist.
     private static readonly SemaphoreSlim Running = new(1, 1);
@@ -135,6 +136,7 @@ public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connector
                 {
                     if (playlist.ServerId is { } id && remote.ContainsKey(id))
                         await server.DeletePlaylistAsync(login, id, ct);
+                    covers.Remove(playlist);
                     db.Playlists.Remove(playlist);
                     removed++;
                 }
@@ -145,10 +147,14 @@ public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connector
                     {
                         Forget(playlist);
                         if (await PushAsync(playlist, null))
+                        {
                             sent++;
+                            await SyncCoverAsync(playlist, null, false);
+                        }
                     }
                     else
                     {
+                        covers.Remove(playlist);
                         db.Playlists.Remove(playlist);
                         removed++;
                     }
@@ -167,6 +173,7 @@ public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connector
                         await PullAsync(playlist, there.Id);
                         brought++;
                     }
+                    await SyncCoverAsync(playlist, there, changedThere);
                 }
             }
             catch (Exception e) when (e is not OperationCanceledException && e is not HttpRequestException)
@@ -182,6 +189,7 @@ public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connector
             var playlist = new Playlist { UserId = user.Id, Name = there.Name, ServerInstanceId = instanceId, ServerId = there.Id };
             db.Playlists.Add(playlist);
             await PullAsync(playlist, there.Id);
+            await SyncCoverAsync(playlist, there, true);
             brought++;
         }
 
@@ -216,6 +224,43 @@ public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connector
             playlist.SyncedAt = started;
             playlist.NeedsPush = missing > 0;
             return true;
+        }
+
+        // Its own picture: sent when it changed here, brought over when it changed there, the later winning when both did.
+        async Task SyncCoverAsync(Playlist playlist, UserPlaylist? there, bool changedThere)
+        {
+            if (!server.SyncsPlaylistCovers || playlist.ServerId is not { } serverId)
+                return;
+            if ((changedThere || playlist.CoverSyncedAt is null) && there?.HasCover != false || playlist.ServerCoverHash is not null && there?.HasCover == false)
+            {
+                playlist.CoverSyncedAt = started;
+                var theirs = there?.HasCover == false ? null : await server.GetPlaylistCoverAsync(login, serverId, ct);
+                var theirHash = theirs is null ? null : PlaylistCovers.Hash(theirs.Data);
+                var newer = !playlist.CoverNeedsPush || there?.Changed?.UtcDateTime > playlist.CoverChangedAt;
+                if (theirHash != playlist.ServerCoverHash && newer)
+                {
+                    if (theirs is null)
+                        covers.Remove(playlist);
+                    else
+                        await covers.SetAsync(playlist, theirs.Data, theirs.ContentType, ct);
+                    playlist.ServerCoverHash = theirHash;
+                    playlist.CoverChangedAt = there?.Changed?.UtcDateTime ?? started;
+                    playlist.CoverNeedsPush = false;
+                    return;
+                }
+            }
+            if (!playlist.CoverNeedsPush)
+                return;
+            PlaylistCover? ours = covers.PathOf(playlist) is { } path && File.Exists(path)
+                ? new PlaylistCover(await File.ReadAllBytesAsync(path, ct), playlist.CoverType ?? "image/jpeg")
+                : null;
+            await server.SetPlaylistCoverAsync(login, serverId, ours, ct);
+            playlist.CoverSyncedAt = started;
+            // What the server keeps may not be the same bytes as were sent: what it has now is what a later change is told from.
+            var kept = ours is null ? null : await server.GetPlaylistCoverAsync(login, serverId, ct);
+            playlist.ServerCoverHash = kept is null ? null : PlaylistCovers.Hash(kept.Data);
+            playlist.ServerChangedAt = (await server.GetPlaylistAsync(login, serverId, ct))?.Playlist.Changed?.UtcDateTime ?? playlist.ServerChangedAt;
+            playlist.CoverNeedsPush = false;
         }
 
         // Takes the server's copy: songs already in it keep what they were found as, and new ones are looked for in the library.
@@ -260,6 +305,9 @@ public sealed class PlaylistSync(MelodexDbContext db, ConnectorPlugins connector
 
     private static void Forget(Playlist playlist)
     {
+        playlist.ServerCoverHash = null;
+        playlist.CoverSyncedAt = null;
+        playlist.CoverNeedsPush = playlist.CoverHash is not null;
         playlist.ServerId = null;
         playlist.ServerInstanceId = null;
         playlist.ServerChangedAt = null;

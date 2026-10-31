@@ -104,7 +104,29 @@ public interface IPlaylistSync
 
     /// <summary>Deletes a playlist. One that's already gone isn't an error.</summary>
     Task DeletePlaylistAsync(ServerLogin login, string playlistId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Whether playlists' own pictures are synced too: <see cref="GetPlaylistCoverAsync"/> and
+    /// <see cref="SetPlaylistCoverAsync"/> work. Since 1.2; connectors built for 1.1 don't.
+    /// </summary>
+    bool SyncsPlaylistCovers => false;
+
+    /// <summary>
+    /// The picture someone gave the playlist, or null when it has none of its own (a picture the server makes from its
+    /// songs doesn't count). Since 1.2.
+    /// </summary>
+    Task<PlaylistCover?> GetPlaylistCoverAsync(ServerLogin login, string playlistId, CancellationToken cancellationToken) =>
+        Task.FromResult<PlaylistCover?>(null);
+
+    /// <summary>Gives the playlist this picture, or with null, takes its picture away. Since 1.2.</summary>
+    Task SetPlaylistCoverAsync(ServerLogin login, string playlistId, PlaylistCover? cover, CancellationToken cancellationToken) =>
+        Task.CompletedTask;
 }
+
+/// <summary>A playlist's own picture.</summary>
+/// <param name="Data">The image file.</param>
+/// <param name="ContentType">Its type, such as <c>image/jpeg</c>.</param>
+public sealed record PlaylistCover(byte[] Data, string ContentType);
 
 /// <summary>A user's login on the media server.</summary>
 public sealed record ServerLogin(string Username, string Password)
@@ -119,7 +141,14 @@ public sealed record ServerLogin(string Username, string Password)
 /// <param name="Comment">Its description, if any.</param>
 /// <param name="SongCount">Number of songs.</param>
 /// <param name="Changed">When it last changed on the server, to tell whether it has since Melodex last looked.</param>
-public sealed record UserPlaylist(string Id, string Name, string? Comment, int SongCount, DateTimeOffset? Changed);
+public sealed record UserPlaylist(string Id, string Name, string? Comment, int SongCount, DateTimeOffset? Changed)
+{
+    /// <summary>
+    /// Whether it has a picture of its own, if the connector can tell without fetching it: false spares asking for one.
+    /// Since 1.2.
+    /// </summary>
+    public bool? HasCover { get; init; }
+}
 
 /// <summary>A playlist with its songs.</summary>
 public sealed record UserPlaylistSongs(UserPlaylist Playlist, IReadOnlyList<ServerTrack> Songs);

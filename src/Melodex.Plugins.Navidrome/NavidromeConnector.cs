@@ -172,6 +172,56 @@ public sealed class NavidromeConnector : IMediaServerConnector, IFullScan, IPlay
         }
     }
 
+    // ---- Playlists' own pictures, through Navidrome's own API ----
+
+    public bool SyncsPlaylistCovers => SyncsPlaylists;
+
+    public async Task<PlaylistCover?> GetPlaylistCoverAsync(ServerLogin login, string playlistId, CancellationToken cancellationToken)
+    {
+        var client = _client.As(login.Username, login.Password);
+        using (var response = await client.NativeAsync(HttpMethod.Get, $"api/playlist/{Uri.EscapeDataString(playlistId)}", () => null, cancellationToken))
+        {
+            // Without a picture uploaded for it, Navidrome makes one from its songs: that isn't the playlist's own.
+            var playlist = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
+            if (Text(playlist, "uploadedImage") is not { Length: > 0 })
+                return null;
+        }
+        var (data, type) = await client.DownloadAsync("getCoverArt", [("id", $"pl-{playlistId}")], cancellationToken);
+        return new PlaylistCover(data, type);
+    }
+
+    public async Task SetPlaylistCoverAsync(ServerLogin login, string playlistId, PlaylistCover? cover, CancellationToken cancellationToken)
+    {
+        var client = _client.As(login.Username, login.Password);
+        var path = $"api/playlist/{Uri.EscapeDataString(playlistId)}/image";
+        if (cover is null)
+        {
+            try
+            {
+                using var _ = await client.NativeAsync(HttpMethod.Delete, path, () => null, cancellationToken);
+            }
+            catch (HttpRequestException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // It had none.
+            }
+            return;
+        }
+        using var response = await client.NativeAsync(HttpMethod.Post, path, () =>
+        {
+            var image = new ByteArrayContent(cover.Data);
+            image.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(cover.ContentType);
+            return new MultipartFormDataContent { { image, "image", "cover" + Extension(cover.ContentType) } };
+        }, cancellationToken);
+    }
+
+    private static string Extension(string contentType) => contentType switch
+    {
+        "image/png" => ".png",
+        "image/webp" => ".webp",
+        "image/gif" => ".gif",
+        _ => ".jpg",
+    };
+
     private static UserPlaylist Playlist(JsonElement p) => new(
         Text(p, "id")!,
         Text(p, "name") ?? "",

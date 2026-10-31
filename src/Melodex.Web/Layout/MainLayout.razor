@@ -16,10 +16,6 @@
         {
             <NavLink href="review">Review</NavLink>
         }
-        @if (Auth.May(UserPermissions.Listen))
-        {
-            <NavLink href="playlists" Match="NavLinkMatch.Prefix">Playlists</NavLink>
-        }
         @SectionLink(NavSection.Search, "Search")
         <NavLink href="@SettingsHref" Match="NavLinkMatch.Prefix">Settings</NavLink>
     </nav>

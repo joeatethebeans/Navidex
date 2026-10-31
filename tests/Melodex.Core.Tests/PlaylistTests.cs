@@ -125,6 +125,49 @@ public sealed class PlaylistTests : IDisposable
         Assert.Empty(await _api.ListPlaylistsAsync());
     }
 
+    [TestLibraryFact]
+    public async Task Playlist_pictures_sync_both_ways_and_pins_stay_here()
+    {
+        await ScanAsync();
+        var (a, _) = await TwoTracksAsync();
+        var server = new FakePlaylistServer();
+        var made = await _api.CreatePlaylistAsync(new CreatePlaylist("Calm", Songs: [new PlaylistItem(a.TrackId)]));
+        var id = made.Playlist.Id;
+
+        // Its own picture stands for it, in place of its albums' covers.
+        var ours = Png(1);
+        var set = await _api.SetPlaylistCoverAsync(id, new SetPlaylistCover(Convert.ToBase64String(ours)));
+        Assert.True(set.OwnCover);
+        Assert.Equal(ours, await _factory.CreateSignedInClient().GetByteArrayAsync(Assert.Single(set.Covers)));
+        Assert.True((await _api.PinPlaylistAsync(id, true)).Pinned);
+        var refused = await Assert.ThrowsAsync<MelodexApiException>(() => _api.SetPlaylistCoverAsync(id, new SetPlaylistCover(Convert.ToBase64String("not a picture"u8.ToArray()))));
+        Assert.Contains("JPEG", refused.Message);
+
+        // Sent with the playlist.
+        await SyncAsync(server);
+        var there = Assert.Single(server.Playlists.Values);
+        Assert.Equal(ours, server.Covers[there.Id].Data);
+        Assert.Equal(PlaylistSyncState.Synced, (await _api.GetPlaylistAsync(id))!.Playlist.Sync);
+
+        // Changed there: brought here.
+        var theirs = Png(2);
+        server.SetCover(there.Id, theirs);
+        await SyncAsync(server);
+        var listed = Assert.Single(await _api.ListPlaylistsAsync());
+        Assert.Equal(theirs, await _factory.CreateSignedInClient().GetByteArrayAsync(Assert.Single(listed.Covers)));
+        Assert.True(listed.Pinned);
+
+        // Taken away here: taken away there, and its albums' covers stand in again.
+        var removed = await _api.SetPlaylistCoverAsync(id, null);
+        Assert.False(removed.OwnCover);
+        await SyncAsync(server);
+        Assert.False(server.Covers.ContainsKey(there.Id));
+        Assert.False(Assert.Single(await _api.ListPlaylistsAsync()).OwnCover);
+    }
+
+    // Enough of a PNG to be taken for one.
+    private static byte[] Png(byte n) => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, n, n, n];
+
     private async Task SyncAsync(FakePlaylistServer server)
     {
         using var scope = _factory.Services.CreateScope();
@@ -205,6 +248,29 @@ public sealed class PlaylistTests : IDisposable
         public Task DeletePlaylistAsync(ServerLogin login, string playlistId, CancellationToken ct)
         {
             Playlists.Remove(playlistId);
+            return Task.CompletedTask;
+        }
+
+        public Dictionary<string, PlaylistCover> Covers { get; } = [];
+
+        public void SetCover(string id, byte[] data)
+        {
+            Covers[id] = new PlaylistCover(data, "image/png");
+            Playlists[id] = Playlists[id] with { Changed = Tick() };
+        }
+
+        public bool SyncsPlaylistCovers => true;
+
+        public Task<PlaylistCover?> GetPlaylistCoverAsync(ServerLogin login, string playlistId, CancellationToken ct) =>
+            Task.FromResult(Covers.GetValueOrDefault(playlistId));
+
+        public Task SetPlaylistCoverAsync(ServerLogin login, string playlistId, PlaylistCover? cover, CancellationToken ct)
+        {
+            if (cover is null)
+                Covers.Remove(playlistId);
+            else
+                Covers[playlistId] = cover;
+            Playlists[playlistId] = Playlists[playlistId] with { Changed = Tick() };
             return Task.CompletedTask;
         }
 

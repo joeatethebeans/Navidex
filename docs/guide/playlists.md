@@ -1,6 +1,6 @@
 # Playlists
 
-Each user has their own playlists, under **Playlists** at the top. They hold songs from your library, files of your
+Each user has their own playlists, on the **Playlists** tab of the **Library** page. They hold songs from your library, files of your
 own that no catalogue knows, and, when they're synced, songs only your media server has. You need the **Listen**
 permission to have them.
 
@@ -14,13 +14,28 @@ or give it a comment. Deleting a playlist leaves its songs in your library.
 
 A song that leaves your library stays in the playlist, greyed out, so it's there again if the song comes back.
 
+## Finding them
+
+Show your playlists as a **List**, in their folders, or as **Squares**, each with its picture. Find one by name, and
+sort them by name, when they last changed, how many songs they have or how long they are. Melodex remembers your
+choices in that browser.
+
+**Pin** the ones you play most, from the pin beside each or on its page: they show in a row at the top, which the pin
+button in the toolbar hides and shows again. Pins are yours alone and stay in Melodex.
+
+## Pictures
+
+A playlist shows the covers of the albums in it, or four of them in a square once it has that many. Give it a
+picture of its own with **Picture** on its page (a JPEG, PNG, WebP or GIF, up to 10 MB), and take it away the same way
+to have its albums' covers back.
+
 ## Folders
 
 Media servers have no folders, so a folder is part of a playlist's name: with the separator `/`, a playlist named
 `Moods/Calm` is **Calm** in a folder **Moods**, and `Moods/Evening/Calm` is a folder within that. Change the
 separator, or turn folders off, under **Playlists** on your account page.
 
-On the Playlists page, open and close folders, make a playlist in one with its **+**, and rename a folder to rename
+In the list, open and close folders, make a playlist in one with its **+**, and rename a folder to rename
 everything in it. Renaming a folder with the separator in the new name moves it into another; leaving the name empty
 takes what's in it out of the folder.
 
@@ -36,12 +51,14 @@ changed in Navidrome, make or change one in Navidrome (or an app that uses it) a
    from **Settings → Users**.
 
 Syncing happens a few seconds after you change a playlist, every 10 minutes for changes made in Navidrome, and when you
-click the sync button on the Playlists page. Each user only ever sees and changes their own playlists: Navidrome's
+click the sync button on the Playlists tab. Each user only ever sees and changes their own playlists: Navidrome's
 public playlists from other users aren't brought over.
 
 - **Changed in one place** since the last sync: copied to the other.
 - **Changed in both**: the later change wins.
 - **Deleted in one place**: deleted in the other, unless it's been changed there since, in which case it's kept.
+- **Pictures** go both ways too, the later change winning. A picture Navidrome makes from a playlist's songs isn't
+  brought over, only one someone gave it.
 - **Songs Navidrome has that your library doesn't** stay in the playlist, marked *only on the media server*, and go
   back to Navidrome with it.
 

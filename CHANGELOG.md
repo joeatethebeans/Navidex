@@ -44,6 +44,8 @@ Everything on the way to 1.0.
   names (`/` by default, set on your account page). Add to them from a song's or album's page or the player. With
   **Sync playlists** ticked in the Navidrome plugin, and each user's Navidrome login linked on their account page (kept
   encrypted), they're kept the same in Navidrome both ways, and formatting that moves files doesn't break them there.
+  They're a tab of the Library page, as a list in folders or as squares, with search, sorting, and your pinned ones in a
+  row at the top. Each can have a picture of its own, which goes to Navidrome and comes from it.
 - **Getting your library ready**: just after starting, the top bar and the Library page say the library's lists are
   being worked out, which takes a while the first time on a big library.
 
@@ -66,8 +68,8 @@ Everything on the way to 1.0.
 
 ### Changed
 
-- The media-server connector contract is 1.1, adding `IPlaylistSync` for each user's playlists. Connectors built for
-  1.0 still load.
+- The media-server connector contract is 1.2, adding `IPlaylistSync` for each user's playlists, and in 1.2 their
+  pictures. Connectors built for 1.0 and 1.1 still load.
 
 - Artist and album pages open at once with what Melodex knows, and fill in as MusicBrainz answers, rather than waiting
   for it. What they fetch goes ahead of catalogue updates running in the background. `GET /artists/{id}` and

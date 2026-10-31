@@ -502,6 +502,24 @@ namespace Melodex.Core.Data.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("CoverChangedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CoverFile")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CoverHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("CoverNeedsPush")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CoverSyncedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CoverType")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -515,7 +533,13 @@ namespace Melodex.Core.Data.Migrations
                     b.Property<bool>("NeedsPush")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("PinnedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("ServerChangedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ServerCoverHash")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ServerId")

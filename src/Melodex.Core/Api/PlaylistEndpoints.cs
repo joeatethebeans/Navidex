@@ -80,6 +80,33 @@ public static class PlaylistEndpoints
             .WithSummary("Reorder a playlist's songs, or remove some: give the entries to keep, in their new order.")
             .Produces<PlaylistDetail>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound);
 
+        playlists.MapPut("/{id:guid}/pin", async (Guid id, HttpContext http, PlaylistService service, CancellationToken ct) =>
+                Owner(http) is { } user ? await service.PinAsync(user, id, true, ct) is { } playlist ? Results.Ok(playlist) : Results.NotFound() : NoOwner())
+            .WithName("PinPlaylist").WithSummary("Pin a playlist, to show it first. Pins are yours alone: the media server doesn't hear of them.")
+            .Produces<PlaylistSummary>().Produces(StatusCodes.Status404NotFound);
+        playlists.MapDelete("/{id:guid}/pin", async (Guid id, HttpContext http, PlaylistService service, CancellationToken ct) =>
+                Owner(http) is { } user ? await service.PinAsync(user, id, false, ct) is { } playlist ? Results.Ok(playlist) : Results.NotFound() : NoOwner())
+            .WithName("UnpinPlaylist").Produces<PlaylistSummary>().Produces(StatusCodes.Status404NotFound);
+
+        playlists.MapGet("/{id:guid}/cover", async (Guid id, HttpContext http, PlaylistService service, CancellationToken ct) =>
+                Owner(http) is { } user
+                    ? await service.CoverAsync(user, id, ct) is { } cover ? Results.File(cover.Path, cover.ContentType) : Results.NotFound()
+                    : NoOwner())
+            .WithName("GetPlaylistCover").WithSummary("A playlist's own picture, if it has one; without, its albums' covers stand in for it.")
+            .Produces(StatusCodes.Status200OK, contentType: "image/jpeg").Produces(StatusCodes.Status404NotFound);
+        playlists.MapPut("/{id:guid}/cover", async (Guid id, SetPlaylistCover body, HttpContext http, PlaylistService service, CancellationToken ct) =>
+                Owner(http) is { } user
+                    ? await Refusable(async () => await service.SetCoverAsync(user, id, body.Upload, ct) is { } playlist ? Results.Ok(playlist) : Results.NotFound())
+                    : NoOwner())
+            .WithName("SetPlaylistCover")
+            .WithSummary("Give a playlist a picture of its own: base64, up to 10 MB, JPEG, PNG, WebP or GIF. When playlists are synced, the media "
+                         + "server gets it too, if it takes playlist pictures; one given there comes here the same way.")
+            .Produces<PlaylistSummary>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound);
+        playlists.MapDelete("/{id:guid}/cover", async (Guid id, HttpContext http, PlaylistService service, CancellationToken ct) =>
+                Owner(http) is { } user ? await service.SetCoverAsync(user, id, null, ct) is { } playlist ? Results.Ok(playlist) : Results.NotFound() : NoOwner())
+            .WithName("RemovePlaylistCover").WithSummary("Take a playlist's own picture away, here and on the media server, so its albums' covers stand in again.")
+            .Produces<PlaylistSummary>().Produces(StatusCodes.Status404NotFound);
+
         MapLogins(api);
         return api;
     }
